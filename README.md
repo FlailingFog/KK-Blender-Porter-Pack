@@ -1,5 +1,6 @@
 # KK Blender Scripts
-Scripts and a shader to get you started with setting up an exported Koikatsu character in Blender. 
+Scripts and a shader to get you started with setting up an exported Koikatsu character in Blender.  
+Meant to be used with this video tutorial: https://youtube.com/watch?v=hT_BvNISFiM
 #
 The ```1-4 scripts``` are for doing various things. You paste them into Blender's scripting tab.
 
