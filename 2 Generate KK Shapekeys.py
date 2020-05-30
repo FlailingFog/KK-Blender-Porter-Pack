@@ -50,12 +50,10 @@ def tidyUp(keyName):
     print(keyName)
     return keyName 
 
-'''debug
 for shapekey in bpy.data.shape_keys:
     for keyblock in shapekey.key_blocks:
         #print(keyblock.name)
         keyblock.name = tidyUp(keyblock.name)
-'''
 
 ######################################################## and then...
 #Combine the shapekeys with this code:
