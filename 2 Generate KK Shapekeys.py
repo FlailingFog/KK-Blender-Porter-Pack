@@ -83,6 +83,7 @@ inUse = []
 #These shapekeys have a common dependancy on other shapekeys
 correctionList = ['Lips_u_s_op', 'Lips_u_l_op', 'Lips_e_l_op', 'Lips_o_s_op', 'Lips_o_l_op', 'Lips_neko_op', 'Lips_san_op']
 resetList = ['Fangs_def_op', 'Teeth_def_op', 'Tongue_def_op', 'Teeth_bisyou_op1', 'Tongue_egao_op', 'Teeth_i_l_cl', 'Fangs_i_l_cl', 'Teeth_i_s_cl', 'Fangs_i_s_cl']
+fanglessResetList = ['Teeth_def_op', 'Tongue_def_op', 'Teeth_bisyou_op1', 'Tongue_egao_op', 'Teeth_i_l_cl', 'Teeth_i_s_cl']
 
 counter = len(bpy.data.shape_keys[0].key_blocks)
 
@@ -118,28 +119,48 @@ for shapekey in bpy.data.shape_keys:
                             
             #Manual corrections
             if (keyblock.name in correctionList):
-                shapekey.key_blocks['Fangs_def_op'].value = ACTIVE
+                try:
+                    shapekey.key_blocks['Fangs_def_op'].value = ACTIVE
+                except:
+                    #this character doesn't have fangs
+                    pass
                 shapekey.key_blocks['Teeth_def_op'].value = ACTIVE
                 shapekey.key_blocks['Tongue_def_op'].value = ACTIVE
             
             if (keyblock.name == 'Lips_e_s_op'):
-                shapekey.key_blocks['Fangs_def_op'].value = ACTIVE
+                try:
+                    shapekey.key_blocks['Fangs_def_op'].value = ACTIVE
+                except:
+                    #this character doesn't have fangs
+                    pass
             
             if (keyblock.name == 'Lips_bisyou_op'):
                 shapekey.key_blocks['Teeth_bisyou_op1'].value = 0
             
             if (keyblock.name == 'Lips_tabe_op'):
-                shapekey.key_blocks['Fangs_def_op'].value = ACTIVE
+                try:
+                    shapekey.key_blocks['Fangs_def_op'].value = ACTIVE
+                except:
+                    #this character doesn't have fangs
+                    pass
                 shapekey.key_blocks['Teeth_def_op'].value = ACTIVE
                 shapekey.key_blocks['Tongue_egao_op'].value = ACTIVE
                 
             if (keyblock.name == 'Lips_i_l_op'):
                 shapekey.key_blocks['Teeth_i_l_cl'].value = ACTIVE
-                shapekey.key_blocks['Fangs_i_l_cl'].value = ACTIVE
+                try:
+                    shapekey.key_blocks['Fangs_def_op'].value = ACTIVE
+                except:
+                    #this character doesn't have fangs
+                    pass
                 
             if (keyblock.name == 'Lips_i_s_op'):
                 shapekey.key_blocks['Teeth_i_s_cl'].value = ACTIVE
-                shapekey.key_blocks['Fangs_i_s_cl'].value = ACTIVE
+                try:
+                    shapekey.key_blocks['Fangs_def_op'].value = ACTIVE
+                except:
+                    #this character doesn't have fangs
+                    pass
                 
             
             if (keyblock.name not in used):
@@ -155,10 +176,13 @@ for shapekey in bpy.data.shape_keys:
                 shapekey.key_blocks[thing].value=0
                 
             #reset values for shapekeys that were used to correct another shapekey
-            for thing in resetList:
-                shapekey.key_blocks[thing].value=0
+            try:
+                for thing in resetList:
+                    shapekey.key_blocks[thing].value=0
                 #print('')
-
-            
-            inUse =[]            
+            except:
+                for thing in fanglessResetList:
+                    shapekey.key_blocks[thing].value=0
+                    
+            inUse =[]
             print('end')
