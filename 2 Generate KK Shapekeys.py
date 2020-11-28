@@ -58,7 +58,8 @@ for shapekey in bpy.data.shape_keys:
 
 
 ######################################################## and then...
-#Combine the shapekeys with this code:
+#Combine the shapekeys with this script
+
 def whatCat(keyName):
     #EyeWhites are unused because the shape keys for left and right eyes both affect the left eye for some reason
     #Eyelashes1 is used because I couldn't see a difference between the other one and they overlap if both are used
@@ -165,7 +166,7 @@ for shapekey in bpy.data.shape_keys:
             
             if (keyblock.name not in used):
                 #print('Creating combined shapekey')
-                bpy.data.objects['Model_mesh'].shape_key_add(name=('KK ' +cat+emotion))
+                bpy.data.objects['Body'].shape_key_add(name=('KK ' +cat+emotion))
                 #print('appended this to used ' + keyblock.name)
                 
             for thing in inUse:
