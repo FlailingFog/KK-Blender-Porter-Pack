@@ -1,7 +1,8 @@
-##########################################
-# BONE HIDE SCRIPT
-##########################################
-#Hide all bones except those in the wantlist
+'''
+AFTER CATS (TIDY UP) SCRIPT
+- Hides all bones that aren't in the wantlist
+- Connects the finger bones that CATS sometimes misses for koikatsu imports
+'''
 
 import bpy
 
@@ -16,3 +17,16 @@ for armature in [ob for ob in bpy.data.objects if ob.type == 'ARMATURE']:
             print(bone.name)
             bone.hide = False
             counter=counter+1
+
+# Make sure finger bones are visually connected (ignore A_N_ bones)
+bpy.ops.object.mode_set(mode='EDIT')
+
+bpy.data.objects['Armature'].data.edit_bones['IndexFinger1_L'].tail = bpy.data.objects['Armature'].data.edit_bones['IndexFinger2_L'].head
+bpy.data.objects['Armature'].data.edit_bones['MiddleFinger1_L'].tail = bpy.data.objects['Armature'].data.edit_bones['MiddleFinger2_L'].head
+bpy.data.objects['Armature'].data.edit_bones['RingFinger1_L'].tail = bpy.data.objects['Armature'].data.edit_bones['RingFinger2_L'].head
+
+bpy.data.objects['Armature'].data.edit_bones['IndexFinger1_R'].tail = bpy.data.objects['Armature'].data.edit_bones['IndexFinger2_R'].head
+bpy.data.objects['Armature'].data.edit_bones['MiddleFinger1_R'].tail = bpy.data.objects['Armature'].data.edit_bones['MiddleFinger2_R'].head
+bpy.data.objects['Armature'].data.edit_bones['RingFinger1_R'].tail = bpy.data.objects['Armature'].data.edit_bones['RingFinger2_R'].head
+
+bpy.ops.object.mode_set(mode='OBJECT')
