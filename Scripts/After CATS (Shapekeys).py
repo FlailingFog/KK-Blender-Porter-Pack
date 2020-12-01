@@ -1,7 +1,10 @@
-############################################
-# GENERATE KK SHAPEKEY SCRIPT
-##########################################
-#Translate shapekeys to english
+'''
+AFTER CATS (SHAPEKEYS) SCRIPT
+- Renames part of the shapekeys to english
+- Creates new, combined shapekeys using the existing shapekeys
+'''
+
+#Translate beginning of shapekeys to english
 
 import bpy
 
