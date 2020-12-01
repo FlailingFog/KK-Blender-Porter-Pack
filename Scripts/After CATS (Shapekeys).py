@@ -46,7 +46,7 @@ def tidyUp(keyName):
         keyName = keyName.replace("kuti_sita.t00", "Tongue")
 
     if (keyName.find("mayuge.mayu00") != -1):
-        keyName = keyName.replace("mayuge.mayu00", "Eyebrows")
+        keyName = keyName.replace("mayuge.mayu00", "KK Eyebrows")
         
     
 
