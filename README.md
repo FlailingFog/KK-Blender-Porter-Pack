@@ -1,4 +1,4 @@
-# KK Blender Scripts
+# KK Blender Shader Pack
 Scripts and a shader to get you started with setting up an exported Koikatsu character in Blender.  
 Meant to be used with this video tutorial series: 
 #
