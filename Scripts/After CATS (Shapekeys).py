@@ -1,7 +1,10 @@
-############################################
-# GENERATE KK SHAPEKEY SCRIPT
-##########################################
-#Translate shapekeys to english
+'''
+AFTER CATS (SHAPEKEYS) SCRIPT
+- Renames part of the shapekeys to english
+- Creates new, combined shapekeys using the existing shapekeys
+'''
+
+#Translate beginning of shapekeys to english
 
 import bpy
 
@@ -43,7 +46,7 @@ def tidyUp(keyName):
         keyName = keyName.replace("kuti_sita.t00", "Tongue")
 
     if (keyName.find("mayuge.mayu00") != -1):
-        keyName = keyName.replace("mayuge.mayu00", "Eyebrows")
+        keyName = keyName.replace("mayuge.mayu00", "KK Eyebrows")
         
     
 
@@ -58,7 +61,8 @@ for shapekey in bpy.data.shape_keys:
 
 
 ######################################################## and then...
-#Combine the shapekeys with this code:
+#Combine the shapekeys with this script
+
 def whatCat(keyName):
     #EyeWhites are unused because the shape keys for left and right eyes both affect the left eye for some reason
     #Eyelashes1 is used because I couldn't see a difference between the other one and they overlap if both are used
@@ -165,7 +169,7 @@ for shapekey in bpy.data.shape_keys:
             
             if (keyblock.name not in used):
                 #print('Creating combined shapekey')
-                bpy.data.objects['Model_mesh'].shape_key_add(name=('KK ' +cat+emotion))
+                bpy.data.objects['Body'].shape_key_add(name=('KK ' +cat+emotion))
                 #print('appended this to used ' + keyblock.name)
                 
             for thing in inUse:
