@@ -4,7 +4,8 @@ BAKE MATERIAL TO TEXTURE SCRIPT
 - Will only bake a material if an image node is present in the node tree
 - If multiple image files are present, only one texture will be created
 - If the multiple image files have different resolutions, a texture will be created for each resolution
-- Export defaults to 8-bit PNG with an alpha channel
+- Export defaults to 8-bit PNG with an alpha channel.
+-    Defaults can be changed by editing the exportType and exportColormode variables below this comment.
 
 Usage:
 - Enter the folder you want to export the textures to in the Output Properties tab
@@ -12,13 +13,19 @@ Usage:
 - Run the script
 - New textures are exported to the folder.
 
+Limitations:
+- Does not (cannot?) account for multiple UV maps. Only the default map named "UVMap" is used.
+
 imageplane driver + shader code taken from https://blenderartists.org/t/scripts-create-camera-image-plane/580839
+Tested on Blender 2.91 and 2.83 LTS
 '''
 
 exportType = 'PNG'
 exportColormode = 'RGBA'
 
 #######################
+#Create a camera and an image plane that will fit to the camera's dimensions using drivers
+
 import bpy
 
 def SetupDriverVariables(driver, imageplane, camera):
@@ -53,7 +60,12 @@ for block in bpy.data.lights:
 currentlySelected = bpy.context.active_object
 
 #Add a new camera
-bpy.ops.object.camera_add(enter_editmode=False, align='VIEW', location=(0, 0, -1), rotation=(0, 0, 0), scale=(1, 1, 1))
+try:
+    #Blender 2.91
+    bpy.ops.object.camera_add(enter_editmode=False, align='VIEW', location=(0, 0, -1), rotation=(0, 0, 0), scale=(1, 1, 1))
+except:
+    #Blender 2.83
+    bpy.ops.object.camera_add(enter_editmode=False, align='VIEW', location=(0, 0, -1), rotation=(0, 0, 0))
 
 #save it for later
 camera = bpy.context.active_object
@@ -98,7 +110,8 @@ SetupDriverVariables(driver, imageplane, camera)
 driver.expression = "((r_x)/(r_y)*(cOS/2)) if (((r_x)/(r_y)) < 1) else (cOS/2)"
 
 ###########################
-#setup imageplane material
+#setup the material for the image plane
+
 imageplane = bpy.context.active_object
 if( len( imageplane.material_slots) == 0 ):
     bpy.ops.object.material_slot_add()
@@ -144,8 +157,9 @@ currentlySelected.select_set(True)
 bpy.context.view_layer.objects.active=currentlySelected
 
 ##############################
+#Changes the material of the image plane to the material of the object,
+# and then puts a render of the image plane into the specified folder
 
-#Renders each material of the selected object in light and in dark
 import bpy
 
 def bakeMaterials(sunstate, sunstrength):
@@ -159,13 +173,13 @@ def bakeMaterials(sunstate, sunstrength):
     sun.energy = sunstrength
     #print('the sun is ' + str(sunstate) + ' at ' + str(sunstrength))
     
-    #prepare a blank array to use for detecting duplicates
+    #prepare a blank array to use for detecting duplicate image dimensions
     dupedetect = []
 
     #preserve the filepath
     folderpath = bpy.context.scene.render.filepath
     
-    #go through each material slot for light colors
+    #go through each material slot
     for matslot in objectToBake.material_slots:
         currentmaterial = matslot.material
         renderedSomething = False
@@ -183,6 +197,7 @@ def bakeMaterials(sunstate, sunstrength):
         #go through each node in the material slot
         for matnode in matslot.material.node_tree.nodes:
             #print(matnode)
+            
             #If this is an image node get its dimensions
             if matnode.type == 'TEX_IMAGE':
                 currentImageX = matnode.image.size[0]
@@ -191,16 +206,17 @@ def bakeMaterials(sunstate, sunstrength):
                 
                 #check if a render has been done at these dimensions for this material
                 if dimension not in dupedetect:
+                    
                     #if it hasn't, render this one
                     bpy.context.scene.render.resolution_x=currentImageX
                     bpy.context.scene.render.resolution_y=currentImageY
                     dupedetect.append(dimension)
                     print('rendering a ' + dimension + ' sized file')
                     
-                    #set the material
+                    #set the imageplane material to match this material
                     bpy.data.objects['imageplane'].data.materials[0] = currentmaterial
                     
-                    #then render it
+                    #then render it at these dimensions
                     bpy.context.scene.render.filepath = folderpath + currentmaterial.name + ' ' + dimension + ' ' + sunstate
                     bpy.context.scene.render.image_settings.file_format=exportType
                     bpy.context.scene.render.image_settings.color_mode=exportColormode
@@ -214,13 +230,13 @@ def bakeMaterials(sunstate, sunstrength):
                     bpy.context.scene.render.filepath = folderpath
                     
                     renderedSomething = True
-
                     
                 else:
                     print('already did this dimension for this material: ' + dimension)
                     print(currentmaterial)
         
-        #If nothing was rendered for this material, the images were in a node group. Dig deeper into each node group
+        #If this point in the loop was reached and nothing was rendered for this material,
+        #the images were in a node group. Loop again and dig deeper into each node group
         if renderedSomething == False:
             #print('each node group')
             for matnode in matslot.material.node_tree.nodes:
@@ -280,8 +296,10 @@ def bakeMaterials(sunstate, sunstrength):
                 pass
 
 ###############
+#Begin baking
+
 #get the currently selected object as the active object
-objectToBake=bpy.context.active_object
+objectToBake = bpy.context.active_object
 
 #Purge unused lights
 for block in bpy.data.lights:
@@ -289,7 +307,12 @@ for block in bpy.data.lights:
         bpy.data.lights.remove(block)
 
 #Make a new sun object
-bpy.ops.object.light_add(type='SUN', radius=1, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
+try:
+    #Blender 2.91
+    bpy.ops.object.light_add(type='SUN', radius=1, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
+except:
+    #Blender 2.83
+    bpy.ops.object.light_add(type='SUN', radius=1, align='WORLD', location=(0, 0, 0))
 
 #save the sun object
 sunobject = bpy.data.objects['Sun']
@@ -298,6 +321,9 @@ sunobject = bpy.data.objects['Sun']
 bakeMaterials('light' , 5)
 #bakes the dark versions of each material at sun intensity 0
 bakeMaterials('dark' , 0)
+
+####################
+#Cleanup
 
 # Deselect all objects
 bpy.ops.object.select_all(action='DESELECT')
