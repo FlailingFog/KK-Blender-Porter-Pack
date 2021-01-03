@@ -9,9 +9,11 @@ BAKE MATERIAL TO TEXTURE SCRIPT
 
 Usage:
 - Enter the folder you want to export the textures to in the Output Properties tab
-- Select an object
+- Delete all light objects
+- Delete all camera objects
+- Select the object you want to bake in the 3D viewport
 - Run the script
-- New textures are exported to the folder.
+- Textures are baked to the output folder
 
 Limitations:
 - Does not (cannot?) account for multiple UV maps. Only the default map named "UVMap" is used.
@@ -22,6 +24,7 @@ Tested on Blender 2.91 and 2.83 LTS
 
 exportType = 'PNG'
 exportColormode = 'RGBA'
+resolutionMultiplier = 1
 
 #######################
 #Create a camera and an image plane that will fit to the camera's dimensions using drivers
@@ -200,40 +203,44 @@ def bakeMaterials(sunstate, sunstrength):
             
             #If this is an image node get its dimensions
             if matnode.type == 'TEX_IMAGE':
-                currentImageX = matnode.image.size[0]
-                currentImageY = matnode.image.size[1]
-                dimension = str(currentImageX)+'x'+str(currentImageY)
-                
-                #check if a render has been done at these dimensions for this material
-                if dimension not in dupedetect:
+                try:
+                    currentImageX = matnode.image.size[0]
+                    currentImageY = matnode.image.size[1]
+                    dimension = str(currentImageX)+'x'+str(currentImageY)
                     
-                    #if it hasn't, render this one
-                    bpy.context.scene.render.resolution_x=currentImageX
-                    bpy.context.scene.render.resolution_y=currentImageY
-                    dupedetect.append(dimension)
-                    print('rendering a ' + dimension + ' sized file')
-                    
-                    #set the imageplane material to match this material
-                    bpy.data.objects['imageplane'].data.materials[0] = currentmaterial
-                    
-                    #then render it at these dimensions
-                    bpy.context.scene.render.filepath = folderpath + currentmaterial.name + ' ' + dimension + ' ' + sunstate
-                    bpy.context.scene.render.image_settings.file_format=exportType
-                    bpy.context.scene.render.image_settings.color_mode=exportColormode
-                    #bpy.context.scene.render.image_settings.color_depth='16'
-                    
-                    print('rendering this file:' + bpy.context.scene.render.filepath)
-                    bpy.ops.render.render(write_still = True)
-                    #print(imageplane.data.materials[0])
-                    
-                    #reset folderpath after render
-                    bpy.context.scene.render.filepath = folderpath
-                    
-                    renderedSomething = True
-                    
-                else:
-                    print('already did this dimension for this material: ' + dimension)
-                    print(currentmaterial)
+                    #check if a render has been done at these dimensions for this material
+                    if dimension not in dupedetect:
+                        
+                        #if it hasn't, render this one
+                        bpy.context.scene.render.resolution_x=currentImageX * resolutionMultiplier
+                        bpy.context.scene.render.resolution_y=currentImageY * resolutionMultiplier
+                        dupedetect.append(dimension)
+                        print('rendering a ' + dimension + ' sized file')
+                        
+                        #set the imageplane material to match this material
+                        bpy.data.objects['imageplane'].data.materials[0] = currentmaterial
+                        
+                        #then render it at these dimensions
+                        bpy.context.scene.render.filepath = folderpath + currentmaterial.name + ' ' + dimension + ' ' + sunstate
+                        bpy.context.scene.render.image_settings.file_format = exportType
+                        bpy.context.scene.render.image_settings.color_mode = exportColormode
+                        #bpy.context.scene.render.image_settings.color_depth='16'
+                        
+                        print('rendering this file:' + bpy.context.scene.render.filepath)
+                        bpy.ops.render.render(write_still = True)
+                        #print(imageplane.data.materials[0])
+                        
+                        #reset folderpath after render
+                        bpy.context.scene.render.filepath = folderpath
+                        
+                        renderedSomething = True
+                        
+                    else:
+                        print('already did this dimension for this material: ' + dimension)
+                        print(currentmaterial)
+                except:
+                    #An image node was present but there was no image loaded
+                    pass
         
         #If this point in the loop was reached and nothing was rendered for this material,
         #the images were in a node group. Loop again and dig deeper into each node group
@@ -246,39 +253,43 @@ def bakeMaterials(sunstate, sunstrength):
                     for matnodeingroup in matnode.node_tree.nodes:
                         #print(matnodeingroup)
                         if matnodeingroup.type == 'TEX_IMAGE':
-                            currentImageX = matnodeingroup.image.size[0]
-                            currentImageY = matnodeingroup.image.size[1]
-                            dimension = str(currentImageX)+'x'+str(currentImageY)
-                            
-                            #check if a render has been done at these dimensions for this material
-                            if dimension not in dupedetect:
-                                #if it hasn't, render this one
-                                bpy.context.scene.render.resolution_x=currentImageX
-                                bpy.context.scene.render.resolution_y=currentImageY
-                                dupedetect.append(dimension)
-                                print('rendering a ' + dimension + ' sized file')
+                            try:
+                                currentImageX = matnodeingroup.image.size[0]
+                                currentImageY = matnodeingroup.image.size[1]
+                                dimension = str(currentImageX)+'x'+str(currentImageY)
                                 
-                                #set the material
-                                bpy.data.objects['imageplane'].data.materials[0] = currentmaterial
-                                
-                                #then render it
-                                bpy.context.scene.render.filepath = folderpath + currentmaterial.name + ' ' + dimension + ' ' + sunstate
-                                bpy.context.scene.render.image_settings.file_format=exportType
-                                bpy.context.scene.render.image_settings.color_mode=exportColormode
-                                #bpy.context.scene.render.image_settings.color_depth='16'
-                                
-                                print('rendering this file:' + bpy.context.scene.render.filepath)
-                                bpy.ops.render.render(write_still = True)
-                                #print(imageplane.data.materials[0])
-                                
-                                #reset folderpath after render
-                                bpy.context.scene.render.filepath = folderpath
-                                
-                                renderedSomething = True
-                                
-                            else:
-                                print('already did this dimension for this material: ' + dimension)
-                                print(currentmaterial)
+                                #check if a render has been done at these dimensions for this material
+                                if dimension not in dupedetect:
+                                    #if it hasn't, render this one
+                                    bpy.context.scene.render.resolution_x=currentImageX * resolutionMultiplier
+                                    bpy.context.scene.render.resolution_y=currentImageY * resolutionMultiplier
+                                    dupedetect.append(dimension)
+                                    print('rendering a ' + dimension + ' sized file')
+                                    
+                                    #set the material
+                                    bpy.data.objects['imageplane'].data.materials[0] = currentmaterial
+                                    
+                                    #then render it
+                                    bpy.context.scene.render.filepath = folderpath + currentmaterial.name + ' ' + dimension + ' ' + sunstate
+                                    bpy.context.scene.render.image_settings.file_format=exportType
+                                    bpy.context.scene.render.image_settings.color_mode=exportColormode
+                                    #bpy.context.scene.render.image_settings.color_depth='16'
+                                    
+                                    print('rendering this file:' + bpy.context.scene.render.filepath)
+                                    bpy.ops.render.render(write_still = True)
+                                    #print(imageplane.data.materials[0])
+                                    
+                                    #reset folderpath after render
+                                    bpy.context.scene.render.filepath = folderpath
+                                    
+                                    renderedSomething = True
+                                    
+                                else:
+                                    print('already did this dimension for this material: ' + dimension)
+                                    print(currentmaterial)
+                            except:
+                                #An image node was present but there was no image loaded
+                                pass
                 except:
                     #this node doesn't have a node tree
                     pass
