@@ -212,6 +212,13 @@ def setDriverHip(hipbone, drivertarget):
 setDriverHip('Leg_R_Twist', 'Right leg')
 setDriverHip('Leg_L_Twist', 'Left leg')
 
+# Tilt the bust bone and make it smaller
+bpy.ops.object.mode_set(mode='EDIT')
+bone = bpy.data.objects['Armature'].data.edit_bones['Cf_D_Bust00']
+bone.tail.y = bpy.data.objects['Armature'].data.edit_bones['AH1_R'].head.y * 2
+bone.tail.z = bpy.data.objects['Armature'].data.edit_bones['AH1_R'].head.z
+bpy.ops.object.mode_set(mode='POSE')
+
 ##################### Make an eye controller
 
 #roll the eye bone, create a copy and name it eye controller
