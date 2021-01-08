@@ -1,11 +1,15 @@
 '''
 AFTER CATS (SHAPEKEYS) SCRIPT
 - Renames part of the shapekeys to english
-- Creates new, combined shapekeys using the existing shapekeys
+- Creates new, full shapekeys using the existing partial shapekeys
+- Deletes the partial shapekeys if the deletePartials variable below this comment equals 1
 '''
 
-#Translate beginning of shapekeys to english
+#Set deletePartials to 1 to clean up the shapekey list after the KK shapekeys are created
+deletePartials = 0
 
+#########################
+#Translate beginning of shapekeys to english
 import bpy
 
 def tidyUp(keyName):
@@ -48,8 +52,6 @@ def tidyUp(keyName):
     if (keyName.find("mayuge.mayu00") != -1):
         keyName = keyName.replace("mayuge.mayu00", "KK Eyebrows")
         
-    
-
     print(keyName)
     return keyName 
 
@@ -190,3 +192,10 @@ for shapekey in bpy.data.shape_keys:
                     
             inUse =[]
             print('end')
+
+#Delete all shapekeys that don't have a "KK" in their name
+if deleteExtras:
+    for shapekey in bpy.data.shape_keys:
+        for keyblock in shapekey.key_blocks:
+            if (keyblock.name.find('KK ') == -1 and keyblock.name.find('Basis') != 0):
+                bpy.data.objects['Body'].shape_key_remove(keyblock)
