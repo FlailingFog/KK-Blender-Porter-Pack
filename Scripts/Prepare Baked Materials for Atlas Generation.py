@@ -39,35 +39,45 @@ for matslot in object.material_slots:
         #(ex. light is already loaded in, switch the textures to dark)
         try:
             try:
-                imageNode = nodes['KK export light']
+                transpMix = nodes['KK export light']
+                
                 currentImage = [file.name for file in files if (material.name in file.name and 'dark' in file.name)]
                 imageName = currentImage[0]
                 imagePath = folderpath + imageName
                 
-                #Load the dark image texture
+                #swap light textures for dark textures
                 bpy.ops.image.open(filepath=imagePath)
                 bpy.data.images[imageName].pack()
+                
+                imageNode = nodes['KK export light'].inputs[0].links[0].from_node
                 imageNode.image = bpy.data.images[imageName]
-                imageNode.name = 'KK export dark'
+                
+                transpMix.name = 'KK export dark'
+                
             except:
-                imageNode = nodes['KK export dark']
+                transpMix = nodes['KK export dark']
+                
                 currentImage = [file.name for file in files if (material.name in file.name and 'light' in file.name)]
                 imageName = currentImage[0]
                 imagePath = folderpath + imageName
                 
-                #Load the dark image texture
+                #swap dark textures for light textures
                 bpy.ops.image.open(filepath=imagePath)
                 bpy.data.images[imageName].pack()
+                
+                imageNode = nodes['KK export dark'].inputs[0].links[0].from_node
                 imageNode.image = bpy.data.images[imageName]
-                imageNode.name = 'KK export light'
+                
+                transpMix.name = 'KK export light'
                 
         except:
             #get output node
             outputNode = nodes['Material Output']
             
-            #make mix node for image transparency
+            #make mix node for image transparency and track the state of the image file
             transpMix = nodes.new('ShaderNodeMixShader')
             transpMix.location = outputNode.location[0], outputNode.location[1] - 300
+            transpMix.name = 'KK export light'
             
             #make transparency node
             transpNode = nodes.new('ShaderNodeBsdfTransparent')
@@ -76,11 +86,24 @@ for matslot in object.material_slots:
             #make emissive node
             emissiveNode = nodes.new('ShaderNodeEmission')
             emissiveNode.location = transpMix.location[0], transpMix.location[1] - 300
+            #Emissive node must be named 'Emission' or Material Combiner will fail
+            try:
+                nodes['Emission'].name = 'renamed for export'
+                emissiveNode.name = 'Emission'
+            except:
+                #image is the only image in the current view
+                pass
             
             #make image node
             imageNode = nodes.new('ShaderNodeTexImage')
             imageNode.location = emissiveNode.location[0]-300, emissiveNode.location[1]
-            imageNode.name = 'KK export light'
+            #Image node must be named 'Image Texture' or Material Combiner will fail
+            try:
+                nodes['Image Texture'].name = 'renamed for export'
+                imageNode.name = 'Image Texture'
+            except:
+                #image is the only image in the current view
+                pass
             
             #Load in the image texture for the material
             bpy.ops.image.open(filepath=imagePath)
