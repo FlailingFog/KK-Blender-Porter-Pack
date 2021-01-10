@@ -2,68 +2,138 @@
 AFTER CATS (SHAPEKEYS) SCRIPT
 - Renames part of the shapekeys to english
 - Creates new, full shapekeys using the existing partial shapekeys
-- Deletes the partial shapekeys if the deletePartials variable below this comment equals 1
+- Deletes the partial shapekeys from the import if the deletePartials variable below this comment equals 1
+
+Tested in Blender 2.91
 '''
 
 #Set deletePartials to 1 to clean up the shapekey list after the KK shapekeys are created
-deletePartials = 0
+deletePartials = 1
 
 #########################
-#Translate beginning of shapekeys to english
+#Translate most of the shapekeys
+
 import bpy
 
-def tidyUp(keyName):
-    if (keyName.find("eye_face.f00") != -1):
-        keyName = keyName.replace("eye_face.f00", "Eyes")
-        
-    if (keyName.find("kuti_face.f00") != -1):
-        keyName = keyName.replace("kuti_face.f00", "Lips")
-        
-    if (keyName.find("eye_siroL.sL00") != -1):
-        keyName = keyName.replace("eye_siroL.sL00", "EyeWhitesL")
-        
-    if (keyName.find("eye_siroR.sR00") != -1):
-        keyName = keyName.replace("eye_siroR.sR00", "EyeWhitesR")
-        
-    if (keyName.find("eye_line_u.elu00") != -1):
-        keyName = keyName.replace("eye_line_u.elu00", "Eyelashes1")
-        
-    if (keyName.find("eye_line_l.ell00") != -1):
-        keyName = keyName.replace("eye_line_l.ell00", "Eyelashes2")
-        
-    if (keyName.find("eye_naM.naM00") != -1):
-        keyName = keyName.replace("eye_naM.naM00", "EyelashesPos")
+def renameCategory(keyName):
+    keyName = keyName.replace("eye_face.f00", "Eyes")
+    keyName = keyName.replace("kuti_face.f00", "Lips")
+    keyName = keyName.replace("eye_siroL.sL00", "EyeWhitesL")
+    keyName = keyName.replace("eye_siroR.sR00", "EyeWhitesR")
+    keyName = keyName.replace("eye_line_u.elu00", "Eyelashes1")
+    keyName = keyName.replace("eye_line_l.ell00", "Eyelashes2")
+    keyName = keyName.replace("eye_naM.naM00", "EyelashesPos")
+    keyName = keyName.replace("eye_nose.nl00", "NoseTop")
+    keyName = keyName.replace("kuti_nose.nl00", "NoseBot")
+    keyName = keyName.replace("kuti_ha.ha00", "Teeth")
+    keyName = keyName.replace("kuti_yaeba.y00", "Fangs")
+    keyName = keyName.replace("kuti_sita.t00", "Tongue")
+    keyName = keyName.replace("mayuge.mayu00", "KK Eyebrows")
     
-    if (keyName.find("eye_nose.nl00") != -1):
-        keyName = keyName.replace("eye_nose.nl00", "NoseTop")
-
-    if (keyName.find("kuti_nose.nl00") != -1):
-        keyName = keyName.replace("kuti_nose.nl00", "NoseBot")
+    #Exception if a previous version of the script was already run
+    if keyName.find('Eyebrows_') > -1 and keyName.find('KK Eyebrows_') == -1:
+        keyName = keyName.replace('Eyebrows_', 'KK Eyebrows_')
         
-    if (keyName.find("kuti_ha.ha00") != -1):
-        keyName = keyName.replace("kuti_ha.ha00", "Teeth")
-        
-    if (keyName.find("kuti_yaeba.y00") != -1):
-        keyName = keyName.replace("kuti_yaeba.y00", "Fangs")
-        
-    if (keyName.find("kuti_sita.t00") != -1):
-        keyName = keyName.replace("kuti_sita.t00", "Tongue")
-
-    if (keyName.find("mayuge.mayu00") != -1):
-        keyName = keyName.replace("mayuge.mayu00", "KK Eyebrows")
-        
-    print(keyName)
     return keyName 
 
+def renameEmotion(keyName):
+    keyName = keyName.replace("_def_", "_default_")
+    keyName = keyName.replace("_egao_", "_smile_")
+    keyName = keyName.replace("_bisyou_", "_smile_sharp_")
+    keyName = keyName.replace("_uresi_ss_", "_happy_slight_")
+    keyName = keyName.replace("_uresi_s_", "_happy_moderate_")
+    keyName = keyName.replace("_uresi_", "_happy_broad_")
+    keyName = keyName.replace("_doki_ss_", "_doki_slight_")
+    keyName = keyName.replace("_doki_s_", "_doki_moderate_")
+    keyName = keyName.replace("_ikari_", "_angry_")
+    keyName = keyName.replace("_ikari02_", "_angry_2_")
+    keyName = keyName.replace("_sinken_", "_serious_")
+    keyName = keyName.replace("_sinken02_", "_serious_1_")
+    keyName = keyName.replace("_sinken03_", "_serious_2_")
+    keyName = keyName.replace("_keno_", "_hate_")
+    keyName = keyName.replace("_sabisi_", "_lonely_")
+    keyName = keyName.replace("_aseri_", "_impatient_")
+    keyName = keyName.replace("_huan_", "_displeased_")
+    keyName = keyName.replace("_human_", "_displeased_")
+    keyName = keyName.replace("_akire_", "_amazed_")
+    keyName = keyName.replace("_odoro_", "_shocked_")
+    keyName = keyName.replace("_odoro_s_", "_shocked_moderate_")
+    keyName = keyName.replace("_doya_", "_smug_")
+    keyName = keyName.replace("_pero_", "_lick_")
+    keyName = keyName.replace("_name_", "_eating_")
+    keyName = keyName.replace("_tabe_", "_eating_2_")
+    keyName = keyName.replace("_kuwae_", "_hold_in_mouth_")
+    keyName = keyName.replace("_kisu_", "_kiss_")
+    keyName = keyName.replace("_name02_", "_tongue_out_")
+    keyName = keyName.replace("_mogu_", "_chewing_")
+    keyName = keyName.replace("_niko_", "_cartoon_mouth_")
+    keyName = keyName.replace("_san_", "_triangle_")
+    
+    keyName = keyName.replace("_winkl_", "_wink_left_")
+    keyName = keyName.replace("_winkr_", "_wink_right_")
+    keyName = keyName.replace("_setunai_", "_distress_")
+    keyName = keyName.replace("_tere_", "_shy_")
+    keyName = keyName.replace("_tmara_", "_bored_")
+    keyName = keyName.replace("_tumara_", "_bored_")
+    keyName = keyName.replace("_kurusi_", "_pain_")
+    keyName = keyName.replace("_sian_", "_thinking_")
+    keyName = keyName.replace("_kanasi_", "_sad_")
+    keyName = keyName.replace("_naki_", "_crying_")
+    keyName = keyName.replace("_rakutan_", "_dejected_")
+    keyName = keyName.replace("_komaru_", "_worried_")
+    keyName = keyName.replace("_gag_", "_gageye_")
+    keyName = keyName.replace("_gyul_", "_squeeze_left_")
+    keyName = keyName.replace("_gyur_", "_squeeze_right_")
+    keyName = keyName.replace("_gyu_", "_squeeze_")
+    keyName = keyName.replace("_gyul02_", "_squeeze_left_2_")
+    keyName = keyName.replace("_gyur02_", "_squeeze_right_2_")
+    keyName = keyName.replace("_gyu02_", "_squeeze_2_")
+    
+    keyName = keyName.replace("_koma_", "_worried_")
+    keyName = keyName.replace("_gimoL_", "_doubt_left_")
+    keyName = keyName.replace("_gimoR_", "_doubt_right_")
+    keyName = keyName.replace("_sianL_", "_thinking_left_")
+    keyName = keyName.replace("_sianR_", "_thinking_right_")
+    keyName = keyName.replace("_oko_", "_angry_")
+    keyName = keyName.replace("_oko2L_", "_angry_left_")
+    keyName = keyName.replace("_oko2R_", "_angry_right_")
+        
+    keyName = keyName.replace("_s_", "_small_")
+    keyName = keyName.replace("_l_", "_big_")
+        
+    return keyName 
+
+body = bpy.context.active_object
+originalExists = False
 
 for shapekey in bpy.data.shape_keys:
     for keyblock in shapekey.key_blocks:
-        #print(keyblock.name)
-        keyblock.name = tidyUp(keyblock.name)
+        
+        keyblock.name = renameCategory(keyblock.name)
+        keyblock.name = renameEmotion(keyblock.name)
+        
+        #check if the original shapekeys still exist
+        if 'Basis' not in keyblock.name:
+            if 'Eyes' in keyblock.name and 'KK Eyes' not in keyblock.name:
+                originalExists = True
+            
+        #If the original shapekeys still exist, and KK shapekeys have already been generated
+        #delete the KK shapekeys and regenerate them in the next section of the script
+        if originalExists and 'KK ' in keyblock.name and 'KK Eyebrows' not in keyblock.name:
+            body.active_shape_key_index = body.data.shape_keys.key_blocks.keys().index(keyblock.name)
+            bpy.ops.object.shape_key_remove()
+        
+        #delete the bounse shapekey that sometimes appears on import
+        try:
+            if 'bounse' in keyblock.name:
+                body.active_shape_key_index = body.data.shape_keys.key_blocks.keys().index(keyblock.name)
+                bpy.ops.object.shape_key_remove()
+        except:
+            #or not
+            pass
 
-
-######################################################## and then...
-#Combine the shapekeys with this script
+########################################################
+#Combine the shapekeys
 
 def whatCat(keyName):
     #EyeWhites are unused because the shape keys for left and right eyes both affect the left eye for some reason
@@ -79,23 +149,20 @@ def whatCat(keyName):
     if not all(v==-1 for v in mouth):
         return 'Mouth'
     
-    #else
     return 'None'
 
-#setup two arrays for later
+#setup two arrays to keep track of the shapekeys that have been used
+#and the shapekeys currently in use
 used = []
 inUse = []
 
-#These shapekeys have a common dependancy on other shapekeys
-correctionList = ['Lips_u_s_op', 'Lips_u_l_op', 'Lips_e_l_op', 'Lips_o_s_op', 'Lips_o_l_op', 'Lips_neko_op', 'Lips_san_op']
-resetList = ['Fangs_def_op', 'Teeth_def_op', 'Tongue_def_op', 'Teeth_bisyou_op1', 'Tongue_egao_op', 'Teeth_i_l_cl', 'Fangs_i_l_cl', 'Teeth_i_s_cl', 'Fangs_i_s_cl']
-fanglessResetList = ['Teeth_def_op', 'Tongue_def_op', 'Teeth_bisyou_op1', 'Tongue_egao_op', 'Teeth_i_l_cl', 'Teeth_i_s_cl']
+#These shapekeys require the default teeth and tongue shapekeys to be active
+correctionList = ['Lips_u_small_op', 'Lips_u_big_op', 'Lips_e_big_op', 'Lips_o_small_op', 'Lips_o_big_op', 'Lips_neko_op', 'Lips_triangle_op']
 
 counter = len(bpy.data.shape_keys[0].key_blocks)
 
-ACTIVE = .9
+ACTIVE = 0.9
 
-#print('-------------------')
 for shapekey in bpy.data.shape_keys:
     for keyblock in shapekey.key_blocks:
         
@@ -113,89 +180,92 @@ for shapekey in bpy.data.shape_keys:
             
             #assign each keyblock a category and emotion combo
             for keyblockCheck in shapekey.key_blocks:
+                
                 #does this key match my current emotion?
-                if (keyblockCheck.name.find(emotion) != -1):
+                if (keyblockCheck.name.find(emotion) > -1):
+                    
                     #does this key match my current category?
                     if whatCat(keyblock.name) == whatCat(keyblockCheck.name):
+                        
                         #I haven't already used this key right?
                         if (keyblockCheck.name not in used):
                             keyblockCheck.value = ACTIVE
                             inUse.append(keyblockCheck.name)
-                            #print('Using ' + keyblockCheck.name)
                             
             #Manual corrections
             if (keyblock.name in correctionList):
                 try:
-                    shapekey.key_blocks['Fangs_def_op'].value = ACTIVE
+                    shapekey.key_blocks['Fangs_default_op'].value = ACTIVE
                 except:
                     #this character doesn't have fangs
                     pass
-                shapekey.key_blocks['Teeth_def_op'].value = ACTIVE
-                shapekey.key_blocks['Tongue_def_op'].value = ACTIVE
+                shapekey.key_blocks['Teeth_default_op'].value = ACTIVE
+                shapekey.key_blocks['Tongue_default_op'].value = ACTIVE
             
-            if (keyblock.name == 'Lips_e_s_op'):
+            if (keyblock.name == 'Lips_e_small_op'):
                 try:
-                    shapekey.key_blocks['Fangs_def_op'].value = ACTIVE
-                except:
-                    #this character doesn't have fangs
-                    pass
-            
-            if (keyblock.name == 'Lips_bisyou_op'):
-                shapekey.key_blocks['Teeth_bisyou_op1'].value = 0
-            
-            if (keyblock.name == 'Lips_tabe_op'):
-                try:
-                    shapekey.key_blocks['Fangs_def_op'].value = ACTIVE
-                except:
-                    #this character doesn't have fangs
-                    pass
-                shapekey.key_blocks['Teeth_def_op'].value = ACTIVE
-                shapekey.key_blocks['Tongue_egao_op'].value = ACTIVE
-                
-            if (keyblock.name == 'Lips_i_l_op'):
-                shapekey.key_blocks['Teeth_i_l_cl'].value = ACTIVE
-                try:
-                    shapekey.key_blocks['Fangs_def_op'].value = ACTIVE
+                    shapekey.key_blocks['Fangs_default_op'].value = ACTIVE
                 except:
                     #this character doesn't have fangs
                     pass
                 
-            if (keyblock.name == 'Lips_i_s_op'):
-                shapekey.key_blocks['Teeth_i_s_cl'].value = ACTIVE
+            if (keyblock.name == 'Lips_cartoon_mouth_op'):
+                shapekey.key_blocks['Tongue_default_op'].value = ACTIVE
+            
+            if (keyblock.name == 'Lips_smile_sharp_op'):
+                shapekey.key_blocks['Teeth_smile_sharp_op1'].value = 0
+            
+            if (keyblock.name == 'Lips_eating_2_op'):
                 try:
-                    shapekey.key_blocks['Fangs_def_op'].value = ACTIVE
+                    shapekey.key_blocks['Fangs_default_op'].value = ACTIVE
+                except:
+                    #this character doesn't have fangs
+                    pass
+                shapekey.key_blocks['Teeth_tongue_out_op'].value = ACTIVE
+                shapekey.key_blocks['Tongue_serious_2_op'].value = ACTIVE
+                
+            if (keyblock.name == 'Lips_i_big_op'):
+                shapekey.key_blocks['Teeth_i_big_cl'].value = ACTIVE
+                try:
+                    shapekey.key_blocks['Fangs_default_op'].value = ACTIVE
                 except:
                     #this character doesn't have fangs
                     pass
                 
-            
+            if (keyblock.name == 'Lips_i_small_op'):
+                shapekey.key_blocks['Teeth_i_small_cl'].value = ACTIVE
+                try:
+                    shapekey.key_blocks['Fangs_default_op'].value = ACTIVE
+                except:
+                    #this character doesn't have fangs
+                    pass
+                
             if (keyblock.name not in used):
                 #print('Creating combined shapekey')
-                bpy.data.objects['Body'].shape_key_add(name=('KK ' +cat+emotion))
+                bpy.data.objects['Body'].shape_key_add(name=('KK ' + cat + emotion))
                 #print('appended this to used ' + keyblock.name)
                 
             for thing in inUse:
                 used.append(thing)
                 
-            #reset used values
-            for thing in used:
-                shapekey.key_blocks[thing].value=0
-                
-            #reset values for shapekeys that were used to correct another shapekey
-            try:
-                for thing in resetList:
-                    shapekey.key_blocks[thing].value=0
-                #print('')
-            except:
-                for thing in fanglessResetList:
-                    shapekey.key_blocks[thing].value=0
+            #reset shapekey values
+            for keyblock in shapekey.key_blocks:
+                keyblock.value = 0
                     
             inUse =[]
-            print('end')
 
 #Delete all shapekeys that don't have a "KK" in their name
-if deleteExtras:
+if deletePartials:
     for shapekey in bpy.data.shape_keys:
         for keyblock in shapekey.key_blocks:
-            if (keyblock.name.find('KK ') == -1 and keyblock.name.find('Basis') != 0):
-                bpy.data.objects['Body'].shape_key_remove(keyblock)
+            try:
+                if (keyblock.name.find('KK ') == -1 and keyblock.name.find('Basis') != 0 and shapekey.user.name == 'Model'):
+                    bpy.data.objects['Body'].shape_key_remove(keyblock)
+                    print(keyblock.name)
+            except:
+                #The script tried to remove a shapekey on a non-body object
+                #shapekeys are only used for the face so this is okay
+                pass
+
+#make the basis shapekey active
+body.active_shape_key_index = 0
