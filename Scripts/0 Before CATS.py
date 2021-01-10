@@ -1,6 +1,10 @@
 '''
 BEFORE CATS SCRIPT
-- Adds "_twist" to the end of these bone names so CATS doesn't eat them up
+- Adds "_twist" to the end of the bones listed below so CATS doesn't delete them
+
+Usage:
+- Import pmx file using CATS
+- Run the script to rename the bones listed below
 '''
 
 import bpy
@@ -11,5 +15,3 @@ for armature in [ob for ob in bpy.data.objects if ob.type == 'ARMATURE']:
     for bone in armature.data.bones:
         if bone.name in wantlist:
             bone.name = bone.name + '_twist'
-
-
