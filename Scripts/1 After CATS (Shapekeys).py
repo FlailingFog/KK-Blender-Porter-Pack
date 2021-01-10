@@ -1,8 +1,12 @@
 '''
 AFTER CATS (SHAPEKEYS) SCRIPT
-- Renames part of the shapekeys to english
+- Renames the face shapekeys to english
 - Creates new, full shapekeys using the existing partial shapekeys
-- Deletes the partial shapekeys from the import if the deletePartials variable below this comment equals 1
+- Deletes the partial shapekeys if the deletePartials variable below this comment equals 1
+
+Usage:
+- Select the Body object
+- Run the script
 
 Tested in Blender 2.91
 '''
