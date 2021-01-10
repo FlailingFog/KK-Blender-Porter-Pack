@@ -1,5 +1,6 @@
 '''
 LINK EYEBROW SHAPEKEYS TO BODY SCRIPT
+Usage:
 - Seperate the eyebrow mesh into its own object
 - Select the eyebrows object, then shift click the body object and run the script to link all the body shapekeys to the eyebrow shapekeys
 
