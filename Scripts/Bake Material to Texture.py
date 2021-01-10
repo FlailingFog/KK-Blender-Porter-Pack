@@ -13,6 +13,9 @@ Usage:
 - Run the script
 - Textures are baked to the output folder
 
+Notes:
+- This script deletes all camera and light objects in the scene
+
 Limitations:
 - Does not (cannot?) account for multiple UV maps. Only the default map named "UVMap" is used.
 
