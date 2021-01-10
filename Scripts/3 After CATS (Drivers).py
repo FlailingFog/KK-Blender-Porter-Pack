@@ -4,6 +4,11 @@ AFTER CATS (DRIVERS) SCRIPT
 - Moves the Knee and Elbow IKs a little closer to the body
 - Adds drivers for twist / joint correction bones for the arms, hands, legs and butt
 - Adds an "Eye Controller" bone and UV warp modifiers on the Body object to make the eyes work
+
+Usage:
+- Make sure the Fix Model button has already been used in CATS
+- Select the armature
+- Run the script
 '''
 
 import bpy
@@ -116,7 +121,7 @@ def armhandIK(elbowbone, handcontroller, elbowcontroller, IKangle, wristbone):
 armhandIK('Right elbow', 'Cf_Pv_Hand_R', 'Cf_Pv_Elbo_R', 0, 'Right wrist')
 armhandIK('Left elbow',  'Cf_Pv_Hand_L', 'Cf_Pv_Elbo_L', 180, 'Left wrist')
 
-############ Setup all drivers
+############ Setup joint correction drivers
 
 #generic function for creating a driver
 def setDriver (bone, drivertype, drivertypeselect, drivertarget, drivertt, driverts, driverrm, driverexpr):
