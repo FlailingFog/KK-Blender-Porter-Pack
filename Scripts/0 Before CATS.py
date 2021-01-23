@@ -1,6 +1,6 @@
 '''
 BEFORE CATS SCRIPT
-- Adds "_twist" to the end of the bones listed below so CATS doesn't delete them
+- Adds "_twist" to the end of the bones listed below so CATS doesn't delete them. These bones are later used in the Drivers script
 
 Usage:
 - Import pmx file using CATS
