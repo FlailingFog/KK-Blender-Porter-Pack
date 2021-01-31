@@ -157,49 +157,26 @@ def main():
     imagemat = bpy.data.materials.new(name='dummyMat')
     imageplane.material_slots[0].material = bpy.data.materials['dummyMat']
     planematerial =  imageplane.material_slots[0].material
-
     planematerial.use_nodes = True
-
-    #enable alpha on the material
-    planematerial.blend_method = 'BLEND'
 
     #enable alpha on the output
     bpy.context.scene.render.film_transparent = True
 
-    nodes = planematerial.node_tree.nodes
-    links = planematerial.node_tree.links
-
-    nodes.clear()
-    emissive = nodes.new('ShaderNodeEmission')
-    emissive.location = 0, 0
-    transparent = nodes.new('ShaderNodeBsdfTransparent')
-    transparent.location = 0,100
-    mix = nodes.new('ShaderNodeMixShader')
-    mix.location = 400,0
-    links.new( emissive.outputs[0], mix.inputs[2] ) 
-    links.new( transparent.outputs[0], mix.inputs[1] )
-    outnode = nodes.new('ShaderNodeOutputMaterial')
-    outnode.location = 800,0
-    links.new( mix.outputs[0], outnode.inputs[0] )
-    texture = nodes.new('ShaderNodeTexImage')
-    texture.location = -400,0
-    links.new( texture.outputs[0], emissive.inputs[0] )    
-    links.new( texture.outputs[1], mix.inputs[0] )
-    #texture.image = bpy.ops.image.open(filepath="c:\\nova\\keyed\\1\\1_5_1\\1_5_1.00000.png")
-
-    #Deselect all objects
+    #Make the originally selected object active again
     bpy.ops.object.select_all(action='DESELECT')
-    #Reselect the originally selected object
     currentlySelected.select_set(True)
-    #and make it active
     bpy.context.view_layer.objects.active=currentlySelected
 
     ##############################
     #Changes the material of the image plane to the material of the object,
     # and then puts a render of the image plane into the specified folder
 
-    import bpy
-
+    def sanitizeMaterialName(text):
+        for ch in ['\\','`','*','<','>','.',':','?','|','/','\"']:
+            if ch in text:
+                text = text.replace(ch,'')
+        return text
+    
     def bakeMaterials(sunstate, sunstrength):
         #get the most recently created light object
         sun = bpy.data.lights[len(bpy.data.lights)-1]
@@ -229,7 +206,7 @@ def main():
                         shadingset = matnode.inputs[1].default_value
                         matnode.inputs[1].default_value=1
                 except:
-                    #this node doesn't have a node tree
+                    #this slot doesn't have a node tree
                     pass
             
             #go through each node in the material slot
@@ -256,7 +233,7 @@ def main():
                             bpy.data.objects['imageplane'].data.materials[0] = currentmaterial
                             
                             #then render it at these dimensions
-                            bpy.context.scene.render.filepath = folderpath + currentmaterial.name + ' ' + dimension + ' ' + sunstate
+                            bpy.context.scene.render.filepath = folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + dimension + ' ' + sunstate
                             bpy.context.scene.render.image_settings.file_format = exportType
                             bpy.context.scene.render.image_settings.color_mode = exportColormode
                             #bpy.context.scene.render.image_settings.color_depth='16'
@@ -305,7 +282,7 @@ def main():
                                         bpy.data.objects['imageplane'].data.materials[0] = currentmaterial
                                         
                                         #then render it
-                                        bpy.context.scene.render.filepath = folderpath + currentmaterial.name + ' ' + dimension + ' ' + sunstate
+                                        bpy.context.scene.render.filepath = folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + dimension + ' ' + sunstate
                                         bpy.context.scene.render.image_settings.file_format=exportType
                                         bpy.context.scene.render.image_settings.color_mode=exportColormode
                                         #bpy.context.scene.render.image_settings.color_depth='16'
