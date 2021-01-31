@@ -16,7 +16,13 @@ from pathlib import Path
 
 def showError(self, context):
         self.layout.label(text="No object selected")
-        
+
+def sanitizeMaterialName(text):
+    for ch in ['\\','`','*','<','>','.',':','?','|','/','\"']:
+        if ch in text:
+            text = text.replace(ch,'')
+    return text
+
 def replaceOrSwap():
     #Get all files from the exported texture folder
     folderpath = bpy.context.scene.render.filepath
@@ -41,10 +47,11 @@ def replaceOrSwap():
         material = matslot.material
         nodes = material.node_tree.nodes
         links = material.node_tree.links
+        matname = sanitizeMaterialName(material.name)
         
         #Then get the image for this material by matching the material name and the lightstate
         #If there's multiple resolutions, choose the first file in the file list
-        currentImage = [file.name for file in files if (material.name in file.name and 'light' in file.name)]
+        currentImage = [file.name for file in files if (matname in file.name and 'light' in file.name)]
         try:
             imageName = currentImage[0]
             imagePath = folderpath + imageName
@@ -56,7 +63,7 @@ def replaceOrSwap():
                 try:
                     transpMix = nodes['KK export light']
                     
-                    currentImage = [file.name for file in files if (material.name in file.name and 'dark' in file.name)]
+                    currentImage = [file.name for file in files if (matname in file.name and 'dark' in file.name)]
                     imageName = currentImage[0]
                     imagePath = folderpath + imageName
                     
@@ -72,7 +79,7 @@ def replaceOrSwap():
                 except:
                     transpMix = nodes['KK export dark']
                     
-                    currentImage = [file.name for file in files if (material.name in file.name and 'light' in file.name)]
+                    currentImage = [file.name for file in files if (matname in file.name and 'light' in file.name)]
                     imageName = currentImage[0]
                     imagePath = folderpath + imageName
                     
@@ -145,6 +152,6 @@ def replaceOrSwap():
                 #set the mix shader's factor to 1 so the baked image is showing instead of the material
                 mainMix.inputs[0].default_value=1
         except:
-            print('no image found for this material: ' + material.name)
+            print('no image found for this material: ' + matname)
 
 replaceOrSwap()
