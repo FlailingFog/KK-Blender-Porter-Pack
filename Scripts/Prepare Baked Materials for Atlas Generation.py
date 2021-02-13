@@ -35,7 +35,7 @@ def replaceOrSwap():
     #test if an object is active and selected. 
     try:
         #object is active but not selected
-        if not object.select:
+        if not object.select_get():
             bpy.context.window_manager.popup_menu(showError, title="Error", icon='ERROR')
             return
     except:
