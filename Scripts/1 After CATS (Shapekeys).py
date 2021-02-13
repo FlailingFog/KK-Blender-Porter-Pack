@@ -11,8 +11,8 @@ Usage:
 Tested in Blender 2.91
 '''
 
-#Set deletePartials to 1 to clean up the shapekey list after the KK shapekeys are created
-deletePartials = 1
+#Set debug mode to False to clean up the shapekey list after the KK shapekeys are created
+debugMode = False
 
 #########################
 #Translate most of the shapekeys
@@ -112,22 +112,23 @@ originalExists = False
 
 for shapekey in bpy.data.shape_keys:
     for keyblock in shapekey.key_blocks:
-        
+        #check if the original shapekeys still exist
+        if 'Basis' not in keyblock.name:
+            if 'Lips' in keyblock.name:
+                originalExists = True
+
+#rename original shapekeys
+for shapekey in bpy.data.shape_keys:
+    for keyblock in shapekey.key_blocks:
         keyblock.name = renameCategory(keyblock.name)
         keyblock.name = renameEmotion(keyblock.name)
         
-        #check if the original shapekeys still exist
-        if 'Basis' not in keyblock.name:
-            if 'Eyes' in keyblock.name and 'KK Eyes' not in keyblock.name:
-                originalExists = True
-            
-        #If the original shapekeys still exist, and KK shapekeys have already been generated
-        #delete the KK shapekeys and regenerate them in the next section of the script
+        #delete the KK shapekeys if the original shapekeys still exist
         if originalExists and 'KK ' in keyblock.name and 'KK Eyebrows' not in keyblock.name:
             body.active_shape_key_index = body.data.shape_keys.key_blocks.keys().index(keyblock.name)
             bpy.ops.object.shape_key_remove()
-        
-        #delete the bounse shapekey that sometimes appears on import
+
+        #delete the 'bounse' shapekey that sometimes appears on import
         try:
             if 'bounse' in keyblock.name:
                 body.active_shape_key_index = body.data.shape_keys.key_blocks.keys().index(keyblock.name)
@@ -135,9 +136,11 @@ for shapekey in bpy.data.shape_keys:
         except:
             #or not
             pass
-
 ########################################################
 #Combine the shapekeys
+
+#make the basis shapekey active
+body.active_shape_key_index = 0
 
 def whatCat(keyName):
     #EyeWhites are unused because the shape keys for left and right eyes both affect the left eye for some reason
@@ -259,7 +262,7 @@ for shapekey in bpy.data.shape_keys:
             inUse =[]
 
 #Delete all shapekeys that don't have a "KK" in their name
-if deletePartials:
+if not debugMode:
     for shapekey in bpy.data.shape_keys:
         for keyblock in shapekey.key_blocks:
             try:
