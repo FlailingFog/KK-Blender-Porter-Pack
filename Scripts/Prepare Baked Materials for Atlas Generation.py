@@ -23,6 +23,14 @@ def sanitizeMaterialName(text):
             text = text.replace(ch,'')
     return text
 
+def renameEyelineGroup(object):
+        try:
+            #KK shader V3.02 or lower has a group called mmd_shader that needs to be renamed to literally anything else
+            object.material_slots['Template Eyeline up'].material.node_tree.nodes['mmd_shader'].name = 'eyelinegroup'
+        except:
+            #that group was already renamed
+            pass
+
 def replaceOrSwap():
     #Get all files from the exported texture folder
     folderpath = bpy.context.scene.render.filepath
@@ -43,6 +51,8 @@ def replaceOrSwap():
         bpy.context.window_manager.popup_menu(showError, title="Error", icon='ERROR')
         return
  
+    renameEyelineGroup(object)
+    
     for matslot in object.material_slots:
         material = matslot.material
         nodes = material.node_tree.nodes
