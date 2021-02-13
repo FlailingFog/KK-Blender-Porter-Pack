@@ -30,14 +30,14 @@ resolutionMultiplier = 1
 #######################
 def main():
     import bpy
-    
+
     #Stop if no object is selected
     def showError(self, context):
         self.layout.label(text="No object selected")
 
     try:
         #An object was set as the active object but is not selected
-        if not bpy.context.active_object.select:
+        if not bpy.context.active_object.select_get():
             bpy.context.window_manager.popup_menu(showError, title="Error", icon='ERROR')
             return
     except:
