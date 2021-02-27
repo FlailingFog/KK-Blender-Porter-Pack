@@ -5,7 +5,7 @@ AFTER CATS (SHAPEKEYS) SCRIPT
 - Deletes the partial shapekeys if debugMode is not set to True (the first variable below this description)
 
 Usage:
-- Make sure CATS has already been run
+- Make sure the Fix Model button has already been used in CATS
 - Run the script
 
 Tested in Blender 2.91
