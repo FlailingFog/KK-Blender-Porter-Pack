@@ -5,7 +5,6 @@ AFTER CATS (TIDY UP) SCRIPT
 
 Usage:
 - Make sure the Fix Model button has already been used in CATS
-- Select the armature
 - Run the script
 '''
 
