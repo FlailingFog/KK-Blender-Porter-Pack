@@ -85,7 +85,7 @@ def renameEmotion(keyName):
     keyName = keyName.replace("_naki_", "_crying_")
     keyName = keyName.replace("_rakutan_", "_dejected_")
     keyName = keyName.replace("_komaru_", "_worried_")
-    keyName = keyName.replace("_gag_", "_gageye_")
+    keyName = keyName.replace("_gag", "_gageye")
     keyName = keyName.replace("_gyul_", "_squeeze_left_")
     keyName = keyName.replace("_gyur_", "_squeeze_right_")
     keyName = keyName.replace("_gyu_", "_squeeze_")
