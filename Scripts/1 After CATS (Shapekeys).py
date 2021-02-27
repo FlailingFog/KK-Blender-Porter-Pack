@@ -2,10 +2,10 @@
 AFTER CATS (SHAPEKEYS) SCRIPT
 - Renames the face shapekeys to english
 - Creates new, full shapekeys using the existing partial shapekeys
-- Deletes the partial shapekeys if the deletePartials variable below this comment equals 1
+- Deletes the partial shapekeys if debugMode is not set to True (the first variable below this description)
 
 Usage:
-- Select the Body object
+- Make sure CATS has already been run
 - Run the script
 
 Tested in Blender 2.91
@@ -107,7 +107,7 @@ def renameEmotion(keyName):
         
     return keyName 
 
-body = bpy.context.active_object
+body = bpy.data.objects['Body']
 originalExists = False
 
 for shapekey in bpy.data.shape_keys:
