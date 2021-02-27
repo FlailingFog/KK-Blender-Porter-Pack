@@ -7,6 +7,7 @@ AFTER CATS (DRIVERS) SCRIPT
 
 Usage:
 - Make sure the Fix Model button has already been used in CATS
+- Make sure the After CATS (Tidy up) script has been run
 - Run the script
 '''
 
