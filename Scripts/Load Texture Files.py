@@ -86,6 +86,7 @@ class LoadTextures(bpy.types.Operator):
         
         ##################################
         
+        
         # Loop through each material in the general object and load the textures, if any, into unique node groups
         # also make unique shader node groups so all materials are unique
         #loop goes here
@@ -110,10 +111,21 @@ class LoadTextures(bpy.types.Operator):
                     imageLoad(genMat.name, 'Gentex', 'MainDet', genType+'_DetailMask.png', True)
                     imageLoad(genMat.name, 'Gentex', 'MainNorm', genType+'_NormalMap.png', True)
                     
+                    MainImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Maintex'].image
+                    #ColorImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['MainCol'].image
+                         
                     #Also, make a copy of the General shader node group, as it's unlikely everything using it will be the same color
                     newNode = genMat.material.node_tree.nodes['KKShader'].node_tree.copy()
                     genMat.material.node_tree.nodes['KKShader'].node_tree = newNode
                     newNode.name = genType + ' Shader'
+                    
+                    #If no main image was loaded in, there's no alpha channel being fed into the KK Shader.
+                    #Unlink the input node and make the alpha channel pure white
+                    if  MainImage == None:
+                        getOut = genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['GeneralOut'].inputs['Alpha'].links[0]
+                        genMat.material.node_tree.nodes['KKShader'].node_tree.links.remove(getOut)
+                        
+                        genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['GeneralOut'].inputs['Alpha'].default_value = 1        
         
         return {'FINISHED'}
 
