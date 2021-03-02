@@ -131,6 +131,42 @@ class LoadTextures(bpy.types.Operator):
                         
                         genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['GeneralOut'].inputs['Alpha'].default_value = 1        
         
+        #Add body outline and load in the clothes transparency mask
+        ob = bpy.context.view_layer.objects['Body']
+        bpy.context.view_layer.objects.active = ob
+        bpy.ops.object.modifier_add(type='SOLIDIFY')
+        mod = ob.modifiers[1]
+        mod.thickness = 0.003
+        mod.offset = 0
+        mod.material_offset = 100
+        mod.use_flip_normals = True
+        ob.data.materials.append(bpy.data.materials['Template Body Outline'])
+        bpy.data.materials['Template Body Outline'].node_tree.nodes['BodyMask'].image = bpy.data.images['cf_m_body_AlphaMask.png']
+                
+        #Give the hair a unique outline group
+        ob = bpy.context.view_layer.objects['Hair']
+        bpy.context.view_layer.objects.active = ob
+        bpy.ops.object.modifier_add(type='SOLIDIFY')
+        mod = ob.modifiers[1]
+        mod.thickness = 0.003
+        mod.offset = 0
+        mod.material_offset = 100
+        mod.use_flip_normals = True
+        hairOutlineMat = bpy.data.materials['Template Outline'].copy()
+        hairOutlineMat.name = 'Hair Outline'
+        ob.data.materials.append(hairOutlineMat)
+         
+        #Add a standard outline to all other objects
+        for ob in bpy.context.view_layer.objects:
+            if  ob.type == 'MESH' and ob.name != 'Body' and ob.name != 'Hair':
+                bpy.context.view_layer.objects.active = ob
+                bpy.ops.object.modifier_add(type='SOLIDIFY')
+                mod = ob.modifiers[1]
+                mod.thickness = 0.003
+                mod.offset = 0
+                mod.material_offset = 100
+                mod.use_flip_normals = True
+                ob.data.materials.append(bpy.data.materials['Template Outline'])
         
         return {'FINISHED'}
 
