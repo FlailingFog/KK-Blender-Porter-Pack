@@ -65,6 +65,22 @@ class OT_TestOpenFilebrowser(Operator, ImportHelper):
         bodySwap('cf_m_tooth','Template Teeth (tooth)')
         bodySwap('cf_m_tang','Template General')
         
+        #Make the tongue material unique so parts of the General Template aren't overwritten
+        
+        tongueTemplate = bpy.data.materials['Template General'].copy()
+        tongueTemplate.name = 'Template Tongue'
+        body.material_slots['Template General'].material = tongueTemplate
+        
+        #Make the texture group unique
+        newNode = tongueTemplate.node_tree.nodes['Gentex'].node_tree.copy()
+        tongueTemplate.node_tree.nodes['Gentex'].node_tree = newNode
+        newNode.name = 'Tongue Textures'
+        
+        #Make the shader group unique
+        newNode = tongueTemplate.node_tree.nodes['KKShader'].node_tree.copy()
+        tongueTemplate.node_tree.nodes['KKShader'].node_tree = newNode
+        newNode.name = 'Tongue Shader'
+        
         #Replace all of the Hair materials with hair templates and name accordingly
         hair = bpy.data.objects['Hair']
         for original in hair.material_slots:
@@ -115,11 +131,14 @@ class OT_TestOpenFilebrowser(Operator, ImportHelper):
                     if node.type == 'GROUP':
                         eliminate(node)
 
+
         return {'FINISHED'}
+
 
 if __name__ == "__main__":
     bpy.utils.register_class(OT_TestOpenFilebrowser)
 
     # test call
     print((bpy.ops.test.open_filebrowser('INVOKE_DEFAULT')))
+    
     
