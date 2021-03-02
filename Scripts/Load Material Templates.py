@@ -34,7 +34,7 @@ class OT_TestOpenFilebrowser(Operator, ImportHelper):
         #import all material templates
         filepath = self.filepath
         innerpath = 'Material'
-        templateList = ['Template Body', 'Template Body Outline', 'Template Eye (hitomi)', 'Template Eyebrows (mayuge)', 'Template Eyeline down', 'Template Eyeline up', 'Template Eyewhites (sirome)', 'Template Face', 'Template General', 'Template Hair', 'Template Mixed Metal or Shiny', 'Template Nose', 'Template Shadowcast (Standard)', 'Template Teeth (tooth)']
+        templateList = ['Template Body', 'Template Outline', 'Template Body Outline', 'Template Eye (hitomi)', 'Template Eyebrows (mayuge)', 'Template Eyeline down', 'Template Eyeline up', 'Template Eyewhites (sirome)', 'Template Face', 'Template General', 'Template Hair', 'Template Mixed Metal or Shiny', 'Template Nose', 'Template Shadowcast (Standard)', 'Template Teeth (tooth)']
 
         for template in templateList:
             bpy.ops.wm.append(
@@ -97,6 +97,7 @@ class OT_TestOpenFilebrowser(Operator, ImportHelper):
                     original.material = bpy.data.materials[template.name]
         
         # Get rid of the duplicate node groups cause there's a lot
+        #stolen from somwhere
         def eliminate(node):
             node_groups = bpy.data.node_groups
 
@@ -109,9 +110,6 @@ class OT_TestOpenFilebrowser(Operator, ImportHelper):
                     print("  Replace '%s' with '%s'" % (node.node_tree.name, base))
                     node.node_tree.use_fake_user = False
                     node.node_tree = node_groups.get(base)
-                            
-        #stolen from somwhere
-        print("\nEliminate Node Group Duplicates:")
 
         #--- Search for duplicates in actual node groups
         node_groups = bpy.data.node_groups
