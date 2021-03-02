@@ -65,6 +65,10 @@ class LoadTextures(bpy.types.Operator):
         #imageLoad('Template Eye (hitomi)', 'EyeTex', 'eyeAlpha', 'cf_m_hitomi_00_MainTex.png')
         #imageLoad('Template Eye (hitomi)', 'EyeTex', 'eyeAlpha', 'cf_m_hitomi_00_MainTex.png')
         
+        imageLoad('Template Tongue', 'Gentex', 'Maintex', 'cf_m_tang_ColorMask.png') #done on purpose
+        imageLoad('Template Tongue', 'Gentex', 'MainCol', 'cf_m_tang_ColorMask.png')
+        imageLoad('Template Tongue', 'Gentex', 'MainDet', 'cf_m_tang_DetailMask.png')
+        imageLoad('Template Tongue', 'Gentex', 'MainNorm', 'cf_m_tang_NormalMap.png')
         
         ##################################
         
@@ -126,6 +130,7 @@ class LoadTextures(bpy.types.Operator):
                         genMat.material.node_tree.nodes['KKShader'].node_tree.links.remove(getOut)
                         
                         genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['GeneralOut'].inputs['Alpha'].default_value = 1        
+        
         
         return {'FINISHED'}
 
