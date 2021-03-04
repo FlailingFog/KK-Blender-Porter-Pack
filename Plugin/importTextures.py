@@ -99,10 +99,8 @@ class import_Textures(bpy.types.Operator):
         
         # Loop through each material in the general object and load the textures, if any, into unique node groups
         # also make unique shader node groups so all materials are unique
-        #loop goes here
         
-        #make a copy of the node group, use it to replace the current node group
-        
+        # make a copy of the node group, use it to replace the current node group
         for object in bpy.context.view_layer.objects:
             if  object.type == 'MESH' and object.name != 'Hair' and object.name != 'Body':
                 
@@ -141,7 +139,7 @@ class import_Textures(bpy.types.Operator):
         ob = bpy.context.view_layer.objects['Body']
         bpy.context.view_layer.objects.active = ob
         bpy.ops.object.modifier_add(type='SOLIDIFY')
-        mod = ob.modifiers[1]
+        mod = ob.modifiers[3]
         mod.thickness = 0.003
         mod.offset = 0
         mod.material_offset = 100
