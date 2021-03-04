@@ -3,7 +3,7 @@ import bpy
 class KK_Panel(bpy.types.Panel):
     bl_idname = "KK_Panel"
     bl_label = "KK Panel"
-    bl_category = "General"
+    bl_category = "KK Scripts"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     
