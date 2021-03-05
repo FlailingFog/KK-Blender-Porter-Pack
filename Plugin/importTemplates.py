@@ -230,8 +230,10 @@ class import_Templates(Operator, ImportHelper):
 
         bpy.ops.object.mode_set(mode='OBJECT')
         
+        #hide the bone widgets
+        bpy.context.scene.view_layers['View Layer'].layer_collection.children['Collection'].children['Bone Widgets'].exclude = True
+        
         return {'FINISHED'}
-
 
 if __name__ == "__main__":
     bpy.utils.register_class(import_Templates)
