@@ -183,7 +183,11 @@ class import_Templates(Operator, ImportHelper):
         bpy.context.object.pose.bones["AH1_R"].custom_shape = bpy.data.objects["WidgetBreast"]
         bpy.context.object.pose.bones["Eye Controller"].custom_shape = bpy.data.objects["WidgetEye"]
 
-        #bpy.context.space_data.overlay.show_relationship_lines = False
+        try:
+            bpy.context.space_data.overlay.show_relationship_lines = False
+        except:
+            #the script was run in the text editor or console, so this won't work
+            pass
 
         #scale all skirt bones
         bpy.ops.object.mode_set(mode='EDIT')
