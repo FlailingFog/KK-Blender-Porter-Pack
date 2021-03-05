@@ -204,6 +204,12 @@ class import_Templates(Operator, ImportHelper):
                 bpy.context.object.data.edit_bones['Sk_0'+str(root)+'_0'+str(chain)].select_tail = False
             bpy.ops.object.mode_set(mode='POSE')
         
+        #hide the extra bones that aren't needed for IK
+        nonIK = ['Left elbow', 'Right elbow', 'Left arm', 'Right arm', 'Left leg', 'Right leg', 'Left knee', 'Right knee', 'Right ankle', 'Left ankle']
+        for bone in nonIK:
+            armature.data.bones[bone].hide = True
+        bpy.context.object.data.display_type = 'STICK'
+        
         #move eye bone location
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.armature.select_all(action='DESELECT')
