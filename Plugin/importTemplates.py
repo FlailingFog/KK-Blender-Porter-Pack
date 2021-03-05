@@ -26,7 +26,16 @@ class import_Templates(Operator, ImportHelper):
     def execute(self, context):
 
         #Clean material list
-        bpy.ops.object.select_all(action='SELECT')
+        armature = bpy.data.objects['Armature']
+        armature.hide = False
+        bpy.context.view_layer.objects.active = None
+        bpy.ops.object.select_all(action='DESELECT')
+        for ob in bpy.context.view_layer.objects:
+            if ob.type == 'MESH':
+                ob.select_set(True)
+                bpy.context.view_layer.objects.active = ob
+        
+        armature.hide = True
         bpy.ops.object.material_slot_remove_unused()
         
         #import all material templates
@@ -127,4 +136,97 @@ class import_Templates(Operator, ImportHelper):
                     if node.type == 'GROUP':
                         eliminate(node)
 
+        #Import custom bone shapes
+        filepath = self.filepath
+        innerpath = 'Collection'
+        templateList = ['Bone Widgets']
+
+        for template in templateList:
+            bpy.ops.wm.append(
+                filepath=os.path.join(filepath, innerpath, template),
+                directory=os.path.join(filepath, innerpath),
+                filename=template,
+                #set_fake=True
+                )
+        
+        #apply custom bone shapes
+        #Select the armature and make it active
+        bpy.ops.object.select_all(action='DESELECT')
+        armature = bpy.data.objects['Armature']
+        armature.hide = False
+        armature.select_set(True)
+        bpy.context.view_layer.objects.active=armature
+        
+        #Add custom shapes to the armature        
+        armature.data.show_bone_custom_shapes = True
+        bpy.ops.object.mode_set(mode='POSE')
+
+        bpy.context.object.pose.bones["Hips"].custom_shape = bpy.data.objects["WidgetHips"]
+        bpy.context.object.pose.bones["Spine"].custom_shape = bpy.data.objects["WidgetSpine"]
+        bpy.context.object.pose.bones["Chest"].custom_shape = bpy.data.objects["WidgetChest"]
+        bpy.context.object.pose.bones["Cf_D_Bust00"].custom_shape = bpy.data.objects["WidgetBust"]
+        bpy.context.object.pose.bones["Left shoulder"].custom_shape = bpy.data.objects["WidgetShoulder"]
+        bpy.context.object.pose.bones["Right shoulder"].custom_shape = bpy.data.objects["WidgetShoulder"]
+        bpy.context.object.pose.bones["Cf_Pv_Foot_R"].custom_shape = bpy.data.objects["WidgetFoot"]
+        bpy.context.object.pose.bones["Cf_Pv_Foot_L"].custom_shape = bpy.data.objects["WidgetFoot"]
+        bpy.context.object.pose.bones["Right toe"].custom_shape = bpy.data.objects["WidgetToe"]
+        bpy.context.object.pose.bones["Left toe"].custom_shape = bpy.data.objects["WidgetToe"]
+        bpy.context.object.pose.bones["Cf_Pv_Knee_L"].custom_shape = bpy.data.objects["WidgetKnee"]
+        bpy.context.object.pose.bones["Cf_Pv_Knee_R"].custom_shape = bpy.data.objects["WidgetKnee"]
+        bpy.context.object.pose.bones["Cf_Pv_Elbo_L"].custom_shape = bpy.data.objects["WidgetKnee"]
+        bpy.context.object.pose.bones["Cf_Pv_Elbo_R"].custom_shape = bpy.data.objects["WidgetKnee"]
+        bpy.context.object.pose.bones["Neck"].custom_shape = bpy.data.objects["WidgetNeck"]
+        bpy.context.object.pose.bones["Head"].custom_shape = bpy.data.objects["WidgetHead"]
+        bpy.context.object.pose.bones["Cf_Pv_Hand_R"].custom_shape = bpy.data.objects["WidgetHandR"]
+        bpy.context.object.pose.bones["Cf_Pv_Hand_L"].custom_shape = bpy.data.objects["WidgetHandL"]
+        bpy.context.object.pose.bones["AH1_L"].custom_shape = bpy.data.objects["WidgetBreast"]
+        bpy.context.object.pose.bones["AH1_R"].custom_shape = bpy.data.objects["WidgetBreast"]
+        bpy.context.object.pose.bones["Eye Controller"].custom_shape = bpy.data.objects["WidgetEye"]
+
+        #bpy.context.space_data.overlay.show_relationship_lines = False
+
+        #scale all skirt bones
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.armature.select_all(action='DESELECT')
+        bpy.ops.object.mode_set(mode='POSE')
+
+        skirtbones = [0,1,2,3,4,5,6,7]
+        skirtlength = [0,1,2,3,4]
+
+        for root in skirtbones:
+            bpy.context.object.pose.bones['Cf_D_Sk_0'+str(root)+'_00'].custom_shape = bpy.data.objects['WidgetSkirt']
+            bpy.ops.object.mode_set(mode='EDIT')
+            for chain in skirtlength:
+                bpy.context.object.data.edit_bones['Sk_0'+str(root)+'_0'+str(chain)].select_head = True
+                bpy.context.object.data.edit_bones['Sk_0'+str(root)+'_0'+str(chain)].select_tail = True
+                bpy.ops.transform.resize(value=(0.25, 0.25, 0.25), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=0.683013, use_proportional_connected=False, use_proportional_projected=False)
+                bpy.context.object.data.edit_bones['Sk_0'+str(root)+'_0'+str(chain)].select_head = False
+                bpy.context.object.data.edit_bones['Sk_0'+str(root)+'_0'+str(chain)].select_tail = False
+            bpy.ops.object.mode_set(mode='POSE')
+        
+        #move eye bone location
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.armature.select_all(action='DESELECT')
+
+        bpy.context.object.data.edit_bones['Eyesx'].head.y = bpy.context.object.data.edit_bones['AH1_R'].tail.y
+        bpy.context.object.data.edit_bones['Eyesx'].tail.y = bpy.context.object.data.edit_bones['AH1_R'].tail.y*1.5
+        bpy.context.object.data.edit_bones['Eyesx'].tail.z = bpy.context.object.data.edit_bones['N_EyesLookTargetP'].head.z
+        bpy.context.object.data.edit_bones['Eyesx'].head.z = bpy.context.object.data.edit_bones['N_EyesLookTargetP'].head.z
+
+        bpy.context.object.data.edit_bones['Eye Controller'].head.y = bpy.context.object.data.edit_bones['AH1_R'].tail.y
+        bpy.context.object.data.edit_bones['Eye Controller'].tail.y = bpy.context.object.data.edit_bones['AH1_R'].tail.y*1.5
+        bpy.context.object.data.edit_bones['Eye Controller'].tail.z = bpy.context.object.data.edit_bones['N_EyesLookTargetP'].head.z
+        bpy.context.object.data.edit_bones['Eye Controller'].head.z = bpy.context.object.data.edit_bones['N_EyesLookTargetP'].head.z
+
+        bpy.ops.object.mode_set(mode='OBJECT')
+        
         return {'FINISHED'}
+
+
+if __name__ == "__main__":
+    bpy.utils.register_class(import_Templates)
+
+    # test call
+    print((bpy.ops.kkb.importtemplates('INVOKE_DEFAULT')))
+    
+    
