@@ -227,13 +227,38 @@ class import_Templates(Operator, ImportHelper):
         bpy.context.object.data.edit_bones['Eye Controller'].tail.y = bpy.context.object.data.edit_bones['AH1_R'].tail.y*1.5
         bpy.context.object.data.edit_bones['Eye Controller'].tail.z = bpy.context.object.data.edit_bones['N_EyesLookTargetP'].head.z
         bpy.context.object.data.edit_bones['Eye Controller'].head.z = bpy.context.object.data.edit_bones['N_EyesLookTargetP'].head.z
-
+        
+        #Add some bones to bone groups
+        bpy.ops.object.mode_set(mode='POSE')
+        bpy.ops.armature.select_all(action='DESELECT')
+        bpy.context.space_data.context = 'BONE'
+        bpy.context.space_data.context = 'DATA'
+        bpy.ops.pose.group_add()
+        group = armature.pose.bone_groups['Group']
+        group.name = 'IK controllers'
+        armature.data.bones['Cf_Pv_Hand_L'].select = True
+        armature.data.bones['Cf_Pv_Hand_R'].select = True
+        armature.data.bones['Cf_Pv_Foot_R'].select = True
+        armature.data.bones['Cf_Pv_Foot_L'].select = True
+        bpy.ops.pose.group_assign(type=1)
+        group.color_set = 'THEME01'
+        
+        bpy.ops.pose.select_all(action='DESELECT')
+        bpy.context.space_data.context = 'BONE'
+        bpy.context.space_data.context = 'DATA'
+        bpy.ops.pose.group_add()
+        group = armature.pose.bone_groups['Group']
+        group.name = 'IK poles'
+        armature.data.bones['Cf_Pv_Elbo_R'].select = True
+        armature.data.bones['Cf_Pv_Elbo_L'].select = True
+        armature.data.bones['Cf_Pv_Knee_R'].select = True
+        armature.data.bones['Cf_Pv_Knee_L'].select = True
+        bpy.ops.pose.group_assign(type=1)
+        group.color_set = 'THEME09'
+        
         bpy.ops.object.mode_set(mode='OBJECT')
-        
-        #hide the bone widgets
-        bpy.context.scene.view_layers['View Layer'].layer_collection.children['Collection'].children['Bone Widgets'].exclude = True
-        
         return {'FINISHED'}
+
 
 if __name__ == "__main__":
     bpy.utils.register_class(import_Templates)
