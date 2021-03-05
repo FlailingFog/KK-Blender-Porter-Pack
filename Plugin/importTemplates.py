@@ -194,6 +194,13 @@ class import_Templates(Operator, ImportHelper):
         bpy.ops.armature.select_all(action='DESELECT')
         bpy.ops.object.mode_set(mode='POSE')
 
+        def resizeBone(bone, scale):
+            bpy.context.object.data.edit_bones[bone].select_head = True
+            bpy.context.object.data.edit_bones[bone].select_tail = True
+            bpy.ops.transform.resize(value=(scale, scale, scale), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=0.683013, use_proportional_connected=False, use_proportional_projected=False)
+            bpy.context.object.data.edit_bones[bone].select_head = False
+            bpy.context.object.data.edit_bones[bone].select_tail = False
+        
         skirtbones = [0,1,2,3,4,5,6,7]
         skirtlength = [0,1,2,3,4]
 
@@ -201,13 +208,33 @@ class import_Templates(Operator, ImportHelper):
             bpy.context.object.pose.bones['Cf_D_Sk_0'+str(root)+'_00'].custom_shape = bpy.data.objects['WidgetSkirt']
             bpy.ops.object.mode_set(mode='EDIT')
             for chain in skirtlength:
-                bpy.context.object.data.edit_bones['Sk_0'+str(root)+'_0'+str(chain)].select_head = True
-                bpy.context.object.data.edit_bones['Sk_0'+str(root)+'_0'+str(chain)].select_tail = True
-                bpy.ops.transform.resize(value=(0.25, 0.25, 0.25), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=0.683013, use_proportional_connected=False, use_proportional_projected=False)
-                bpy.context.object.data.edit_bones['Sk_0'+str(root)+'_0'+str(chain)].select_head = False
-                bpy.context.object.data.edit_bones['Sk_0'+str(root)+'_0'+str(chain)].select_tail = False
+                resizebone('Sk_0'+str(root)+'_0'+str(chain), 0.25)
             bpy.ops.object.mode_set(mode='POSE')
         
+        #scale and apply eye bones, mouth bones, eyebrow bones
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.armature.select_all(action='DESELECT')
+        bpy.ops.object.mode_set(mode='POSE')
+        
+        eyebones = [1,2,3,4,5,6,7,8]
+        
+        for piece in eyebones:
+            left = 'Eye0'+str(piece)+'_S_L'
+            right = 'Eye0'+str(piece)+'_S_R'
+            bpy.context.object.pose.bones[left].custom_shape  = bpy.data.objects['WidgetFace']
+            bpy.context.object.pose.bones[right].custom_shape = bpy.data.objects['WidgetFace']
+            
+            resizebone(left, 0.1)
+            resizebone(right, 0.1)
+        
+        restOfFace = ['cf_J_Mayu_R', 'cf_J_MayuMid_s_R', 'cf_J_MayuTip_s_R', 'cf_J_Mayu_L', 'cf_J_MayuMid_s_L', 'cf_J_MayuTip_s_L', 'cf_J_Mouth_R', 'cf_J_Mouth_L', 'cf_J_MouthUp', 'cf_J_MouthLow', 'cf_J_MouthMove']
+
+        for bone in restOfFace:
+            bpy.context.object.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetFace']
+            resizebone(bone, 0.1)
+        
+        bpy.ops.object.mode_set(mode='POSE')
+            
         #hide the extra bones that aren't needed for IK
         nonIK = ['Left elbow', 'Right elbow', 'Left arm', 'Right arm', 'Left leg', 'Right leg', 'Left knee', 'Right knee', 'Right ankle', 'Left ankle']
         for bone in nonIK:
