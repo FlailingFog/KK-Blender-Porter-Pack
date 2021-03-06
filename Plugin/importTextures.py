@@ -154,7 +154,7 @@ class import_Textures(bpy.types.Operator):
         bpy.ops.object.modifier_add(type='SOLIDIFY')
         mod = ob.modifiers[1]
         mod.thickness = 0.003
-        mod.offset = 0
+        mod.offset = 1
         mod.material_offset = 100
         mod.use_flip_normals = True
         hairOutlineMat = bpy.data.materials['Template Outline'].copy()
@@ -168,7 +168,7 @@ class import_Textures(bpy.types.Operator):
                 bpy.ops.object.modifier_add(type='SOLIDIFY')
                 mod = ob.modifiers[1]
                 mod.thickness = 0.003
-                mod.offset = 0
+                mod.offset = 1
                 mod.material_offset = 100
                 mod.use_flip_normals = True
                 #mod.use_rim = False
