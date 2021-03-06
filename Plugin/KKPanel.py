@@ -11,7 +11,7 @@ class KK_Panel(bpy.types.Panel):
         layout = self.layout
         
         row = layout.row()
-        row.operator('kkb.beforecats', text = '1 Run before clicking the Fix Model in CATS')
+        row.operator('kkb.beforecats', text = '1 Run right after importing')
         row = layout.row()
         row.operator('kkb.shapekeys', text = '2 Fix shapekeys')
         row = layout.row()
