@@ -158,7 +158,7 @@ class import_Textures(bpy.types.Operator):
         mod.material_offset = 100
         mod.use_flip_normals = True
         hairOutlineMat = bpy.data.materials['Template Outline'].copy()
-        hairOutlineMat.name = 'Hair Outline'
+        hairOutlineMat.name = 'Template Hair Outline'
         ob.data.materials.append(hairOutlineMat)
          
         #Add a standard outline to all other objects
