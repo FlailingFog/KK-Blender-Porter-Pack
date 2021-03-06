@@ -144,6 +144,7 @@ class import_Textures(bpy.types.Operator):
         mod.offset = 0
         mod.material_offset = 100
         mod.use_flip_normals = True
+        mod.use_rim = False
         ob.data.materials.append(bpy.data.materials['Template Body Outline'])
         bpy.data.materials['Template Body Outline'].node_tree.nodes['BodyMask'].image = bpy.data.images['cf_m_body_AlphaMask.png']
                 
