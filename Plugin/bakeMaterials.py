@@ -31,7 +31,7 @@ from bpy.props import StringProperty, BoolProperty
 from bpy_extras.io_utils import ImportHelper
 from bpy.types import Operator
 
-class bake_materials(bpy.types.Operator):
+class bake_Materials(bpy.types.Operator):
     bl_idname = "kkb.bakematerials"
     bl_label = "Store baked materials here"
     bl_description = "Open the folder you want to bake the material templates to"
@@ -344,7 +344,7 @@ class bake_materials(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
 if __name__ == "__main__":
-    bpy.utils.register_class(bake_materials)
+    bpy.utils.register_class(bake_Materials)
 
     # test call
     print((bpy.ops.kkb.bakematerials('INVOKE_DEFAULT')))
