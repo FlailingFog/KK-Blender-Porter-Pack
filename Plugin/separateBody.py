@@ -16,6 +16,7 @@ class separate_Body(bpy.types.Operator):
     def execute(self, context):
 
         #Select the body and make it active
+        bpy.ops.object.mode_set(mode = 'OBJECT')
         body = bpy.data.objects['Body']
         bpy.ops.object.select_all(action='DESELECT')
         body.select_set(True)
