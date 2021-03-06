@@ -24,4 +24,5 @@ class KK_Panel(bpy.types.Panel):
         row.operator('kkb.importtemplates', text = '6 Import material templates')
         row = layout.row()
         row.operator('kkb.importtextures', text = '7 Import textures')
-        
+        row = layout.row()
+        row.operator('kkb.bakematerials', text = '8 Bake material templates')
