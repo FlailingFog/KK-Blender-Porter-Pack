@@ -162,7 +162,7 @@ class import_Textures(bpy.types.Operator):
          
         #Add a standard outline to all other objects
         for ob in bpy.context.view_layer.objects:
-            if  ob.type == 'MESH' and ob.name != 'Body' and ob.name != 'Hair':
+            if  ob.type == 'MESH' and ob.name != 'Body' and ob.name != 'Hair' and 'Widget' not in ob.name:
                 bpy.context.view_layer.objects.active = ob
                 bpy.ops.object.modifier_add(type='SOLIDIFY')
                 mod = ob.modifiers[1]
