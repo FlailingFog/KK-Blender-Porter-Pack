@@ -209,14 +209,24 @@ class import_Templates(Operator, ImportHelper):
             bpy.context.object.data.edit_bones[bone].select_tail = False
             bpy.ops.object.mode_set(mode='POSE')
         
+        #are you freaking serious
+        firstTwoBoneLayers = (True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False)
+        secondBoneLayer = (False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False)
         skirtbones = [0,1,2,3,4,5,6,7]
         skirtlength = [0,1,2,3,4]
 
         for root in skirtbones:
+            bpy.ops.pose.select_all(action='DESELECT')
             bpy.context.object.pose.bones['Cf_D_Sk_0'+str(root)+'_00'].custom_shape = bpy.data.objects['WidgetSkirt']
+            armature.pose.bones['Sk_0'+str(root)+'_0'+str(chain)].bone.select = True
+            bpy.ops.pose.bone_layers(layers=secondBoneLayer)
+            bpy.ops.pose.select_all(action='DESELECT')
+            
             bpy.ops.object.mode_set(mode='EDIT')
             for chain in skirtlength:
                 resizeBone('Sk_0'+str(root)+'_0'+str(chain), 0.25)
+                armature.pose.bones['Sk_0'+str(root)+'_0'+str(chain)].bone.select = True
+                bpy.ops.pose.bone_layers(layers=secondBoneLayer)
             bpy.ops.object.mode_set(mode='POSE')
         
         #scale and apply eye bones, mouth bones, eyebrow bones
@@ -225,6 +235,7 @@ class import_Templates(Operator, ImportHelper):
         eyebones = [1,2,3,4,5,6,7,8]
         
         for piece in eyebones:
+            bpy.ops.pose.select_all(action='DESELECT')
             left = 'Eye0'+str(piece)+'_S_L'
             right = 'Eye0'+str(piece)+'_S_R'
             
@@ -235,15 +246,23 @@ class import_Templates(Operator, ImportHelper):
             
             resizeBone(left, 0.1, 'face')
             resizeBone(right, 0.1, 'face')
-        
+            armature.pose.bones[left].bone.select = True
+            armature.pose.bones[right].bone.select = True
+            bpy.ops.pose.bone_layers(layers=secondBoneLayer)
+            
         restOfFace = ['Mayu_R', 'MayuMid_S_R', 'MayuTip_S_R', 'Mayu_L', 'MayuMid_S_L', 'MayuTip_S_L', 'Mouth_R', 'Mouth_L', 'Mouthup', 'MouthLow', 'MouthMove']
         
         for bone in restOfFace:
+            bpy.ops.pose.select_all(action='DESELECT')
             armature.data.bones[bone].hide=False
             bpy.context.object.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetFace']
             resizeBone(bone, 0.1, 'face')
+            armature.pose.bones[bone].bone.select = True
+            bpy.ops.pose.bone_layers(layers=secondBoneLayer)
         
         bpy.ops.object.mode_set(mode='POSE')
+        #Make both bone layers visible
+        bpy.ops.armature.armature_layers(layers=firstTwoBoneLayers)
             
         #hide the extra bones that aren't needed for IK
         nonIK = ['Left elbow', 'Right elbow', 'Left arm', 'Right arm', 'Left leg', 'Right leg', 'Left knee', 'Right knee', 'Right ankle', 'Left ankle']
