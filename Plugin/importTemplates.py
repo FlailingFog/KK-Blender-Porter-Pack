@@ -202,7 +202,6 @@ class import_Templates(Operator, ImportHelper):
             if type == 'MIDPOINT':
                 bpy.ops.transform.resize(value=(scale, scale, scale), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=0.683013, use_proportional_connected=False, use_proportional_projected=False)
             else:
-                #damn thing
                 bpy.context.object.data.edit_bones[bone].tail=(bpy.context.object.data.edit_bones[bone].tail+bpy.context.object.data.edit_bones[bone].head)/2
                 bpy.context.object.data.edit_bones[bone].tail=(bpy.context.object.data.edit_bones[bone].tail+bpy.context.object.data.edit_bones[bone].head)/2
                 bpy.context.object.data.edit_bones[bone].tail=(bpy.context.object.data.edit_bones[bone].tail+bpy.context.object.data.edit_bones[bone].head)/2
@@ -283,6 +282,7 @@ class import_Templates(Operator, ImportHelper):
         bpy.ops.pose.group_add()
         group = armature.pose.bone_groups['Group']
         group.name = 'IK poles'
+        armature.pose.bone_groups.active_index = 1
         armature.data.bones['Cf_Pv_Elbo_R'].select = True
         armature.data.bones['Cf_Pv_Elbo_L'].select = True
         armature.data.bones['Cf_Pv_Knee_R'].select = True
