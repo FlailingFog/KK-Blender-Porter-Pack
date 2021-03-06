@@ -218,16 +218,14 @@ class import_Templates(Operator, ImportHelper):
         for root in skirtbones:
             bpy.ops.pose.select_all(action='DESELECT')
             bpy.context.object.pose.bones['Cf_D_Sk_0'+str(root)+'_00'].custom_shape = bpy.data.objects['WidgetSkirt']
-            armature.pose.bones['Sk_0'+str(root)+'_0'+str(chain)].bone.select = True
+            armature.pose.bones['Cf_D_Sk_0'+str(root)+'_00'].bone.select = True
             bpy.ops.pose.bone_layers(layers=secondBoneLayer)
             bpy.ops.pose.select_all(action='DESELECT')
             
-            bpy.ops.object.mode_set(mode='EDIT')
             for chain in skirtlength:
                 resizeBone('Sk_0'+str(root)+'_0'+str(chain), 0.25)
                 armature.pose.bones['Sk_0'+str(root)+'_0'+str(chain)].bone.select = True
                 bpy.ops.pose.bone_layers(layers=secondBoneLayer)
-            bpy.ops.object.mode_set(mode='POSE')
         
         #scale and apply eye bones, mouth bones, eyebrow bones
         bpy.ops.object.mode_set(mode='POSE')
