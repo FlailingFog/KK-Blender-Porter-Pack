@@ -171,7 +171,7 @@ class import_Textures(bpy.types.Operator):
                 mod.offset = 0
                 mod.material_offset = 100
                 mod.use_flip_normals = True
-                mod.use_rim = False
+                #mod.use_rim = False
                 ob.data.materials.append(bpy.data.materials['Template Outline'])
                     
         return {'FINISHED'}
