@@ -12,7 +12,7 @@ import bpy
 class before_CATS(bpy.types.Operator):
     bl_idname = "kkb.beforecats"
     bl_label = "The before CATS script"
-    bl_description = "Saves bones for later use"
+    bl_description = "Preserves bones for later use"
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):
