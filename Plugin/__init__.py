@@ -19,11 +19,12 @@ from . importTemplates import import_Templates
 from . importTextures import import_Textures
 from . cleanArmature import clean_Armature
 from . bonedrivers import bone_drivers
+from . bakeMaterials import bake_Materials
 
 
 from . KKPanel    import KK_Panel
 
-classes = (before_CATS, shape_keys, separate_Body, import_Templates, import_Textures, clean_Armature, bone_drivers, KK_Panel)
+classes = (before_CATS, shape_keys, separate_Body, import_Templates, import_Textures, clean_Armature, bone_drivers, bake_Materials, KK_Panel)
 
 register, unregister = bpy.utils.register_classes_factory(classes)
 
