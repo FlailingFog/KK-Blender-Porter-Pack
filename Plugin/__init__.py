@@ -1,13 +1,16 @@
-#words words words
+#The init file for the plugin
 
 bl_info = {
-    "name" : "KKBlenderPack",
+    "name" : "KK Blender Pack",
     "author" : "a blendlet",
-    "description" : "Scripts for automating the cleanup process for a Koikatsu export. See https://github.com/FlailingFog/KK-Blender-Shader-Pack/ for info",
+    "location": 'View 3D > Tool Shelf > KK Scripts'
+    "description" : "Scripts for automating the cleanup process for a Koikatsu export",
     "blender" : (2, 91, 2),
     "location" : "View3D",
     "warning" : "",
-    "category" : "Generic"
+    "category" : "3D View"
+    "wiki_url" : "https://github.com/FlailingFog/KK-Blender-Shader-Pack/wiki"
+    "tracker_url": "https://github.com/FlailingFog/KK-Blender-Shader-Pack/"
 }
 
 import bpy
@@ -21,7 +24,6 @@ from . cleanArmature import clean_Armature
 from . bonedrivers import bone_drivers
 from . bakeMaterials import bake_Materials
 from . applyMaterials import apply_Materials
-
 
 from . KKPanel    import KK_Panel
 
