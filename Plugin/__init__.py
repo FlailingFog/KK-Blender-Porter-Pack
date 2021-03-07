@@ -3,13 +3,13 @@
 bl_info = {
     "name" : "KK Blender Pack",
     "author" : "a blendlet",
-    "location": 'View 3D > Tool Shelf > KK Scripts'
+    "location": 'View 3D > Tool Shelf > KK Scripts',
     "description" : "Scripts for automating the cleanup process for a Koikatsu export",
     "blender" : (2, 91, 2),
     "location" : "View3D",
     "warning" : "",
-    "category" : "3D View"
-    "wiki_url" : "https://github.com/FlailingFog/KK-Blender-Shader-Pack/wiki"
+    "category" : "3D View",
+    "wiki_url" : "https://github.com/FlailingFog/KK-Blender-Shader-Pack/wiki",
     "tracker_url": "https://github.com/FlailingFog/KK-Blender-Shader-Pack/"
 }
 
