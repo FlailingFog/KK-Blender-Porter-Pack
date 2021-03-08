@@ -102,8 +102,8 @@ class bone_drivers(bpy.types.Operator):
             bone.constraints[0].subtarget=bpy.data.objects['Armature'].data.bones[footIK].name
 
             #Set the rotation to local space
-            bone.constraints[0].target_space = 'LOCAL'
-            bone.constraints[0].owner_space = 'LOCAL'
+            bone.constraints[0].target_space = 'LOCAL_WITH_PARENT'
+            bone.constraints[0].owner_space = 'LOCAL_WITH_PARENT'
             
             #Lock the footIK's rotation
             bpy.data.objects['Armature'].pose.bones[footIK].lock_rotation[1] = True
