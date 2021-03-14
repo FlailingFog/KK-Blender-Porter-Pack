@@ -130,7 +130,7 @@ class bone_drivers(bpy.types.Operator):
         footIK('Left ankle',  'Left toe',  'ToeTipIK_L', 'Cf_Pv_Foot_L', 'Cf_Pv_Knee_L', 'Left knee')
 
         #add an IK to the arm, makes the wrist bone copy the hand IK's rotation, moves elbow IKs a little closer to the body
-        def armhandIK(elbowbone, handcontroller, elbowcontroller, IKangle, wristbone):
+        def armhandIK(elbowbone, handcontroller, elbowcontroller, IKangle, wristbone, wristtwist):
             #Set IK bone
             bone = bpy.data.objects['Armature'].pose.bones[elbowbone]
 
@@ -162,6 +162,18 @@ class bone_drivers(bpy.types.Operator):
             bone.constraints[0].target=bpy.data.objects['Armature']
             bone.constraints[0].subtarget=bpy.data.objects['Armature'].data.bones[handcontroller].name
 
+            bone = bpy.data.objects['Armature'].pose.bones[wristtwist]
+
+            bone.constraints.new("COPY_ROTATION")
+            bone.constraints[0].target=bpy.data.objects['Armature']
+            bone.constraints[0].subtarget=bpy.data.objects['Armature'].data.bones[wristbone].name
+            bone.constraints[0].use_x = True
+            bone.constraints[0].use_y = False
+            bone.constraints[0].use_z = False
+            bone.constraints[0].target_space = 'POSE'
+            bone.constraints[0].owner_space = 'POSE'
+            bone.constraints[0].influence = 0.5
+            
             bpy.ops.object.mode_set(mode='POSE')
             bpy.data.objects['Armature'].data.bones[wristbone].hide = True
             bpy.ops.object.mode_set(mode='EDIT')
@@ -172,8 +184,8 @@ class bone_drivers(bpy.types.Operator):
             bpy.data.objects['Armature'].data.edit_bones[elbowcontroller].tail.y = elbowdist*2
 
         #Run for each side
-        armhandIK('Right elbow', 'Cf_Pv_Hand_R', 'Cf_Pv_Elbo_R', 0, 'Right wrist')
-        armhandIK('Left elbow',  'Cf_Pv_Hand_L', 'Cf_Pv_Elbo_L', 180, 'Left wrist')
+        armhandIK('Right elbow', 'Cf_Pv_Hand_R', 'Cf_Pv_Elbo_R', 0, 'Right wrist', 'Cf_D_Wrist_R_Twist')
+        armhandIK('Left elbow',  'Cf_Pv_Hand_L', 'Cf_Pv_Elbo_L', 180, 'Left wrist', 'Cf_D_Wrist_L_Twist')
 
         ################### Setup joint correction drivers
 
@@ -485,4 +497,8 @@ class bone_drivers(bpy.types.Operator):
                     
         return {'FINISHED'}
 
+if __name__ == "__main__":
+    bpy.utils.register_class(bone_drivers)
 
+    # test call
+    print((bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT')))
