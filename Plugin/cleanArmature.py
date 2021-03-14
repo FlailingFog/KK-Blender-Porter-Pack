@@ -17,8 +17,9 @@ class clean_Armature(bpy.types.Operator):
     
     def execute(self, context):
 
+        scene = context.scene.placeholder
         #Set this to True to make the joint correction bones visible
-        debugMode = False
+        debugMode = scene.my_bool
 
         ########################
         import bpy
