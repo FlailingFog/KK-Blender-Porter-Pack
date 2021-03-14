@@ -226,7 +226,11 @@ class shape_keys(bpy.types.Operator):
                         shapekey.key_blocks['Tongue_default_op'].value = ACTIVE
                     
                     if (keyblock.name == 'Lips_smile_sharp_op'):
-                        shapekey.key_blocks['Teeth_smile_sharp_op1'].value = 0
+                        try:
+                            #Someone had an issue with this shapekey so into a try catch it goes
+                            shapekey.key_blocks['Teeth_smile_sharp_op1'].value = 0
+                        except:
+                            pass
                     
                     if (keyblock.name == 'Lips_eating_2_op'):
                         try:
