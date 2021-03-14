@@ -28,11 +28,12 @@ from . cleanArmature import clean_Armature
 from . bonedrivers import bone_drivers
 from . bakeMaterials import bake_Materials
 from . applyMaterials import apply_Materials
+from . selectBones import select_Bones
 
 from . KKPanel    import PlaceholderProperties
 from . KKPanel    import KK_Panel
 
-classes = (before_CATS, shape_keys, separate_Body, import_Templates, import_Textures, clean_Armature, bone_drivers, bake_Materials, apply_Materials, PlaceholderProperties, KK_Panel)
+classes = (before_CATS, shape_keys, separate_Body, import_Templates, import_Textures, clean_Armature, bone_drivers, bake_Materials, apply_Materials, select_Bones, PlaceholderProperties, KK_Panel)
 
 def register():
     from bpy.utils import register_class
