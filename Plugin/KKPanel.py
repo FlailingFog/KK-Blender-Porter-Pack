@@ -45,4 +45,4 @@ class KK_Panel(bpy.types.Panel):
         row = layout.row()
         row.operator('kkb.applymaterials', text = '9 Apply material templates')
         row = layout.row()
-        row.operator('kkb.selectbones', text = '10 Select useless bones')
+        row.operator('kkb.selectbones', text = '10 Select unused bones')
