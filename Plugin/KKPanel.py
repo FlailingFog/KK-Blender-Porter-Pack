@@ -44,3 +44,5 @@ class KK_Panel(bpy.types.Panel):
         row.prop(context.scene.placeholder, "inc_dec_int", text = 'Multiplier:')
         row = layout.row()
         row.operator('kkb.applymaterials', text = '9 Apply material templates')
+        row = layout.row()
+        row.operator('kkb.selectbones', text = '10 Select useless bones')
