@@ -45,9 +45,10 @@ class bake_Materials(bpy.types.Operator):
     
     def execute(self, context):
         def runIt():
+            scene = context.scene.placeholder
             exportType = 'PNG'
             exportColormode = 'RGBA'
-            resolutionMultiplier = 1
+            resolutionMultiplier = scene.inc_dec_int
             
             print(self.directory)
             #Stop if no object is selected
