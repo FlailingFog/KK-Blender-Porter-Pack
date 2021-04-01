@@ -51,7 +51,11 @@ class import_Textures(bpy.types.Operator):
         imageLoad('Template Body', 'NippleTextures', 'NipR', 'cf_m_body_overtex1.png')
         imageLoad('Template Body', 'NippleTextures', 'NipL', 'cf_m_body_overtex1.png')
         
-        currentObj.material_slots['Template Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].node_tree.nodes['AlphaBody'].image = bpy.data.images['cf_m_body_AlphaMask.png']
+        try:
+            currentObj.material_slots['Template Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].node_tree.nodes['AlphaBody'].image = bpy.data.images['cf_m_body_AlphaMask.png']
+        catch:
+            #An alpha mask for the clothing wasn't present in the Textures folder
+            currentObj.['Template Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].inputs['Built in transparency toggle'].default_value = 0
         
         imageLoad('Template Face', 'FaceTextures', 'FaceMC', 'cf_face_00_mc-BC7.dds', True)
         imageLoad('Template Face', 'FaceTextures', 'FaceMD', 'cf_m_face_00_DetailMask.png', True)
@@ -146,8 +150,12 @@ class import_Textures(bpy.types.Operator):
         mod.use_flip_normals = True
         mod.use_rim = False
         ob.data.materials.append(bpy.data.materials['Template Body Outline'])
-        bpy.data.materials['Template Body Outline'].node_tree.nodes['BodyMask'].image = bpy.data.images['cf_m_body_AlphaMask.png']
-                
+        try:
+            bpy.data.materials['Template Body Outline'].node_tree.nodes['BodyMask'].image = bpy.data.images['cf_m_body_AlphaMask.png']
+        catch:
+            #An alpha mask for the clothing wasn't present in the Textures folder
+            bpy.data.materials['Template Body Outline'].node_tree.nodes['Clipping prevention toggle'].inputs['Fac'].default_value = 0            
+            
         #Give the hair a unique outline group
         ob = bpy.context.view_layer.objects['Hair']
         bpy.context.view_layer.objects.active = ob
