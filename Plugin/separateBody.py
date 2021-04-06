@@ -34,7 +34,7 @@ class separate_Body(bpy.types.Operator):
         bpy.ops.mesh.select_all(action = 'DESELECT')
 
         #Select all body related materials
-        bodyMatList = ['cf_m_face_00', 'cf_m_mayuge_00', 'cf_m_noseline_00', 'cf_m_eyeline_00_up', 'cf_m_eyeline_down', 'cf_m_sirome_00', 'cf_m_sirome_00.001', 'cf_m_hitomi_00', 'cf_m_hitomi_00.001', 'cf_m_body', 'cf_m_tooth', 'cf_m_tang']
+        bodyMatList = ['cf_m_face_00', 'cf_m_mayuge_00', 'cf_m_noseline_00', 'cf_m_eyeline_00_up', 'cf_m_eyeline_down', 'cf_m_sirome_00', 'cf_m_sirome_00.001', 'cf_m_hitomi_00', 'cf_m_hitomi_00.001', 'cf_m_body', 'cf_m_tooth', 'cf_m_tang', 'cm_m_body']
 
         for bodyMat in bodyMatList:
             try:
@@ -54,3 +54,9 @@ class separate_Body(bpy.types.Operator):
         bpy.ops.object.material_slot_remove_unused()
                     
         return {'FINISHED'}
+
+if __name__ == "__main__":
+    bpy.utils.register_class(separate_Body)
+
+    # test call
+    print((bpy.ops.kkb.separatebody('INVOKE_DEFAULT')))
