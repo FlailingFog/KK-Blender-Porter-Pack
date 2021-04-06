@@ -68,7 +68,8 @@ class import_Templates(Operator, ImportHelper):
         bodySwap('cf_m_sirome_00.001','Template Eyewhites (sirome)')
         bodySwap('cf_m_hitomi_00','Template Eye (hitomi)')
         bodySwap('cf_m_hitomi_00.001','Template Eye (hitomi)')
-        bodySwap('cf_m_body','Template Body')
+        bodySwap('cf_m_body','Template Body') #female
+        bodySwap('cm_m_body','Template Body') #male
         bodySwap('cf_m_tooth','Template Teeth (tooth)')
         bodySwap('cf_m_tang','Template General')
         
@@ -114,7 +115,7 @@ class import_Templates(Operator, ImportHelper):
             # Replace the numeric duplicate
             if ext.isnumeric():
                 if base in node_groups:
-                    print("  Replace '%s' with '%s'" % (node.node_tree.name, base))
+                    #print("  Replace '%s' with '%s'" % (node.node_tree.name, base))
                     node.node_tree.use_fake_user = False
                     node.node_tree = node_groups.get(base)
 
