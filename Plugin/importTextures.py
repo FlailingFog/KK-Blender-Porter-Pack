@@ -44,18 +44,27 @@ class import_Textures(bpy.types.Operator):
                 print('File not found, skipping: ' + image)
             
         imageLoad('Template Body', 'BodyTextures', 'BodyMC', 'cf_body_00_mc-RGB24.tga', True)
-        imageLoad('Template Body', 'BodyTextures', 'BodyMD', 'cf_m_body_DetailMask.png', True)
+        imageLoad('Template Body', 'BodyTextures', 'BodyMD', 'cf_m_body_DetailMask.png', True) #female
         imageLoad('Template Body', 'BodyTextures', 'BodyLine', 'cf_m_body_LineMask.png', True)
+        imageLoad('Template Body', 'BodyTextures', 'BodyMD', 'cm_m_body_DetailMask.png', True) #male
+        imageLoad('Template Body', 'BodyTextures', 'BodyLine', 'cm_m_body_LineMask.png', True)
         #imageLoad('BodyOptional', '')
         
-        imageLoad('Template Body', 'NippleTextures', 'NipR', 'cf_m_body_overtex1.png')
+        imageLoad('Template Body', 'NippleTextures', 'NipR', 'cf_m_body_overtex1.png') #female
         imageLoad('Template Body', 'NippleTextures', 'NipL', 'cf_m_body_overtex1.png')
+        imageLoad('Template Body', 'NippleTextures', 'NipR', 'cm_m_body_overtex1.png') #male
+        imageLoad('Template Body', 'NippleTextures', 'NipL', 'cm_m_body_overtex1.png')
         
         try:
-            currentObj.material_slots['Template Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].node_tree.nodes['AlphaBody'].image = bpy.data.images['cf_m_body_AlphaMask.png']
+            #add female alpha mask
+            currentObj.material_slots['Template Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].node_tree.nodes['AlphaBody'].image = bpy.data.images['cf_m_body_AlphaMask.png'] #female
         except:
-            #An alpha mask for the clothing wasn't present in the Textures folder
-            currentObj.material_slots['Template Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].inputs['Built in transparency toggle'].default_value = 0
+            try:
+                #maybe the character is male
+                currentObj.material_slots['Template Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].node_tree.nodes['AlphaBody'].image = bpy.data.images['cm_m_body_AlphaMask.png'] #male
+            except:
+                #An alpha mask for the clothing wasn't present in the Textures folder
+                currentObj.material_slots['Template Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].inputs['Built in transparency toggle'].default_value = 0
         
         imageLoad('Template Face', 'FaceTextures', 'FaceMC', 'cf_face_00_mc-BC7.dds', True)
         imageLoad('Template Face', 'FaceTextures', 'FaceMD', 'cf_m_face_00_DetailMask.png', True)
@@ -151,10 +160,13 @@ class import_Textures(bpy.types.Operator):
         mod.use_rim = False
         ob.data.materials.append(bpy.data.materials['Template Body Outline'])
         try:
-            bpy.data.materials['Template Body Outline'].node_tree.nodes['BodyMask'].image = bpy.data.images['cf_m_body_AlphaMask.png']
+            bpy.data.materials['Template Body Outline'].node_tree.nodes['BodyMask'].image = bpy.data.images['cf_m_body_AlphaMask.png'] #female
         except:
-            #An alpha mask for the clothing wasn't present in the Textures folder
-            bpy.data.materials['Template Body Outline'].node_tree.nodes['Clipping prevention toggle'].inputs['Fac'].default_value = 0            
+            try:
+                bpy.data.materials['Template Body Outline'].node_tree.nodes['BodyMask'].image = bpy.data.images['cf_m_body_AlphaMask.png'] #male
+            except:
+                #An alpha mask for the clothing wasn't present in the Textures folder
+                bpy.data.materials['Template Body Outline'].node_tree.nodes['Clipping prevention toggle'].inputs['Fac'].default_value = 0            
             
         #Give the hair a unique outline group
         ob = bpy.context.view_layer.objects['Hair']
@@ -187,3 +199,9 @@ class import_Textures(bpy.types.Operator):
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
+    
+if __name__ == "__main__":
+    bpy.utils.register_class(import_Textures)
+
+    # test call
+    print((bpy.ops.kkb.importtextures('INVOKE_DEFAULT')))
