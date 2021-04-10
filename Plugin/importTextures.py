@@ -131,9 +131,10 @@ class import_Textures(bpy.types.Operator):
                     imageLoad(genMat.name, 'Gentex', 'MainCol', genType+'_ColorMask.png', True)
                     imageLoad(genMat.name, 'Gentex', 'MainDet', genType+'_DetailMask.png', True)
                     imageLoad(genMat.name, 'Gentex', 'MainNorm', genType+'_NormalMap.png', True)
+                    imageLoad(genMat.name, 'Gentex', 'Alphamask', genType+'_AlphaMask.png', True)
                     
                     MainImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Maintex'].image
-                    #ColorImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['MainCol'].image
+                    AlphaImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Alphamask'].image
                          
                     #Also, make a copy of the General shader node group, as it's unlikely everything using it will be the same color
                     newNode = genMat.material.node_tree.nodes['KKShader'].node_tree.copy()
@@ -145,8 +146,11 @@ class import_Textures(bpy.types.Operator):
                     if  MainImage == None:
                         getOut = genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['GeneralOut'].inputs['Alpha'].links[0]
                         genMat.material.node_tree.nodes['KKShader'].node_tree.links.remove(getOut)
+                        genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['GeneralOut'].inputs['Alpha'].default_value = 1    
                         
-                        genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['GeneralOut'].inputs['Alpha'].default_value = 1        
+                    #If an alpha mask was loaded in, enable the alpha mask toggle in the KK shader
+                    if  AlphaImage != None:
+                        toggle = genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['alphatoggle'].inputs['Transparency toggle'].default_value = 1
         
         #Add body outline and load in the clothes transparency mask
         ob = bpy.context.view_layer.objects['Body']
