@@ -498,7 +498,57 @@ class bone_drivers(bpy.types.Operator):
         bpy.ops.object.select_all(action='DESELECT')
         armature.select_set(True)
         bpy.context.view_layer.objects.active = armature
-                    
+        
+        ####################### Perform the rest of the scaling operations
+        
+        #scale all skirt bones
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.armature.select_all(action='DESELECT')
+        bpy.ops.object.mode_set(mode='POSE')
+
+        def resizeBone(bone, scale, type='MIDPOINT'):
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.armature.select_all(action='DESELECT')
+            bpy.context.object.data.edit_bones[bone].select_head = True
+            bpy.context.object.data.edit_bones[bone].select_tail = True
+            if type == 'MIDPOINT':
+                bpy.ops.transform.resize(value=(scale, scale, scale), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=0.683013, use_proportional_connected=False, use_proportional_projected=False)
+            else:
+                bpy.context.object.data.edit_bones[bone].tail=(bpy.context.object.data.edit_bones[bone].tail+bpy.context.object.data.edit_bones[bone].head)/2
+                bpy.context.object.data.edit_bones[bone].tail=(bpy.context.object.data.edit_bones[bone].tail+bpy.context.object.data.edit_bones[bone].head)/2
+                bpy.context.object.data.edit_bones[bone].tail=(bpy.context.object.data.edit_bones[bone].tail+bpy.context.object.data.edit_bones[bone].head)/2
+            bpy.context.object.data.edit_bones[bone].select_head = False
+            bpy.context.object.data.edit_bones[bone].select_tail = False
+            bpy.ops.object.mode_set(mode='POSE')
+        
+        skirtbones = [0,1,2,3,4,5,6,7]
+        skirtlength = [0,1,2,3,4]
+
+        for root in skirtbones:
+            for chain in skirtlength:
+                resizeBone('Sk_0'+str(root)+'_0'+str(chain), 0.25)
+        
+        #scale eye bones, mouth bones, eyebrow bones
+        bpy.ops.object.mode_set(mode='POSE')
+        
+        eyebones = [1,2,3,4,5,6,7,8]
+        
+        for piece in eyebones:
+            bpy.ops.pose.select_all(action='DESELECT')
+            left = 'Eye0'+str(piece)+'_S_L'
+            right = 'Eye0'+str(piece)+'_S_R'
+            
+            resizeBone(left, 0.1, 'face')
+            resizeBone(right, 0.1, 'face')
+            
+        restOfFace = ['Mayu_R', 'MayuMid_S_R', 'MayuTip_S_R', 'Mayu_L', 'MayuMid_S_L', 'MayuTip_S_L', 'Mouth_R', 'Mouth_L', 'Mouthup', 'MouthLow', 'MouthMove', 'MouthCavity']
+        
+        for bone in restOfFace:
+            bpy.ops.pose.select_all(action='DESELECT')
+            resizeBone(bone, 0.1, 'face')
+        
+        bpy.ops.object.mode_set(mode='POSE')
+ 
         return {'FINISHED'}
 
 if __name__ == "__main__":
