@@ -52,7 +52,7 @@ class bone_drivers(bpy.types.Operator):
         ################### Setup all IKs
 
         #gives the leg an IK modifier, repositions the foot IK controller
-        def legIK(legbone, IKtarget, IKpole, IKpoleangle, footbone, kneebone, toebone):
+        def legIK(legbone, IKtarget, IKpole, IKpoleangle, footIK, kneebone, toebone):
             bone = bpy.data.objects['Armature'].pose.bones[legbone]
 
             #Make IK
@@ -70,17 +70,20 @@ class bone_drivers(bpy.types.Operator):
             #Set chain length
             bone.constraints["IK"].chain_count=2
 
-            #Move bone backwards and flip bone
+            #Flip foot IK to match foot bone
             bpy.ops.object.mode_set(mode='EDIT')
 
-            bone = bpy.data.objects['Armature'].data.edit_bones[footbone]
+            bone = bpy.data.objects['Armature'].data.edit_bones[footIK]
 
+            head = bone.head.y
             bone.head.y = bpy.data.objects['Armature'].data.edit_bones[kneebone].tail.y
-            bone.tail.y = bpy.data.objects['Armature'].data.edit_bones[kneebone].tail.y
-            bone.tail.z = bpy.data.objects['Armature'].data.edit_bones[toebone].tail.z
+            bone.tail.z = bpy.data.objects['Armature'].data.edit_bones[toebone].head.z
             
             bone.head.x = bpy.data.objects['Armature'].data.edit_bones[kneebone].tail.x
             bone.tail.x = bone.head.x
+            
+            if legbone[0] == 'R':
+                bone.roll = 3.1415
 
             #unparent the bone
             bone.parent = None
@@ -106,8 +109,8 @@ class bone_drivers(bpy.types.Operator):
             bone.constraints[0].owner_space = 'LOCAL_WITH_PARENT'
             
             #Lock the footIK's rotation
-            bpy.data.objects['Armature'].pose.bones[footIK].lock_rotation[1] = True
-            bpy.data.objects['Armature'].pose.bones[footIK].lock_rotation[2] = True
+            #bpy.data.objects['Armature'].pose.bones[footIK].lock_rotation[1] = True
+            #bpy.data.objects['Armature'].pose.bones[footIK].lock_rotation[2] = True
 
             #parent the toe tip bone to the foot IK bone
             bpy.data.objects['Armature'].data.edit_bones[toeIK].parent = bpy.data.objects['Armature'].data.edit_bones[footIK]
