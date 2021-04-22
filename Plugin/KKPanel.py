@@ -11,7 +11,9 @@ from bpy.props import (
 class PlaceholderProperties(PropertyGroup):
     inc_dec_int: IntProperty(
         name="Incr-Decr", min=1, max = 6, default=1, description="Set this to 2 or 3 if the baked texture is blurry")
-    my_bool : BoolProperty(
+    driver_bool : BoolProperty(
+    name="Enable or Disable", description="Enables debug mode if checked", default = False)
+    shapekey_bool : BoolProperty(
     name="Enable or Disable", description="Enables debug mode if checked", default = False)
         
 class KK_Panel(bpy.types.Panel):
