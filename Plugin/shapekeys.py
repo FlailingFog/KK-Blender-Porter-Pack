@@ -18,8 +18,9 @@ class shape_keys(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):
-        #Set debug mode to False to clean up the shapekey list after the KK shapekeys are created
-        debugMode = False
+        #Enable debug mode to prevent the shapekey list from being cleaned out after the KK shapekeys are created
+        scene = context.scene.placeholder
+        debugMode = scene.my_bool
 
         #########################
         #Translate most of the shapekeys
