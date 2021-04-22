@@ -21,8 +21,9 @@ class bone_drivers(bpy.types.Operator):
     def execute(self, context):
 
         #The hip joint corrections aren't finished yet.
-        #Set the useHips variable to True to use them in their current state. 
-        useHips = False
+        #Enable debug mode to use them in their current state.
+        scene = context.scene.placeholder
+        useHips = scene.my_bool
 
         ################### Start script
 
