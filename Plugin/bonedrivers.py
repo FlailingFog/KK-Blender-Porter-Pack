@@ -547,7 +547,44 @@ class bone_drivers(bpy.types.Operator):
             bpy.ops.pose.select_all(action='DESELECT')
             resizeBone(bone, 0.1, 'face')
         
+        #move eye bone location
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.armature.select_all(action='DESELECT')
+
+        bpy.context.object.data.edit_bones['Eyesx'].head.y = bpy.context.object.data.edit_bones['AH1_R'].tail.y
+        bpy.context.object.data.edit_bones['Eyesx'].tail.y = bpy.context.object.data.edit_bones['AH1_R'].tail.y*1.5
+        bpy.context.object.data.edit_bones['Eyesx'].tail.z = bpy.context.object.data.edit_bones['N_EyesLookTargetP'].head.z
+        bpy.context.object.data.edit_bones['Eyesx'].head.z = bpy.context.object.data.edit_bones['N_EyesLookTargetP'].head.z
+
+        bpy.context.object.data.edit_bones['Eye Controller'].head.y = bpy.context.object.data.edit_bones['AH1_R'].tail.y
+        bpy.context.object.data.edit_bones['Eye Controller'].tail.y = bpy.context.object.data.edit_bones['AH1_R'].tail.y*1.5
+        bpy.context.object.data.edit_bones['Eye Controller'].tail.z = bpy.context.object.data.edit_bones['N_EyesLookTargetP'].head.z
+        bpy.context.object.data.edit_bones['Eye Controller'].head.z = bpy.context.object.data.edit_bones['N_EyesLookTargetP'].head.z
+        
+        #Add some bones to bone groups
         bpy.ops.object.mode_set(mode='POSE')
+        bpy.ops.pose.select_all(action='DESELECT')
+        bpy.ops.pose.group_add()
+        group = armature.pose.bone_groups['Group']
+        group.name = 'IK controllers'
+        armature.data.bones['Cf_Pv_Hand_L'].select = True
+        armature.data.bones['Cf_Pv_Hand_R'].select = True
+        armature.data.bones['Cf_Pv_Foot_R'].select = True
+        armature.data.bones['Cf_Pv_Foot_L'].select = True
+        bpy.ops.pose.group_assign(type=1)
+        group.color_set = 'THEME01'
+        
+        bpy.ops.pose.select_all(action='DESELECT')
+        bpy.ops.pose.group_add()
+        group = armature.pose.bone_groups['Group']
+        group.name = 'IK poles'
+        armature.pose.bone_groups.active_index = 1
+        armature.data.bones['Cf_Pv_Elbo_R'].select = True
+        armature.data.bones['Cf_Pv_Elbo_L'].select = True
+        armature.data.bones['Cf_Pv_Knee_R'].select = True
+        armature.data.bones['Cf_Pv_Knee_L'].select = True
+        bpy.ops.pose.group_assign(type=1)
+        group.color_set = 'THEME09'
  
         return {'FINISHED'}
 
