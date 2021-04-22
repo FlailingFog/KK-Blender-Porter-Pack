@@ -189,133 +189,34 @@ class import_Templates(Operator, ImportHelper):
         except:
             #the script was run in the text editor or console, so this won't work
             pass
-
-        #scale all skirt bones
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.armature.select_all(action='DESELECT')
-        bpy.ops.object.mode_set(mode='POSE')
-
-        def resizeBone(bone, scale, type='MIDPOINT'):
-            bpy.ops.object.mode_set(mode='EDIT')
-            bpy.ops.armature.select_all(action='DESELECT')
-            bpy.context.object.data.edit_bones[bone].select_head = True
-            bpy.context.object.data.edit_bones[bone].select_tail = True
-            if type == 'MIDPOINT':
-                bpy.ops.transform.resize(value=(scale, scale, scale), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=0.683013, use_proportional_connected=False, use_proportional_projected=False)
-            else:
-                bpy.context.object.data.edit_bones[bone].tail=(bpy.context.object.data.edit_bones[bone].tail+bpy.context.object.data.edit_bones[bone].head)/2
-                bpy.context.object.data.edit_bones[bone].tail=(bpy.context.object.data.edit_bones[bone].tail+bpy.context.object.data.edit_bones[bone].head)/2
-                bpy.context.object.data.edit_bones[bone].tail=(bpy.context.object.data.edit_bones[bone].tail+bpy.context.object.data.edit_bones[bone].head)/2
-            bpy.context.object.data.edit_bones[bone].select_head = False
-            bpy.context.object.data.edit_bones[bone].select_tail = False
-            bpy.ops.object.mode_set(mode='POSE')
         
-        #are you freaking serious
-        firstTwoBoneLayers = (True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False)
-        secondBoneLayer = (False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False)
         skirtbones = [0,1,2,3,4,5,6,7]
-        skirtlength = [0,1,2,3,4]
-
         for root in skirtbones:
-            bpy.ops.pose.select_all(action='DESELECT')
             bpy.context.object.pose.bones['Cf_D_Sk_0'+str(root)+'_00'].custom_shape = bpy.data.objects['WidgetSkirt']
-            armature.pose.bones['Cf_D_Sk_0'+str(root)+'_00'].bone.select = True
-            bpy.ops.pose.bone_layers(layers=secondBoneLayer)
-            bpy.ops.pose.select_all(action='DESELECT')
-            
-            for chain in skirtlength:
-                resizeBone('Sk_0'+str(root)+'_0'+str(chain), 0.25)
-                armature.pose.bones['Sk_0'+str(root)+'_0'+str(chain)].bone.select = True
-                bpy.ops.pose.bone_layers(layers=secondBoneLayer)
         
         #scale and apply eye bones, mouth bones, eyebrow bones
-        bpy.ops.object.mode_set(mode='POSE')
-        
         eyebones = [1,2,3,4,5,6,7,8]
-        
         for piece in eyebones:
-            bpy.ops.pose.select_all(action='DESELECT')
             left = 'Eye0'+str(piece)+'_S_L'
             right = 'Eye0'+str(piece)+'_S_R'
-            
-            armature.data.bones[left].hide=False
-            armature.data.bones[right].hide=False
             bpy.context.object.pose.bones[left].custom_shape  = bpy.data.objects['WidgetFace']
             bpy.context.object.pose.bones[right].custom_shape = bpy.data.objects['WidgetFace']
             
-            resizeBone(left, 0.1, 'face')
-            resizeBone(right, 0.1, 'face')
-            armature.pose.bones[left].bone.select = True
-            armature.pose.bones[right].bone.select = True
-            bpy.ops.pose.bone_layers(layers=secondBoneLayer)
-            
         restOfFace = ['Mayu_R', 'MayuMid_S_R', 'MayuTip_S_R', 'Mayu_L', 'MayuMid_S_L', 'MayuTip_S_L', 'Mouth_R', 'Mouth_L', 'Mouthup', 'MouthLow', 'MouthMove']
-        
         for bone in restOfFace:
-            bpy.ops.pose.select_all(action='DESELECT')
-            armature.data.bones[bone].hide=False
             bpy.context.object.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetFace']
-            resizeBone(bone, 0.1, 'face')
-            armature.pose.bones[bone].bone.select = True
-            bpy.ops.pose.bone_layers(layers=secondBoneLayer)
         
-        bpy.ops.object.mode_set(mode='POSE')
         #Make both bone layers visible
+        firstTwoBoneLayers = (True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False)
         bpy.ops.armature.armature_layers(layers=firstTwoBoneLayers)
-            
-        #hide the extra bones that aren't needed for IK
-        nonIK = ['Left elbow', 'Right elbow', 'Left arm', 'Right arm', 'Left leg', 'Right leg', 'Left knee', 'Right knee', 'Right ankle', 'Left ankle']
-        for bone in nonIK:
-            armature.data.bones[bone].hide = True
         bpy.context.object.data.display_type = 'STICK'
-        
-        #move eye bone location
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.armature.select_all(action='DESELECT')
-
-        bpy.context.object.data.edit_bones['Eyesx'].head.y = bpy.context.object.data.edit_bones['AH1_R'].tail.y
-        bpy.context.object.data.edit_bones['Eyesx'].tail.y = bpy.context.object.data.edit_bones['AH1_R'].tail.y*1.5
-        bpy.context.object.data.edit_bones['Eyesx'].tail.z = bpy.context.object.data.edit_bones['N_EyesLookTargetP'].head.z
-        bpy.context.object.data.edit_bones['Eyesx'].head.z = bpy.context.object.data.edit_bones['N_EyesLookTargetP'].head.z
-
-        bpy.context.object.data.edit_bones['Eye Controller'].head.y = bpy.context.object.data.edit_bones['AH1_R'].tail.y
-        bpy.context.object.data.edit_bones['Eye Controller'].tail.y = bpy.context.object.data.edit_bones['AH1_R'].tail.y*1.5
-        bpy.context.object.data.edit_bones['Eye Controller'].tail.z = bpy.context.object.data.edit_bones['N_EyesLookTargetP'].head.z
-        bpy.context.object.data.edit_bones['Eye Controller'].head.z = bpy.context.object.data.edit_bones['N_EyesLookTargetP'].head.z
-        
-        #Add some bones to bone groups
-        bpy.ops.object.mode_set(mode='POSE')
-        bpy.ops.pose.select_all(action='DESELECT')
-        bpy.ops.pose.group_add()
-        group = armature.pose.bone_groups['Group']
-        group.name = 'IK controllers'
-        armature.data.bones['Cf_Pv_Hand_L'].select = True
-        armature.data.bones['Cf_Pv_Hand_R'].select = True
-        armature.data.bones['Cf_Pv_Foot_R'].select = True
-        armature.data.bones['Cf_Pv_Foot_L'].select = True
-        bpy.ops.pose.group_assign(type=1)
-        group.color_set = 'THEME01'
-        
-        bpy.ops.pose.select_all(action='DESELECT')
-        bpy.ops.pose.group_add()
-        group = armature.pose.bone_groups['Group']
-        group.name = 'IK poles'
-        armature.pose.bone_groups.active_index = 1
-        armature.data.bones['Cf_Pv_Elbo_R'].select = True
-        armature.data.bones['Cf_Pv_Elbo_L'].select = True
-        armature.data.bones['Cf_Pv_Knee_R'].select = True
-        armature.data.bones['Cf_Pv_Knee_L'].select = True
-        bpy.ops.pose.group_assign(type=1)
-        group.color_set = 'THEME09'
         
         bpy.ops.object.mode_set(mode='OBJECT')
         return {'FINISHED'}
-
 
 if __name__ == "__main__":
     bpy.utils.register_class(import_Templates)
 
     # test call
     print((bpy.ops.kkb.importtemplates('INVOKE_DEFAULT')))
-    
     
