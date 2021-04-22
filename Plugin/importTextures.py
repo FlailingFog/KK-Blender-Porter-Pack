@@ -197,7 +197,11 @@ class import_Textures(bpy.types.Operator):
                 mod.use_flip_normals = True
                 #mod.use_rim = False
                 ob.data.materials.append(bpy.data.materials['Template Outline'])
-                    
+        
+        #automatically hide bone widgets collection
+        bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children['Collection'].children['Bone Widgets']
+        bpy.context.scene.view_layers[0].active_layer_collection.exclude = True
+        
         return {'FINISHED'}
 
     def invoke(self, context, event):
