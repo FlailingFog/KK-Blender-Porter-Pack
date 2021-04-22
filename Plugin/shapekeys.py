@@ -20,7 +20,7 @@ class shape_keys(bpy.types.Operator):
     def execute(self, context):
         #Enable debug mode to prevent the shapekey list from being cleaned out after the KK shapekeys are created
         scene = context.scene.placeholder
-        debugMode = scene.my_bool
+        debugMode = scene.shapekey_bool
 
         #########################
         #Translate most of the shapekeys
