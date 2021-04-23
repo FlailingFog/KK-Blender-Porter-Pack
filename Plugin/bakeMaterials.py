@@ -15,6 +15,7 @@ Usage:
 
 Notes:
 - This script deletes all camera and light objects in the scene
+- This script sets the world color in the World tab to black
 
 Limitations:
 - Does not (cannot?) account for multiple UV maps. Only the default map named "UVMap" is used.
@@ -79,6 +80,9 @@ class bake_Materials(bpy.types.Operator):
             #Then delete them
             bpy.ops.object.delete()
 
+            #and set the world color to black 
+            bpy.data.worlds[0].node_tree.nodes['Background'].inputs[0].default_value = (0,0,0,1)
+            
             #reset currently selected object
             bpy.context.view_layer.objects.active = currentlySelected
             currentlySelected.select_set(True)
