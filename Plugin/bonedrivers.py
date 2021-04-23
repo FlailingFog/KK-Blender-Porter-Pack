@@ -53,7 +53,7 @@ class bone_drivers(bpy.types.Operator):
         ################### Setup all IKs
 
         #gives the leg an IK modifier, repositions the foot IK controller
-        def legIK(legbone, IKtarget, IKpole, IKpoleangle, footIK, kneebone, toebone):
+        def legIK(legbone, IKtarget, IKpole, IKpoleangle, footIK, kneebone, toebone, footbone):
             bone = bpy.data.objects['Armature'].pose.bones[legbone]
 
             #Make IK
@@ -79,19 +79,20 @@ class bone_drivers(bpy.types.Operator):
             head = bone.head.y
             bone.head.y = bpy.data.objects['Armature'].data.edit_bones[kneebone].tail.y
             bone.tail.z = bpy.data.objects['Armature'].data.edit_bones[toebone].head.z
+            bone.head.z = bpy.data.objects['Armature'].data.edit_bones[footbone].head.z
             
             bone.head.x = bpy.data.objects['Armature'].data.edit_bones[kneebone].tail.x
             bone.tail.x = bone.head.x
             
-            if legbone[0] == 'R':
-                bone.roll = 3.1415
+            #if legbone[0] == 'R':
+            bone.roll = 3.1415
 
             #unparent the bone
             bone.parent = None
 
         #Run for each side
-        legIK('Right knee', 'Cf_Pv_Foot_R', 'Cf_Pv_Knee_R', -1.571, 'Cf_Pv_Foot_R', 'Right knee', 'ToeTipIK_R')
-        legIK('Left knee',  'Cf_Pv_Foot_L', 'Cf_Pv_Knee_L', -1.571, 'Cf_Pv_Foot_L', 'Left knee', 'ToeTipIK_L')
+        legIK('Right knee', 'Cf_Pv_Foot_R', 'Cf_Pv_Knee_R', -1.571, 'Cf_Pv_Foot_R', 'Right knee', 'ToeTipIK_R', 'Right ankle')
+        legIK('Left knee',  'Cf_Pv_Foot_L', 'Cf_Pv_Knee_L', -1.571, 'Cf_Pv_Foot_L', 'Left knee', 'ToeTipIK_L', 'Left ankle')
 
         #adds an IK for the toe bone, moves the knee IKs a little closer to the body
         def footIK(footbone, toebone, toeIK, footIK, kneebone, legbone):
@@ -133,6 +134,67 @@ class bone_drivers(bpy.types.Operator):
         footIK('Right ankle', 'Right toe', 'ToeTipIK_R', 'Cf_Pv_Foot_R', 'Cf_Pv_Knee_R', 'Right knee')
         footIK('Left ankle',  'Left toe',  'ToeTipIK_L', 'Cf_Pv_Foot_L', 'Cf_Pv_Knee_L', 'Left knee')
 
+        #Add a heel controller setup to the foot
+        def heelController(footbone, footIK, toebone):
+            bpy.ops.object.mode_set(mode='EDIT')
+            
+            #duplicate the foot IK. This is the new master bone
+            armatureData = bpy.data.objects['Armature'].data
+            masterbone = armatureData.edit_bones.new('MasterFootIK.' + footbone[0])
+            masterbone.head = armatureData.edit_bones[footbone].head
+            masterbone.tail = armatureData.edit_bones[footbone].tail
+            masterbone.matrix = armatureData.edit_bones[footbone].matrix
+            masterbone.parent = None
+            
+            #Create the heel controller
+            heelIK = armatureData.edit_bones.new('HeelIK.' + footbone[0])
+            heelIK.head = armatureData.edit_bones[footbone].tail
+            heelIK.tail = armatureData.edit_bones[footbone].head
+            #heelIK.matrix = armatureData.edit_bones[footbone].matrix
+            heelIK.parent = masterbone
+            
+            #parent footIK to heel controller
+            armatureData.edit_bones[footIK].parent = heelIK
+            
+            #make a bone to pin the foot
+            footPin = armatureData.edit_bones.new('FootPin.' + footbone[0])
+            footPin.head = armatureData.edit_bones[toebone].head
+            footPin.tail = armatureData.edit_bones[toebone].tail
+            footPin.tail.z*=.8
+            footPin.parent = masterbone
+            
+            #make a bone to allow rotation of the toe along an arc
+            toeRotator = armatureData.edit_bones.new('ToeRotator.' + footbone[0])
+            toeRotator.head = armatureData.edit_bones[toebone].head
+            toeRotator.tail = armatureData.edit_bones[toebone].tail
+            toeRotator.parent = masterbone
+            
+            #make a bone to pin the toe
+            toePin = armatureData.edit_bones.new('ToePin.' + footbone[0])
+            toePin.head = armatureData.edit_bones[toebone].tail
+            toePin.tail = armatureData.edit_bones[toebone].tail
+            toePin.tail.z *=1.2
+            toePin.parent = toeRotator
+ 
+            #pin the foot
+            bpy.ops.object.mode_set(mode='POSE')
+            bone = bpy.data.objects['Armature'].pose.bones[footbone]
+            bone.constraints.new("IK")
+            bone.constraints["IK"].target = bpy.data.objects['Armature']
+            bone.constraints["IK"].subtarget = bpy.data.objects['Armature'].data.bones['FootPin.' + footbone[0]].name
+            bone.constraints["IK"].chain_count=1
+            
+            #pin the toe
+            bpy.ops.object.mode_set(mode='POSE')
+            bone = bpy.data.objects['Armature'].pose.bones[toebone]
+            bone.constraints.new("IK")
+            bone.constraints["IK"].target = bpy.data.objects['Armature']
+            bone.constraints["IK"].subtarget = bpy.data.objects['Armature'].data.bones['ToePin.' + footbone[0]].name
+            bone.constraints["IK"].chain_count=1
+            
+        heelController('Left ankle', 'Cf_Pv_Foot_L', 'Left toe')
+        heelController('Right ankle', 'Cf_Pv_Foot_R', 'Right toe')
+        
         #add an IK to the arm, makes the wrist bone copy the hand IK's rotation, moves elbow IKs a little closer to the body
         def armhandIK(elbowbone, handcontroller, elbowcontroller, IKangle, wristbone, wristtwist):
             #Set IK bone
