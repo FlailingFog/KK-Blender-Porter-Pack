@@ -586,6 +586,7 @@ class bone_drivers(bpy.types.Operator):
         bpy.ops.pose.group_assign(type=1)
         group.color_set = 'THEME09'
  
+        bpy.ops.object.mode_set(mode='OBJECT')
         return {'FINISHED'}
 
 if __name__ == "__main__":
