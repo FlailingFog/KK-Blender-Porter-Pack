@@ -186,18 +186,93 @@ class import_Textures(bpy.types.Operator):
         ob.data.materials.append(hairOutlineMat)
          
         #Add a standard outline to all other objects
+        #If the material has a maintex or alphamask then give it it's own outline, mmdtools style
+        for ob in bpy.context.view_layer.objects:
+            if  ob.type == 'MESH' and ob.name != 'Body' and ob.name != 'Hair' and 'Widget' not in ob.name:
+                
+                bpy.context.view_layer.objects.active = ob
+                
+                #Get the length of the material list before starting
+                outlineStart = len(ob.material_slots)
+                outlineIndex = 0
+                
+                #done this way because the range changes length during the loop
+                for matindex in range(0, outlineStart,1):
+                    genMat = ob.material_slots[matindex]
+                    genType = genMat.name.replace('Template ','')
+                    print(genType)
+                    
+                    try:
+                        MainImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Maintex'].image
+                        AlphaImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Alphamask'].image
+                        
+                        if MainImage != None or AlphaImage != None:
+                            transpType = 'alpha'
+                            if AlphaImage != None:
+                                Image = AlphaImage
+                            else:
+                                transpType = 'main'
+                                Image = MainImage
+                            
+                            #set the material as active and move to the top of the material list
+                            ob.active_material_index = ob.data.materials.find(genMat.name)
+
+                            def moveUp():
+                                return bpy.ops.object.material_slot_move(direction='UP')
+
+                            while moveUp() != {"CANCELLED"}:
+                                pass
+
+                            OutlineMat = bpy.data.materials['Template Outline'].copy()
+                            OutlineMat.name = 'Outline ' + genType
+                            ob.data.materials.append(OutlineMat)
+
+                            #redraw UI with each material append to prevent crashing
+                            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+
+                            #Make the new outline the first outline in the material list
+                            ob.active_material_index = ob.data.materials.find(OutlineMat.name)
+                            while ob.active_material_index > outlineStart:
+                                moveUp()
+                                #print(ob.active_material_index)
+
+                            #and after it's done moving...
+                                bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+                                
+                    except:
+                        print(genType + ' had a maintex image but no transparency')
+
+        #separate loop to prevent crashing
         for ob in bpy.context.view_layer.objects:
             if  ob.type == 'MESH' and ob.name != 'Body' and ob.name != 'Hair' and 'Widget' not in ob.name:
                 bpy.context.view_layer.objects.active = ob
+                for OutlineMat in ob.material_slots:
+                    if 'Outline ' in OutlineMat.name:
+                        genType = OutlineMat.name.replace('Outline ','')
+                        MainImage = ob.material_slots['Template ' + genType].material.node_tree.nodes['Gentex'].node_tree.nodes['Maintex'].image
+                        AlphaImage = ob.material_slots['Template ' + genType].material.node_tree.nodes['Gentex'].node_tree.nodes['Alphamask'].image
+                        #print(genType)
+                        #print(MainImage)
+                        #print(AlphaImage)
+                        
+                        if AlphaImage != None:
+                            OutlineMat.material.node_tree.nodes['outlinealpha'].image = AlphaImage
+                        else:
+                            OutlineMat.material.node_tree.nodes['outlinealpha'].image = MainImage
+                        
+                        OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs['Fac'].default_value = 1.0
+                        OutlineMat.material.node_tree.nodes['outlinetransparency'].inputs['Fac'].default_value = 1.0
+                
+                #Add a general outline that covers the rest of the materials that don't need transparency
                 bpy.ops.object.modifier_add(type='SOLIDIFY')
                 mod = ob.modifiers[1]
                 mod.thickness = 0.003
                 mod.offset = 1
-                mod.material_offset = 100
+                mod.material_offset = outlineStart
                 mod.use_flip_normals = True
-                #mod.use_rim = False
+                mod.use_rim = False
                 ob.data.materials.append(bpy.data.materials['Template Outline'])
-        
+
         #automatically hide bone widgets collection
         bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children['Collection'].children['Bone Widgets']
         bpy.context.scene.view_layers[0].active_layer_collection.exclude = True
