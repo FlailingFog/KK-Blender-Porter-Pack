@@ -150,7 +150,7 @@ class bone_drivers(bpy.types.Operator):
             heelIK = armatureData.edit_bones.new('HeelIK.' + footbone[0])
             heelIK.head = armatureData.edit_bones[footbone].tail
             heelIK.tail = armatureData.edit_bones[footbone].head
-            #heelIK.matrix = armatureData.edit_bones[footbone].matrix
+            heelIK.tail.y *= .5
             heelIK.parent = masterbone
             
             #parent footIK to heel controller
@@ -185,12 +185,20 @@ class bone_drivers(bpy.types.Operator):
             bone.constraints["IK"].chain_count=1
             
             #pin the toe
-            bpy.ops.object.mode_set(mode='POSE')
             bone = bpy.data.objects['Armature'].pose.bones[toebone]
             bone.constraints.new("IK")
             bone.constraints["IK"].target = bpy.data.objects['Armature']
             bone.constraints["IK"].subtarget = bpy.data.objects['Armature'].data.bones['ToePin.' + footbone[0]].name
             bone.constraints["IK"].chain_count=1
+            
+            #move these bones to armature layer 19
+            layer19 =   (False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False)
+            bpy.ops.pose.select_all(action='DESELECT')
+            bpy.data.objects['Armature'].data.bones['FootPin.' + footbone[0]].select = True
+            bpy.data.objects['Armature'].data.bones['ToePin.' + footbone[0]].select = True
+            bpy.data.objects['Armature'].data.bones[toebone].select = True
+            bpy.data.objects['Armature'].data.bones[footIK].select = True
+            bpy.ops.pose.bone_layers(layers=layer19)
             
         heelController('Left ankle', 'Cf_Pv_Foot_L', 'Left toe')
         heelController('Right ankle', 'Cf_Pv_Foot_R', 'Right toe')
