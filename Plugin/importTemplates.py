@@ -204,7 +204,7 @@ class import_Templates(Operator, ImportHelper):
             bpy.context.object.pose.bones[left].custom_shape  = bpy.data.objects['WidgetFace']
             bpy.context.object.pose.bones[right].custom_shape = bpy.data.objects['WidgetFace']
             
-        restOfFace = ['Mayu_R', 'MayuMid_S_R', 'MayuTip_S_R', 'Mayu_L', 'MayuMid_S_L', 'MayuTip_S_L', 'Mouth_R', 'Mouth_L', 'Mouthup', 'MouthLow', 'MouthMove']
+        restOfFace = ['Mayu_R', 'MayuMid_S_R', 'MayuTip_S_R', 'Mayu_L', 'MayuMid_S_L', 'MayuTip_S_L', 'Mouth_R', 'Mouth_L', 'Mouthup', 'MouthLow', 'MouthMove', 'MouthCavity']
         for bone in restOfFace:
             bpy.context.object.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetFace']
         
