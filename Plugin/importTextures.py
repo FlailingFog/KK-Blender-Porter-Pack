@@ -258,10 +258,11 @@ class import_Textures(bpy.types.Operator):
                         
                         if AlphaImage != None:
                             OutlineMat.material.node_tree.nodes['outlinealpha'].image = AlphaImage
+                            OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs['Fac'].default_value = 0.0
                         else:
                             OutlineMat.material.node_tree.nodes['outlinealpha'].image = MainImage
-                        
-                        OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs['Fac'].default_value = 1.0
+                            OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs['Fac'].default_value = 1.0
+
                         OutlineMat.material.node_tree.nodes['outlinetransparency'].inputs['Fac'].default_value = 1.0
                 
                 #Add a general outline that covers the rest of the materials that don't need transparency
