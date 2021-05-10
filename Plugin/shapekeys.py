@@ -91,7 +91,8 @@ class shape_keys(bpy.types.Operator):
             keyName = keyName.replace("_naki_", "_crying_")
             keyName = keyName.replace("_rakutan_", "_dejected_")
             keyName = keyName.replace("_komaru_", "_worried_")
-            keyName = keyName.replace("_gag", "_gageye")
+            if 'gageye' not in keyName:
+                keyName = keyName.replace("_gag", "_gageye")
             keyName = keyName.replace("_gyul_", "_squeeze_left_")
             keyName = keyName.replace("_gyur_", "_squeeze_right_")
             keyName = keyName.replace("_gyu_", "_squeeze_")
@@ -114,11 +115,12 @@ class shape_keys(bpy.types.Operator):
             return keyName 
 
         body = bpy.data.objects['Body']
+        body.active_shape_key_index = 0
+        
         originalExists = False
-
         for shapekey in bpy.data.shape_keys:
             for keyblock in shapekey.key_blocks:
-                #check if the original shapekeys still exist
+                #check if the original shapekeys still exists
                 if 'Basis' not in keyblock.name:
                     if 'Lips' in keyblock.name:
                         originalExists = True
@@ -129,18 +131,19 @@ class shape_keys(bpy.types.Operator):
                 keyblock.name = renameCategory(keyblock.name)
                 keyblock.name = renameEmotion(keyblock.name)
                 
-                #delete the KK shapekeys if the original shapekeys still exist
-                if originalExists and 'KK ' in keyblock.name and 'KK Eyebrows' not in keyblock.name:
-                    body.active_shape_key_index = body.data.shape_keys.key_blocks.keys().index(keyblock.name)
-                    bpy.ops.object.shape_key_remove()
-
-                #delete the 'bounse' shapekey that sometimes appears on import
                 try:
+                    #delete the KK shapekeys if the original shapekeys still exist
+                    if originalExists and 'KK ' in keyblock.name and 'KK Eyebrows' not in keyblock.name:
+                        body.active_shape_key_index = body.data.shape_keys.key_blocks.keys().index(keyblock.name)
+                        bpy.ops.object.shape_key_remove()
+
+                    #delete the 'bounse' shapekey that sometimes appears on import
                     if 'bounse' in keyblock.name:
                         body.active_shape_key_index = body.data.shape_keys.key_blocks.keys().index(keyblock.name)
                         bpy.ops.object.shape_key_remove()
                 except:
                     #or not
+                    print("couldn't delete key: " + keyblock.name)
                     pass
         
         ########################################################
@@ -282,7 +285,7 @@ class shape_keys(bpy.types.Operator):
                     try:
                         if (keyblock.name.find('KK ') == -1 and keyblock.name.find('Basis') != 0 and shapekey.user.name == 'Model'):
                             bpy.data.objects['Body'].shape_key_remove(keyblock)
-                            print(keyblock.name)
+                            #print(keyblock.name)
                     except:
                         #The script tried to remove a shapekey on a non-body object
                         #shapekeys are only used for the face so this is okay
