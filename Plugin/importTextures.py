@@ -268,6 +268,8 @@ class import_Textures(bpy.types.Operator):
                                 OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs['Fac'].default_value = 1.0
 
                             OutlineMat.material.node_tree.nodes['outlinetransparency'].inputs['Fac'].default_value = 1.0
+                else:
+                    outlineStart = 200
                 
                 #Add a general outline that covers the rest of the materials on the object that don't need transparency
                 bpy.ops.object.modifier_add(type='SOLIDIFY')
