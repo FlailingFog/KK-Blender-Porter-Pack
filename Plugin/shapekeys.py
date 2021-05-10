@@ -182,6 +182,7 @@ class shape_keys(bpy.types.Operator):
 
         except:
             #the sirome material was already merged
+            pass
 
         #delete the right eyewhites mesh
         bpy.ops.object.mode_set(mode = 'EDIT')
