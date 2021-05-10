@@ -1,6 +1,7 @@
 '''
 SEPARATE BODY SCRIPT
 - Isolates the body
+- Attempts to isolate the bonelyfans and shadowcast meshes as well
 Usage:
 - Run the script
 '''
@@ -10,7 +11,7 @@ import bpy
 class separate_Body(bpy.types.Operator):
     bl_idname = "kkb.separatebody"
     bl_label = "The separate body script"
-    bl_description = "I wonder what this does"
+    bl_description = "Separates the Body, shadowcast and bonelyfans into separate objects"
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):
