@@ -25,6 +25,9 @@ class import_Textures(bpy.types.Operator):
     structure = None
     
     def execute(self, context):
+        scene = context.scene.placeholder
+        oneOutlineOnlyMode = scene.textures_bool
+        
         print('Getting textures from: ' + self.directory)
         fileList = Path(self.directory).glob('*.*')
         files = [file for file in fileList if file.is_file()]
@@ -189,7 +192,7 @@ class import_Textures(bpy.types.Operator):
         #Add a standard outline to all other objects
         #If the material has a maintex or alphamask then give it it's own outline, mmdtools style
         for ob in bpy.context.view_layer.objects:
-            if  ob.type == 'MESH' and ob.name != 'Body' and ob.name != 'Hair' and 'Widget' not in ob.name:
+            if  ob.type == 'MESH' and ob.name != 'Body' and ob.name != 'Hair' and 'Widget' not in ob.name and not oneOutlineOnlyMode:
                 
                 bpy.context.view_layer.objects.active = ob
                 
@@ -246,26 +249,27 @@ class import_Textures(bpy.types.Operator):
         #separate loop to prevent crashing
         for ob in bpy.context.view_layer.objects:
             if  ob.type == 'MESH' and ob.name != 'Body' and ob.name != 'Hair' and 'Widget' not in ob.name:
-                bpy.context.view_layer.objects.active = ob
-                for OutlineMat in ob.material_slots:
-                    if 'Outline ' in OutlineMat.name:
-                        genType = OutlineMat.name.replace('Outline ','')
-                        MainImage = ob.material_slots['Template ' + genType].material.node_tree.nodes['Gentex'].node_tree.nodes['Maintex'].image
-                        AlphaImage = ob.material_slots['Template ' + genType].material.node_tree.nodes['Gentex'].node_tree.nodes['Alphamask'].image
-                        #print(genType)
-                        #print(MainImage)
-                        #print(AlphaImage)
-                        
-                        if AlphaImage != None:
-                            OutlineMat.material.node_tree.nodes['outlinealpha'].image = AlphaImage
-                            OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs['Fac'].default_value = 0.0
-                        else:
-                            OutlineMat.material.node_tree.nodes['outlinealpha'].image = MainImage
-                            OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs['Fac'].default_value = 1.0
+                if not oneOutlineOnlyMode:
+                    bpy.context.view_layer.objects.active = ob
+                    for OutlineMat in ob.material_slots:
+                        if 'Outline ' in OutlineMat.name:
+                            genType = OutlineMat.name.replace('Outline ','')
+                            MainImage = ob.material_slots['Template ' + genType].material.node_tree.nodes['Gentex'].node_tree.nodes['Maintex'].image
+                            AlphaImage = ob.material_slots['Template ' + genType].material.node_tree.nodes['Gentex'].node_tree.nodes['Alphamask'].image
+                            #print(genType)
+                            #print(MainImage)
+                            #print(AlphaImage)
 
-                        OutlineMat.material.node_tree.nodes['outlinetransparency'].inputs['Fac'].default_value = 1.0
+                            if AlphaImage != None:
+                                OutlineMat.material.node_tree.nodes['outlinealpha'].image = AlphaImage
+                                OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs['Fac'].default_value = 0.0
+                            else:
+                                OutlineMat.material.node_tree.nodes['outlinealpha'].image = MainImage
+                                OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs['Fac'].default_value = 1.0
+
+                            OutlineMat.material.node_tree.nodes['outlinetransparency'].inputs['Fac'].default_value = 1.0
                 
-                #Add a general outline that covers the rest of the materials that don't need transparency
+                #Add a general outline that covers the rest of the materials on the object that don't need transparency
                 bpy.ops.object.modifier_add(type='SOLIDIFY')
                 mod = ob.modifiers[1]
                 mod.thickness = 0.003
