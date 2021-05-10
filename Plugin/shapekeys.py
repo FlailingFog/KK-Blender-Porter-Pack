@@ -155,7 +155,10 @@ class shape_keys(bpy.types.Operator):
             #EyelashPos is unused because Eyelashes work better and it overlaps with Eyelashes
             #eye_nal is unused because I have no idea what it does
             
-            eyes = [keyName.find("Eyes"), keyName.find("NoseT"), keyName.find("Eyelashes1")]
+            if debugMode:
+                eyes = [keyName.find("Eyes"), keyName.find("NoseT"), keyName.find("Eyelashes1"), keyName.find("EyeWhitesL")]
+            else:
+                eyes = [keyName.find("Eyes"), keyName.find("NoseT"), keyName.find("Eyelashes1")]
             if not all(v == -1 for v in eyes):
                 return 'Eyes'
             
@@ -291,3 +294,8 @@ class shape_keys(bpy.types.Operator):
         return {'FINISHED'}
 
 
+if __name__ == "__main__":
+    bpy.utils.register_class(shape_keys)
+
+    # test call
+    print((bpy.ops.kkb.shapekeys('INVOKE_DEFAULT')))
