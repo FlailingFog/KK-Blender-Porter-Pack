@@ -12,9 +12,12 @@ class PlaceholderProperties(PropertyGroup):
     inc_dec_int: IntProperty(
         name="Incr-Decr", min=1, max = 6, default=1, description="Set this to 2 or 3 if the baked texture is blurry")
     driver_bool : BoolProperty(
-    name="Enable or Disable", description="Enables debug mode if checked", default = False)
+    name="Enable or Disable", description="Check to save the partial shapekeys \nthat are used to generate the KK shapekeys.\nThese are useless on their own", default = False)
     shapekey_bool : BoolProperty(
-    name="Enable or Disable", description="Enables debug mode if checked", default = False)
+    name="Enable or Disable", description="Check to use experimental \nhip joint correction drivers", default = False)
+    textures_bool : BoolProperty(
+    name="Enable or Disable", description="Check to use one generic outline material \nas opposed to using several unique ones. \nChecking this may cause outline transparency issues.", default = False)
+        
         
 class KK_Panel(bpy.types.Panel):
     bl_idname = "KK_Panel"
@@ -30,7 +33,7 @@ class KK_Panel(bpy.types.Panel):
         row.operator('kkb.beforecats', text = '1 Run right after importing')
         row = layout.row()
         row.operator('kkb.shapekeys', text = '2 Fix shapekeys')
-        row.prop(context.scene.placeholder, "shapekey_bool", text = "Enable debug mode")
+        row.prop(context.scene.placeholder, "shapekey_bool", text = "Save partial shapekeys")
         row = layout.row()
         row.operator('kkb.separatebody', text = '3 Separate the body') 
         row = layout.row()
@@ -38,11 +41,12 @@ class KK_Panel(bpy.types.Panel):
         #row.prop(context.scene.placeholder, "my_bool", text = "Enable debug mode")
         row = layout.row()
         row.operator('kkb.bonedrivers', text = '5 Add bone drivers')
-        row.prop(context.scene.placeholder, "driver_bool", text = "Enable debug mode")
+        row.prop(context.scene.placeholder, "driver_bool", text = "Enable beta hip drivers")
         row = layout.row()
         row.operator('kkb.importtemplates', text = '6 Import material templates')
         row = layout.row()
         row.operator('kkb.importtextures', text = '7 Import textures')
+        row.prop(context.scene.placeholder, "textures_bool", text = "Use generic outline")
         row = layout.row()
         row.operator('kkb.bakematerials', text = '8 Bake material templates')
         row.prop(context.scene.placeholder, "inc_dec_int", text = 'Multiplier:')
