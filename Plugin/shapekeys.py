@@ -172,7 +172,7 @@ class shape_keys(bpy.types.Operator):
 
         #merge the sirome materials into one
         try:
-            while body.data.materials.find('cf_m_sirome_00') > body.data.materials.find('cf_m_sirome_00.001'):
+            while body.data.materials.find('cf_m_sirome_00') > body.data.materials.find('cf_m_sirome_00.001') and body.data.materials.find('cf_m_sirome_00.001') != -1:
                 bpy.ops.object.material_slot_move(direction='UP')
             bpy.ops.object.mode_set(mode='EDIT')
             bpy.context.object.active_material_index = body.data.materials.find('cf_m_sirome_00.001')
@@ -193,6 +193,7 @@ class shape_keys(bpy.types.Operator):
         #refresh the selection
         #bpy.ops.object.mode_set(mode = 'OBJECT')
         #bpy.ops.object.mode_set(mode = 'EDIT')
+        bm = bmesh.from_edit_mesh(body.data)
         bm.select_flush_mode()   
         body.data.update()
 
@@ -236,7 +237,10 @@ class shape_keys(bpy.types.Operator):
 
         bm.select_flush_mode()   
         body.data.update()
-
+        
+        #remove eyewhiter vertices from eyewhiteL group
+        bpy.ops.object.vertex_group_remove_from()
+        
         #make eyewhiter vertex group
         bpy.ops.object.vertex_group_add()
         bpy.ops.object.vertex_group_assign()
