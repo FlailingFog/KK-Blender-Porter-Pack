@@ -16,7 +16,7 @@ class PlaceholderProperties(PropertyGroup):
     shapekey_bool : BoolProperty(
     name="Enable or Disable", description="Check to save the partial shapekeys \nthat are used to generate the KK shapekeys.\nThese are useless on their own", default = False)
     textures_bool : BoolProperty(
-    name="Enable or Disable", description="Check to use one generic outline material \nas opposed to using several unique ones. \nChecking this may cause outline transparency issues.", default = False)
+    name="Enable or Disable", description="Check to use one generic outline material \nas opposed to using several unique ones. \nChecking this may cause outline transparency issues", default = False)
         
         
 class KK_Panel(bpy.types.Panel):
