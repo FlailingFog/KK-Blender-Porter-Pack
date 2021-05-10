@@ -32,27 +32,76 @@ class separate_Body(bpy.types.Operator):
         #go into edit mode and deselect everything
         bpy.ops.object.mode_set(mode = 'EDIT')
         bpy.ops.mesh.select_all(action = 'DESELECT')
-
-        #Select all body related materials
-        bodyMatList = ['cf_m_face_00', 'cf_m_mayuge_00', 'cf_m_noseline_00', 'cf_m_eyeline_00_up', 'cf_m_eyeline_down', 'cf_m_sirome_00', 'cf_m_sirome_00.001', 'cf_m_hitomi_00', 'cf_m_hitomi_00.001', 'cf_m_body', 'cf_m_tooth', 'cf_m_tang', 'cm_m_body']
-
-        for bodyMat in bodyMatList:
-            try:
-                bpy.context.object.active_material_index = body.data.materials.find(bodyMat)
-                bpy.ops.object.material_slot_select()
-            except:
-                print('material wasn\'t found: ' + bodyMat)
-
-        #Separate the body from everything else
-        bpy.ops.mesh.separate(type='SELECTED')
-        bpy.ops.object.mode_set(mode = 'OBJECT')
-
-        #rename objects, remove unused material slots
-        bpy.context.selected_objects[0].name = 'Clothes'
-        bpy.context.selected_objects[1].name = 'Body'
-
-        bpy.ops.object.material_slot_remove_unused()
+        
+        def separateMaterial(matList):
+            for mat in matList:
+                try:
+                    bpy.context.object.active_material_index = body.data.materials.find(mat)
+                    bpy.ops.object.material_slot_select()
+                except:
+                    print('material wasn\'t found: ' + mat)
+            bpy.ops.mesh.separate(type='SELECTED')
                     
+        #Select all body related materials, then separate it from everything else
+        #This puts hair/clothes in position 1 and the body in position 2
+        bodyMatList = ['cf_m_face_00', 'cf_m_mayuge_00', 'cf_m_noseline_00', 'cf_m_eyeline_00_up', 'cf_m_eyeline_down', 'cf_m_sirome_00', 'cf_m_sirome_00.001', 'cf_m_hitomi_00', 'cf_m_hitomi_00.001', 'cf_m_body', 'cf_m_tooth', 'cf_m_tang', 'cm_m_body']
+        separateMaterial(bodyMatList)
+
+        #Separate the shadowcast if any, placing it in position 3
+        try:
+            bpy.ops.mesh.select_all(action = 'DESELECT')
+            shadMatList = ['c_m_shadowcast', 'Standard']
+            separateMaterial(shadMatList)
+        except:
+            pass
+        
+        #Separate the bonelyfans mesh if any, placing it in position 4
+        try:
+            bpy.ops.mesh.select_all(action = 'DESELECT')
+            boneMatList = ['Bonelyfans']
+            separateMaterial(boneMatList)
+        except:
+            pass
+        
+        #rename objects, remove unused material slots
+        rename = bpy.context.selected_objects
+        rename[0].name = 'Clothes'
+        rename[1].name = 'Body'
+        try:
+            rename[2].name = 'Shadowcast'
+            rename[3].name = 'Bonelyfans'
+        except:
+            pass
+
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+        bpy.ops.object.material_slot_remove_unused()
+        
+        #and move the shadowcast/bonelyfans to their own collection
+        bpy.ops.object.select_all(action='DESELECT')
+        try:
+            rename[2].select_set(True)
+        except:
+            pass
+        try:
+            rename[3].select_set(True)
+        except:
+            pass
+        #don't even care
+        bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name="Shadowcast Collection")
+        
+        #hide the new collection
+        try:
+            bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children['Shadowcast Collection']
+            bpy.context.scene.view_layers[0].active_layer_collection.exclude = True
+        except:
+            try:
+                #maybe the collection is in the default Collection collection
+                bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children['Collection'].children['Shadowcast Collection']
+                bpy.context.scene.view_layers[0].active_layer_collection.exclude = True
+            except:
+                #maybe the collection is already hidden
+                pass
+        
         return {'FINISHED'}
 
 if __name__ == "__main__":
