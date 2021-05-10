@@ -557,8 +557,13 @@ class bone_drivers(bpy.types.Operator):
             #select the eye materials
             bpy.context.object.active_material_index = body.data.materials.find('cf_m_hitomi_00 (Instance)')
             bpy.ops.object.material_slot_select()
-            bpy.context.object.active_material_index = body.data.materials.find('cf_m_hitomi_00 (Instance).001')
-            bpy.ops.object.material_slot_select()
+            #Try to select the other eye if it wasn't merged
+            try:
+                bpy.context.object.active_material_index = body.data.materials.find('cf_m_hitomi_00 (Instance).001')
+                bpy.ops.object.material_slot_select()
+            except:
+                #the eye was already merged, skip
+                pass
             #then assign them to the Eyex_L group
             bpy.ops.object.vertex_group_assign()
 
