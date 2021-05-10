@@ -401,6 +401,9 @@ class shape_keys(bpy.types.Operator):
         #make the basis shapekey active
         body.active_shape_key_index = 0
         
+        #and reset the pivot point to median
+        bpy.context.scene.tool_settings.transform_pivot_point = 'MEDIAN_POINT'
+        
         return {'FINISHED'}
 
 if __name__ == "__main__":
