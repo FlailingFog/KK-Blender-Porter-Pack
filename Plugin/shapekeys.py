@@ -10,6 +10,7 @@ Tested in Blender 2.91
 '''
 
 import bpy
+import bmesh
 
 class shape_keys(bpy.types.Operator):
     bl_idname = "kkb.shapekeys"
@@ -133,6 +134,7 @@ class shape_keys(bpy.types.Operator):
                 
                 try:
                     #delete the KK shapekeys if the original shapekeys still exist
+                    #fucking thing doesn't even work
                     if originalExists and 'KK ' in keyblock.name and 'KK Eyebrows' not in keyblock.name:
                         body.active_shape_key_index = body.data.shape_keys.key_blocks.keys().index(keyblock.name)
                         bpy.ops.object.shape_key_remove()
@@ -147,21 +149,121 @@ class shape_keys(bpy.types.Operator):
                     pass
         
         ########################################################
+        #Fix the eyewhites/sirome shapekeys
+
+        body = bpy.data.objects['Body']
+        body.active_shape_key_index = 0
+        
+        #Remove the "Instance" tag on all materials
+        materialCount = len(body.data.materials.values())-1
+        currentMat=0
+        while currentMat <= materialCount:
+            body.data.materials[currentMat].name = body.data.materials[currentMat].name.replace(' (Instance)','')
+            currentMat+=1
+            
+        #Deselect all objects
+        bpy.ops.object.select_all(action='DESELECT')
+        #Select the Body object
+        body.select_set(True)
+        #and make it active
+        bpy.context.view_layer.objects.active = body
+
+        bpy.context.object.active_material_index = body.data.materials.find('cf_m_sirome_00')
+
+        #merge the sirome materials into one
+        try:
+            while body.data.materials.find('cf_m_sirome_00') > body.data.materials.find('cf_m_sirome_00.001'):
+                bpy.ops.object.material_slot_move(direction='UP')
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.context.object.active_material_index = body.data.materials.find('cf_m_sirome_00.001')
+            bpy.ops.material_slot_select()
+            bpy.context.object.active_material_index = body.data.materials.find('cf_m_sirome_00')
+            bpy.ops.material_slot_assign()
+
+        except:
+            #the sirome material was already merged
+
+        #delete the right eyewhites mesh
+        bpy.ops.object.mode_set(mode = 'EDIT')
+        bpy.ops.mesh.select_all(action = 'DESELECT')
+        bpy.context.object.active_material_index = body.data.materials.find('cf_m_sirome_00')
+        bpy.ops.object.material_slot_select()
+
+        #refresh the selection
+        #bpy.ops.object.mode_set(mode = 'OBJECT')
+        #bpy.ops.object.mode_set(mode = 'EDIT')
+        bm.select_flush_mode()   
+        body.data.update()
+
+        bm = bmesh.from_edit_mesh(body.data)
+        vgVerts = [v for v in bm.verts if v.select]
+
+        for v in vgVerts:
+            v.select = (v.co.x < 0)
+
+        vgVerts = [v for v in bm.verts if v.select]
+
+        bm.select_flush_mode()   
+        body.data.update()
+
+        bmesh.ops.delete(bm, geom=vgVerts, context='VERTS')
+        bmesh.update_edit_mesh(body.data)
+
+        #assign the left eyewhites into a vertex group
+        bpy.ops.mesh.select_all(action = 'DESELECT')
+        bpy.context.object.active_material_index = body.data.materials.find('cf_m_sirome_00')
+        bpy.ops.object.material_slot_select()
+
+        bm = bmesh.from_edit_mesh(body.data)
+        vgVerts = [v for v in bm.verts if v.select]
+
+        bpy.ops.object.vertex_group_add()
+        bpy.ops.object.vertex_group_assign()
+        body.vertex_groups.active.name = "EyewhitesL"
+
+        #duplicate the left eyewhites
+        bpy.ops.mesh.duplicate_move(MESH_OT_duplicate={"mode":1}, TRANSFORM_OT_translate={"value":(0, 0, 0), "orient_type":'GLOBAL', "orient_matrix":((0, 0, 0), (0, 0, 0), (0, 0, 0)), "orient_matrix_type":'GLOBAL', "constraint_axis":(False, False, False), "mirror":False, "use_proportional_edit":False, "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "use_proportional_connected":False, "use_proportional_projected":False, "snap":False, "snap_target":'CLOSEST', "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "cursor_transform":False, "texture_space":False, "remove_on_cancel":False, "release_confirm":False, "use_accurate":False, "use_automerge_and_split":False})
+        bpy.context.scene.tool_settings.transform_pivot_point = 'CURSOR'
+        bpy.context.scene.cursor.location = (0.0, 0.0, 0.0)
+
+        #and mirror it on the x axis to recreate the right eyewhites
+        bm = bmesh.from_edit_mesh(body.data)
+        vgVerts = [v for v in bm.verts if v.select]
+
+        for v in vgVerts:
+            v.co.x *=-1
+
+        bm.select_flush_mode()   
+        body.data.update()
+
+        #make eyewhiter vertex group
+        bpy.ops.object.vertex_group_add()
+        bpy.ops.object.vertex_group_assign()
+        body.vertex_groups.active.name = "EyewhitesR"
+
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+
+        #make eyewhiteL shapekeys only affect the eyewhiteL vertex group
+        #ditto for right
+        for shapekey in bpy.data.shape_keys:
+            for keyblock in shapekey.key_blocks:
+                if 'EyeWhitesL_' in keyblock.name:
+                    keyblock.vertex_group = 'EyewhitesL'
+                elif 'EyeWhitesR_' in keyblock.name:
+                    keyblock.vertex_group = 'EyewhitesR'
+
+        ########################################################
         #Combine the shapekeys
 
         #make the basis shapekey active
         body.active_shape_key_index = 0
 
         def whatCat(keyName):
-            #EyeWhites are unused because the shape keys for left and right eyes both affect the left eye for some reason
             #Eyelashes1 is used because I couldn't see a difference between the other one and they overlap if both are used
             #EyelashPos is unused because Eyelashes work better and it overlaps with Eyelashes
-            #eye_nal is unused because I have no idea what it does
+            #eye_nal is unused because it apparently screws with face accessories
             
-            if debugMode:
-                eyes = [keyName.find("Eyes"), keyName.find("NoseT"), keyName.find("Eyelashes1"), keyName.find("EyeWhitesL")]
-            else:
-                eyes = [keyName.find("Eyes"), keyName.find("NoseT"), keyName.find("Eyelashes1")]
+            eyes = [keyName.find("Eyes"), keyName.find("NoseT"), keyName.find("Eyelashes1"), keyName.find("EyeWhitesL"), keyName.find("EyeWhitesR")]
             if not all(v == -1 for v in eyes):
                 return 'Eyes'
             
@@ -295,7 +397,6 @@ class shape_keys(bpy.types.Operator):
         body.active_shape_key_index = 0
         
         return {'FINISHED'}
-
 
 if __name__ == "__main__":
     bpy.utils.register_class(shape_keys)
