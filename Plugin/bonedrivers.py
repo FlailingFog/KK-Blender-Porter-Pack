@@ -4,6 +4,7 @@ AFTER CATS (BONE DRIVERS) SCRIPT
 - Moves the Knee and Elbow IKs a little closer to the body
 - Adds drivers for twist / joint correction bones for the arms, hands, legs and butt
 - Adds an "Eye Controller" bone to the top of the head and UV warp modifiers on the Body object to make the eyes work
+- Scales and repositions some bones
 Usage:
 - Make sure the Fix Model button has already been used in CATS
 - Make sure the After CATS (Clean Armature) script has been run
@@ -386,7 +387,6 @@ class bone_drivers(bpy.types.Operator):
                     target.rotation_mode = 'QUATERNION'
 
             def setLegDriver (bonetarget, drivertarget, xmult, ymult1, ymult2, zmult, rotatexmult1, rotatexmult2):
-            
                 bpy.ops.object.mode_set(mode='POSE')
                 bone = bpy.data.objects['Armature'].pose.bones[bonetarget]
                 targetbonelength = str(round((bpy.data.objects['Armature'].pose.bones[drivertarget].head - bpy.data.objects['Armature'].pose.bones[drivertarget].tail).length,2))
@@ -394,51 +394,73 @@ class bone_drivers(bpy.types.Operator):
                 driverx = bone.driver_add('location', 0)
                 drivery = bone.driver_add('location', 1)
                 driverz = bone.driver_add('location', 2)
-                rotatedriverx = bone.driver_add('rotation_quaternion', 1)
-                rotatedriverw = bone.driver_add('rotation_quaternion', 0)
+                #rotatedriverx = bone.driver_add('rotation_quaternion', 1)
+                #rotatedriverw = bone.driver_add('rotation_quaternion', 0)
                 
                 makeHipXYZ(driverx, drivertarget)
                 makeHipXYZ(drivery, drivertarget)
                 makeHipXYZ(driverz, drivertarget)
-                makeHipXYZ(rotatedriverx, drivertarget)
-                makeHipXYZ(rotatedriverw, bone.name)
+                #makeHipXYZ(rotatedriverx, drivertarget)
+                #makeHipXYZ(rotatedriverw, bone.name)
+                
+                #define four states for leg rotation:
+                #1) leg rotates up on x axis 90deg
+                #2) leg rotates out to hand on y axis 90deg
+                #3) leg rotates up on x axis 90deg, //and then// out on z axis 90deg
+                #4) leg rotates out on y axis 90deg, //and then// forward on z axis 90deg
                 
                 if 'Right' in drivertarget:
-                    driverx.driver.expression = 'zcomponent*' + targetbonelength + '*' + xmult + '+ycomponent*2*' + xmult + ' if zcomponent > 0 else 0'
+                    #only moves right/left in states 3 and 4
+                    #these are the only states where y and z are nonzero
+                    driverx.driver.expression = '-ycomponent*zcomponent*2.92'
                     
-                    drivery.driver.expression = '(1-ycomponent)*(1-wcomponent)*(3 - xcomponent*' + targetbonelength + '*' + ymult1 + '*ycomponent if xcomponent < 0 else 0) if ycomponent >= 0 else (1-ycomponent)*(1-wcomponent)*(3 - zcomponent*' + targetbonelength + '*-ycomponent*' + ymult2 + ')'
+                    #moves upward in all four states
+                    #it comes out to roughly the same height for each state
+                    #disabled when leg is rotated backwards on the x axis
+                    drivery.driver.expression = '(1-wcomponent)*3 if xcomponent < 0 else 0'
                     
-                    driverz.driver.expression = '(1-ycomponent)*(1-wcomponent)*(3 - xcomponent*' + targetbonelength + '*' + zmult + '*ycomponent if xcomponent < 0 else 0) if ycomponent >= 0 else (1-ycomponent)*(1-wcomponent)*(3 - xcomponent*' + targetbonelength + '*ycomponent*' + zmult + ')'
+                    #only moves outward in state 1 or state 4
+                    #state 1 is the only state with a negative x component and zero z component
+                    #it should move more outward in state 1 vs state 4
+                    driverz.driver.expression = '1.15*((wcomponent*-ycomponent) + (wcomponent*-ycomponent)*(0.707-zcomponent)) + 1.414*(0.707-zcomponent)*(-xcomponent) if xcomponent<=0 else 0'#1.15*((wcomponent*-ycomponent) + (wcomponent*-ycomponent)*(0.707-zcomponent))'
+          
+                    #only rotates in state 1
+                    #state 1 is the only state with a negative x component and zero z component
+                    #rotatedriverx.driver.expression = '-0.5*(0.707-zcomponent)*(-xcomponent) if xcomponent<=0 else 0'
                     
-                    #this rotates but skips around
-                    rotatedriverx.driver.expression = '(xcomponent*' + targetbonelength + '*' + rotatexmult1 + ' if xcomponent < 0 else 0)' + 'if abs(xcomponent)' + '>' +  'abs(ycomponent) else ycomponent*' + targetbonelength + '*' + rotatexmult2
-                
                     #Quaternion rotation needs to be "balanced", but blender doesn't appear to do this automatically when drivers are used
-                    #Sets W to square root of 1 - (x^2 + y^2 + z^2) using approximations (sort of similar to the quake 3 method)
+                    #Sets W to square root of 1 - (x^2 + y^2 + z^2) using approximations
                     #it's done this way to keep Blender's python security checker happy
-                    rotatedriverw.driver.expression = 'log(2 - xcomponent*xcomponent - ycomponent*ycomponent - zcomponent*zcomponent,2)'
+                    #rotatedriverw.driver.expression = 'log(2 - xcomponent*xcomponent - ycomponent*ycomponent - zcomponent*zcomponent,2)'
+                    
+                    #give the twist bone a copy rotation instead of that
+                    #this works well enough
+                    bone = bpy.data.objects['Armature'].pose.bones[bonetarget]
+                    bone.constraints.new("COPY_ROTATION")
+                    bone.constraints[0].target=bpy.data.objects['Armature']
+                    bone.constraints[0].subtarget=bpy.data.objects['Armature'].data.bones[drivertarget].name
+                    bone.constraints[0].influence=0.558
+                    bone.constraints[0].invert_z=True
+                    bone.constraints[0].target_space = 'LOCAL_WITH_PARENT'
+                    bone.constraints[0].owner_space = 'LOCAL_WITH_PARENT'
                     
                 #Left leg has different expressions
                 else:
-                    driverx.driver.expression = '-zcomponent*' + targetbonelength + '*' + xmult + '+ycomponent*2*' + xmult + ' if zcomponent > 0 else 0'
+                    driverx.driver.expression = 'ycomponent*zcomponent*2.92'
+                    drivery.driver.expression = '(1-wcomponent)*3 if xcomponent < 0 else 0'
+                    driverz.driver.expression = '1.15*((wcomponent*-ycomponent) + (wcomponent*-ycomponent)*(-0.707+zcomponent)) + 1.414*(0.707+zcomponent)*(-xcomponent) if xcomponent<=0 else 0'
                     
-                    drivery.driver.expression = '(xcomponent*' + targetbonelength + '*' + ymult1 + '-ycomponent*' + ymult2 + ' if xcomponent < 0 else 0)' + 'if abs(xcomponent)' + '>' +  'abs(zcomponent) else -zcomponent*' + targetbonelength + '*' + ymult2
-                    
-                    driverz.driver.expression = 'xcomponent*' + targetbonelength + '*' + zmult + ' if xcomponent < 0 and ycomponent < 0 else 0'
-
-                    rotatedriverx.driver.expression = '(xcomponent*' + targetbonelength + '*' + rotatexmult1 + ' if xcomponent < 0 else 0)' + 'if abs(xcomponent)' + '>' +  'abs(ycomponent) else ycomponent*' + targetbonelength + '*' + rotatexmult2
-                    
-                    #Sets W to square root of 1 - (x^2 + y^2 + z^2) using approximations
-                    #it's done this way to keep Blender's python security checker happy
-                    rotatedriverw.driver.expression = 'log(2 - xcomponent*xcomponent - ycomponent*ycomponent - zcomponent*zcomponent,2)'
+                    bone = bpy.data.objects['Armature'].pose.bones[bonetarget]
+                    bone.constraints.new("COPY_ROTATION")
+                    bone.constraints[0].target=bpy.data.objects['Armature']
+                    bone.constraints[0].subtarget=bpy.data.objects['Armature'].data.bones[drivertarget].name
+                    bone.constraints[0].influence=0.558
+                    bone.constraints[0].invert_z=True
+                    bone.constraints[0].target_space = 'LOCAL_WITH_PARENT'
+                    bone.constraints[0].owner_space = 'LOCAL_WITH_PARENT'
                 
-            setLegDriver('Leg_R_Twist', 'Right leg', '-0.3',    '1', '1',    '0.6',    '0.5', '1')
-            setDriver('Leg_R_Twist', 'rotation_quaternion', 3, 'Right leg', 'ROT_Z', 'LOCAL_SPACE', 'QUATERNION', '-0.6', 'rotate')
-            setDriver('Leg_R_Twist', 'rotation_quaternion', 2, 'Right leg', 'ROT_Y', 'LOCAL_SPACE', 'QUATERNION', '-0.6', 'rotatePos')
-
-            setLegDriver('Leg_L_Twist', 'Left leg', '-0.3',    '1', '1',    '0.6',    '0.5', '1')
-            setDriver('Leg_L_Twist', 'rotation_quaternion', 3, 'Left leg', 'ROT_Z', 'LOCAL_SPACE', 'QUATERNION', '-0.6', 'rotate')
-            setDriver('Leg_L_Twist', 'rotation_quaternion', 2, 'Left leg', 'ROT_Y', 'LOCAL_SPACE', 'QUATERNION', '-0.6', 'rotateNeg')
+            setLegDriver('Leg_R_Twist', 'Right leg', '0.66',    '1', '1',    '0.6',    '0.5', '1')
+            setLegDriver('Leg_L_Twist', 'Left leg', '-0.6',    '1', '1',    '0.6',    '0.5', '1')
 
             #Cf_D_Siri_L/R_Twist also has a unique driver expression for movement/rotation
             def setButtDriver (bonetarget, drivertarget, ymult1, ymult2, ymult3, zmult1, zmult2, xrotatemult1, xrotatemult2, zrotatemult1, zrotatemult2):
@@ -448,31 +470,37 @@ class bone_drivers(bpy.types.Operator):
                 targetbonelength = str(round((bpy.data.objects['Armature'].pose.bones[drivertarget].head - bpy.data.objects['Armature'].pose.bones[drivertarget].tail).length,2))
                 
                 drivery = bone.driver_add('location', 1)
-                driverz = bone.driver_add('location', 2)
-                
                 makeHipXYZ(drivery, drivertarget)
-                makeHipXYZ(driverz, drivertarget)
 
-                drivery.driver.expression = '(xcomponent*' + targetbonelength + '*' + ymult1 + '+ycomponent*' + ymult3 + ' if xcomponent < 0 else 0)' + 'if abs(xcomponent)' + '>' +  'abs(zcomponent) else zcomponent*' + targetbonelength + '*' + ymult2
+                drivery.driver.expression = '(1-wcomponent)*.5 if xcomponent < 0 else 0'
                 
-                driverz.driver.expression = '(xcomponent*' + targetbonelength + '*' + zmult1 + ' if xcomponent < 0 else 0)' + 'if abs(xcomponent)' + '>' +  'abs(zcomponent) else zcomponent*' + targetbonelength + '*' + zmult2
-                
-                rotatedriverx = bone.driver_add('rotation_quaternion', 1)
-                rotatedriverz = bone.driver_add('rotation_quaternion', 3)
-                rotatedriverw = bone.driver_add('rotation_quaternion', 0)
-                makeHipXYZ(rotatedriverx, drivertarget)
-                makeHipXYZ(rotatedriverz, drivertarget)
-                makeHipXYZ(rotatedriverw, bonetarget)
-                
-                rotatedriverx.driver.expression = 'xcomponent*' + targetbonelength + '*' + xrotatemult1 + ' if xcomponent < 0 else xcomponent*' + targetbonelength + '*' + xrotatemult2
-                
-                rotatedriverz.driver.expression = '(xcomponent*' + targetbonelength + '*' + zrotatemult1 + ' if xcomponent < 0 else 0)' + 'if abs(xcomponent)' + '>' +  'abs(zcomponent) else zcomponent*' + targetbonelength + '*' + zrotatemult2
-                
-                rotatedriverw.driver.expression = 'log(2 - xcomponent*xcomponent - ycomponent*ycomponent - zcomponent*zcomponent,2)'
+                bone = bpy.data.objects['Armature'].pose.bones[bonetarget]
+                bone.constraints.new("COPY_ROTATION")
+                bone.constraints[0].target=bpy.data.objects['Armature']
+                bone.constraints[0].subtarget=bpy.data.objects['Armature'].data.bones[drivertarget].name
+                bone.constraints[0].influence=0.4
+                bone.constraints[0].use_y=False
+                bone.constraints[0].invert_z=True
+                bone.constraints[0].target_space = 'LOCAL_WITH_PARENT'
+                bone.constraints[0].owner_space = 'LOCAL_WITH_PARENT'
 
-            #these rotate but they skip around
-            setButtDriver('Cf_D_Siri_R_Twist', 'Right leg', '-0.05', '-0.06', '0.05',    '0.05', '-0.06',    '0.1', '0.5',    '0.2', '-0.2')
-            setButtDriver('Cf_D_Siri_L_Twist', 'Left leg',  '0.05', '0.06', '-0.05',    '0.05', '-0.06',    '0.1', '0.5',    '-0.2', '0.2')
+            setButtDriver('Cf_D_Siri01_R_Twist', 'Right leg', '-0.05', '-0.06', '0.05',    '0.05', '-0.06',    '0.1', '0.5',    '0.2', '-0.2')
+            setButtDriver('Cf_D_Siri01_L_Twist', 'Left leg',  '0.05', '0.06', '-0.05',    '0.05', '-0.06',    '0.1', '0.5',    '-0.2', '0.2')
+
+            #give the waist a copy rotation as well
+            def setWaistDriver(bonetarget, drivertarget):
+                bone = bpy.data.objects['Armature'].pose.bones[bonetarget]
+                const = bone.constraints.new("COPY_ROTATION")
+                const.target=bpy.data.objects['Armature']
+                const.subtarget=bpy.data.objects['Armature'].data.bones[drivertarget].name
+                const.influence=0.1
+                const.use_y=False
+                const.use_z=False
+                const.target_space = 'LOCAL_WITH_PARENT'
+                const.owner_space = 'LOCAL_WITH_PARENT'
+                
+            setWaistDriver('Waist02_Twist', 'Left leg')
+            setWaistDriver('Waist02_Twist', 'Right leg')
 
         # Tilt the bust bone and make it smaller
         bpy.ops.object.mode_set(mode='EDIT')
