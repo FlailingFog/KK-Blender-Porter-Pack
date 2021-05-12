@@ -245,6 +245,9 @@ class shape_keys(bpy.types.Operator):
         bpy.ops.object.vertex_group_add()
         bpy.ops.object.vertex_group_assign()
         body.vertex_groups.active.name = "EyewhitesR"
+        
+        #then recalculate normals for the right group to avoid outline issues later on
+        bpy.ops.mesh.normals_make_consistent(inside=False)
 
         bpy.ops.object.mode_set(mode = 'OBJECT')
 
