@@ -42,6 +42,7 @@ class import_Textures(bpy.types.Operator):
             else:
                 #throw an error
                 bpy.context.window_manager.popup_menu(showError, title="Error", icon='ERROR')
+                return
             
             for image in files:
                 bpy.ops.image.open(filepath=str(image))
