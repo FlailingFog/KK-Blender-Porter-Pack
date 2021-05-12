@@ -25,13 +25,13 @@ class import_Textures(bpy.types.Operator):
     structure = None
     
     def execute(self, context):
-        runIt():
+        def runIt():
             scene = context.scene.placeholder
             oneOutlineOnlyMode = scene.textures_bool
             
             #Stop if this is the wrong folder
             def showError(self, context):
-                self.layout.label(text="Textures folder was not selected.")
+                self.layout.label(text="Textures folder was not selected. (Hint: go into the \"Textures\" folder before confirming)")
             
             print('Getting textures from: ' + self.directory)
             #lazy check to see if the user actually opened the Textures folder
