@@ -27,7 +27,8 @@ class import_Textures(bpy.types.Operator):
     def execute(self, context):
         def runIt():
             scene = context.scene.placeholder
-            oneOutlineOnlyMode = scene.textures_bool
+            oneOutlineOnlyMode = scene.textureoutline_bool
+            folderCheckEnabled = scene.texturecheck_bool
             
             #Stop if this is the wrong folder
             def showError(self, context):
@@ -42,7 +43,8 @@ class import_Textures(bpy.types.Operator):
             else:
                 #throw an error
                 bpy.context.window_manager.popup_menu(showError, title="Error", icon='ERROR')
-                return
+                if folderCheckEnabled:
+                    return
             
             for image in files:
                 bpy.ops.image.open(filepath=str(image))
