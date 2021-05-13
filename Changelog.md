@@ -1,3 +1,18 @@
+### Changes for V4.2:
+* The eyewhites shapekeys are now used when generating the KK shapekeys
+    * This will prevent gaps between the eyewhite and the lower eyelash for certain expressions
+* Fully transparent materials and materials that are a solid color should properly bake now
+* The Separate Body button will now attempt to separate the shadowcast and bonelyfans meshes automatically, then shove them into a collection
+* The Import Textures button will now check if the user has actually selected the Textures folder and will abort if they chose the wrong folder
+    * This was done to prevent texture loading issues
+    * This check can be disabled with a toggle
+* Adjusted panel layout
+* Added better joint correction for the hip bone
+    * In order to use them, the "Enable hip drivers" toggle needs to be enabled before pressing the "5 Add bone drivers" button
+* Better descriptions of what each toggle does
+* Made using multiple outlines optional through a toggle
+* The hair object can now be named either "hair" or "Hair"
+
 ### Changes for V4.1.2:
 * Added an easier way to scale and move UVs with the "Scale Vector" node group.
     * This replaces the mapping node setup used for the eyes, blush, etc
