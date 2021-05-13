@@ -15,9 +15,11 @@ class PlaceholderProperties(PropertyGroup):
     name="Enable or Disable", description="Check to use experimental \nhip joint correction drivers", default = False)
     shapekey_bool : BoolProperty(
     name="Enable or Disable", description="Check to save the partial shapekeys \nthat are used to generate the KK shapekeys.\nThese are useless on their own", default = False)
-    textures_bool : BoolProperty(
+    textureoutline_bool : BoolProperty(
     name="Enable or Disable", description="Check to use one generic outline material \nas opposed to using several unique ones. \nChecking this may cause outline transparency issues", default = False)
-        
+    texturecheck_bool : BoolProperty(
+    name="Enable or Disable", description="Uncheck this if you're having issues loading the textures folder", default = True)
+   
         
 class KK_Panel(bpy.types.Panel):
     bl_idname = "KK_Panel"
@@ -29,28 +31,43 @@ class KK_Panel(bpy.types.Panel):
     def draw(self,context):
         layout = self.layout
         
-        row = layout.row()
+        col = layout.column(align=True)
+        row = col.row(align=True)
         row.operator('kkb.beforecats', text = '1 Run right after importing')
-        row = layout.row()
-        row.operator('kkb.shapekeys', text = '2 Fix shapekeys')
-        row.prop(context.scene.placeholder, "shapekey_bool", text = "Save partial shapekeys")
-        row = layout.row()
+        
+        row = col.row(align=True)
+        split = row.split(align=True, percentage=0.7)
+        split.operator('kkb.shapekeys', text = '2 Fix shapekeys')
+        split.prop(context.scene.placeholder, "shapekey_bool", text = "Save partial shapekeys")
+        
+        row = col.row(align=True)
         row.operator('kkb.separatebody', text = '3 Separate the body') 
-        row = layout.row()
+        
+        row = col.row(align=True)
         row.operator('kkb.cleanarmature', text = '4 Clean armature')
-        #row.prop(context.scene.placeholder, "my_bool", text = "Enable debug mode")
-        row = layout.row()
-        row.operator('kkb.bonedrivers', text = '5 Add bone drivers')
-        row.prop(context.scene.placeholder, "driver_bool", text = "Enable beta hip drivers")
-        row = layout.row()
+        
+        row = col.row(align=True)
+        split = row.split(align=True, percentage=0.7)
+        split.operator('kkb.bonedrivers', text = '5 Add bone drivers')
+        split.prop(context.scene.placeholder, "driver_bool", text = "Enable beta hip drivers")
+        
+        row = col.row(align=True)
         row.operator('kkb.importtemplates', text = '6 Import material templates')
-        row = layout.row()
-        row.operator('kkb.importtextures', text = '7 Import textures')
-        row.prop(context.scene.placeholder, "textures_bool", text = "Use generic outline")
-        row = layout.row()
-        row.operator('kkb.bakematerials', text = '8 Bake material templates')
-        row.prop(context.scene.placeholder, "inc_dec_int", text = 'Multiplier:')
-        row = layout.row()
+        
+        row = col.row(align=True)
+        split = row.split(align=True, percentage=0.5)
+        split.operator('kkb.importtextures', text = '7 Import textures')
+        split = split.split(align=True, percentage=0.5)
+        split.prop(context.scene.placeholder, "textureoutline_bool", text = "Use generic outline")
+        split.prop(context.scene.placeholder, "texturecheck_bool", text = "Check folder before execution")
+        
+        row = col.row(align=True)
+        split = row.split(align=True, percentage=0.7)
+        split.operator('kkb.bakematerials', text = '8 Bake material templates')
+        split.prop(context.scene.placeholder, "inc_dec_int", text = 'Multiplier:')
+        
+        row = col.row(align=True)
         row.operator('kkb.applymaterials', text = '9 Apply material templates')
-        row = layout.row()
+        
+        row = col.row(align=True)
         row.operator('kkb.selectbones', text = '10 Select unused bones')
