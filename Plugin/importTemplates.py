@@ -89,6 +89,13 @@ class import_Templates(Operator, ImportHelper):
         tongueTemplate.node_tree.nodes['KKShader'].node_tree = newNode
         newNode.name = 'Tongue Shader'
         
+        #Make sure the hair object's name is capitalized
+        try:
+            bpy.data.objects['hair'].name = 'Hair'
+        except:
+            #The hair object's name was already correctly capitalized
+            pass
+        
         #Replace all of the Hair materials with hair templates and name accordingly
         hair = bpy.data.objects['Hair']
         for original in hair.material_slots:
