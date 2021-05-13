@@ -248,12 +248,11 @@ class bake_Materials(bpy.types.Operator):
                                         
                                         #check if a render has been done at these dimensions for this material
                                         if dimension not in dupedetect:
-                                            print('3')
                                             #if it hasn't, render this one
                                             bpy.context.scene.render.resolution_x=currentImageX * resolutionMultiplier
                                             bpy.context.scene.render.resolution_y=currentImageY * resolutionMultiplier
                                             dupedetect.append(dimension)
-                                            print('rendering a ' + dimension + ' sized file')
+                                            #print('rendering a ' + dimension + ' sized file')
                                             
                                             #set the material
                                             bpy.data.objects['imageplane'].data.materials[0] = currentmaterial
@@ -274,14 +273,35 @@ class bake_Materials(bpy.types.Operator):
                                             renderedSomething = True
                                             
                                         else:
-                                            print('already did this dimension for this material: ' + dimension)
-                                            print(currentmaterial)
+                                            print('already did this dimension for this material: ' + dimension + ' || ' + currentmaterial)
                                     except:
                                         #An image node was present but there was no image loaded
                                         pass
                         except:
                             #this node doesn't have a node tree
                             pass
+                    
+                    #if nothing was rendered at all for this material, render a very small (64px) failsafe image
+                    #this will let the script catch fully transparent materials or materials that are solid colors
+                    if not renderedSomething:
+                        bpy.context.scene.render.resolution_x=64
+                        bpy.context.scene.render.resolution_y=64
+                        
+                        #set the material
+                        bpy.data.objects['imageplane'].data.materials[0] = currentmaterial
+                        
+                        #then render it
+                        bpy.context.scene.render.filepath = folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + '64x64' + ' ' + sunstate
+                        bpy.context.scene.render.image_settings.file_format=exportType
+                        bpy.context.scene.render.image_settings.color_mode=exportColormode
+                        #bpy.context.scene.render.image_settings.color_depth='16'
+                        
+                        print('rendering this file:' + bpy.context.scene.render.filepath)
+                        bpy.ops.render.render(write_still = True)
+                        #print(imageplane.data.materials[0])
+                        
+                        #reset folderpath after render
+                        bpy.context.scene.render.filepath = folderpath
                     
                     #reset dupedetect array for the next material
                     dupedetect = []
