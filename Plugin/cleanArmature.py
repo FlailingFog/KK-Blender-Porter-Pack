@@ -2,6 +2,7 @@
 AFTER CATS (CLEAN ARMATURE) SCRIPT
 - Hides all bones that aren't in the bonelist
 - Connects the finger bones that CATS sometimes misses for koikatsu imports
+- Corrects the toe bones on the better penetration armature
 Usage:
 - Make sure the Fix Model button has already been used in CATS
 - Run the script
@@ -29,7 +30,7 @@ class clean_Armature(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='POSE')
         
         #main bone list
-        coreList = ['Cf_Pv_Knee_L', 'MiddleFinger1_L', 'LittleFinger3_R', 'Left ankle', 'Left wrist', 'AH1_R', 'Eyesx', 'Right knee', 'LittleFinger1_L', 'Right elbow', 'Cf_Pv_Foot_R', 'LittleFinger3_L', 'ToeTipIK_R', 'IndexFinger2_R', 'MiddleFinger2_L', 'IndexFinger1_L', 'Left arm', 'IndexFinger3_R', 'MiddleFinger2_R', 'MiddleFinger1_R', 'IndexFinger1_R', 'Right ankle', 'Thumb2_R', 'Cf_Pv_Elbo_L', 'Left leg', 'Cf_D_Siri_L', 'Spine', 'Sk_04_04', 'Sk_05_03', 'Kokan', 'Right leg', 'RingFinger3_L', 'MiddleFinger3_L', 'Sk_07_02', 'Neck', 'Thumb1_L', 'MiddleFinger3_R', 'RingFinger1_R', 'Thumb0_L', 'IndexFinger2_L', 'Thumb1_R', 'RingFinger2_R', 'Thumb0_R', 'Left elbow', 'IndexFinger3_L', 'Left shoulder', 'Cf_Pv_Hand_R', 'Right wrist', 'RingFinger3_R', 'Thumb2_L', 'Cf_Pv_Knee_R', 'Cf_Pv_Hand_L', 'Head', 'Left knee', 'Hips', 'Cf_Pv_Foot_L', 'LittleFinger1_R', 'LittleFinger2_L', 'RingFinger1_L', 'Cf_Pv_Elbo_R', 'LittleFinger2_R', 'ToeTipIK_L', 'Right shoulder', 'Right arm', 'Chest', 'Cf_D_Bust00', 'RingFinger2_L', 'AH1_L', 'Right toe', 'Left toe']
+        coreList = ['Cf_Pv_Knee_L', 'MiddleFinger1_L', 'LittleFinger3_R', 'Left ankle', 'Left wrist', 'AH1_R', 'Eyesx', 'Right knee', 'LittleFinger1_L', 'Right elbow', 'Cf_Pv_Foot_R', 'LittleFinger3_L', 'ToeTipIK_R', 'IndexFinger2_R', 'MiddleFinger2_L', 'IndexFinger1_L', 'Left arm', 'IndexFinger3_R', 'MiddleFinger2_R', 'MiddleFinger1_R', 'IndexFinger1_R', 'Right ankle', 'Thumb2_R', 'Cf_Pv_Elbo_L', 'Left leg', 'Cf_D_Siri_L', 'Spine', 'Sk_04_04', 'Sk_05_03', 'Right leg', 'RingFinger3_L', 'MiddleFinger3_L', 'Sk_07_02', 'Neck', 'Thumb1_L', 'MiddleFinger3_R', 'RingFinger1_R', 'Thumb0_L', 'IndexFinger2_L', 'Thumb1_R', 'RingFinger2_R', 'Thumb0_R', 'Left elbow', 'IndexFinger3_L', 'Left shoulder', 'Cf_Pv_Hand_R', 'Right wrist', 'RingFinger3_R', 'Thumb2_L', 'Cf_Pv_Knee_R', 'Cf_Pv_Hand_L', 'Head', 'Left knee', 'Hips', 'Cf_Pv_Foot_L', 'LittleFinger1_R', 'LittleFinger2_L', 'RingFinger1_L', 'Cf_Pv_Elbo_R', 'LittleFinger2_R', 'ToeTipIK_L', 'Right shoulder', 'Right arm', 'Chest', 'Cf_D_Bust00', 'RingFinger2_L', 'AH1_L', 'Right toe', 'Left toe']
         
         #IK bone list
         nonIK = ['Left elbow', 'Right elbow', 'Left arm', 'Right arm', 'Left leg', 'Right leg', 'Left knee', 'Right knee', 'Right ankle', 'Left ankle']
@@ -38,6 +39,10 @@ class clean_Armature(bpy.types.Operator):
         
         faceList = ['Eye01_S_L', 'Eye01_S_R', 'Eye02_S_L', 'Eye02_S_R', 'Eye03_S_L', 'Eye03_S_R', 'Eye04_S_L', 'Eye04_S_R', 'Eye05_S_L', 'Eye05_S_R', 'Eye06_S_L', 'Eye06_S_R', 'Eye07_S_L', 'Eye07_S_R', 'Eye08_S_L', 'Eye08_S_R', 'Mayu_R', 'MayuMid_S_R', 'MayuTip_S_R', 'Mayu_L', 'MayuMid_S_L', 'MayuTip_S_L', 'Mouth_R', 'Mouth_L', 'Mouthup', 'MouthLow', 'MouthMove', 'MouthCavity']
         
+        toeList = ['Toes0_L', 'Toes1_L', 'Toes10_L', 'Toes2_L', 'Toes20_L', 'Toes3_L', 'Toes30_L', 'Toes4_L', 'Toes0_R', 'Toes1_R', 'Toes10_R', 'Toes2_R', 'Toes20_R', 'Toes3_R', 'Toes30_R', 'Toes4_R']
+        
+        BPList = ['Kokan', 'Ana', 'Vagina_B', 'Vagina_F', 'Vagina_L_001', 'Vagina_L_002', 'Vagina_L_003', 'Vagina_L_004', 'Vagina_L_005',  'Vagina_R_001', 'Vagina_R_002', 'Vagina_R_003', 'Vagina_R_004', 'Vagina_R_005']
+        
         #joint correction bone lists
         #cf_j_ bones are merged into cf_s_ bones. cf_s_ bones have their prefix removed by CATS
         upperJointList = ['Elboback_L_Twist', 'Elboback_R_Twist', 'Forearm01_L_Twist', 'Forearm01_R_Twist', 'Shoulder_L_Twist', 'Shoulder_R_Twist', 'Shoulder02_L_Twist', 'Shoulder02_R_Twist', 'Wrist_L_Twist', 'Wrist_R_Twist', 'Cf_D_Wrist_L_Twist', 'Cf_D_Wrist_R_Twist', 'Cf_D_Hand_L_Twist', 'Cf_D_Hand_R_Twist', 'Elbo_L_Twist', 'Elbo_R_Twist', 'Arm01_R_Twist', 'Arm01_L_Twist', 'Cf_D_Arm01_L_Twist', 'Cf_D_Arm01_R_Twist']
@@ -45,6 +50,7 @@ class clean_Armature(bpy.types.Operator):
 
         allLayers = (True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True, True, True, False, False, False, False, False, False, False, False, False, False, False, False, False)
         layer2 =    (False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False)
+        layer3 =    (False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False)
         layer17 =   (False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False)
         layer18 =   (False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False)
         layer19 =   (False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True, False, False, False, False, False, False, False, False, False, False, False, False, False)
@@ -55,12 +61,21 @@ class clean_Armature(bpy.types.Operator):
                 if bone.name in coreList:
                     #Make core list bones visible on layer 1
                     bone.hide = False
-                if bone.name in skirtList or bone.name in faceList:
+                if bone.name in skirtList or bone.name in faceList or bone.name in toeList:
                     #Make secondary bones visible on layer 2
                     bone.hide = False
                     bpy.ops.pose.select_all(action='DESELECT')
                     bone.select = True
                     bpy.ops.pose.bone_layers(layers=layer2)
+                if bone.name in BPList:
+                    #Make kokan / better penetration bones visible on layer 3
+                    bone.hide = False
+                    bpy.ops.pose.select_all(action='DESELECT')
+                    bone.select = True
+                    bpy.ops.pose.bone_layers(layers=layer3)
+                    #Also, rename the bones so you can mirror them over the x axis in pose mode
+                    if 'Vagina_L' or 'Vagina_R' in bone.name:
+                        bone.name = 'Vagina' + bone.name[8:] + '_' + bone.name[7]
                 if bone.name in nonIK:
                     #Move bones that don't need to be visible for IK on layer 17
                     bone.hide = False
@@ -97,6 +112,12 @@ class clean_Armature(bpy.types.Operator):
         armature.data.edit_bones['MiddleFinger1_R'].tail = bpy.data.objects['Armature'].data.edit_bones['MiddleFinger2_R'].head
         armature.data.edit_bones['RingFinger1_R'].tail = bpy.data.objects['Armature'].data.edit_bones['RingFinger2_R'].head
 
+        # Make sure all toe bones are visually correct if using the better penetration armature 
+        try:
+            armature.data.edit_bones['Toes4_L'].tail.y = bpy.data.objects['Armature'].data.edit_bones['Toes30_L'].head.y
+            armature.data.edit_bones['Toes4_L'].tail.z = bpy.data.objects['Armature'].data.edit_bones['Toes30_L'].head.z
+            armature.data.edit_bones['Toes30_L'].tail.z = 
+        
         bpy.ops.object.mode_set(mode='OBJECT')
                     
         return {'FINISHED'}
