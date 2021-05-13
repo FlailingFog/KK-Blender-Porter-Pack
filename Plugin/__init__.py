@@ -6,10 +6,9 @@ bl_info = {
     "location" : "View 3D > Tool Shelf > KK Scripts",
     "description" : "Scripts for automating the cleanup process of a Koikatsu export",
     "version": (4, 1, 3), #great now I have to remember to update this number each time
-    "blender" : (2, 91, 2),
+    "blender" : (2, 92, 0),
     "location" : "View3D",
     "category" : "3D View",
-    "wiki_url" : "https://github.com/FlailingFog/KK-Blender-Shader-Pack/wiki",
     "tracker_url" : "https://github.com/FlailingFog/KK-Blender-Shader-Pack/"
 }
 
