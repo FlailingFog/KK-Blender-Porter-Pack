@@ -12,15 +12,15 @@ class PlaceholderProperties(PropertyGroup):
     inc_dec_int: IntProperty(
         name="Incr-Decr", min=1, max = 6, default=1, description="Set this to 2 or 3 if the baked texture is blurry")
     driver_bool : BoolProperty(
-    name="Enable or Disable", description="Check to use in-process \nhip bone joint correction drivers", default = False)
+    name="Enable or Disable", description="Enable to use in-process \nhip bone joint correction drivers", default = False)
     shapekey_bool : BoolProperty(
-    name="Enable or Disable", description="Check to save the partial shapekeys \nthat are used to generate the KK shapekeys.\nThese are useless on their own", default = False)
+    name="Enable or Disable", description="Enable to save the partial shapekeys \nthat are used to generate the KK shapekeys.\nThese are useless on their own", default = False)
     textureoutline_bool : BoolProperty(
-    name="Enable or Disable", description="Check to use one generic outline material \nas opposed to using several unique ones. \nChecking this may cause outline transparency issues", default = False)
+    name="Enable or Disable", description="Enable to use one generic outline material \nas opposed to using several unique ones. \nChecking this may cause outline transparency issues", default = False)
     texturecheck_bool : BoolProperty(
     name="Enable or Disable", description="Disable this if you're 100% sure you're selecting the textures folder correctly", default = True)
     templates_bool : BoolProperty(
-    name="Enable or Disable", description="Enable this to prevent the material templates from being deleted\nif blender is restarted between steps 7 and 8", default = False)   
+    name="Enable or Disable", description="Enable to prevent the material templates from being deleted\nif blender is restarted between steps 7 and 8", default = False)   
         
 class KK_Panel(bpy.types.Panel):
     bl_idname = "KK_PT_Panel"
