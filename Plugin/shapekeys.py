@@ -168,22 +168,40 @@ class shape_keys(bpy.types.Operator):
         #and make it active
         bpy.context.view_layer.objects.active = body
 
-        bpy.context.object.active_material_index = body.data.materials.find('cf_m_sirome_00')
-
         #merge the sirome materials into one
         try:
-            while body.data.materials.find('cf_m_sirome_00') > body.data.materials.find('cf_m_sirome_00.001') and body.data.materials.find('cf_m_sirome_00.001') != -1:
+            #loop through all materials and get the two sirome materials
+            currentMat=0
+            eyewhitePos=0
+            eyewhiteMats = [None,None]
+            materialCount = len(body.data.materials.values())-1
+            while currentMat <= materialCount:
+                if 'cf_m_sirome_00' in body.data.materials[currentMat].name:
+                    eyewhiteMats[eyewhitePos] = body.data.materials[currentMat].name
+                    eyewhitePos+=1
+                currentMat+=1
+            
+            bpy.context.object.active_material_index = body.data.materials.find(eyewhiteMats[0])
+            #The script will fail here if the sirome material was already merged
+            while body.data.materials.find(eyewhiteMats[0]) > body.data.materials.find(eyewhiteMats[1]) and body.data.materials.find(eyewhiteMats[1]) != -1:
                 bpy.ops.object.material_slot_move(direction='UP')
+            
+            body.data.materials[body.data.materials.find(eyewhiteMats[0])].name = 'cf_m_sirome_00.temp'
+            body.data.materials[body.data.materials.find(eyewhiteMats[1])].name = 'cf_m_sirome_00'
+            body.data.materials[body.data.materials.find('cf_m_sirome_00.temp')].name = 'cf_m_sirome_00.001'
+            
             bpy.ops.object.mode_set(mode='EDIT')
-            bpy.context.object.active_material_index = body.data.materials.find('cf_m_sirome_00.001')
-            bpy.ops.material_slot_select()
-            bpy.context.object.active_material_index = body.data.materials.find('cf_m_sirome_00')
-            bpy.ops.material_slot_assign()
+            bpy.ops.mesh.select_all(action='DESELECT')
+            bpy.context.object.active_material_index = body.data.materials.find(eyewhiteMats[0])
+            bpy.ops.object.material_slot_select()
+            bpy.context.object.active_material_index = body.data.materials.find(eyewhiteMats[1])
+            bpy.ops.object.material_slot_assign()
 
         except:
             #the sirome material was already merged
+            body.data.materials[body.data.materials.find(eyewhiteMats[0])].name = 'cf_m_sirome_00'
             pass
-
+            
         #delete the right eyewhites mesh
         bpy.ops.object.mode_set(mode = 'EDIT')
         bpy.ops.mesh.select_all(action = 'DESELECT')
