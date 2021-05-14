@@ -22,6 +22,7 @@ class clean_Armature(bpy.types.Operator):
         import bpy
         
         #Select the armature and make it active
+        bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.select_all(action='DESELECT')
         armature = bpy.data.objects['Armature']
         armature.hide = False
@@ -41,7 +42,7 @@ class clean_Armature(bpy.types.Operator):
         
         toeList = ['Toes0_L', 'Toes1_L', 'Toes10_L', 'Toes2_L', 'Toes20_L', 'Toes3_L', 'Toes30_L', 'Toes4_L', 'Toes0_R', 'Toes1_R', 'Toes10_R', 'Toes2_R', 'Toes20_R', 'Toes3_R', 'Toes30_R', 'Toes4_R']
         
-        BPList = ['Kokan', 'Ana', 'Vagina_B', 'Vagina_F', 'Vagina_L_001', 'Vagina_L_002', 'Vagina_L_003', 'Vagina_L_004', 'Vagina_L_005',  'Vagina_R_001', 'Vagina_R_002', 'Vagina_R_003', 'Vagina_R_004', 'Vagina_R_005']
+        BPList = ['Kokan', 'Ana', 'Vagina_Root', 'Vagina_B', 'Vagina_F', 'Vagina_L_001', 'Vagina_L_002', 'Vagina_L_003', 'Vagina_L_004', 'Vagina_L_005',  'Vagina_R_001', 'Vagina_R_002', 'Vagina_R_003', 'Vagina_R_004', 'Vagina_R_005']
         
         #joint correction bone lists
         #cf_j_ bones are merged into cf_s_ bones. cf_s_ bones have their prefix removed by CATS
@@ -115,8 +116,31 @@ class clean_Armature(bpy.types.Operator):
         # Make sure all toe bones are visually correct if using the better penetration armature 
         try:
             armature.data.edit_bones['Toes4_L'].tail.y = bpy.data.objects['Armature'].data.edit_bones['Toes30_L'].head.y
-            armature.data.edit_bones['Toes4_L'].tail.z = bpy.data.objects['Armature'].data.edit_bones['Toes30_L'].head.z
-            armature.data.edit_bones['Toes30_L'].tail.z = 
+            armature.data.edit_bones['Toes4_L'].tail.z = bpy.data.objects['Armature'].data.edit_bones['Toes30_L'].head.z*.8
+            armature.data.edit_bones['Toes0_L'].tail.y = bpy.data.objects['Armature'].data.edit_bones['Toes10_L'].head.y
+            armature.data.edit_bones['Toes0_L'].tail.z = bpy.data.objects['Armature'].data.edit_bones['Toes30_L'].head.z*.9
+            
+            armature.data.edit_bones['Toes30_L'].tail.z = armature.data.edit_bones['Toes30_L'].head.z*0.8
+            armature.data.edit_bones['Toes30_L'].tail.y = armature.data.edit_bones['Toes30_L'].head.y*1.2
+            armature.data.edit_bones['Toes20_L'].tail.z = armature.data.edit_bones['Toes20_L'].head.z*0.8
+            armature.data.edit_bones['Toes20_L'].tail.y = armature.data.edit_bones['Toes20_L'].head.y*1.2
+            armature.data.edit_bones['Toes10_L'].tail.z = armature.data.edit_bones['Toes10_L'].head.z*0.8
+            armature.data.edit_bones['Toes10_L'].tail.y = armature.data.edit_bones['Toes10_L'].head.y*1.2
+            
+            armature.data.edit_bones['Toes4_R'].tail.y = bpy.data.objects['Armature'].data.edit_bones['Toes30_R'].head.y
+            armature.data.edit_bones['Toes4_R'].tail.z = bpy.data.objects['Armature'].data.edit_bones['Toes30_R'].head.z*.8
+            armature.data.edit_bones['Toes0_R'].tail.y = bpy.data.objects['Armature'].data.edit_bones['Toes10_R'].head.y
+            armature.data.edit_bones['Toes0_R'].tail.z = bpy.data.objects['Armature'].data.edit_bones['Toes30_R'].head.z*.9
+            
+            armature.data.edit_bones['Toes30_R'].tail.z = armature.data.edit_bones['Toes30_R'].head.z*0.8
+            armature.data.edit_bones['Toes30_R'].tail.y = armature.data.edit_bones['Toes30_R'].head.y*1.2
+            armature.data.edit_bones['Toes20_R'].tail.z = armature.data.edit_bones['Toes20_R'].head.z*0.8
+            armature.data.edit_bones['Toes20_R'].tail.y = armature.data.edit_bones['Toes20_R'].head.y*1.2
+            armature.data.edit_bones['Toes10_R'].tail.z = armature.data.edit_bones['Toes10_R'].head.z*0.8
+            armature.data.edit_bones['Toes10_R'].tail.y = armature.data.edit_bones['Toes10_R'].head.y*1.2
+        except:
+            #this character isn't using the BP/toe control armature
+            pass
         
         bpy.ops.object.mode_set(mode='OBJECT')
                     
