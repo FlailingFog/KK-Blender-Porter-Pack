@@ -123,9 +123,7 @@ class import_Textures(bpy.types.Operator):
                 imageLoad(hairMat.name, 'HairTextures', 'hairFade', hairType+'_ColorMask.png')
                 imageLoad(hairMat.name, 'HairTextures', 'hairShine', hairType+'_HairGloss.png')
             
-            
             ##################################
-            
             
             # Loop through each material in the general object and load the textures, if any, into unique node groups
             # also make unique shader node groups so all materials are unique
@@ -161,9 +159,9 @@ class import_Textures(bpy.types.Operator):
                         #If no main image was loaded in, there's no alpha channel being fed into the KK Shader.
                         #Unlink the input node and make the alpha channel pure white
                         if  MainImage == None:
-                            getOut = genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['GeneralOut'].inputs['Alpha'].links[0]
+                            getOut = genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['alphatoggle'].inputs['maintex alpha'].links[0]
                             genMat.material.node_tree.nodes['KKShader'].node_tree.links.remove(getOut)
-                            genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['GeneralOut'].inputs['Alpha'].default_value = 1    
+                            genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['alphatoggle'].inputs['maintex alpha'].default_value = (1,1,1,1)   
                             
                         #If an alpha mask was loaded in, enable the alpha mask toggle in the KK shader
                         if  AlphaImage != None:
