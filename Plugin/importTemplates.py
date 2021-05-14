@@ -215,6 +215,10 @@ class import_Templates(Operator, ImportHelper):
         for bone in restOfFace:
             bpy.context.object.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetFace']
         
+        BPList = ['Kokan', 'Ana', 'Vagina_Root', 'Vagina_B', 'Vagina_F', 'Vagina_L_001', 'Vagina_L_002', 'Vagina_L_003', 'Vagina_L_004', 'Vagina_L_005',  'Vagina_R_001', 'Vagina_R_002', 'Vagina_R_003', 'Vagina_R_004', 'Vagina_R_005']
+        for bone in BPList:
+            bpy.context.object.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetBP']
+        
         #Make both bone layers visible
         firstTwoBoneLayers = (True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False)
         bpy.ops.armature.armature_layers(layers=firstTwoBoneLayers)
