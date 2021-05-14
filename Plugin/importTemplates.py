@@ -24,7 +24,10 @@ class import_Templates(Operator, ImportHelper):
     )
     
     def execute(self, context):
-
+        
+        scene = context.scene.placeholder
+        useFakeUser = scene.templates_bool
+        
         #Clean material list
         armature = bpy.data.objects['Armature']
         armature.hide = False
@@ -48,7 +51,7 @@ class import_Templates(Operator, ImportHelper):
                 filepath=os.path.join(filepath, innerpath, template),
                 directory=os.path.join(filepath, innerpath),
                 filename=template,
-                #set_fake=True
+                set_fake=useFakeUser
                 )
         
         #Replace all materials on the body with templates
