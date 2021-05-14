@@ -1,8 +1,11 @@
 ### Changes for V4.2:
 * The eyewhites shapekeys are now used when generating the KK shapekeys
     * This will prevent gaps between the eyewhite and the lower eyelash for certain expressions
+* The plugin will now recognize the *KK Better Penetration* body type
+    * Toes are placed on armature layer 2
+    * BP bones are placed on armature layer 3
 * Materials without an image texture should properly bake now
-    * This will cover fully transparent materials and materials that are a solid color but still use the KK Shader
+    * This will ensure fully transparent materials and materials that are a solid color (but still use the KK Shader) are baked
 * The Separate Body button will now attempt to separate the shadowcast and bonelyfans meshes automatically, then shove them into a collection
 * The Import Textures button will now check if the user has actually selected the Textures folder and will abort if they chose the wrong folder
     * This was done to prevent texture loading issues
