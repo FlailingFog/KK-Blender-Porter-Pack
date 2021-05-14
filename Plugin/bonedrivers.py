@@ -664,6 +664,12 @@ class bone_drivers(bpy.types.Operator):
         bpy.context.object.data.edit_bones['Eye Controller'].tail.z = bpy.context.object.data.edit_bones['N_EyesLookTargetP'].head.z
         bpy.context.object.data.edit_bones['Eye Controller'].head.z = bpy.context.object.data.edit_bones['N_EyesLookTargetP'].head.z
         
+        #scale BP bones
+        BPList = ['Kokan', 'Ana', 'Vagina_Root', 'Vagina_B', 'Vagina_F', 'Vagina_L_001', 'Vagina_L_002', 'Vagina_L_003', 'Vagina_L_004', 'Vagina_L_005',  'Vagina_R_001', 'Vagina_R_002', 'Vagina_R_003', 'Vagina_R_004', 'Vagina_R_005']
+        
+        for bone in BPList:
+            armature.data.edit_bones[bone].tail.z = armature.data.edit_bones[bone].tail.z*.95
+        
         #Add some bones to bone groups
         bpy.ops.object.mode_set(mode='POSE')
         bpy.ops.pose.select_all(action='DESELECT')
