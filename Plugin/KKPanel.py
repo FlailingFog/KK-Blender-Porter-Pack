@@ -86,7 +86,7 @@ class KK_Panel(bpy.types.Panel):
         row = col.row(align=True)
         split = row.split(align=True, factor=0.5)
         split.label(text="")
-        split.prop(context.scene.placeholder, "templates_bool", toggle=True, text = "Give fake user")
+        split.prop(context.scene.placeholder, "templates_bool", toggle=True, text = "Set fake user")
         
         box = layout.box()
         col = box.column(align=True)
