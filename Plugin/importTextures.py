@@ -282,6 +282,7 @@ class import_Textures(bpy.types.Operator):
                         outlineStart = 200
                     
                     #Add a general outline that covers the rest of the materials on the object that don't need transparency
+                    bpy.context.view_layer.objects.active = ob
                     bpy.ops.object.modifier_add(type='SOLIDIFY')
                     mod = ob.modifiers[1]
                     mod.thickness = 0.003
