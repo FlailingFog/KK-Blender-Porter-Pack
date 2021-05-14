@@ -265,6 +265,10 @@ class shape_keys(bpy.types.Operator):
         body.vertex_groups.active.name = "EyewhitesR"
         
         #then recalculate normals for the right group to avoid outline issues later on
+        bpy.ops.object.material_slot_select()
+        #why is this so fucking finicky
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+        bpy.ops.object.mode_set(mode = 'EDIT')
         bpy.ops.mesh.normals_make_consistent(inside=False)
 
         bpy.ops.object.mode_set(mode = 'OBJECT')
