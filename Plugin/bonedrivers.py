@@ -670,8 +670,23 @@ class bone_drivers(bpy.types.Operator):
         for bone in BPList:
             armature.data.edit_bones[bone].tail.z = armature.data.edit_bones[bone].tail.z*.95
         
-        #Add some bones to bone groups
         bpy.ops.object.mode_set(mode='POSE')
+        #move new bones to correct armature layers
+        layer1 =    (True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False)
+        layer2 =    (False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False)
+        oneList = ['ToeRotator.L', 'HeelIK.L', 'MasterFootIK.L', 'ToeRotator.R', 'HeelIK.R', 'MasterFootIK.R']
+        
+        for bone in oneList:
+            bpy.ops.pose.select_all(action='DESELECT')
+            armature.data.bones[bone].select = True
+            bpy.ops.pose.bone_layers(layers=layer1)
+        
+        bpy.ops.pose.select_all(action='DESELECT')
+        armature.data.bones['Eye Controller'].select = True
+        bpy.ops.pose.bone_layers(layers=layer2)
+        
+        #Add some bones to bone groups
+
         bpy.ops.pose.select_all(action='DESELECT')
         bpy.ops.pose.group_add()
         group = armature.pose.bone_groups['Group']
