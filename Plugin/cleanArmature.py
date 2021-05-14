@@ -75,7 +75,7 @@ class clean_Armature(bpy.types.Operator):
                     bone.select = True
                     bpy.ops.pose.bone_layers(layers=layer3)
                     #Also, rename the bones so you can mirror them over the x axis in pose mode
-                    if 'Vagina_L' or 'Vagina_R' in bone.name:
+                    if 'Vagina_L' in bone.name or 'Vagina_R' in bone.name:
                         bone.name = 'Vagina' + bone.name[8:] + '_' + bone.name[7]
                 if bone.name in nonIK:
                     #Move bones that don't need to be visible for IK on layer 17
