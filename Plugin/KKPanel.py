@@ -19,7 +19,8 @@ class PlaceholderProperties(PropertyGroup):
     name="Enable or Disable", description="Check to use one generic outline material \nas opposed to using several unique ones. \nChecking this may cause outline transparency issues", default = False)
     texturecheck_bool : BoolProperty(
     name="Enable or Disable", description="Disable this if you're 100% sure you're selecting the textures folder correctly", default = True)
-   
+    template_bool : BoolProperty(
+    name="Enable or Disable", description="Enable this to prevent the material templates from being deleted\nif blender is restarted between steps 7 and 8", default = False)   
         
 class KK_Panel(bpy.types.Panel):
     bl_idname = "KK_PT_Panel"
@@ -82,6 +83,10 @@ class KK_Panel(bpy.types.Panel):
         split = row.split(align=True, factor=splitfac)
         split.label(text="5) Import material templates:")
         split.operator('kkb.importtemplates', text = '6')
+        row = col.row(align=True)
+        split = row.split(align=True, factor=0.5)
+        split.label(text="")
+        split.prop(context.scene.placeholder, "templates_bool", toggle=True, text = "Give fake user")
         
         box = layout.box()
         col = box.column(align=True)
