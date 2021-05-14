@@ -37,15 +37,13 @@ class import_Textures(bpy.types.Operator):
             print('Getting textures from: ' + self.directory)
             #lazy check to see if the user actually opened the Textures folder
             #this will false pass if the word "Texture" is anywhere else on the path but I don't care
-            if 'Textures' in self.directory:
+            if 'Textures' in self.directory or not folderCheckEnabled:
                 fileList = Path(self.directory).glob('*.*')
                 files = [file for file in fileList if file.is_file()]
             else:
-                #throw an error
                 bpy.context.window_manager.popup_menu(showError, title="Error", icon='ERROR')
-                if folderCheckEnabled:
-                    return
-            
+                return
+
             for image in files:
                 bpy.ops.image.open(filepath=str(image))
                 bpy.data.images[image.name].pack()
