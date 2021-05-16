@@ -218,9 +218,13 @@ class import_Templates(Operator, ImportHelper):
         for bone in restOfFace:
             bpy.context.object.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetFace']
         
-        BPList = ['Kokan', 'Ana', 'Vagina_Root', 'Vagina_B', 'Vagina_F', 'Vagina_001_L', 'Vagina_002_L', 'Vagina_003_L', 'Vagina_004_L', 'Vagina_005_L',  'Vagina_001_R', 'Vagina_002_R', 'Vagina_003_R', 'Vagina_004_R', 'Vagina_005_R']
-        for bone in BPList:
-            bpy.context.object.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetBP']
+        try:
+            BPList = ['Kokan', 'Ana', 'Vagina_Root', 'Vagina_B', 'Vagina_F', 'Vagina_001_L', 'Vagina_002_L', 'Vagina_003_L', 'Vagina_004_L', 'Vagina_005_L',  'Vagina_001_R', 'Vagina_002_R', 'Vagina_003_R', 'Vagina_004_R', 'Vagina_005_R']
+            for bone in BPList:
+                bpy.context.object.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetBP']
+        except:
+            #This isn't a BP armature
+            pass
         
         #Make both bone layers visible
         firstTwoBoneLayers = (True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False)
