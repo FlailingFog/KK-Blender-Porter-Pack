@@ -664,11 +664,15 @@ class bone_drivers(bpy.types.Operator):
         bpy.context.object.data.edit_bones['Eye Controller'].tail.z = bpy.context.object.data.edit_bones['N_EyesLookTargetP'].head.z
         bpy.context.object.data.edit_bones['Eye Controller'].head.z = bpy.context.object.data.edit_bones['N_EyesLookTargetP'].head.z
         
-        #scale BP bones
-        BPList = ['Kokan', 'Ana', 'Vagina_Root', 'Vagina_B', 'Vagina_F', 'Vagina_001_L', 'Vagina_002_L', 'Vagina_003_L', 'Vagina_004_L', 'Vagina_005_L',  'Vagina_001_R', 'Vagina_002_R', 'Vagina_003_R', 'Vagina_004_R', 'Vagina_005_R']
+        #scale BP bones if they exist
+        try:
+            BPList = ['Kokan', 'Ana', 'Vagina_Root', 'Vagina_B', 'Vagina_F', 'Vagina_001_L', 'Vagina_002_L', 'Vagina_003_L', 'Vagina_004_L', 'Vagina_005_L',  'Vagina_001_R', 'Vagina_002_R', 'Vagina_003_R', 'Vagina_004_R', 'Vagina_005_R']
         
-        for bone in BPList:
-            armature.data.edit_bones[bone].tail.z = armature.data.edit_bones[bone].tail.z*.95
+            for bone in BPList:
+                armature.data.edit_bones[bone].tail.z = armature.data.edit_bones[bone].tail.z*.95
+        except:
+            #this isn't a BP armature
+            pass
         
         bpy.ops.object.mode_set(mode='POSE')
         #move new bones to correct armature layers
