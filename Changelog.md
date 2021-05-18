@@ -1,3 +1,5 @@
+### Changes for V4.2.1:
+* Bake button wasn't assigned correctly in the new panel layout
 ### Changes for V4.2:
 * The eyewhites shapekeys are now used when generating the KK shapekeys
     * This will prevent gaps between the eyewhite and the lower eyelash for certain expressions
