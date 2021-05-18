@@ -105,7 +105,7 @@ class KK_Panel(bpy.types.Panel):
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text="8) Bake material templates:")
-        split.operator('kkb.importtextures', text = '8')
+        split.operator('kkb.bakematerials', text = '8')
         row = col.row(align=True)
         split = row.split(align=True, factor=0.5)
         split.label(text="")
