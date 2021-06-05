@@ -412,8 +412,12 @@ class shape_keys(bpy.types.Operator):
                     #reset shapekey values
                     for keyblock in shapekey.key_blocks:
                         keyblock.value = 0
-                            
+                    
                     inUse =[]
+                
+                #lazy crash prevention
+                if counter % 20 == 0:
+                    bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
         #Delete all shapekeys that don't have a "KK" in their name
         if not debugMode:
