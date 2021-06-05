@@ -389,7 +389,12 @@ class shape_keys(bpy.types.Operator):
                             pass
                         
                     if (keyblock.name == 'Lips_i_small_op'):
-                        shapekey.key_blocks['Teeth_i_small_cl'].value = ACTIVE
+                        try:
+                            #someone was having an issue with this shapekey so it will be banished to another try catch
+                            shapekey.key_blocks['Teeth_i_small_cl'].value = ACTIVE
+                        except:
+                                pass
+                            
                         try:
                             shapekey.key_blocks['Fangs_default_op'].value = ACTIVE
                         except:
