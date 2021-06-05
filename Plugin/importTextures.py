@@ -183,7 +183,7 @@ class import_Textures(bpy.types.Operator):
                     bpy.data.materials['Template Body Outline'].node_tree.nodes['BodyMask'].image = bpy.data.images['cf_m_body_AlphaMask.png'] #male
                 except:
                     #An alpha mask for the clothing wasn't present in the Textures folder
-                    bpy.data.materials['Template Body Outline'].node_tree.nodes['Clipping prevention toggle'].inputs['Fac'].default_value = 0            
+                    bpy.data.materials['Template Body Outline'].node_tree.nodes['Clipping prevention toggle'].inputs[0].default_value = 0            
                 
             #Give the hair a unique outline group
             ob = bpy.context.view_layer.objects['Hair']
@@ -272,12 +272,12 @@ class import_Textures(bpy.types.Operator):
 
                                 if AlphaImage != None:
                                     OutlineMat.material.node_tree.nodes['outlinealpha'].image = AlphaImage
-                                    OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs['Fac'].default_value = 0.0
+                                    OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs[0].default_value = 0.0
                                 else:
                                     OutlineMat.material.node_tree.nodes['outlinealpha'].image = MainImage
-                                    OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs['Fac'].default_value = 1.0
+                                    OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs[0].default_value = 1.0
 
-                                OutlineMat.material.node_tree.nodes['outlinetransparency'].inputs['Fac'].default_value = 1.0
+                                OutlineMat.material.node_tree.nodes['outlinetransparency'].inputs[0].default_value = 1.0
                     else:
                         outlineStart = 200
                     
