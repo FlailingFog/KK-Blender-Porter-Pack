@@ -138,6 +138,7 @@ class bake_Materials(bpy.types.Operator):
             #create imageplane
             bpy.ops.mesh.primitive_plane_add()#radius = 0.5)
             imageplane = bpy.context.active_object
+            imageplane.data.uv_layers[0].name = 'UVMap'
             imageplane.name = "imageplane"
             imageplane.lock_location[0] = True
             imageplane.lock_location[1] = True
