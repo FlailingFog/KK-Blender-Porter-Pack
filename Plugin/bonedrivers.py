@@ -693,7 +693,7 @@ class bone_drivers(bpy.types.Operator):
 
         bpy.ops.pose.select_all(action='DESELECT')
         bpy.ops.pose.group_add()
-        group = armature.pose.bone_groups['Group']
+        group = armature.pose.bone_groups[len(armature.pose.bone_groups)-1]
         group.name = 'IK controllers'
         armature.data.bones['Cf_Pv_Hand_L'].select = True
         armature.data.bones['Cf_Pv_Hand_R'].select = True
@@ -704,7 +704,7 @@ class bone_drivers(bpy.types.Operator):
         
         bpy.ops.pose.select_all(action='DESELECT')
         bpy.ops.pose.group_add()
-        group = armature.pose.bone_groups['Group']
+        group = armature.pose.bone_groups[len(armature.pose.bone_groups)-1]
         group.name = 'IK poles'
         armature.pose.bone_groups.active_index = 1
         armature.data.bones['Cf_Pv_Elbo_R'].select = True
