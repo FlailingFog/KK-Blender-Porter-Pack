@@ -25,8 +25,8 @@ class apply_Materials(bpy.types.Operator):
     bl_description = "Open the folder that contains the baked materials"
     bl_options = {'REGISTER', 'UNDO'}
     
-    directory = StringProperty(maxlen=1024, default='', subtype='FILE_PATH', options={'HIDDEN'})
-    filter_glob = StringProperty(default='', options={'HIDDEN'})
+    directory : StringProperty(maxlen=1024, default='', subtype='FILE_PATH', options={'HIDDEN'})
+    filter_glob : StringProperty(default='', options={'HIDDEN'})
     data = None
     mats_uv = None
     structure = None
