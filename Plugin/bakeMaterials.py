@@ -335,7 +335,7 @@ class bake_Materials(bpy.types.Operator):
                 bpy.ops.object.light_add(type='SUN', radius=1, align='WORLD', location=(0, 0, 0))
 
             #save the sun object
-            sunobject = bpy.data.objects['Sun']
+            sunobject = bpy.context.active_object
 
             #bakes the light versions of each material to the selected folder at sun intensity 5
             bakeMaterials('light' , 5)
@@ -352,7 +352,7 @@ class bake_Materials(bpy.types.Operator):
             #Select the imageplane
             bpy.data.objects['imageplane'].select_set(True)
             #Select the camera
-            bpy.data.objects['Camera'].select_set(True)
+            camera.select_set(True)
             #delete them
             bpy.ops.object.delete()
 
