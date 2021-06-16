@@ -16,13 +16,13 @@ class PlaceholderProperties(PropertyGroup):
     delete_shapekey_bool : BoolProperty(
     name="Enable or Disable", description="Enable to save the partial shapekeys \nthat are used to generate the KK shapekeys.\nThese are useless on their own", default = False)
     fix_eyewhites_bool : BoolProperty(
-    name="Enable or Disable", description="Disable this if Blender crashes during the shapekeys script.\nMesh operations on the Eyewhites material will \nbe skipped if this is disabled", default = True)
+    name="Enable or Disable", description="Disable this if Blender crashes during the shapekeys script.\nMesh operations on the Eyewhites material\n will be skipped if this is disabled", default = True)
     textureoutline_bool : BoolProperty(
     name="Enable or Disable", description="Enable to use one generic outline material \nas opposed to using several unique ones. \nChecking this may cause outline transparency issues", default = False)
     texturecheck_bool : BoolProperty(
     name="Enable or Disable", description="Disable this if you're 100% sure you're selecting the textures folder correctly", default = True)
     templates_bool : BoolProperty(
-    name="Enable or Disable", description="Keep enabled to prevent the material templates from being deleted\nif blender is restarted between steps 7 and 8. \nHandy for crashes during Step 8", default = True)   
+    name="Enable or Disable", description="Keep enabled to prevent the material templates from being deleted\nif Blender is restarted between steps 6 and 7. \nHandy for crashes during Step 7", default = True)   
         
 class KK_Panel(bpy.types.Panel):
     bl_idname = "KK_PT_Panel"
