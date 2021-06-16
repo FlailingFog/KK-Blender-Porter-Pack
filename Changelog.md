@@ -1,3 +1,7 @@
+### Changes for V4.2.3:
+* Made eyewhite operations for the shapekeys optional through a toggle
+* Fixed the Basis shapekey being deleted when not set to English
+
 ### Changes for V4.2.2:
 * The plugin now works in Blender 2.93
 * The plugin should now work when Blender's interface is set to any language
