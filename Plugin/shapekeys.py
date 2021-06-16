@@ -145,12 +145,13 @@ class shape_keys(bpy.types.Operator):
                         bpy.ops.object.shape_key_remove()
                 except:
                     #or not
-                    print("couldn't delete key: " + keyblock.name)
+                    print("Couldn't delete sshapekey: " + keyblock.name)
                     pass
         
         ########################################################
         #Fix the eyewhites/sirome shapekeys
 
+        bpy.ops.object.mode_set(mode = 'OBJECT')
         body = bpy.data.objects['Body']
         body.active_shape_key_index = 0
         
