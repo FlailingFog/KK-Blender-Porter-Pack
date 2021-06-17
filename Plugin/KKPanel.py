@@ -16,7 +16,7 @@ class PlaceholderProperties(PropertyGroup):
     delete_shapekey_bool : BoolProperty(
     name="Enable or Disable", description="Enable to save the partial shapekeys \nthat are used to generate the KK shapekeys.\nThese are useless on their own", default = False)
     fix_eyewhites_bool : BoolProperty(
-    name="Enable or Disable", description="Disable this if Blender crashes during the shapekeys script.\nMesh operations on the Eyewhites material\n will be skipped if this is disabled", default = True)
+    name="Enable or Disable", description="Disable this if Blender crashes during the shapekeys script.\nIf this is disabled, mesh operations on the Eyewhites material\nwill be skipped so there may be gaps between \nthe eyes and the eyewhites", default = True)
     textureoutline_bool : BoolProperty(
     name="Enable or Disable", description="Enable to use one generic outline material \nas opposed to using several unique ones. \nChecking this may cause outline transparency issues", default = False)
     texturecheck_bool : BoolProperty(
