@@ -2,6 +2,7 @@
 BAKE MATERIAL TO TEXTURE SCRIPT
 - Bakes all materials of an object into image textures (to use in other programs)
 - Will only bake a material if an image node is present in the node tree
+- If no image is present, a low resolution failsafe image will be baked to account for fully opaque or transparent materials that don't rely on images
 - If multiple image files are present, only one texture will be created
 - If the multiple image files have different resolutions, a texture will be created for each resolution
 - Export defaults to 8-bit PNG with an alpha channel.
