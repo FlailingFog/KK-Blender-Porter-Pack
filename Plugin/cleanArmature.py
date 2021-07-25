@@ -31,7 +31,7 @@ class clean_Armature(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='POSE')
         
         #main bone list
-        coreList = ['Cf_Pv_Knee_L', 'MiddleFinger1_L', 'LittleFinger3_R', 'Left ankle', 'Left wrist', 'AH1_R', 'Eyesx', 'Right knee', 'LittleFinger1_L', 'Right elbow', 'Cf_Pv_Foot_R', 'LittleFinger3_L', 'ToeTipIK_R', 'IndexFinger2_R', 'MiddleFinger2_L', 'IndexFinger1_L', 'Left arm', 'IndexFinger3_R', 'MiddleFinger2_R', 'MiddleFinger1_R', 'IndexFinger1_R', 'Right ankle', 'Thumb2_R', 'Cf_Pv_Elbo_L', 'Left leg', 'Cf_D_Siri_L', 'Spine', 'Sk_04_04', 'Sk_05_03', 'Right leg', 'RingFinger3_L', 'MiddleFinger3_L', 'Sk_07_02', 'Neck', 'Thumb1_L', 'MiddleFinger3_R', 'RingFinger1_R', 'Thumb0_L', 'IndexFinger2_L', 'Thumb1_R', 'RingFinger2_R', 'Thumb0_R', 'Left elbow', 'IndexFinger3_L', 'Left shoulder', 'Cf_Pv_Hand_R', 'Right wrist', 'RingFinger3_R', 'Thumb2_L', 'Cf_Pv_Knee_R', 'Cf_Pv_Hand_L', 'Head', 'Left knee', 'Hips', 'Cf_Pv_Foot_L', 'LittleFinger1_R', 'LittleFinger2_L', 'RingFinger1_L', 'Cf_Pv_Elbo_R', 'LittleFinger2_R', 'ToeTipIK_L', 'Right shoulder', 'Right arm', 'Chest', 'Cf_D_Bust00', 'RingFinger2_L', 'AH1_L', 'Right toe', 'Left toe']
+        coreList = ['Cf_Pv_Knee_L', 'MiddleFinger1_L', 'LittleFinger3_R', 'Left ankle', 'Left wrist', 'AH1_R', 'Eyesx', 'Right knee', 'LittleFinger1_L', 'Right elbow', 'Cf_Pv_Foot_R', 'LittleFinger3_L', 'ToeTipIK_R', 'IndexFinger2_R', 'MiddleFinger2_L', 'IndexFinger1_L', 'Left arm', 'IndexFinger3_R', 'MiddleFinger2_R', 'MiddleFinger1_R', 'IndexFinger1_R', 'Right ankle', 'Thumb2_R', 'Cf_Pv_Elbo_L', 'Left leg', 'Cf_D_Siri_L', 'Spine', 'Sk_04_04', 'Sk_05_03', 'Right leg', 'RingFinger3_L', 'MiddleFinger3_L', 'Sk_07_02', 'Neck', 'Thumb1_L', 'MiddleFinger3_R', 'RingFinger1_R', 'Thumb0_L', 'IndexFinger2_L', 'Thumb1_R', 'RingFinger2_R', 'Thumb0_R', 'Left elbow', 'IndexFinger3_L', 'Left shoulder', 'Cf_Pv_Hand_R', 'Right wrist', 'RingFinger3_R', 'Thumb2_L', 'Cf_Pv_Knee_R', 'Cf_Pv_Hand_L', 'Head', 'Left knee', 'Hips', 'Cf_Pv_Foot_L', 'LittleFinger1_R', 'LittleFinger2_L', 'RingFinger1_L', 'Cf_Pv_Elbo_R', 'LittleFinger2_R', 'ToeTipIK_L', 'Right shoulder', 'Right arm', 'Chest', 'Cf_D_Bust00', 'RingFinger2_L', 'AH1_L', 'Right toe', 'Left toe', 'LowerBody_Twist']
         
         #IK bone list
         nonIK = ['Left elbow', 'Right elbow', 'Left arm', 'Right arm', 'Left leg', 'Right leg', 'Left knee', 'Right knee', 'Right ankle', 'Left ankle']
@@ -47,7 +47,7 @@ class clean_Armature(bpy.types.Operator):
         #joint correction bone lists
         #cf_j_ bones are merged into cf_s_ bones. cf_s_ bones have their prefix removed by CATS
         upperJointList = ['Elboback_L_Twist', 'Elboback_R_Twist', 'Forearm01_L_Twist', 'Forearm01_R_Twist', 'Shoulder_L_Twist', 'Shoulder_R_Twist', 'Shoulder02_L_Twist', 'Shoulder02_R_Twist', 'Wrist_L_Twist', 'Wrist_R_Twist', 'Cf_D_Wrist_L_Twist', 'Cf_D_Wrist_R_Twist', 'Cf_D_Hand_L_Twist', 'Cf_D_Hand_R_Twist', 'Elbo_L_Twist', 'Elbo_R_Twist', 'Arm01_R_Twist', 'Arm01_L_Twist', 'Cf_D_Arm01_L_Twist', 'Cf_D_Arm01_R_Twist']
-        lowerJointList = ['KneeB_R_Twist', 'KneeB_L_Twist', 'Leg_L_Twist', 'Leg_R_Twist', 'Cf_D_Siri_L_Twist', 'Cf_D_Siri_R_Twist', 'Cf_D_Siri01_L_Twist', 'Cf_D_Siri01_R_Twist', 'Waist02_Twist', 'Waist02_Twist_001']
+        lowerJointList = ['KneeB_R_Twist', 'KneeB_L_Twist', 'Leg_L_Twist', 'Leg_R_Twist', 'Cf_D_Siri_L_Twist', 'Cf_D_Siri_R_Twist', 'Cf_D_Siri01_L_Twist', 'Cf_D_Siri01_R_Twist', 'Waist02_Twist', 'Waist02_Twist_001', 'cf_s_waist01_Twist']
 
         allLayers = (True, True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, True, True, True, False, False, False, False, False, False, False, False, False, False, False, False, False)
         layer2 =    (False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False)
@@ -78,7 +78,7 @@ class clean_Armature(bpy.types.Operator):
                     if 'Vagina_L_' in bone.name or 'Vagina_R_' in bone.name:
                         bone.name = 'Vagina' + bone.name[8:] + '_' + bone.name[7]
                 if bone.name in nonIK:
-                    #Move bones that don't need to be visible for IK on layer 17
+                    #Move bones that don't need to be visible for IK to layer 17
                     bone.hide = False
                     bpy.ops.pose.select_all(action='DESELECT')
                     bone.select = True
@@ -142,10 +142,17 @@ class clean_Armature(bpy.types.Operator):
             #this character isn't using the BP/toe control armature
             pass
         
+        #Make sure top skirt root bones are visually correct (flip them)
+        def flip(switchbone):
+            chain = switchbone[5:10]
+            armature.data.edit_bones[switchbone].tail = (armature.data.edit_bones[switchbone].head + armature.data.edit_bones[chain].tail)/2
+        for skirtroot in skirtList:
+            if '_D_' in skirtroot:
+                flip(skirtroot)
+        
         bpy.ops.object.mode_set(mode='OBJECT')
                     
         return {'FINISHED'}
-
 
 if __name__ == "__main__":
     bpy.utils.register_class(clean_Armature)
