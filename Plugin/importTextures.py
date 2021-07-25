@@ -96,8 +96,6 @@ class import_Textures(bpy.types.Operator):
             imageLoad('Template Eye (hitomi)', 'EyeTex', 'eyeAlpha', 'cf_m_hitomi_00_MainTex.png')
             imageLoad('Template Eye (hitomi)', 'EyeTex', 'EyeHU', 'cf_m_hitomi_00_overtex1.png')
             imageLoad('Template Eye (hitomi)', 'EyeTex', 'EyeHD', 'cf_m_hitomi_00_overtex2.png')
-            #imageLoad('Template Eye (hitomi)', 'EyeTex', 'eyeAlpha', 'cf_m_hitomi_00_MainTex.png')
-            #imageLoad('Template Eye (hitomi)', 'EyeTex', 'eyeAlpha', 'cf_m_hitomi_00_MainTex.png')
             
             imageLoad('Template Tongue', 'Gentex', 'Maintex', 'cf_m_tang_ColorMask.png') #done on purpose
             imageLoad('Template Tongue', 'Gentex', 'MainCol', 'cf_m_tang_ColorMask.png')
@@ -165,7 +163,7 @@ class import_Textures(bpy.types.Operator):
                         if  AlphaImage != None:
                             toggle = genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['alphatoggle'].inputs['Transparency toggle'].default_value = 1
             
-            #Add body outline and load in the clothes transparency mask
+            #Add face and body outlines, then load in the clothes transparency mask to body outline
             ob = bpy.context.view_layer.objects['Body']
             bpy.context.view_layer.objects.active = ob
             bpy.ops.object.modifier_add(type='SOLIDIFY')
@@ -175,6 +173,13 @@ class import_Textures(bpy.types.Operator):
             mod.material_offset = 100
             mod.use_flip_normals = True
             mod.use_rim = False
+            
+            #face
+            faceOutlineMat = bpy.data.materials['Template Outline'].copy()
+            faceOutlineMat.name = 'Template Face Outline'
+            ob.data.materials.append(faceOutlineMat)
+            
+            #body
             ob.data.materials.append(bpy.data.materials['Template Body Outline'])
             try:
                 bpy.data.materials['Template Body Outline'].node_tree.nodes['BodyMask'].image = bpy.data.images['cf_m_body_AlphaMask.png'] #female
