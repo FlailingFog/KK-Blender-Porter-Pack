@@ -145,7 +145,7 @@ class clean_Armature(bpy.types.Operator):
         #Make sure top skirt root bones are visually correct (flip them)
         def flip(switchbone):
             chain = switchbone[5:10]
-            armature.data.edit_bones[switchbone].tail = (armature.data.edit_bones[switchbone].head + armature.data.edit_bones[chain].tail)/2
+            armature.data.edit_bones[switchbone].tail = (armature.data.edit_bones[switchbone].head + armature.data.edit_bones[chain+'_00'].tail)/2
         for skirtroot in skirtList:
             if '_D_' in skirtroot:
                 flip(skirtroot)
