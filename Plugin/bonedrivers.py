@@ -48,9 +48,39 @@ class bone_drivers(bpy.types.Operator):
         #Select the armature and make it active
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.select_all(action='DESELECT')
-        bpy.data.objects['Armature'].select_set(True)
-        bpy.context.view_layer.objects.active=bpy.data.objects['Armature']
+        armature = bpy.data.objects['Armature']
+        armature.select_set(True)
+        bpy.context.view_layer.objects.active=armature
 
+        #Recreate the Center bone
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.view3d.snap_cursor_to_center()
+        centerbone = armature.data.edit_bones.new('Center')
+        centerbone.tail = (centerbone.tail+centerbone.head)/2
+        
+        #Recreate the hips bone
+        armature.data.edit_bones['Hips'].name = 'Pelvis'
+        hipsbone = armature.data.edit_bones.new('Hips')
+        hipsbone.tail = armature.data.edit_bones['Pelvis'].tail
+        hipsbone.head = armature.data.edit_bones['Pelvis'].head
+        
+        #separate the PV bones
+        pvrootupper = armature.data.edit_bones.new('Cf_Pv_Root_upper')
+        pvrootupper.tail = armature.data.edit_bones['Cf_Pv_Root'].tail
+        pvrootupper.head = armature.data.edit_bones['Cf_Pv_Root'].head
+        
+        #reparent things
+        def reparent(bone,parent):
+            armature.data.edit_bones[bone].parent = armature.data.edit_bones[parent]
+        
+        reparent('Hips', 'Center')
+        reparent('Pelvis', 'Hips')
+        reparent('Spine', 'Hips')
+        reparent('Cf_Pv_Root_upper', 'Spine')
+        reparent('BodyTop', 'Spine')
+        reparent('Cf_Pv_Elbo_R', 'Cf_Pv_Root_upper')
+        reparent('Cf_Pv_Elbo_L', 'Cf_Pv_Root_upper')
+        
         ################### Setup all IKs
 
         #gives the leg an IK modifier, repositions the foot IK controller
@@ -89,7 +119,7 @@ class bone_drivers(bpy.types.Operator):
             bone.roll = 3.1415
 
             #unparent the bone
-            bone.parent = None
+            bone.parent = armature.data.edit_bones['Center']
 
         #Run for each side
         legIK('Right knee', 'Cf_Pv_Foot_R', 'Cf_Pv_Knee_R', -1.571, 'Cf_Pv_Foot_R', 'Right knee', 'ToeTipIK_R', 'Right ankle')
@@ -145,7 +175,7 @@ class bone_drivers(bpy.types.Operator):
             masterbone.head = armatureData.edit_bones[footbone].head
             masterbone.tail = armatureData.edit_bones[footbone].tail
             masterbone.matrix = armatureData.edit_bones[footbone].matrix
-            masterbone.parent = None
+            masterbone.parent = armature.data.edit_bones['Center']
             
             #Create the heel controller
             heelIK = armatureData.edit_bones.new('HeelIK.' + footbone[0])
@@ -227,7 +257,7 @@ class bone_drivers(bpy.types.Operator):
             #unparent the bone
             bpy.ops.object.mode_set(mode='EDIT')
             bone = bpy.data.objects['Armature'].data.edit_bones[handcontroller]
-            bone.parent = None
+            bone.parent = armature.data.edit_bones['Center']
             bpy.ops.object.mode_set(mode='POSE')
 
             # Set hand rotation then hide it
