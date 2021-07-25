@@ -25,4 +25,8 @@ class before_CATS(bpy.types.Operator):
                     
         return {'FINISHED'}
 
+if __name__ == "__main__":
+    bpy.utils.register_class(before_CATS)
 
+    # test call
+    print((bpy.ops.kkb.beforecats('INVOKE_DEFAULT')))
