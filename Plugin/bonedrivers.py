@@ -54,7 +54,7 @@ class bone_drivers(bpy.types.Operator):
 
         #Recreate the Center bone
         bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.view3d.snap_cursor_to_center()
+        bpy.context.scene.cursor.location = (0.0, 0.0, 0.0)
         centerbone = armature.data.edit_bones.new('Center')
         centerbone.tail = (centerbone.tail+centerbone.head)/2
         
@@ -175,7 +175,7 @@ class bone_drivers(bpy.types.Operator):
             masterbone.head = armatureData.edit_bones[footbone].head
             masterbone.tail = armatureData.edit_bones[footbone].tail
             masterbone.matrix = armatureData.edit_bones[footbone].matrix
-            masterbone.parent = armature.data.edit_bones['Center']
+            masterbone.parent = centerbone
             
             #Create the heel controller
             heelIK = armatureData.edit_bones.new('HeelIK.' + footbone[0])
@@ -257,7 +257,7 @@ class bone_drivers(bpy.types.Operator):
             #unparent the bone
             bpy.ops.object.mode_set(mode='EDIT')
             bone = bpy.data.objects['Armature'].data.edit_bones[handcontroller]
-            bone.parent = armature.data.edit_bones['Center']
+            bone.parent = centerbone
             bpy.ops.object.mode_set(mode='POSE')
 
             # Set hand rotation then hide it
