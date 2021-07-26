@@ -5,7 +5,7 @@ bl_info = {
     "author" : "a blendlet",
     "location" : "View 3D > Tool Shelf > KK Scripts",
     "description" : "Scripts for automating the cleanup process of a Koikatsu export",
-    "version": (4, 2, 3), #great now I have to remember to update this number each time
+    "version": (4, 3, 0), #great now I have to remember to update this number each time
     "blender" : (2, 93, 0),
     "location" : "View3D",
     "category" : "3D View",
@@ -28,11 +28,12 @@ from . bonedrivers import bone_drivers
 from . bakeMaterials import bake_Materials
 from . applyMaterials import apply_Materials
 from . selectBones import select_Bones
+from . importStudio import import_studio
 
 from . KKPanel    import PlaceholderProperties
 from . KKPanel    import KK_Panel
 
-classes = (before_CATS, shape_keys, separate_Body, import_Templates, import_Textures, clean_Armature, bone_drivers, bake_Materials, apply_Materials, select_Bones, PlaceholderProperties, KK_Panel)
+classes = (before_CATS, shape_keys, separate_Body, import_Templates, import_Textures, clean_Armature, bone_drivers, bake_Materials, apply_Materials, select_Bones, import_studio, PlaceholderProperties, KK_Panel)
 
 def register():
     from bpy.utils import register_class
