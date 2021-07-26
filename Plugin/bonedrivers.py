@@ -727,9 +727,11 @@ class bone_drivers(bpy.types.Operator):
         
         bpy.ops.pose.select_all(action='DESELECT')
         armature.data.bones['Eye Controller'].select = True
+        armature.data.bones['LowerBody_Twist'].select = True
         bpy.ops.pose.bone_layers(layers=layer2)
         
         armature.data.bones['Cf_Pv_Root_upper'].hide = True
+        armature.data.bones['LowerBody_Twist'].hide = True
         
         #Add some bones to bone groups
         bpy.ops.pose.select_all(action='DESELECT')
