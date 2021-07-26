@@ -58,7 +58,7 @@ class bone_drivers(bpy.types.Operator):
         def newbone(newbonepls):
             bpy.ops.armature.bone_primitive_add()
             bo = armature.data.edit_bones['Bone']
-            bo.name = 'newbonepls'
+            bo.name = newbonepls
             return bo
         centerbone = newbone('Root')
         centerbone.tail = (centerbone.tail+centerbone.head)/2
