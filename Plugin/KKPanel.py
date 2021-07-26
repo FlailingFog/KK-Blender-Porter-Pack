@@ -22,7 +22,7 @@ class PlaceholderProperties(PropertyGroup):
     texturecheck_bool : BoolProperty(
     name="Enable or Disable", description="Disable this if you're 100% sure you're selecting the textures folder correctly", default = True)
     templates_bool : BoolProperty(
-    name="Enable or Disable", description="Keep enabled to prevent the material templates from being deleted\nif Blender is restarted between steps 6 and 7. \nHandy for crashes during Step 7", default = True)   
+    name="Enable or Disable", description="Keep enabled to prevent the material templates from being deleted\nif Blender is restarted between steps 6 and 7. \nHandy for crashes during Step 7", default = True)
         
 class KK_Panel(bpy.types.Panel):
     bl_idname = "KK_PT_Panel"
@@ -127,7 +127,13 @@ class KK_Panel(bpy.types.Panel):
         split = row.split(align=True, factor=splitfac)
         split.label(text="10) Select unused bones:")
         split.operator('kkb.selectbones', text = '10')
-
+        
+        box = layout.box()
+        col = box.column(align=True)
+        row = col.row(align=True)
+        split = row.split(align=True, factor=splitfac)
+        split.label(text="11) Import studio object")
+        split.operator('kkb.importstudio', text = '11')
 def register():
     bpy.utils.register_class(KK_Panel)
 
