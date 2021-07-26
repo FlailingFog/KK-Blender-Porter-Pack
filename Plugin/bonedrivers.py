@@ -65,7 +65,10 @@ class bone_drivers(bpy.types.Operator):
         
         #Recreate the hips bone, flip the pelvis bone
         armature.data.edit_bones['Hips'].name = 'Pelvis'
+        bpy.ops.armature.select_all(action='DESELECT')
         armature.data.edit_bones['Pelvis'].select = True
+        armature.data.edit_bones['Pelvis'].select_head = True
+        armature.data.edit_bones['Pelvis'].select_tail = True
         bpy.ops.transform.rotate(value=3.14159, orient_axis='X', orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(True, False, False))
         hipsbone = newbone('Hips')
         hipsbone.tail = armature.data.edit_bones['Pelvis'].tail
@@ -726,8 +729,9 @@ class bone_drivers(bpy.types.Operator):
         armature.data.bones['Eye Controller'].select = True
         bpy.ops.pose.bone_layers(layers=layer2)
         
+        armature.data.bones['Cf_Pv_Root_upper'].hide = True
+        
         #Add some bones to bone groups
-
         bpy.ops.pose.select_all(action='DESELECT')
         bpy.ops.pose.group_add()
         group = armature.pose.bone_groups[len(armature.pose.bone_groups)-1]
