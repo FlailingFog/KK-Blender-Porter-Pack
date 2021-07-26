@@ -28,8 +28,6 @@ class bone_drivers(bpy.types.Operator):
 
         ################### Start script
 
-        import bpy
-
         #remove all constraints from all bones
         for armature in [ob for ob in bpy.data.objects if ob.type == 'ARMATURE']:
             for bone in armature.pose.bones:
@@ -55,17 +53,26 @@ class bone_drivers(bpy.types.Operator):
         #Recreate the Center bone
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.context.scene.cursor.location = (0.0, 0.0, 0.0)
-        centerbone = armature.data.edit_bones.new('Center')
+        
+        #why the fuck do i have to do it this way
+        def newbone(newbonepls):
+            bpy.ops.armature.bone_primitive_add()
+            bo = armature.data.edit_bones['Bone']
+            bo.name = 'newbonepls'
+            return bo
+        centerbone = newbone('Root')
         centerbone.tail = (centerbone.tail+centerbone.head)/2
         
-        #Recreate the hips bone
+        #Recreate the hips bone, flip the pelvis bone
         armature.data.edit_bones['Hips'].name = 'Pelvis'
-        hipsbone = armature.data.edit_bones.new('Hips')
+        armature.data.edit_bones['Pelvis'].select = True
+        bpy.ops.transform.rotate(value=3.14159, orient_axis='X', orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(True, False, False))
+        hipsbone = newbone('Hips')
         hipsbone.tail = armature.data.edit_bones['Pelvis'].tail
         hipsbone.head = armature.data.edit_bones['Pelvis'].head
         
         #separate the PV bones
-        pvrootupper = armature.data.edit_bones.new('Cf_Pv_Root_upper')
+        pvrootupper = newbone('Cf_Pv_Root_upper')
         pvrootupper.tail = armature.data.edit_bones['Cf_Pv_Root'].tail
         pvrootupper.head = armature.data.edit_bones['Cf_Pv_Root'].head
         
@@ -73,7 +80,7 @@ class bone_drivers(bpy.types.Operator):
         def reparent(bone,parent):
             armature.data.edit_bones[bone].parent = armature.data.edit_bones[parent]
         
-        reparent('Hips', 'Center')
+        reparent('Hips', 'Root')
         reparent('Pelvis', 'Hips')
         reparent('Spine', 'Hips')
         reparent('Cf_Pv_Root_upper', 'Spine')
@@ -119,7 +126,7 @@ class bone_drivers(bpy.types.Operator):
             bone.roll = 3.1415
 
             #unparent the bone
-            bone.parent = armature.data.edit_bones['Center']
+            bone.parent = centerbone
 
         #Run for each side
         legIK('Right knee', 'Cf_Pv_Foot_R', 'Cf_Pv_Knee_R', -1.571, 'Cf_Pv_Foot_R', 'Right knee', 'ToeTipIK_R', 'Right ankle')
@@ -171,14 +178,14 @@ class bone_drivers(bpy.types.Operator):
             
             #duplicate the foot IK. This is the new master bone
             armatureData = bpy.data.objects['Armature'].data
-            masterbone = armatureData.edit_bones.new('MasterFootIK.' + footbone[0])
+            masterbone = newbone('MasterFootIK.' + footbone[0])
             masterbone.head = armatureData.edit_bones[footbone].head
             masterbone.tail = armatureData.edit_bones[footbone].tail
             masterbone.matrix = armatureData.edit_bones[footbone].matrix
-            masterbone.parent = centerbone
+            masterbone.parent = bpy.data.objects['Armature'].data.edit_bones['Root']
             
             #Create the heel controller
-            heelIK = armatureData.edit_bones.new('HeelIK.' + footbone[0])
+            heelIK = newbone('HeelIK.' + footbone[0])
             heelIK.head = armatureData.edit_bones[footbone].tail
             heelIK.tail = armatureData.edit_bones[footbone].head
             heelIK.tail.y *= .5
@@ -188,20 +195,20 @@ class bone_drivers(bpy.types.Operator):
             armatureData.edit_bones[footIK].parent = heelIK
             
             #make a bone to pin the foot
-            footPin = armatureData.edit_bones.new('FootPin.' + footbone[0])
+            footPin = newbone('FootPin.' + footbone[0])
             footPin.head = armatureData.edit_bones[toebone].head
             footPin.tail = armatureData.edit_bones[toebone].tail
             footPin.tail.z*=.8
             footPin.parent = masterbone
             
             #make a bone to allow rotation of the toe along an arc
-            toeRotator = armatureData.edit_bones.new('ToeRotator.' + footbone[0])
+            toeRotator = newbone('ToeRotator.' + footbone[0])
             toeRotator.head = armatureData.edit_bones[toebone].head
             toeRotator.tail = armatureData.edit_bones[toebone].tail
             toeRotator.parent = masterbone
             
             #make a bone to pin the toe
-            toePin = armatureData.edit_bones.new('ToePin.' + footbone[0])
+            toePin = newbone('ToePin.' + footbone[0])
             toePin.head = armatureData.edit_bones[toebone].tail
             toePin.tail = armatureData.edit_bones[toebone].tail
             toePin.tail.z *=1.2
@@ -257,7 +264,7 @@ class bone_drivers(bpy.types.Operator):
             #unparent the bone
             bpy.ops.object.mode_set(mode='EDIT')
             bone = bpy.data.objects['Armature'].data.edit_bones[handcontroller]
-            bone.parent = centerbone
+            bone.parent = bpy.data.objects['Armature'].data.edit_bones['Root']
             bpy.ops.object.mode_set(mode='POSE')
 
             # Set hand rotation then hide it
@@ -547,7 +554,7 @@ class bone_drivers(bpy.types.Operator):
         armatureData = bpy.data.objects['Armature'].data
         armatureData.edit_bones['Eyesx'].roll = -1.571
 
-        copy = armatureData.edit_bones.new('Eye Controller')
+        copy = newbone('Eye Controller')
 
         copy.head = armatureData.edit_bones['Eyesx'].head/2
         copy.tail = armatureData.edit_bones['Eyesx'].tail/2
