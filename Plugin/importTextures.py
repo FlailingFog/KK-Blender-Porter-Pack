@@ -170,7 +170,7 @@ class import_Textures(bpy.types.Operator):
             mod = ob.modifiers[3]
             mod.thickness = 0.003
             mod.offset = 0
-            mod.material_offset = 100
+            mod.material_offset = len(ob.material_slots)
             mod.use_flip_normals = True
             mod.use_rim = False
             
