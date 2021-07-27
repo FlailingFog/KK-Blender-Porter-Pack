@@ -29,21 +29,21 @@ class PlaceholderProperties(PropertyGroup):
             ("B", "Emission", "Flat shading"),
             ("C", "KK Shader", "Anime cel shading"),
             ("D", "Custom", "Custom shading")
-        ), name="Shader type", default="A", description="Shader type")
+        ), name="", default="A", description="Shader type")
     shadows_dropdown : EnumProperty(
         items=(
             ("A", "None", "No shadows"),
             ("B", "Opaque", ""),
             ("C", "Alpha Clip", ""),
             ("D", "Alpha Hashed", "")
-        ), name="Shadow Mode", default="A", description="Shadow Mode")
+        ), name="", default="A", description="Shadow Mode")
     blend_dropdown : EnumProperty(
         items=(
             ("A", "Opaque", ""),
             ("B", "Alpha Clip", ""),
             ("C", "Alpha Hashed", ""),
             ("D", "Alpha Blend", ""),
-        ), name="Blend Mode", default="B", description="Blend Mode")
+        ), name="", default="B", description="Blend Mode")
 
 class KK_Panel(bpy.types.Panel):
     bl_idname = "KK_PT_Panel"
