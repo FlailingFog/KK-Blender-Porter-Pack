@@ -23,7 +23,28 @@ class PlaceholderProperties(PropertyGroup):
     name="Enable or Disable", description="Disable this if you're 100% sure you're selecting the textures folder correctly", default = True)
     templates_bool : BoolProperty(
     name="Enable or Disable", description="Keep enabled to prevent the material templates from being deleted\nif Blender is restarted between steps 6 and 7. \nHandy for crashes during Step 7", default = True)
-        
+    dropdown_box : EnumProperty(
+        items=(
+            ("A", "Principled BSDF", "Default shading"),
+            ("B", "Emission", "Flat shading"),
+            ("C", "KK Shader", "Anime cel shading"),
+            ("D", "Custom", "Custom shading")
+        ), name="Shader type", default="A", description="Shader type")
+    shadows_dropdown : EnumProperty(
+        items=(
+            ("A", "None", "No shadows"),
+            ("B", "Opaque", ""),
+            ("C", "Alpha Clip", ""),
+            ("D", "Alpha Hashed", "")
+        ), name="Shadow Mode", default="A", description="Shadow Mode")
+    blend_dropdown : EnumProperty(
+        items=(
+            ("A", "Opaque", "No shadows"),
+            ("B", "Alpha Clip", ""),
+            ("C", "Alpha Hashed", ""),
+            ("D", "Alpha Blend", ""),
+        ), name="Blend Mode", default="B", description="Blend Mode")
+
 class KK_Panel(bpy.types.Panel):
     bl_idname = "KK_PT_Panel"
     bl_label = "KK Panel"
@@ -134,6 +155,13 @@ class KK_Panel(bpy.types.Panel):
         split = row.split(align=True, factor=splitfac)
         split.label(text="11) Import studio object")
         split.operator('kkb.importstudio', text = '11')
+        row = col.row(align=True)
+        split = row.split(align=True, factor=0.1)
+        split.label(text="")
+        split.prop(context.scene.placeholder, "dropdown_box")
+        split.prop(context.scene.placeholder, "shadows_dropdown")
+        split.prop(context.scene.placeholder, "blend_dropdown")
+        
 def register():
     bpy.utils.register_class(KK_Panel)
 
