@@ -139,7 +139,7 @@ class import_studio(bpy.types.Operator):
                             elif shader_type == 'D':
                                 
                                 if nodes['Normal Map'].inputs[1].links != ():
-                                    normal = nodes['Normal Map'].inputs[1].links[0].from_node.image
+                                    normal = nodes['Normal Map'].inputs[1].links[0].from_node
                                 else:
                                     normal = 'nonormal'
                                     
@@ -153,7 +153,6 @@ class import_studio(bpy.types.Operator):
                                 custom_group.location = output_node.location[0], output_node.location[1] - 300
                                 
                                 material.node_tree.links.new(image.outputs[0], custom_group.inputs[0])
-                                material.node_tree.links.new(image_alpha.outputs[1], custom_group.inputs[0])
                                 material.node_tree.links.new(image_alpha.outputs[1], custom_group.inputs[1])
                                 if normal != 'nonormal':
                                     material.node_tree.links.new(normal.outputs[0], custom_group.inputs[2])
