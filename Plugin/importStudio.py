@@ -136,7 +136,7 @@ class import_studio(bpy.types.Operator):
                                 material.blend_method = blend_dict[blend_type]
                                 material.shadow_method = shadow_dict[shadow_type]
                             
-                            elif shaer_type == 'D':
+                            elif shader_type == 'D':
                                 
                                 if nodes['Normal Map'].inputs[1].links != ():
                                     normal = nodes['Normal Map'].inputs[1].links[0].from_node.image
