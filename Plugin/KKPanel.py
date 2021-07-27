@@ -39,7 +39,7 @@ class PlaceholderProperties(PropertyGroup):
         ), name="Shadow Mode", default="A", description="Shadow Mode")
     blend_dropdown : EnumProperty(
         items=(
-            ("A", "Opaque", "No shadows"),
+            ("A", "Opaque", ""),
             ("B", "Alpha Clip", ""),
             ("C", "Alpha Hashed", ""),
             ("D", "Alpha Blend", ""),
