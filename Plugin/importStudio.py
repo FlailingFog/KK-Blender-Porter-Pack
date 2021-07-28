@@ -56,13 +56,19 @@ class import_studio(bpy.types.Operator):
                             material.blend_method = blend_dict[blend_type]
                             material.shadow_method = shadow_dict[shadow_type]
                             
-                            #skip materials that have already had operations performed on them
-                            if nodes.get('Principled BSDF') == None:
-                                continue
+                            try:
+                                    image_alpha = nodes['Principled BSDF'].inputs[19].links[0].from_node
+                            except:
+                                    #there was no image attached to the alpha node
+                                    image_alpha = 'noalpha'
                             
-                            image_alpha = nodes['Principled BSDF'].inputs[19].links[0].from_node
-                            image = nodes['Principled BSDF'].inputs[0].links[0].from_node
-                            material.node_tree.links.new(image_alpha.outputs[1], nodes['Principled BSDF'].inputs[19])
+                            try:
+                                image = nodes['Principled BSDF'].inputs[0].links[0].from_node
+                            except:
+                                image = 'noimage'
+                            
+                            if image_alpha != 'noalpha':
+                                material.node_tree.links.new(image_alpha.outputs[1], nodes['Principled BSDF'].inputs[19])
                             
                             #if set to emission
                             if shader_type == 'B': 
@@ -76,16 +82,23 @@ class import_studio(bpy.types.Operator):
                                 emissive_node.location = transparency_node.location[0], transparency_node.location[1] + 300
                                 output_node.location = transparency_mix.location[0] + 300, transparency_mix.location[1]
                                 
-                                material.node_tree.links.new(image.outputs[0], emissive_node.inputs[0])
+                                if image != 'noimage':
+                                    material.node_tree.links.new(image.outputs[0], emissive_node.inputs[0])
                                 material.node_tree.links.new(emissive_node.outputs[0], transparency_mix.inputs[2])
                                 material.node_tree.links.new(transparency_node.outputs[0], transparency_mix.inputs[1])
-                                material.node_tree.links.new(image_alpha.outputs[1], transparency_mix.inputs[0])
+                                if image_alpha != 'noalpha':
+                                    material.node_tree.links.new(image_alpha.outputs[1], transparency_mix.inputs[0])
+                                elif image != 'noimage':
+                                    material.node_tree.links.new(image.outputs[1], transparency_mix.inputs[0])
+                                                                    
                                 material.node_tree.links.new(output_node.inputs[0], transparency_mix.outputs[0])
                             
                             elif shader_type == 'C':
                             #if set to KK shader
-                                image_alpha = image_alpha.image
-                                image = image.image
+                                if image_alpha != 'noalpha':
+                                    image_alpha = image_alpha.image
+                                if image != 'noimage':
+                                    image = image.image
                                 if nodes['Normal Map'].inputs[1].links != ():
                                     normal = nodes['Normal Map'].inputs[1].links[0].from_node.image
                                 else:
@@ -111,18 +124,19 @@ class import_studio(bpy.types.Operator):
                                 new_node = material_slot.material.node_tree.nodes['Gentex'].node_tree.copy()
                                 material_slot.material.node_tree.nodes['Gentex'].node_tree = new_node
                                 new_node.name = gen_type + ' Textures'
-
-                                imageLoad('Gentex', 'Maintex', image.name, True)
+                                
+                                if image != 'noimage':
+                                    imageLoad('Gentex', 'Maintex', image.name, True)
                                 if normal != 'nonormal':
                                     imageLoad('Gentex', 'MainNorm', image.name, True)
-
-                                main_image = material_slot.material.node_tree.nodes['Gentex'].node_tree.nodes['Maintex'].image
-                                alpha_image = material_slot.material.node_tree.nodes['Gentex'].node_tree.nodes['Alphamask'].image
 
                                 #Also, make a copy of the General shader node group, as it's unlikely everything using it will be the same color
                                 new_node = material_slot.material.node_tree.nodes['KKShader'].node_tree.copy()
                                 material_slot.material.node_tree.nodes['KKShader'].node_tree = new_node
                                 new_node.name = gen_type + ' Shader'
+                                
+                                main_image = material_slot.material.node_tree.nodes['Gentex'].node_tree.nodes['Maintex'].image
+                                alpha_image = material_slot.material.node_tree.nodes['Gentex'].node_tree.nodes['Alphamask'].image
 
                                 #If no main image was loaded in, there's no alpha channel being fed into the KK Shader.
                                 #Unlink the input node and make the alpha channel pure white
@@ -152,8 +166,10 @@ class import_studio(bpy.types.Operator):
                                     custom_group.node_tree = bpy.data.node_groups['custom_studio']
                                 custom_group.location = output_node.location[0], output_node.location[1] - 300
                                 
-                                material.node_tree.links.new(image.outputs[0], custom_group.inputs[0])
-                                material.node_tree.links.new(image_alpha.outputs[1], custom_group.inputs[1])
+                                if image != 'noimage':
+                                    material.node_tree.links.new(image.outputs[0], custom_group.inputs[0])
+                                if image_alpha != 'noalpha':
+                                    material.node_tree.links.new(image_alpha.outputs[1], custom_group.inputs[1])
                                 if normal != 'nonormal':
                                     material.node_tree.links.new(normal.outputs[0], custom_group.inputs[2])
                                 material.node_tree.links.new(output_node.inputs[0], custom_group.outputs[0])
