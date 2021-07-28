@@ -60,6 +60,9 @@ class import_studio(bpy.types.Operator):
                             if nodes.get('Principled BSDF') == None:
                                 continue
                             
+                            #set emission to black
+                            nodes['Principled BSDF'].inputs[17].default_value = (0, 0, 0, 1)
+                            
                             try:
                                     image_alpha = nodes['Principled BSDF'].inputs[19].links[0].from_node
                             except:
