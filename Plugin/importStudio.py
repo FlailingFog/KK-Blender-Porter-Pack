@@ -56,6 +56,10 @@ class import_studio(bpy.types.Operator):
                             material.blend_method = blend_dict[blend_type]
                             material.shadow_method = shadow_dict[shadow_type]
                             
+                            #if two objects have the same material, and the material was already operated on, skip it
+                            if nodes.get('Principled BSDF') == None:
+                                continue
+                            
                             try:
                                     image_alpha = nodes['Principled BSDF'].inputs[19].links[0].from_node
                             except:
