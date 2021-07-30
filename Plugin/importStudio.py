@@ -179,7 +179,7 @@ class import_studio(bpy.types.Operator):
                                         if raw:
                                             currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].image.colorspace_settings.name = 'Raw'
                                     except:
-                                        print('Image not found, skipping: ' + image)
+                                        print('Image not found, skipping: ' + str(image))
 
                                 gen_type = material_slot.name.replace('Template ','')
 
@@ -193,8 +193,9 @@ class import_studio(bpy.types.Operator):
                                 else:
                                     #if there's no image, fallback to the detected maintex
                                     imageLoad('Gentex', 'Maintex', detected_maintex, True)
+                                
                                 if normal != 'nonormal':
-                                    imageLoad('Gentex', 'MainNorm', normal, True)
+                                    imageLoad('Gentex', 'MainNorm', normal.name, True)
                                 
                                 #try importing the detail mask if there is one
                                 try:
