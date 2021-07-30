@@ -22,7 +22,7 @@ class import_studio(bpy.types.Operator):
             
             #Stop if no files were detected
             def fileError(self, context):
-                self.layout.label(text="No fbx files were detected in the folder you selected. (Hint: go into the folder before confirming)")
+                self.layout.label(text="No fbx files were detected in the folder you selected (including subfolders)")
             
             #Stop if no custom studio node group was detected
             def nodeError(self, context):
@@ -92,6 +92,16 @@ class import_studio(bpy.types.Operator):
                             material.show_transparent_back = False
                             material.blend_method = blend_dict[blend_type]
                             material.shadow_method = shadow_dict[shadow_type]
+                            
+                            #rename all principled BSDF nodes to 'Principled BSDF' just in case
+                            for node in nodes:
+                                if node.type == 'BSDF_PRINCIPLED':
+                                    node.name = 'Principled BSDF'
+                            
+                            #rename all Material Output nodes to 'Material Output' just in case
+                            for node in nodes:
+                                if node.type == 'OUTPUT_MATERIAL':
+                                    node.name = 'Material Output'
                             
                             #if two objects have the same material, and the material was already operated on, skip it
                             if nodes.get('Principled BSDF') == None:
@@ -167,7 +177,7 @@ class import_studio(bpy.types.Operator):
                                     except:
                                         pass
                                 
-                                if nodes['Normal Map'].inputs[1].links != ():
+                                if nodes['Principled BSDF'].inputs[20].links[0].from_node.inputs[1].links != ():
                                     normal = nodes['Principled BSDF'].inputs[20].links[0].from_node.inputs[1].links[0].from_node.image
                                 else:
                                     normal = 'nonormal'
