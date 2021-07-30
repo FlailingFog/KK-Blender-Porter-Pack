@@ -2,7 +2,7 @@
 LINK EYEBROW SHAPEKEYS TO BODY SCRIPT
 Usage:
 - Seperate the eyebrow mesh into its own object
-- Select the eyebrows object, then shift click the body object and run the script to link all the body shapekeys to the eyebrow shapekeys
+- Select the eyebrows object, then shift click the body object and run the script to control the eyebrow shapekeys from the body object
 
 Script 90% stolen from https://blender.stackexchange.com/questions/86757/python-how-to-connect-shapekeys-via-drivers
 '''
@@ -26,7 +26,7 @@ class link_Shapekeys(bpy.types.Operator):
       for obj in selected_obj:
           for key in obj.data.shape_keys.key_blocks:
               if key.name.lower() in shapekey_list_string:
-                  if not key.name == "Basis":
+                  if not key.name == obj.data.shape_keys.key_blocks[0]:
                       skey_driver = key.driver_add('value')
                       skey_driver.driver.type = 'AVERAGE'
                       #skey_driver.driver.show_debug_info = True
