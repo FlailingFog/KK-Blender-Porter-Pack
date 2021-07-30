@@ -192,7 +192,11 @@ class import_studio(bpy.types.Operator):
                                     imageLoad('Gentex', 'Maintex', image.name, True)
                                 else:
                                     #if there's no image, fallback to the detected maintex
-                                    imageLoad('Gentex', 'Maintex', detected_maintex, True)
+                                    try:
+                                        imageLoad('Gentex', 'Maintex', detected_maintex, True)
+                                    except:
+                                        #oh well
+                                        pass
                                 
                                 if normal != 'nonormal':
                                     imageLoad('Gentex', 'MainNorm', normal.name, True)
