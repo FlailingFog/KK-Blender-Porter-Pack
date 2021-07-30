@@ -130,6 +130,16 @@ class import_studio(bpy.types.Operator):
                                 
                                 if image != 'noimage':
                                     material.node_tree.links.new(image.outputs[0], emissive_node.inputs[0])
+                                else:
+                                    #if there's no image, try falling back to the colormask
+                                    try:
+                                        color_node = nodes.new('ShaderNodeTexImage')
+                                        color_node.image = bpy.data.images[detected_colormask]
+                                        color_node.location = emissive_node.location[0] - 300, emissive_node.location[1]
+                                        material.node_tree.links.new(color_node.outputs[0], emissive_node.inputs[0])
+                                    except:
+                                        nodes.remove(color_node)
+                                
                                 material.node_tree.links.new(emissive_node.outputs[0], transparency_mix.inputs[2])
                                 material.node_tree.links.new(transparency_node.outputs[0], transparency_mix.inputs[1])
                                 if image_alpha != 'noalpha':
