@@ -29,6 +29,11 @@ class import_studio(bpy.types.Operator):
                 self.layout.label(text="You need a node group named \"Custom_studio\" with at least three inputs and one output to use the Custom shader.")
                 self.layout.label(text="Input 1: Maintex || Input 2: Image Alpha || Input 3: Normal || Input 4 (optional): Detailmask || Input 5 (optional): Colormask")
             
+            #Stop if the KK shader was not detected
+            def kkError(self, context):
+                self.layout.label(text="You need to append the KK Shader from the KK Shader.blend file to use this shader.")
+                self.layout.label(text="Go to File > Append > choose the KK shader.blend > go into the materials folder > choose \"Template General\" ")
+            
             scene = context.scene.placeholder
             shader_type = scene.dropdown_box 
             shadow_type = scene.shadows_dropdown 
@@ -166,8 +171,13 @@ class import_studio(bpy.types.Operator):
                                     normal = nodes['Principled BSDF'].inputs[20].links[0].from_node.inputs[1].links[0].from_node.image
                                 else:
                                     normal = 'nonormal'
-
-                                template = bpy.data.materials['Template General'].copy()
+                                
+                                try:
+                                    template = bpy.data.materials['Template General'].copy()
+                                except:
+                                    bpy.context.window_manager.popup_menu(kkError, title="Error", icon='ERROR')
+                                    return
+                                
                                 template.name = 'Template ' + material.name
                                 material_slot.material = bpy.data.materials[template.name]
                                 material = material_slot.material
