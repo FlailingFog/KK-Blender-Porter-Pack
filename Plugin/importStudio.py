@@ -26,7 +26,7 @@ class import_studio(bpy.types.Operator):
             
             #Stop if no custom studio node group was detected
             def nodeError(self, context):
-                self.layout.label(text="You need a node group named \"Custom_studio\" with at least three inputs and one output to use this feature.")
+                self.layout.label(text="You need a node group named \"Custom_studio\" with at least three inputs and one output to use the Custom shader.")
                 self.layout.label(text="Input 1: Maintex || Input 2: Image Alpha || Input 3: Normal || Input 4 (optional): Detailmask || Input 5 (optional): Colormask")
             
             scene = context.scene.placeholder
@@ -237,7 +237,7 @@ class import_studio(bpy.types.Operator):
                             elif shader_type == 'D':
                                 
                                 if nodes['Normal Map'].inputs[1].links != ():
-                                    normal = nodes['Principled BSDF'].inputs[20].links[0].from_node.inputs[1].links[0].from_node.image
+                                    normal = nodes['Principled BSDF'].inputs[20].links[0].from_node.inputs[1].links[0].from_node
                                 else:
                                     normal = 'nonormal'
                                     
@@ -282,12 +282,12 @@ class import_studio(bpy.types.Operator):
                                     nodes.remove(color_node)
                                 
                                 material.node_tree.links.new(output_node.inputs[0], custom_group.outputs[0])
-            
+        
         #I need a better way to do this
         runIt()
         
         return {'FINISHED'}
-
+        
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
