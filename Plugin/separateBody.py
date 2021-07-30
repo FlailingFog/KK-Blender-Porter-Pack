@@ -38,6 +38,15 @@ class separate_Body(bpy.types.Operator):
             for mat in matList:
                 try:
                     bpy.context.object.active_material_index = body.data.materials.find(mat)
+                    
+                    #if this is the face material, make sure it's at the top of the material list
+                    if mat == 'cf_m_face_00':
+                        def moveUp():
+                            return bpy.ops.object.material_slot_move(direction='UP')
+
+                        while moveUp() != {"CANCELLED"}:
+                            pass
+                    
                     bpy.ops.object.material_slot_select()
                 except:
                     print('material wasn\'t found: ' + mat)
