@@ -13,6 +13,7 @@
 * Added a pelvis bone back to the armature
     * This bone lets you move the pelvis and legs without moving the upper spine
     * This bone is usually deleted by CATS
+* Edited the armature bone tree a little
 * Changed the bone widget shapes in the KK shader to be slightly more rigify-like
 * Fixed the orientation of the top skirt bones
 * Gave the face material a seperate outline
