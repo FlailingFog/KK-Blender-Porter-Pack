@@ -20,6 +20,15 @@ class import_studio(bpy.types.Operator):
     def execute(self, context):        
         def runIt():
             
+            #Stop if no files were detected
+            def fileError(self, context):
+                self.layout.label(text="No fbx files were detected in the folder you selected. (Hint: go into the folder before confirming)")
+            
+            #Stop if no custom studio node group was detected
+            def nodeError(self, context):
+                self.layout.label(text="You need a node group named \"Custom_studio\" with at least three inputs and one output to use this feature.")
+                self.layout.label(text="Input 1: Maintex || Input 2: Image Alpha || Input 3: Normal || Input 4 (optional): Detailmask || Input 5 (optional): Colormask")
+            
             scene = context.scene.placeholder
             shader_type = scene.dropdown_box 
             shadow_type = scene.shadows_dropdown 
@@ -30,12 +39,35 @@ class import_studio(bpy.types.Operator):
             blend_dict = {"A": "OPAQUE", "B": "CLIP", "C": "HASHED", "D": "BLEND"}
             
             path = Path(self.directory).rglob('*')
-            fileList = []
+            fbx_list = []
+            image_list = []
             for item in path:
                 if '.fbx' in str(item):
-                    fileList.append(item)
+                    fbx_list.append(item)
+                if '.dds' in str(item) or '.tga' in str(item):
+                    image_list.append(item)
             
-            for fbx in fileList:
+            #attempt to detect detail masks, color masks and main tex files from the selected folder/subfolders
+            #normal map will always be attached on import if it's present
+            for image in image_list:
+                if '_md-DXT' in str(image):
+                    bpy.ops.image.open(filepath=str(image))
+                    bpy.data.images[image.name].pack()
+                    detected_detailmask = image.name
+                if '_mc-DXT' in str(image):
+                    bpy.ops.image.open(filepath=str(image))
+                    bpy.data.images[image.name].pack()
+                    detected_colormask = image.name
+                if '_t-DXT' in str(image):
+                    bpy.ops.image.open(filepath=str(image))
+                    bpy.data.images[image.name].pack()
+                    detected_maintex = image.name
+            
+            if len(fbx_list) == 0:
+                bpy.context.window_manager.popup_menu(fileError, title="Error", icon='ERROR')
+                return
+            
+            for fbx in fbx_list:
                 bpy.ops.import_scene.fbx(filepath=str(fbx))
                 bpy.ops.object.mode_set(mode='OBJECT')
                 for object in bpy.context.selected_objects:
@@ -63,11 +95,18 @@ class import_studio(bpy.types.Operator):
                             #set emission to black
                             nodes['Principled BSDF'].inputs[17].default_value = (0, 0, 0, 1)
                             
+                            #set normal map to srgb if it exists
                             try:
-                                    image_alpha = nodes['Principled BSDF'].inputs[19].links[0].from_node
+                                nodes['Principled BSDF'].inputs[20].links[0].from_node.inputs[1].links[0].from_node.image.colorspace_settings.name = 'sRGB'
                             except:
-                                    #there was no image attached to the alpha node
-                                    image_alpha = 'noalpha'
+                                #the normal map doesn't exist
+                                pass
+                            
+                            try:
+                                image_alpha = nodes['Principled BSDF'].inputs[19].links[0].from_node
+                            except:
+                                #there was no image attached to the alpha node
+                                image_alpha = 'noalpha'
                             
                             try:
                                 image = nodes['Principled BSDF'].inputs[0].links[0].from_node
@@ -106,8 +145,15 @@ class import_studio(bpy.types.Operator):
                                     image_alpha = image_alpha.image
                                 if image != 'noimage':
                                     image = image.image
+                                else:
+                                    #if there's no image, try to fallback to the maintex
+                                    try:
+                                        image = detected_maintex
+                                    except:
+                                        pass
+                                
                                 if nodes['Normal Map'].inputs[1].links != ():
-                                    normal = nodes['Normal Map'].inputs[1].links[0].from_node.image
+                                    normal = nodes['Principled BSDF'].inputs[20].links[0].from_node.inputs[1].links[0].from_node.image
                                 else:
                                     normal = 'nonormal'
 
@@ -134,9 +180,25 @@ class import_studio(bpy.types.Operator):
                                 
                                 if image != 'noimage':
                                     imageLoad('Gentex', 'Maintex', image.name, True)
+                                else:
+                                    #if there's no image, fallback to the detected maintex
+                                    imageLoad('Gentex', 'Maintex', detected_maintex, True)
                                 if normal != 'nonormal':
-                                    imageLoad('Gentex', 'MainNorm', image.name, True)
-
+                                    imageLoad('Gentex', 'MainNorm', normal, True)
+                                
+                                #try importing the detail mask if there is one
+                                try:
+                                    imageLoad('Gentex', 'MainDet', detected_detailmask, True)
+                                except:
+                                    #or not
+                                    pass
+                                
+                                try:
+                                    imageLoad('Gentex', 'MainCol', detected_colormask, True)
+                                except:
+                                    #or not
+                                    pass
+                                
                                 #Also, make a copy of the General shader node group, as it's unlikely everything using it will be the same color
                                 new_node = material_slot.material.node_tree.nodes['KKShader'].node_tree.copy()
                                 material_slot.material.node_tree.nodes['KKShader'].node_tree = new_node
@@ -160,7 +222,7 @@ class import_studio(bpy.types.Operator):
                             elif shader_type == 'D':
                                 
                                 if nodes['Normal Map'].inputs[1].links != ():
-                                    normal = nodes['Normal Map'].inputs[1].links[0].from_node
+                                    normal = nodes['Principled BSDF'].inputs[20].links[0].from_node.inputs[1].links[0].from_node.image
                                 else:
                                     normal = 'nonormal'
                                     
@@ -170,7 +232,13 @@ class import_studio(bpy.types.Operator):
                                 try:
                                     custom_group.node_tree = bpy.data.node_groups['Custom_studio']
                                 except: 
-                                    custom_group.node_tree = bpy.data.node_groups['custom_studio']
+                                    try:
+                                        custom_group.node_tree = bpy.data.node_groups['custom_studio']
+                                    except:
+                                        #no custom studio node group was detected
+                                        bpy.context.window_manager.popup_menu(nodeError, title="Error", icon='ERROR')
+                                        return
+                                
                                 custom_group.location = output_node.location[0], output_node.location[1] - 300
                                 
                                 if image != 'noimage':
@@ -179,6 +247,25 @@ class import_studio(bpy.types.Operator):
                                     material.node_tree.links.new(image_alpha.outputs[1], custom_group.inputs[1])
                                 if normal != 'nonormal':
                                     material.node_tree.links.new(normal.outputs[0], custom_group.inputs[2])
+                                
+                                #if the custom studio node group has a fourth input, and a detail mask is available, put the detail mask in there
+                                try:
+                                    detail_node = nodes.new('ShaderNodeTexImage')
+                                    detail_node.image = bpy.data.images[detected_detailmask]
+                                    detail_node.location = custom_group.location[0] - 300, custom_group.location[1] - 300
+                                    material.node_tree.links.new(detail_node.outputs[0], custom_group.inputs[3])
+                                except:
+                                    nodes.remove(detail_node)
+                               
+                                #if the custom studio node group has a fifth input, and a color mask is available, put the color mask in there
+                                try:
+                                    color_node = nodes.new('ShaderNodeTexImage')
+                                    color_node.image = bpy.data.images[detected_colormask]
+                                    color_node.location = custom_group.location[0] - 300, custom_group.location[1] - 600
+                                    material.node_tree.links.new(color_node.outputs[0], custom_group.inputs[4])
+                                except:
+                                    nodes.remove(color_node)
+                                
                                 material.node_tree.links.new(output_node.inputs[0], custom_group.outputs[0])
             
         #I need a better way to do this
