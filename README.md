@@ -7,3 +7,5 @@ The changelog for the pack [can be found here.](https://github.com/FlailingFog/K
 The pack is meant to be used with the video tutorial series below: (*click for playlist*)
 
 [![How to export your Koikatsu anime waifu to Blender, Unity and more](https://img.youtube.com/vi/uEBd4w_JpNw/0.jpg)](https://www.youtube.com/watch?v=xe5A8bOh2Mk&list=PLhiuav2SCuvd5eAOb3Ct1eovFAlgv-iwe&index=1)
+
+The [wiki also shows](https://github.com/FlailingFog/KK-Blender-Shader-Pack/wiki) some stuff
