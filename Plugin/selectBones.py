@@ -15,7 +15,7 @@ import bpy
 class select_Bones(bpy.types.Operator):
     bl_idname = "kkb.selectbones"
     bl_label = "The select bones script"
-    bl_description = "Selects bones that aren't needed"
+    bl_description = "Selects bones that aren't needed. \nThis script also unparents the Hip bone from the Root bone"
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):
