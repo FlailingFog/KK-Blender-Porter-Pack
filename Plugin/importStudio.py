@@ -256,7 +256,7 @@ class import_studio(bpy.types.Operator):
                             
                             elif shader_type == 'D':
                                 
-                                if nodes['Normal Map'].inputs[1].links != ():
+                                if nodes['Principled BSDF'].inputs[20].links[0].from_node.inputs[1].links != ():
                                     normal = nodes['Principled BSDF'].inputs[20].links[0].from_node.inputs[1].links[0].from_node
                                 else:
                                     normal = 'nonormal'
