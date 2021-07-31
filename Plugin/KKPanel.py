@@ -173,7 +173,7 @@ class KK_Panel(bpy.types.Panel):
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text="12) Link Shapekeys")
-        split.operator('kkb.linkShapekeys', text = '12')
+        split.operator('kkb.linkshapekeys', text = '12')
         
 def register():
     bpy.utils.register_class(KK_Panel)
