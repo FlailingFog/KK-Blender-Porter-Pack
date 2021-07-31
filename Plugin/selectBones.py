@@ -44,6 +44,10 @@ class select_Bones(bpy.types.Operator):
             bpy.ops.object.mode_set(mode='EDIT')
             bpy.ops.armature.select_all(action='DESELECT')
             
+            #If someone is using this script it's likely they intend on exporting the model
+            #Unparent the Hips from the root bone because it causes issues on Unity import
+            bpy.context.object.data.edit_bones['Hips'].parent = None
+            
             for bone in armature.data.bones:
                 if bone.name not in boneList and bone.name not in jointCorrectionList and bone.name not in visibleList:
                     bpy.context.object.data.edit_bones[bone.name].select = True
