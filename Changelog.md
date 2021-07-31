@@ -1,11 +1,12 @@
 ### Changes for V4.3.0:
 * Added a new button to the KK Panel: Import Studio Object
     * This script speeds up the import process for an accessory, studio object, or studio map that has been exported as an fbx file with SB3U
+    * Example usage video: [not created yet]
     * The shader applied to the object can be left as the default, changed to an emission shader, changed to the KK Shader, or changed to a custom user-defined node group
 * Added a new button to the KK Panel: Link Shapekeys
     * If the Eyebrows material is separated from the body object, this script will allow you to link the shapekeys values on the Body object to the Eyebrows object
     * This can be used for the Eyes and Eyeline materials as well
-    * Example usage case for this script (click this button instead of running the script in the editor as shown): https://www.youtube.com/watch?v=sqEBau1enWE
+    * Example usage video (click this button instead of running the script in the editor as shown): https://www.youtube.com/watch?v=sqEBau1enWE
     * Script source: https://blender.stackexchange.com/questions/86757/
 * Added a Center bone back to the armature
     * This bone lets you move all the bones on the armature without moving the armature's object location
