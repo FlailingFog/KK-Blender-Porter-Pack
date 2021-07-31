@@ -34,7 +34,7 @@ from . linkShapekeys import link_Shapekeys
 from . KKPanel    import PlaceholderProperties
 from . KKPanel    import KK_Panel
 
-classes = (before_CATS, shape_keys, separate_Body, import_Templates, import_Textures, clean_Armature, bone_drivers, bake_Materials, apply_Materials, select_Bones, import_studio, link_shapekeys, PlaceholderProperties, KK_Panel)
+classes = (before_CATS, shape_keys, separate_Body, import_Templates, import_Textures, clean_Armature, bone_drivers, bake_Materials, apply_Materials, select_Bones, import_studio, link_Shapekeys, PlaceholderProperties, KK_Panel)
 
 def register():
     from bpy.utils import register_class
