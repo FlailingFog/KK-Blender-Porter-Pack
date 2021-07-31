@@ -718,7 +718,7 @@ class bone_drivers(bpy.types.Operator):
         #move new bones to correct armature layers
         layer1 =    (True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False)
         layer2 =    (False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False)
-        oneList = ['ToeRotator.L', 'HeelIK.L', 'MasterFootIK.L', 'ToeRotator.R', 'HeelIK.R', 'MasterFootIK.R']
+        oneList = ['ToeRotator.L', 'HeelIK.L', 'MasterFootIK.L', 'ToeRotator.R', 'HeelIK.R', 'MasterFootIK.R', 'Hips']
         
         for bone in oneList:
             bpy.ops.pose.select_all(action='DESELECT')
