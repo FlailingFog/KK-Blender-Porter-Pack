@@ -51,7 +51,7 @@ class link_Shapekeys(bpy.types.Operator):
                       newVar.targets[0].id_type = 'KEY'
                       newVar.targets[0].id = active_obj.data.shape_keys
                       newVar.targets[0].data_path = 'key_blocks["' + key.name+ '"].mute'
-    return {'FINISHED'}
+        return {'FINISHED'}
 
 if __name__ == "__main__":
     bpy.utils.register_class(link_Shapekeys)
