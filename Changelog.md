@@ -1,22 +1,28 @@
+### Changes for V4.3.1:
+* Renamed the spine bones during the "1) Run right after importing" script
+    * CATS was not detecting the Spine, Chest and Upper Chest bones correctly. This resulted in the spine and chest bones being merged into one bone with awkward spine bends. Renaming the bones lets CATS detect the three bones correctly.
+
 ### Changes for V4.3.0:
-* Added a new button to the KK Panel: Import Studio Object
+* Added a new button to the KK Panel: **Import Studio Object**
     * This script speeds up the import process for an accessory, studio object, or studio map that has been exported as an fbx file with SB3U
-    * Example usage video: [not created yet]
+    * Example usage video: https://www.youtube.com/watch?v=PeryYTsAN6E
     * The shader applied to the object can be left as the default, changed to an emission shader, changed to the KK Shader, or changed to a custom user-defined node group
-* Added a new button to the KK Panel: Link Shapekeys
+* Added a new button to the KK Panel: **Link Shapekeys**
     * If the Eyebrows material is separated from the body object, this script will allow you to link the shapekeys values on the Body object to the Eyebrows object
-    * This can be used for the Eyes and Eyeline materials as well
     * Example usage video: https://www.youtube.com/watch?v=sqEBau1enWE
         * (click this button instead of running the script in the editor as shown)
+    * This can be used for the Eyes and Eyeline materials as well
     * Script source: https://blender.stackexchange.com/questions/86757/
 * Added a Center bone back to the armature
     * This bone lets you move all the bones on the armature without moving the armature's object location
-* Added a pelvis bone back to the armature
+* Added a Pelvis bone back to the armature
     * This bone lets you move the pelvis and legs without moving the upper spine
 * Edited the armature bone tree a little
 * Changed the bone widget shapes in the KK shader to be slightly more rigify-like
 * Fixed the orientation of the top skirt bones
-* Gave the face material a seperate outline
+* Gave the face material a separate outline
+* The "Select unused bones" button now unparents the Hips bone from the new Center bone
+    * Leaving the Hips bone parented caused import issues in Unity
 
 ### Changes for V4.2.3:
 * Made eyewhite operations for the shapekeys optional through a toggle
