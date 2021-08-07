@@ -1,7 +1,7 @@
 '''
 BEFORE CATS SCRIPT
-- Adds "_twist" to the end of the bones listed below so CATS doesn't delete them.
-- These bones are later used in the Drivers script
+- Renames spine bones so CATS correctly recognizes them
+- Adds "_twist" to the end of the bones listed below so CATS doesn't delete them (these bones are later used in the Drivers script)
 Usage:
 - Import pmx file using CATS
 - Run the script to rename the bones listed below
@@ -23,6 +23,11 @@ class before_CATS(bpy.types.Operator):
                 if bone.name in jointBones:
                     bone.name = bone.name + '_twist'
                     
+                if bone.name == '上半身2':
+                    bone.name = 'cf_j_spine02'
+                elif bone.name == '上半身':
+                    bone.name = 'cf_j_spine01'
+                
         return {'FINISHED'}
 
 if __name__ == "__main__":
