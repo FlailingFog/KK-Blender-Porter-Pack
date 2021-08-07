@@ -5,7 +5,7 @@ bl_info = {
     "author" : "a blendlet",
     "location" : "View 3D > Tool Shelf > KK Scripts",
     "description" : "Scripts for automating the cleanup process of a Koikatsu export",
-    "version": (4, 3, 0), #great now I have to remember to update this number each time
+    "version": (4, 3, 1), #great now I have to remember to update this number each time
     "blender" : (2, 93, 0),
     "location" : "View3D",
     "category" : "3D View",
