@@ -197,7 +197,8 @@ class import_Templates(Operator, ImportHelper):
         bpy.context.object.pose.bones["Eye Controller"].custom_shape = bpy.data.objects["WidgetEye"]
         bpy.context.object.pose.bones["Root"].custom_shape = bpy.data.objects["WidgetRoot"]
         bpy.context.object.pose.bones["Pelvis"].custom_shape = bpy.data.objects["WidgetPelvis"]
-
+        bpy.context.object.pose.bones["Upper Chest"].custom_shape = bpy.data.objects["WidgetChest"]
+        
         try:
             bpy.context.space_data.overlay.show_relationship_lines = False
         except:
