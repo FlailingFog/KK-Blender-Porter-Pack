@@ -173,7 +173,7 @@ class import_Templates(Operator, ImportHelper):
         bpy.ops.object.mode_set(mode='POSE')
 
         bpy.context.object.pose.bones["Hips"].custom_shape = bpy.data.objects["WidgetHips"]
-        bpy.context.object.pose.bones["Spine"].custom_shape = bpy.data.objects["WidgetSpine"]
+        bpy.context.object.pose.bones["Spine"].custom_shape = bpy.data.objects["WidgetChest"]
         bpy.context.object.pose.bones["Chest"].custom_shape = bpy.data.objects["WidgetChest"]
         bpy.context.object.pose.bones["Cf_D_Bust00"].custom_shape = bpy.data.objects["WidgetBust"]
         bpy.context.object.pose.bones["Left shoulder"].custom_shape = bpy.data.objects["WidgetShoulder"]
