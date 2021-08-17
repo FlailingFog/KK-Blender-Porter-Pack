@@ -65,10 +65,11 @@ class import_grey(bpy.types.Operator):
             'cf_pv_heel_L',
             'cf_pv_heel_R',
             'cf_pv_knee_L',
-            'cf_pv_knee_R'
+            'cf_pv_knee_R',
+            'cf_hit_head'
             ]
             
-            bpy.context.view_layer.objects.active = body = armature
+            bpy.context.view_layer.objects.active = armature
             bpy.ops.object.mode_set(mode='EDIT')
             height_adder = Vector((0,0.1,0))
             
@@ -77,6 +78,10 @@ class import_grey(bpy.types.Operator):
                 new_bone = armature.data.edit_bones.new(bone)
                 new_bone.head = empty_location.location
                 new_bone.tail = empty_location.location + height_adder
+            
+            #then fix the hit_head location
+            new_bone.head = armature.data.edit_bones['cf_s_head'].head + empty_location.location 
+            new_bone.tail = armature.data.edit_bones['cf_s_head'].head + height_adder +  empty_location.location
             
             bpy.ops.object.mode_set(mode='OBJECT')
             
@@ -145,9 +150,26 @@ class import_grey(bpy.types.Operator):
             for object in objects:
                 rename_keys(object)
             
+            #scale armature down
+            bpy.context.view_layer.objects.active = armature
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.armature.select_all(action='SELECT')
+            armature.data.edit_bones['cf_n_height'].select=False
+            armature.data.edit_bones['cf_n_height'].select_head=False
+            armature.data.edit_bones['cf_n_height'].select_tail=False
+            
+            scale_multiplier = armature.data.edit_bones['cf_n_height'].tail.y / armature.data.edit_bones['cf_hit_head'].head.y
+            bpy.context.scene.tool_settings.transform_pivot_point = 'CURSOR'
+            bpy.context.scene.cursor.location = (0.0, 0.0, 0.0)
+            
+            for bone in bpy.context.selected_bones:
+                bone.head *= (scale_multiplier * .9675)
+                bone.tail *= (scale_multiplier * .9675)
             
             
-            #scale armature down and fix accessories manually
+            #fix accessories manually
+            
+            
             #'a_n_' in empty.name or 'ca_slot' in empty.name or 
             
         #I need a better way to do this
