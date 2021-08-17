@@ -74,14 +74,14 @@ class import_grey(bpy.types.Operator):
             height_adder = Vector((0,0.1,0))
             
             for bone in missing_bones:
-                empty_location = bpy.data.objects[bone]
+                empty_location = bpy.data.objects[bone].location
                 new_bone = armature.data.edit_bones.new(bone)
-                new_bone.head = empty_location.location
-                new_bone.tail = empty_location.location + height_adder
+                new_bone.head = empty_location
+                new_bone.tail = empty_location + height_adder
             
             #then fix the hit_head location
-            new_bone.head = armature.data.edit_bones['cf_s_head'].head + empty_location.location 
-            new_bone.tail = armature.data.edit_bones['cf_s_head'].head + height_adder +  empty_location.location
+            new_bone.head = armature.data.edit_bones['cf_s_head'].head + empty_location
+            new_bone.tail = armature.data.edit_bones['cf_s_head'].head + height_adder +  empty_location
             
             bpy.ops.object.mode_set(mode='OBJECT')
             
