@@ -2,6 +2,7 @@
 
 import bpy
 import os
+from mathutils import Vector
 from pathlib import Path
 
 from bpy.props import StringProperty, BoolProperty
@@ -9,7 +10,7 @@ from bpy_extras.io_utils import ImportHelper
 
 class import_grey(bpy.types.Operator):
     bl_idname = "kkb.importgrey"
-    bl_label = "Import Grey's exported .fbx"
+    bl_label = "Import Grey's .fbx"
     bl_description = "Select the .fbx file from Grey's Mesh Exporter"
     bl_options = {'REGISTER', 'UNDO'}
     
@@ -36,16 +37,16 @@ class import_grey(bpy.types.Operator):
                 bone.location = (0,0,0)
                 
                 if 'root' in bone.name:
-                    armature.data.bone[bone.name].hide = True
+                    armature.data.bones[bone.name].hide = True
             
             #Hide the height bone
             armature.data.bones['cf_n_height'].hide = True
             
             #add "twist" to certain bones so they aren't deleted by CATS
-            jointBones = ['cf_s_elboback_R', 'cf_s_elboback_L', 'cf_s_forearm01_R', 'cf_s_forearm01_L', '肩.L', '肩.R', 'cf_s_shoulder02_L', 'cf_s_shoulder02_R', 'cf_s_kneeB_R', 'cf_s_kneeB_L', 'cf_s_wrist_R', 'cf_s_wrist_L', 'cf_d_wrist_R', 'cf_d_wrist_L', 'cf_d_hand_L', 'cf_d_hand_R', 'cf_s_elbo_L', 'cf_s_elbo_R', 'cf_d_arm01_L', 'cf_d_arm01_R', 'cf_s_arm01_R', 'cf_s_arm01_L', 'cf_s_leg_R', 'cf_s_leg_L', 'cf_d_siri_L', 'cf_d_siri_R', 'cf_j_siri_L', 'cf_j_siri_R', 'cf_d_siri01_R', 'cf_d_siri01_L', 'cf_s_waist02', 'cf_j_waist02', '下半身', 'cf_s_waist01']
+            joint_bones = ['cf_s_elboback_R', 'cf_s_elboback_L', 'cf_s_forearm01_R', 'cf_s_forearm01_L', '肩.L', '肩.R', 'cf_s_shoulder02_L', 'cf_s_shoulder02_R', 'cf_s_kneeB_R', 'cf_s_kneeB_L', 'cf_s_wrist_R', 'cf_s_wrist_L', 'cf_d_wrist_R', 'cf_d_wrist_L', 'cf_d_hand_L', 'cf_d_hand_R', 'cf_s_elbo_L', 'cf_s_elbo_R', 'cf_d_arm01_L', 'cf_d_arm01_R', 'cf_s_arm01_R', 'cf_s_arm01_L', 'cf_s_leg_R', 'cf_s_leg_L', 'cf_d_siri_L', 'cf_d_siri_R', 'cf_j_siri_L', 'cf_j_siri_R', 'cf_d_siri01_R', 'cf_d_siri01_L', 'cf_s_waist02', 'cf_j_waist02', '下半身', 'cf_s_waist01']
             for armature in [ob for ob in bpy.data.objects if ob.type == 'ARMATURE']:
                 for bone in armature.data.bones:
-                    if bone.name in jointBones:
+                    if bone.name in joint_bones:
                         bone.name = bone.name + '_twist'
                     
                     #and rename these bones so CATS can detect them
@@ -53,11 +54,101 @@ class import_grey(bpy.types.Operator):
                     bone.name.replace('cf_j_forearm01_', 'Elbow_')
                     bone.name.replace('cf_j_hand_', 'Hand_')
             
-            #recreate the missing armature bones using the empty locations
+            #create the missing armature bones
+            missing_bones = [
+            'cf_pv_elbo_L',
+            'cf_pv_elbo_R',
+            'cf_pv_foot_L',
+            'cf_pv_foot_R',
+            'cf_pv_hand_L',
+            'cf_pv_hand_R',
+            'cf_pv_heel_L',
+            'cf_pv_heel_R',
+            'cf_pv_knee_L',
+            'cf_pv_knee_R'
+            ]
+            
+            bpy.context.view_layer.objects.active = body = armature
+            bpy.ops.object.mode_set(mode='EDIT')
+            height_adder = Vector((0,0.1,0))
+            
+            for bone in missing_bones:
+                empty_location = bpy.data.objects[bone]
+                new_bone = armature.data.edit_bones.new(bone)
+                new_bone.head = empty_location.location
+                new_bone.tail = empty_location.location + height_adder
+            
+            bpy.ops.object.mode_set(mode='OBJECT')
             
             #rename all the shapekeys to be compatible with the other script
+            #rename face shapekeys based on category
+            keyset = bpy.data.objects['cf_O_face'].data.shape_keys.name
+            index = 0
+            while index < len(bpy.data.shape_keys[keyset].key_blocks):
+                key = bpy.data.shape_keys[keyset].key_blocks[index]
+                
+                #reset the key value
+                key.value = 0
+                
+                #rename the key
+                if index < 29:
+                    key.name = key.name.replace("f00", "eye_face.f00")
+                else:
+                    key.name = key.name.replace("f00", "kuti_face.f00")
+                key.name = key.name.replace('.001','')
+                
+                index+=1
+            
+            #rename nose shapekeys based on category
+            keyset = bpy.data.objects['cf_O_noseline'].data.shape_keys.name
+            index = 0
+            while index < len(bpy.data.shape_keys[keyset].key_blocks):
+                key = bpy.data.shape_keys[keyset].key_blocks[index]
+                
+                #reset the key value
+                key.value = 0
+                
+                #rename the key
+                if index < 26:
+                    key.name = key.name.replace("nl00", "eye_nose.f00")
+                else:
+                    key.name = key.name.replace("nl00", "kuti_nose.f00")
+                key.name = key.name.replace('.001','')
+                
+                index+=1
+            
+            #rename the rest of the shapekeys
+            def rename_keys(object):
+                keyset = bpy.data.objects[object].data.shape_keys.name
+                for key in bpy.data.shape_keys[keyset].key_blocks:
+                    key.value = 0
+                    key.name = key.name.replace("sL00",  "eye_siroL.sL00")
+                    key.name = key.name.replace("sR00",  "eye_siroR.sR00")
+                    key.name = key.name.replace('elu00', "eye_line_u.elu00")
+                    key.name = key.name.replace('ell00', "eye_line_l.ell00")
+                    key.name = key.name.replace('ha00',  "kuti_ha.ha00")
+                    key.name = key.name.replace('y00',   "kuti_yaeba.y00")
+                    key.name = key.name.replace('t00',   "kuti_sita.t00")
+                    key.name = key.name.replace('mayu00',"mayuge.mayu00")
+            
+            objects = [
+            'cf_Ohitomi_L',
+            'cf_Ohitomi_R',
+            'cf_O_eyeline',
+            'cf_O_eyeline_low',
+            #eyenaM?
+            'cf_O_tooth',
+            #fangs?
+            'o_tang',
+            'cf_O_mayuge']
+            
+            for object in objects:
+                rename_keys(object)
+            
+            
             
             #scale armature down and fix accessories manually
+            #'a_n_' in empty.name or 'ca_slot' in empty.name or 
             
         #I need a better way to do this
         runIt()
