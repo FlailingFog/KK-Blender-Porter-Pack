@@ -166,11 +166,7 @@ class import_grey(bpy.types.Operator):
                 bone.head *= (scale_multiplier * .9675)
                 bone.tail *= (scale_multiplier * .9675)
             
-            
-            #fix accessories manually
-            
-            
-            #'a_n_' in empty.name or 'ca_slot' in empty.name or 
+            #fix the fingers too
             
         #I need a better way to do this
         runIt()
