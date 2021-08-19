@@ -87,6 +87,9 @@ class finalize_grey(bpy.types.Operator):
                 empty.select_set(True)
             bpy.ops.object.delete(use_global=False, confirm=False)
             
+            #then merge all the objects
+            
+            
         #I need a better way to do this
         runIt()
         
