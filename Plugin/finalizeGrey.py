@@ -24,8 +24,7 @@ class finalize_grey(bpy.types.Operator):
                 
             #go through the empties that have children
             for empty in [ob for ob in bpy.data.objects if ob.type == 'EMPTY' and len(ob.children) > 0]:
-              
-                #get the last child of the empty and check if it's a mesh (and thus an accessory object)
+                #get the last child of the empty and check if it's a mesh (accessory object)
                 if empty.parent_bone != None and empty.parent_bone != '':
                     empty_name = empty.name
                     empty_parent = bpy.data.objects[empty_name].parent_bone
@@ -86,9 +85,6 @@ class finalize_grey(bpy.types.Operator):
             for empty in [ob for ob in bpy.data.objects if ob.type == 'EMPTY']:
                 empty.select_set(True)
             bpy.ops.object.delete(use_global=False, confirm=False)
-            
-            #then merge all the objects
-            
             
         #I need a better way to do this
         runIt()
