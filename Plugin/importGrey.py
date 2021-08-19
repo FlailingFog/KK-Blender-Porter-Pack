@@ -56,9 +56,9 @@ class import_grey(bpy.types.Operator):
                 
                 #rename the key
                 if index < 26:
-                    key.name = key.name.replace("nl00", "eye_nose.f00")
+                    key.name = key.name.replace("nl00", "eye_nose.nl00")
                 else:
-                    key.name = key.name.replace("nl00", "kuti_nose.f00")
+                    key.name = key.name.replace("nl00", "kuti_nose.nl00")
                 key.name = key.name.replace('.001','')
                 
                 index+=1
