@@ -26,65 +26,6 @@ class import_grey(bpy.types.Operator):
             fbx = Path('C:\\Users\\C\\Desktop\\GME process\\20210815_Hachikuji_Mayoi\\Hachikuji_Mayoi.fbx')
             bpy.ops.import_scene.fbx(filepath=str(fbx), use_prepost_rot=False, global_scale=500)
             
-            armature = bpy.data.objects['Armature']
-            armature.show_in_front = True
-            
-            #reset rotations, scale and locations in pose mode for all bones
-            #Hide all root bones
-            for bone in armature.pose.bones:
-                bone.rotation_quaternion = (1,0,0,0)
-                bone.scale = (1,1,1)
-                bone.location = (0,0,0)
-                
-                if 'root' in bone.name:
-                    armature.data.bones[bone.name].hide = True
-            
-            #Hide the height bone
-            armature.data.bones['cf_n_height'].hide = True
-            
-            #add "twist" to certain bones so they aren't deleted by CATS
-            joint_bones = ['cf_s_elboback_R', 'cf_s_elboback_L', 'cf_s_forearm01_R', 'cf_s_forearm01_L', '肩.L', '肩.R', 'cf_s_shoulder02_L', 'cf_s_shoulder02_R', 'cf_s_kneeB_R', 'cf_s_kneeB_L', 'cf_s_wrist_R', 'cf_s_wrist_L', 'cf_d_wrist_R', 'cf_d_wrist_L', 'cf_d_hand_L', 'cf_d_hand_R', 'cf_s_elbo_L', 'cf_s_elbo_R', 'cf_d_arm01_L', 'cf_d_arm01_R', 'cf_s_arm01_R', 'cf_s_arm01_L', 'cf_s_leg_R', 'cf_s_leg_L', 'cf_d_siri_L', 'cf_d_siri_R', 'cf_j_siri_L', 'cf_j_siri_R', 'cf_d_siri01_R', 'cf_d_siri01_L', 'cf_s_waist02', 'cf_j_waist02', '下半身', 'cf_s_waist01']
-            for armature in [ob for ob in bpy.data.objects if ob.type == 'ARMATURE']:
-                for bone in armature.data.bones:
-                    if bone.name in joint_bones:
-                        bone.name = bone.name + '_twist'
-                    
-                    #and rename these bones so CATS can detect them
-                    bone.name.replace('cf_j_arm00_', 'Arm_')
-                    bone.name.replace('cf_j_forearm01_', 'Elbow_')
-                    bone.name.replace('cf_j_hand_', 'Hand_')
-            
-            #create the missing armature bones
-            missing_bones = [
-            'cf_pv_elbo_L',
-            'cf_pv_elbo_R',
-            'cf_pv_foot_L',
-            'cf_pv_foot_R',
-            'cf_pv_hand_L',
-            'cf_pv_hand_R',
-            'cf_pv_heel_L',
-            'cf_pv_heel_R',
-            'cf_pv_knee_L',
-            'cf_pv_knee_R',
-            'cf_hit_head'
-            ]
-            
-            bpy.context.view_layer.objects.active = armature
-            bpy.ops.object.mode_set(mode='EDIT')
-            height_adder = Vector((0,0.1,0))
-            
-            for bone in missing_bones:
-                empty_location = bpy.data.objects[bone].location
-                new_bone = armature.data.edit_bones.new(bone)
-                new_bone.head = empty_location
-                new_bone.tail = empty_location + height_adder
-            
-            #then fix the hit_head location
-            new_bone.head = armature.data.edit_bones['cf_s_head'].head + empty_location
-            new_bone.tail = armature.data.edit_bones['cf_s_head'].head + height_adder +  empty_location
-            
-            bpy.ops.object.mode_set(mode='OBJECT')
-            
             #rename all the shapekeys to be compatible with the other script
             #rename face shapekeys based on category
             keyset = bpy.data.objects['cf_O_face'].data.shape_keys.name
@@ -150,6 +91,77 @@ class import_grey(bpy.types.Operator):
             for object in objects:
                 rename_keys(object)
             
+            #reset rotations, scale and locations in pose mode for all bones
+            armature = bpy.data.objects['Armature']
+            armature.show_in_front = True
+            
+            #Hide all root bones
+            for bone in armature.pose.bones:
+                bone.rotation_quaternion = (1,0,0,0)
+                bone.scale = (1,1,1)
+                bone.location = (0,0,0)
+                
+                if 'root' in bone.name:
+                    armature.data.bones[bone.name].hide = True
+            
+            #Hide the height bone
+            armature.data.bones['cf_n_height'].hide = True
+            
+            #add "twist" to certain bones so they aren't deleted by CATS
+            joint_bones = ['cf_s_elboback_R', 'cf_s_elboback_L', 'cf_s_forearm01_R', 'cf_s_forearm01_L', '肩.L', '肩.R', 'cf_s_shoulder02_L', 'cf_s_shoulder02_R', 'cf_s_kneeB_R', 'cf_s_kneeB_L', 'cf_s_wrist_R', 'cf_s_wrist_L', 'cf_d_wrist_R', 'cf_d_wrist_L', 'cf_d_hand_L', 'cf_d_hand_R', 'cf_s_elbo_L', 'cf_s_elbo_R', 'cf_d_arm01_L', 'cf_d_arm01_R', 'cf_s_arm01_R', 'cf_s_arm01_L', 'cf_s_leg_R', 'cf_s_leg_L', 'cf_d_siri_L', 'cf_d_siri_R', 'cf_j_siri_L', 'cf_j_siri_R', 'cf_d_siri01_R', 'cf_d_siri01_L', 'cf_s_waist02', 'cf_j_waist02', '下半身', 'cf_s_waist01']
+            for armature in [ob for ob in bpy.data.objects if ob.type == 'ARMATURE']:
+                for bone in armature.data.bones:
+                    if bone.name in joint_bones:
+                        bone.name = bone.name + '_twist'
+                    
+                    #and rename these bones so CATS can detect them
+                    bone.name = bone.name.replace('cf_j_arm00_', 'Arm_')
+                    bone.name = bone.name.replace('cf_j_forearm01_', 'Elbow_')
+                    bone.name = bone.name.replace('cf_j_hand_', 'Hand_')
+                    
+            #create the missing armature bones
+            missing_bones = [
+            'cf_pv_elbo_L',
+            'cf_pv_elbo_R',
+            'cf_pv_foot_L',
+            'cf_pv_foot_R',
+            'cf_pv_hand_L',
+            'cf_pv_hand_R',
+            'cf_pv_heel_L',
+            'cf_pv_heel_R',
+            'cf_pv_knee_L',
+            'cf_pv_knee_R',
+            'cf_hit_head'
+            ]
+            
+            bpy.context.view_layer.objects.active = armature
+            bpy.ops.object.mode_set(mode='EDIT')
+            height_adder = Vector((0,0.1,0))
+            
+            for bone in missing_bones:
+                empty_location = bpy.data.objects[bone].location
+                new_bone = armature.data.edit_bones.new(bone)
+                new_bone.head = empty_location
+                new_bone.tail = empty_location + height_adder
+            
+            #then fix the hit_head location
+            new_bone.head = armature.data.edit_bones['cf_s_head'].head + empty_location
+            new_bone.tail = armature.data.edit_bones['cf_s_head'].head + height_adder +  empty_location
+            
+            #then fix the wrist location
+            for side in ['R','L']:
+                armature.data.edit_bones['cf_pv_hand_'+side
+                ].head.z = armature.data.edit_bones['Elbow_'+side].head.z
+                armature.data.edit_bones['cf_pv_hand_'+side].tail.z = armature.data.edit_bones['Elbow_'+side].tail.z
+                armature.data.edit_bones['cf_s_hand_'+side].head.z = armature.data.edit_bones['Elbow_'+side].head.z
+                armature.data.edit_bones['cf_s_hand_'+side].tail.z = armature.data.edit_bones['Elbow_'+side].tail.z
+                armature.data.edit_bones['cf_d_hand_'+side+'_twist'].head.z = armature.data.edit_bones['Elbow_'+side].head.z
+                armature.data.edit_bones['cf_d_hand_'+side+'_twist'].tail.z = armature.data.edit_bones['Elbow_'+side].tail.z
+                armature.data.edit_bones['Hand_'+side].head.z = armature.data.edit_bones['Elbow_'+side].head.z
+                armature.data.edit_bones['Hand_'+side].tail.z = armature.data.edit_bones['Elbow_'+side].tail.z
+            
+            bpy.ops.object.mode_set(mode='OBJECT')
+                        
             #scale armature down
             bpy.context.view_layer.objects.active = armature
             bpy.ops.object.mode_set(mode='EDIT')
