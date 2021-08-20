@@ -149,9 +149,10 @@ class shape_keys(bpy.types.Operator):
                     pass
         
         ########################################################
-        #Fix the eyewhites/sirome shapekeys
-
-        if fix_eyewhites:
+        #Fix the eyewhites/sirome shapekeys for pmx imports only
+        armature = bpy.data.objects['Armature']
+        
+        if fix_eyewhites and armature.data.bones.get('Greybone') == None:
             bpy.ops.object.mode_set(mode = 'OBJECT')
             body = bpy.data.objects['Body']
             body.active_shape_key_index = 0
