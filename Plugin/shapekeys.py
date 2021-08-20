@@ -327,7 +327,7 @@ class shape_keys(bpy.types.Operator):
             for current_keyblock in shapekey_block:
 
                 counter = counter - 1
-                print(counter)
+                #print(counter)
                 if (counter == 0):
                     break
 
