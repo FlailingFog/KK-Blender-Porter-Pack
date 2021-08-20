@@ -294,17 +294,15 @@ class shape_keys(bpy.types.Operator):
             #Eyelashes1 is used because I couldn't see a difference between the other one and they overlap if both are used
             #EyelashPos is unused because Eyelashes work better and it overlaps with Eyelashes
             #eye_nal is unused because it apparently screws with face accessories
-            if fix_eyewhites:
-                eyes = [keyName.find("Eyes"), keyName.find("NoseT"), keyName.find("Eyelashes1"), keyName.find("EyeWhitesL"), keyName.find("EyeWhitesR")]
-            else:
-                eyes = [keyName.find("Eyes"), keyName.find("NoseT"), keyName.find("Eyelashes1")]
+
+            eyes = [keyName.find("Eyes"), keyName.find("NoseT"), keyName.find("Eyelashes1"), keyName.find("EyeWhites")]
             if not all(v == -1 for v in eyes):
                 return 'Eyes'
-            
+
             mouth = [keyName.find("NoseB"), keyName.find("Lips"), keyName.find("Tongue"), keyName.find("Teeth"), keyName.find("Fangs")]
             if not all(v==-1 for v in mouth):
                 return 'Mouth'
-            
+
             return 'None'
 
         #setup two arrays to keep track of the shapekeys that have been used
@@ -312,88 +310,97 @@ class shape_keys(bpy.types.Operator):
         used = []
         inUse = []
 
-        #These shapekeys require the default teeth and tongue shapekeys to be active
-        correctionList = ['Lips_u_small_op', 'Lips_u_big_op', 'Lips_e_big_op', 'Lips_o_small_op', 'Lips_o_big_op', 'Lips_neko_op', 'Lips_triangle_op']
-
-        counter = len(bpy.data.shape_keys[0].key_blocks)
+        #These mouth shapekeys require the default teeth and tongue shapekeys to be active
+        correctionList = ['_u_small_op', '_u_big_op', '_e_big_op', '_o_small_op', '_o_big_op', '_neko_op', '_triangle_op']
+        shapekey_block = bpy.data.shape_keys[body.data.shape_keys.name].key_blocks
 
         ACTIVE = 0.9
+        def activate_shapekey(key_act):
+            if shapekey_block.get(key_act) != None:
+                shapekey_block[key_act].value = ACTIVE
 
-        for shapekey in bpy.data.shape_keys:
-            for keyblock in shapekey.key_blocks:
-                
+        #go through the keyblock list twice
+        #Do eye shapekeys first then mouth shapekeys
+        for type in ['Eyes_', 'Lips_']:
+
+            counter = len(shapekey_block)
+            for current_keyblock in shapekey_block:
+
                 counter = counter - 1
                 print(counter)
                 if (counter == 0):
                     break
-                
-                #What category is this shapekey (mouth, eyes or neither)?
-                cat = whatCat(keyblock.name)
-                
-                #get the emotion for mouth or eyes from the shapekey name
-                if not (cat.find('None') == 0):
-                    emotion = keyblock.name[keyblock.name.find("_"):]
-                    
-                    #assign each keyblock a category and emotion combo
-                    for keyblockCheck in shapekey.key_blocks:
-                        
-                        #does this key match my current emotion?
-                        if (keyblockCheck.name.find(emotion) > -1):
-                            
-                            #does this key match my current category?
-                            if whatCat(keyblock.name) == whatCat(keyblockCheck.name):
-                                
-                                #I haven't already used this key right?
-                                if (keyblockCheck.name not in used):
-                                    keyblockCheck.value = ACTIVE
-                                    inUse.append(keyblockCheck.name)
-                    
-                    def activate_shapekey(key_act):
-                        if shapekey.key_blocks.get(key_act) != None:
-                            shapekey.key_blocks[key_act].value = ACTIVE
-                    
-                    #Manual corrections
-                    if (keyblock.name in correctionList):
+
+                #categorize the shapekey (eye or mouth)
+                cat = whatCat(current_keyblock.name)
+
+                #get the emotion from the shapekey name
+                if (cat != 'None') and ('KK' not in current_keyblock.name) and (type in current_keyblock.name):
+                    emotion = current_keyblock.name[current_keyblock.name.find("_"):]
+
+                    #go through every shapekey to check if any match the current shapekey's emotion
+                    for supporting_shapekey in shapekey_block:
+
+                        #If the's emotion matches the current one and is the correct category...
+                        if emotion in supporting_shapekey.name and cat == whatCat(supporting_shapekey.name):
+
+                            #and this key has hasn't been used yet activate it, else skip to the next
+                            if (supporting_shapekey.name not in used):
+                                supporting_shapekey.value = ACTIVE
+                                inUse.append(supporting_shapekey.name)
+
+                    #The shapekeys for the current emotion are now all active
+
+                    #Some need manual corrections
+                    correction_needed = False
+                    for c in correctionList:
+                        if c in current_keyblock.name:
+                            correction_needed = True
+
+                    if correction_needed:
                         activate_shapekey('Fangs_default_op')
                         activate_shapekey('Teeth_default_op')
                         activate_shapekey('Tongue_default_op')
-                    
-                    if (keyblock.name == 'Lips_e_small_op'):
+
+                    if ('_e_small_op' in current_keyblock.name):
                         activate_shapekey('Fangs_default_op')
-                        
-                    if (keyblock.name == 'Lips_cartoon_mouth_op'):
+                        activate_shapekey('Lips_e_small_op')
+
+                    if ('_cartoon_mouth_op' in current_keyblock.name):
                         activate_shapekey('Tongue_default_op')
-                    
-                    if (keyblock.name == 'Lips_smile_sharp_op'):
+                        activate_shapekey('Lips_cartoon_mouth_op')
+
+                    if ('_smile_sharp_op' in current_keyblock.name and cat == 'Mouth'):
                         activate_shapekey('Teeth_smile_sharp_op1')
-                    
-                    if (keyblock.name == 'Lips_eating_2_op'):
+                        activate_shapekey('Lips_smile_sharp_op')
+
+                    if ('_eating_2_op' in current_keyblock.name):
                         activate_shapekey('Fangs_default_op')
                         activate_shapekey('Teeth_tongue_out_op')
                         activate_shapekey('Tongue_serious_2_op')
-                        
-                    if (keyblock.name == 'Lips_i_big_op'):
+                        activate_shapekey('Lips_eating_2_op')
+
+                    if ('_i_big_op' in current_keyblock.name):
                         activate_shapekey('Teeth_i_big_cl')
                         activate_shapekey('Fangs_default_op')
-                        
-                    if (keyblock.name == 'Lips_i_small_op'):
+                        activate_shapekey('Lips_i_big_op')
+
+                    if ('_i_small_op' in current_keyblock.name):
                         activate_shapekey('Teeth_i_small_cl')
                         activate_shapekey('Fangs_default_op')
-                        
-                    if (keyblock.name not in used):
-                        #print('Creating combined shapekey')
+                        activate_shapekey('Lips_i_small_op')
+
+                    if (current_keyblock.name not in used):
                         bpy.data.objects['Body'].shape_key_add(name=('KK ' + cat + emotion))
-                        #print('appended this to used ' + keyblock.name)
-                        
-                    for thing in inUse:
-                        used.append(thing)
-                        
-                    #reset shapekey values
-                    for keyblock in shapekey.key_blocks:
-                        keyblock.value = 0
-                    
+
+                    #make sure this shapekey set isn't used again
+                    used.extend(inUse)
                     inUse =[]
-                
+
+                    #reset all shapekey values
+                    for reset_keyblock in shapekey_block:
+                        reset_keyblock.value = 0
+
                 #lazy crash prevention
                 if counter % 20 == 0:
                     bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
@@ -401,16 +408,14 @@ class shape_keys(bpy.types.Operator):
         #Delete all shapekeys that don't have a "KK" in their name
         #Don't delete the Basis shapekey though
         if not keep_partial_shapekeys:
-            for shapekey in bpy.data.shape_keys:
-                for keyblock in shapekey.key_blocks:
-                    try:
-                        if (keyblock.name.find('KK ') == -1 and (body.data.shape_keys.key_blocks[0].name != keyblock.name) and shapekey.user.name == 'Model'):
-                            bpy.data.objects['Body'].shape_key_remove(keyblock)
-                            #print(keyblock.name)
-                    except:
-                        #The script tried to remove a shapekey on a non-body object
-                        #shapekeys are only used for the face so this is okay
-                        pass
+            for remove_shapekey in shapekey_block:
+                try:
+                    if ('KK ' not in remove_shapekey.name and remove_shapekey.name != shapekey_block[0].name):
+                        body.shape_key_remove(remove_shapekey)
+                except:
+                    #I don't even know if this needs to be in a try catch anymore
+                    print('Couldn\'t remove key:  ' + remove_shapekey.name)
+                    pass
         
         #make the basis shapekey active
         body.active_shape_key_index = 0
