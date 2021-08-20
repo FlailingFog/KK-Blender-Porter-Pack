@@ -118,11 +118,11 @@ class import_grey(bpy.types.Operator):
                 bone.name = bone.name.replace('cf_j_forearm01_', 'Elbow_')
                 bone.name = bone.name.replace('cf_j_hand_', 'Hand_')
                 
-                bone.name = bone.name.replace('cf_j_index', '人指')
-                bone.name = bone.name.replace('cf_j_middle', '中指')
-                bone.name = bone.name.replace('cf_j_ring', '薬指')
-                bone.name = bone.name.replace('cf_j_little', '小指')
-                bone.name = bone.name.replace('cf_j_thumb', '親指')
+                bone.name = bone.name.replace('cf_j_index0', '人指')
+                bone.name = bone.name.replace('cf_j_middle0', '中指')
+                bone.name = bone.name.replace('cf_j_ring0', '薬指')
+                bone.name = bone.name.replace('cf_j_little0', '小指')
+                bone.name = bone.name.replace('cf_j_thumb0', '親指')
             
             #tag the armature with a bone to let the plugin distinguish between pmx/fbx origin
             bpy.context.view_layer.objects.active = armature
