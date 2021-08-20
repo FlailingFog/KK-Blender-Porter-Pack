@@ -347,63 +347,38 @@ class shape_keys(bpy.types.Operator):
                                 if (keyblockCheck.name not in used):
                                     keyblockCheck.value = ACTIVE
                                     inUse.append(keyblockCheck.name)
-                                    
+                    
+                    def activate_shapekey(key_act):
+                        if shapekey.key_blocks.get(key_act) != None:
+                            shapekey.key_blocks[key_act].value = ACTIVE
+                    
                     #Manual corrections
                     if (keyblock.name in correctionList):
-                        try:
-                            shapekey.key_blocks['Fangs_default_op'].value = ACTIVE
-                        except:
-                            #this character doesn't have fangs
-                            pass
-                        shapekey.key_blocks['Teeth_default_op'].value = ACTIVE
-                        shapekey.key_blocks['Tongue_default_op'].value = ACTIVE
+                        activate_shapekey('Fangs_default_op')
+                        activate_shapekey('Teeth_default_op')
+                        activate_shapekey('Tongue_default_op')
                     
                     if (keyblock.name == 'Lips_e_small_op'):
-                        try:
-                            shapekey.key_blocks['Fangs_default_op'].value = ACTIVE
-                        except:
-                            #this character doesn't have fangs
-                            pass
+                        activate_shapekey('Fangs_default_op')
                         
                     if (keyblock.name == 'Lips_cartoon_mouth_op'):
-                        shapekey.key_blocks['Tongue_default_op'].value = ACTIVE
+                        activate_shapekey('Tongue_default_op')
                     
                     if (keyblock.name == 'Lips_smile_sharp_op'):
-                        try:
-                            #Someone had an issue with this shapekey so into a try catch it goes
-                            shapekey.key_blocks['Teeth_smile_sharp_op1'].value = 0
-                        except:
-                            pass
+                        activate_shapekey('Teeth_smile_sharp_op1')
                     
                     if (keyblock.name == 'Lips_eating_2_op'):
-                        try:
-                            shapekey.key_blocks['Fangs_default_op'].value = ACTIVE
-                        except:
-                            #this character doesn't have fangs
-                            pass
-                        shapekey.key_blocks['Teeth_tongue_out_op'].value = ACTIVE
-                        shapekey.key_blocks['Tongue_serious_2_op'].value = ACTIVE
+                        activate_shapekey('Fangs_default_op')
+                        activate_shapekey('Teeth_tongue_out_op')
+                        activate_shapekey('Tongue_serious_2_op')
                         
                     if (keyblock.name == 'Lips_i_big_op'):
-                        shapekey.key_blocks['Teeth_i_big_cl'].value = ACTIVE
-                        try:
-                            shapekey.key_blocks['Fangs_default_op'].value = ACTIVE
-                        except:
-                            #this character doesn't have fangs
-                            pass
+                        activate_shapekey('Teeth_i_big_cl')
+                        activate_shapekey('Fangs_default_op')
                         
                     if (keyblock.name == 'Lips_i_small_op'):
-                        try:
-                            #someone was having an issue with this shapekey so it will be banished to another try catch
-                            shapekey.key_blocks['Teeth_i_small_cl'].value = ACTIVE
-                        except:
-                                pass
-                            
-                        try:
-                            shapekey.key_blocks['Fangs_default_op'].value = ACTIVE
-                        except:
-                            #this character doesn't have fangs
-                            pass
+                        activate_shapekey('Teeth_i_small_cl')
+                        activate_shapekey('Fangs_default_op')
                         
                     if (keyblock.name not in used):
                         #print('Creating combined shapekey')
