@@ -109,40 +109,47 @@ class import_grey(bpy.types.Operator):
             
             #add "twist" to certain bones so they aren't deleted by CATS
             joint_bones = ['cf_s_elboback_R', 'cf_s_elboback_L', 'cf_s_forearm01_R', 'cf_s_forearm01_L', '肩.L', '肩.R', 'cf_s_shoulder02_L', 'cf_s_shoulder02_R', 'cf_s_kneeB_R', 'cf_s_kneeB_L', 'cf_s_wrist_R', 'cf_s_wrist_L', 'cf_d_wrist_R', 'cf_d_wrist_L', 'cf_d_hand_L', 'cf_d_hand_R', 'cf_s_elbo_L', 'cf_s_elbo_R', 'cf_d_arm01_L', 'cf_d_arm01_R', 'cf_s_arm01_R', 'cf_s_arm01_L', 'cf_s_leg_R', 'cf_s_leg_L', 'cf_d_siri_L', 'cf_d_siri_R', 'cf_j_siri_L', 'cf_j_siri_R', 'cf_d_siri01_R', 'cf_d_siri01_L', 'cf_s_waist02', 'cf_j_waist02', '下半身', 'cf_s_waist01']
-            for armature in [ob for ob in bpy.data.objects if ob.type == 'ARMATURE']:
-                for bone in armature.data.bones:
-                    if bone.name in joint_bones:
-                        bone.name = bone.name + '_twist'
+            for bone in armature.data.bones:
+                if bone.name in joint_bones:
+                    bone.name = bone.name + '_twist'
                     
-                    #and rename these bones so CATS can detect them
-                    bone.name = bone.name.replace('cf_j_arm00_', 'Arm_')
-                    bone.name = bone.name.replace('cf_j_forearm01_', 'Elbow_')
-                    bone.name = bone.name.replace('cf_j_hand_', 'Hand_')
-                    
-            #create the missing armature bones
-            missing_bones = [
-            'cf_pv_elbo_L',
-            'cf_pv_elbo_R',
-            'cf_pv_foot_L',
-            'cf_pv_foot_R',
-            'cf_pv_hand_L',
-            'cf_pv_hand_R',
-            'cf_pv_heel_L',
-            'cf_pv_heel_R',
-            'cf_pv_knee_L',
-            'cf_pv_knee_R',
-            'cf_hit_head'
-            ]
+                #and rename these bones so CATS can detect them
+                bone.name = bone.name.replace('cf_j_arm00_', 'Arm_')
+                bone.name = bone.name.replace('cf_j_forearm01_', 'Elbow_')
+                bone.name = bone.name.replace('cf_j_hand_', 'Hand_')
+                
+                bone.name = bone.name.replace('cf_j_index', '人指')
+                bone.name = bone.name.replace('cf_j_middle', '中指')
+                bone.name = bone.name.replace('cf_j_ring', '薬指')
+                bone.name = bone.name.replace('cf_j_little', '小指')
+                bone.name = bone.name.replace('cf_j_thumb', '親指')
             
+            #tag the armature with a bone to let the plugin distinguish between pmx/fbx origin
             bpy.context.view_layer.objects.active = armature
             bpy.ops.object.mode_set(mode='EDIT')
-            height_adder = Vector((0,0.1,0))
+            new_bone = armature.data.edit_bones.new('Greybone')
+            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+            new_bone.head = Vector((0,0,0))
+            new_bone.tail = Vector((0,0.1,0))
             
+            #create the missing armature bones
+            missing_bones = [
+            'cf_pv_elbo_L', 'cf_pv_elbo_R',
+            'cf_pv_foot_L', 'cf_pv_foot_R',
+            'cf_pv_hand_L', 'cf_pv_hand_R',
+            'cf_pv_heel_L', 'cf_pv_heel_R',
+            'cf_pv_knee_L', 'cf_pv_knee_R',
+            'cf_hit_head'
+            
+            ]
+            
+            height_adder = Vector((0,0.1,0))
             for bone in missing_bones:
                 empty_location = bpy.data.objects[bone].location
                 new_bone = armature.data.edit_bones.new(bone)
                 new_bone.head = empty_location
                 new_bone.tail = empty_location + height_adder
+                
             
             #then fix the hit_head location
             new_bone.head = armature.data.edit_bones['cf_s_head'].head + empty_location
@@ -162,7 +169,7 @@ class import_grey(bpy.types.Operator):
             
             bpy.ops.object.mode_set(mode='OBJECT')
                         
-            #scale armature down
+            #manually scale armature down
             bpy.context.view_layer.objects.active = armature
             bpy.ops.object.mode_set(mode='EDIT')
             bpy.ops.armature.select_all(action='SELECT')
@@ -177,8 +184,6 @@ class import_grey(bpy.types.Operator):
             for bone in bpy.context.selected_bones:
                 bone.head *= (scale_multiplier * .9675)
                 bone.tail *= (scale_multiplier * .9675)
-            
-            #fix the fingers too
             
         #I need a better way to do this
         runIt()
