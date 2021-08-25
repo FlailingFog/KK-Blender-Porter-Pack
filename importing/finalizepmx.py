@@ -4,7 +4,7 @@ import bpy
 from mathutils import Vector
 import math
 
-bpy.ops.cats_importer.import_any_model(filepath="C:\\Users\\C\\Desktop\\GME process\\5741\\model.pmx", files=[{"name":"model.pmx", "name":"model.pmx"}], directory="C:\\Users\\C\\Desktop\\GME process\\5741\\")
+#bpy.ops.cats_importer.import_any_model(filepath="C:\\Users\\C\\Desktop\\GME process\\5741\\model.pmx", files=[{"name":"model.pmx", "name":"model.pmx"}], directory="C:\\Users\\C\\Desktop\\GME process\\5741\\")
 
 def rename_bones():
     armature = bpy.data.objects['Model_arm']
