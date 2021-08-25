@@ -129,6 +129,7 @@ def reset_and_reroll_bones():
     reorient('cf_j_leg01_L')
     reorient('cf_j_foot_R')
     reorient('cf_j_foot_L')
+    
     #Use roll data from a reference armature to set the roll for each bone
     reroll_data = {
     'BodyTop':0.0,
@@ -201,16 +202,16 @@ def reset_and_reroll_bones():
     'cf_j_hand_L':-6.776263578034403e-21,
     'cf_s_hand_L':-6.776263578034403e-21,
     'cf_j_index01_L':math.radians(-11),
-    'cf_j_index02_L':math.radians(-11),
-    'cf_j_index03_L':math.radians(-11),
+    'cf_j_index02_L':math.radians(-5),
+    'cf_j_index03_L':math.radians(0),
     'cf_j_little01_L':math.radians(30),
-    'cf_j_little02_L':math.radians(30),
+    'cf_j_little02_L':math.radians(11),
     'cf_j_little03_L':math.radians(30),
     'cf_j_middle01_L':math.radians(3),
     'cf_j_middle02_L':math.radians(3),
     'cf_j_middle03_L':math.radians(3),
     'cf_j_ring01_L':math.radians(15),
-    'cf_j_ring02_L':math.radians(15),
+    'cf_j_ring02_L':math.radians(7),
     'cf_j_ring03_L':math.radians(15),
     'cf_j_thumb01_L':math.pi,
     'cf_j_thumb02_L':math.pi,
@@ -239,16 +240,16 @@ def reset_and_reroll_bones():
     'cf_j_hand_R':-6.776470373187541e-21,
     'cf_s_hand_R':-6.776470373187541e-21,
     'cf_j_index01_R':math.radians(-11),
-    'cf_j_index02_R':math.radians(-11),
-    'cf_j_index03_R':math.radians(-11),
+    'cf_j_index02_R':math.radians(-5),
+    'cf_j_index03_R':math.radians(0),
     'cf_j_little01_R':math.radians(30),
-    'cf_j_little02_R':math.radians(30),
+    'cf_j_little02_R':math.radians(11),
     'cf_j_little03_R':math.radians(30),
     'cf_j_middle01_R':math.radians(3),
     'cf_j_middle02_R':math.radians(3),
     'cf_j_middle03_R':math.radians(3),
     'cf_j_ring01_R':math.radians(15),
-    'cf_j_ring02_R':math.radians(15),
+    'cf_j_ring02_R':math.radians(7),
     'cf_j_ring03_R':math.radians(15),
     'cf_j_thumb01_R':math.radians(0),
     'cf_j_thumb02_R':math.radians(0),
@@ -560,6 +561,28 @@ def clean_and_reorganize_pmx():
     bpy.ops.armature.select_all(action='INVERT')
     bpy.ops.armature.delete()
     
+    #relocate the tail of some bones to make IKs easier
+    def relocate_tail(bone1, bone2, direction='leg'):
+        if direction == 'leg':
+            armature.data.edit_bones[bone1].tail.z = armature.data.edit_bones[bone2].head.z
+            armature.data.edit_bones[bone1].roll = 0
+        elif direction == 'arm':
+            armature.data.edit_bones[bone1].tail.x = armature.data.edit_bones[bone2].head.x
+            armature.data.edit_bones[bone1].tail.z = armature.data.edit_bones[bone2].head.z
+            armature.data.edit_bones[bone1].roll = -math.pi/2
+        else:
+            armature.data.edit_bones[bone1].tail.y = armature.data.edit_bones[bone2].head.y
+            armature.data.edit_bones[bone1].tail.z = armature.data.edit_bones[bone2].head.z
+            armature.data.edit_bones[bone1].roll = 0
+        
+    
+    relocate_tail('Right knee', 'Right ankle')
+    relocate_tail('Left knee', 'Left ankle')
+    relocate_tail('Right ankle', 'Right toe', 'foot')
+    relocate_tail('Left ankle', 'Left toe', 'foot')
+    relocate_tail('Right elbow', 'Right wrist', 'arm')
+    relocate_tail('Left elbow', 'Left wrist', 'arm')
+    
     #remove all constraints from all bones
     bpy.ops.object.mode_set(mode='POSE')
     for bone in armature.pose.bones:
@@ -570,7 +593,7 @@ def clean_and_reorganize_pmx():
         
         for constraint in bones_with_constraints:
             bone.constraints.remove(constraint)
-
+    
     #remove all drivers from all armature bones
     #animation_data is nonetype if no drivers have been created yet
     if armature.animation_data != None:

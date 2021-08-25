@@ -1,5 +1,5 @@
 import bpy
-from mathutils import Vector
+from mathutils import Vector, Quaternion
 
 def rename_bones():
     armature = bpy.context.object
@@ -74,12 +74,14 @@ def rename_bones():
     armature.data.edit_bones['Hips'].parent = armature.data.edit_bones['Center']
     armature.data.edit_bones['cf_pv_root'].parent = armature.data.edit_bones['Center']
     armature.data.edit_bones['Center'].parent = None
+
+    bpy.ops.object.mode_set(mode='POSE')
     
-    bpy.ops.armature.select_all(action='DESELECT')
+    #bpy.ops.armature.select_all(action='DESELECT')
         
     bpy.ops.object.mode_set(mode='OBJECT')
     
-    #100% stolen
+    
     #this script will copy the animation data from the active Object to the selected object:
     active_obj = bpy.context.object
     ad = bpy.context.object.animation_data
@@ -94,6 +96,42 @@ def rename_bones():
         ad2 = obj.animation_data
         for prop in properties:
             setattr(ad2, prop, getattr(ad, prop))
+
+    #then swap the x and y rotation channels because the bone has been rotated
+    #Find each rotation
+    myaction = bpy.context.active_object.animation_data.action
+    fcurves = myaction.fcurves
+    
+    def flip_animation(bone_to_flip):
+        bone = objects[0].pose.bones[bone_to_flip]
+        dpath = bone.path_from_id("rotation_quaternion")
+
+        #get X channel and y channel
+        wchan = fcurves.find(dpath, index=0).keyframe_points
+        xchan = fcurves.find(dpath, index=1).keyframe_points
+        ychan = fcurves.find(dpath, index=2).keyframe_points
+        zchan = fcurves.find(dpath, index=3).keyframe_points
+        
+        index = 0
+        while index < len(ychan):
+            quaternion_axis_swapped = Quaternion((
+            -wchan[index].co[1],
+            -ychan[index].co[1],
+            xchan[index].co[1],
+            zchan[index].co[1])) #euler_representation.to_quaternion()
+            
+            wchan[index].co[1] = quaternion_axis_swapped.w
+            xchan[index].co[1] = quaternion_axis_swapped.x
+            ychan[index].co[1] = quaternion_axis_swapped.y
+            zchan[index].co[1] = quaternion_axis_swapped.z
+            print(quaternion_axis_swapped)
+            index += 1
+    
+    flip_animation('Left elbow')
+    flip_animation('Right elbow')
+
+#C.object.pose.bones['cf_j_forearm01_L'].rotation_quaternion @= mathutils.Euler((radians(90), radians(90), radians(0))).to_quaternion()
+#C.object.pose.bones['cf_j_forearm01_L'].rotation_quaternion @= mathutils.Euler((radians(3.33), radians(0), radians(-3.33))).to_quaternion()
 
 if __name__ == "__main__":
     rename_bones()
