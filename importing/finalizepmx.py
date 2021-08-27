@@ -4,7 +4,11 @@ import bpy
 from mathutils import Vector
 import math
 
-#bpy.ops.cats_importer.import_any_model(filepath="C:\\Users\\C\\Desktop\\GME process\\5741\\model.pmx", files=[{"name":"model.pmx", "name":"model.pmx"}], directory="C:\\Users\\C\\Desktop\\GME process\\5741\\")
+bpy.ops.cats_importer.import_any_model(filepath="C:\\Users\\C\\Desktop\\GME process\\5741\\model.pmx", files=[{"name":"model.pmx", "name":"model.pmx"}], directory="C:\\Users\\C\\Desktop\\GME process\\5741\\")
+    #get rid of the text files mmd tools generate
+if bpy.data.texts['Model']:
+        bpy.data.texts.remove(bpy.data.texts['Model'])
+        bpy.data.texts.remove(bpy.data.texts['Model_e'])
 
 def rename_bones():
     armature = bpy.data.objects['Model_arm']
@@ -562,26 +566,33 @@ def clean_and_reorganize_pmx():
     bpy.ops.armature.delete()
     
     #relocate the tail of some bones to make IKs easier
-    def relocate_tail(bone1, bone2, direction='leg'):
+    def relocate_tail(bone1, bone2, direction):
         if direction == 'leg':
             armature.data.edit_bones[bone1].tail.z = armature.data.edit_bones[bone2].head.z
+            #move the bone forward a bit or the ik bones might not bend correctly
+            armature.data.edit_bones[bone1].head.y += -.004
             armature.data.edit_bones[bone1].roll = 0
         elif direction == 'arm':
             armature.data.edit_bones[bone1].tail.x = armature.data.edit_bones[bone2].head.x
             armature.data.edit_bones[bone1].tail.z = armature.data.edit_bones[bone2].head.z
             armature.data.edit_bones[bone1].roll = -math.pi/2
+        elif direction == 'hand':
+            armature.data.edit_bones[bone1].tail = armature.data.edit_bones[bone2].tail
+            armature.data.edit_bones[bone1].tail.z += .01
+            armature.data.edit_bones[bone1].head = armature.data.edit_bones[bone2].head
         else:
             armature.data.edit_bones[bone1].tail.y = armature.data.edit_bones[bone2].head.y
             armature.data.edit_bones[bone1].tail.z = armature.data.edit_bones[bone2].head.z
             armature.data.edit_bones[bone1].roll = 0
-        
     
-    relocate_tail('Right knee', 'Right ankle')
-    relocate_tail('Left knee', 'Left ankle')
+    relocate_tail('Right knee', 'Right ankle', 'leg')
+    relocate_tail('Left knee', 'Left ankle', 'leg')
     relocate_tail('Right ankle', 'Right toe', 'foot')
     relocate_tail('Left ankle', 'Left toe', 'foot')
     relocate_tail('Right elbow', 'Right wrist', 'arm')
     relocate_tail('Left elbow', 'Left wrist', 'arm')
+    relocate_tail('cf_pv_hand_R', 'Right wrist', 'hand')
+    relocate_tail('cf_pv_hand_L', 'Left wrist', 'hand')
     
     #remove all constraints from all bones
     bpy.ops.object.mode_set(mode='POSE')
@@ -619,11 +630,6 @@ def clean_and_reorganize_pmx():
     #Set the view transform 
     bpy.context.scene.view_settings.view_transform = 'Standard'
     
-    #get rid of the text files mmd tools generate
-    if bpy.data.texts['Model']:
-        bpy.data.texts.remove(bpy.data.texts['Model'])
-        bpy.data.texts.remove(bpy.data.texts['Model_e'])
-    
 class finalize_pmx(bpy.types.Operator):
     bl_idname = "kkb.finalizepmx"
     bl_label = "Finalize .pmx file"
@@ -636,8 +642,10 @@ class finalize_pmx(bpy.types.Operator):
         reset_and_reroll_bones()
         rename_for_clarity()
         clean_and_reorganize_pmx()
-        #bpy.ops.kkb.shapekeys('INVOKE_DEFAULT')
-        #bpy.ops.kkb.cleanarmature('INVOKE_DEFAULT')
+        bpy.ops.kkb.shapekeys('INVOKE_DEFAULT')
+        bpy.ops.kkb.separatebody('INVOKE_DEFAULT')
+        bpy.ops.kkb.cleanarmature('INVOKE_DEFAULT')
+        #bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT')
         
         return {'FINISHED'}
     

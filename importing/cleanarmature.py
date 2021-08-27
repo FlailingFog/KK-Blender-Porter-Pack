@@ -48,7 +48,8 @@ def get_bone_list(kind):
         'Left arm', 'Right arm',
         'Left leg', 'Right leg',
         'Left knee', 'Right knee',
-        'Left ankle', 'Right ankle']
+        'Left ankle', 'Right ankle',
+        'Left wrist', 'Right wrist']
         
     elif kind == 'face_list':
         return [
@@ -89,7 +90,7 @@ def get_bone_list(kind):
         'cf_s_elboback_L', 'cf_s_elboback_R',
         'cf_s_forearm01_L', 'cf_s_forearm01_R',
         'cf_d_shoulder02_L', 'cf_d_shoulder02_R',
-        'cf_s_shoulder02_L', 'cf_s_shoulder02_R',
+        #'cf_s_shoulder02_L', 'cf_s_shoulder02_R',
         'cf_s_wrist_L', 'cf_s_wrist_R',
         'cf_d_wrist_L', 'cf_d_wrist_R',
         'cf_d_hand_L', 'cf_d_hand_R',

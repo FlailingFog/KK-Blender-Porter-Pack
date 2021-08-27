@@ -301,6 +301,8 @@ def combine_shapekeys(keep_partial_shapekeys):
     used = []
     inUse = []
 
+    #These mouth shapekeys require the default teeth and tongue shapekeys to be active
+    correctionList = ['_u_small_op', '_u_big_op', '_e_big_op', '_o_small_op', '_o_big_op', '_neko_op', '_triangle_op']
     shapekey_block = bpy.data.shape_keys[body.data.shape_keys.name].key_blocks
 
     ACTIVE = 0.9
@@ -333,15 +335,14 @@ def combine_shapekeys(keep_partial_shapekeys):
                     #If the's emotion matches the current one and is the correct category...
                     if emotion in supporting_shapekey.name and cat == whatCat(supporting_shapekey.name):
 
-                        #and this key has hasn't been used yet activate it
+                        #and this key has hasn't been used yet activate it, else skip to the next
                         if (supporting_shapekey.name not in used):
                             supporting_shapekey.value = ACTIVE
                             inUse.append(supporting_shapekey.name)
 
                 #The shapekeys for the current emotion are now all active
 
-                #Some mouth shapekeys need manual corrections
-                correctionList = ['_u_small_op', '_u_big_op', '_e_big_op', '_o_small_op', '_o_big_op', '_neko_op', '_triangle_op']
+                #Some need manual corrections
                 correction_needed = False
                 for c in correctionList:
                     if c in current_keyblock.name:

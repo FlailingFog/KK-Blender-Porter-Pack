@@ -54,7 +54,19 @@ class separate_body(bpy.types.Operator):
                     
         #Select all body related materials, then separate it from everything else
         #This puts hair/clothes in position 1 and the body in position 2
-        bodyMatList = ['cf_m_face_00', 'cf_m_mayuge_00', 'cf_m_noseline_00', 'cf_m_eyeline_00_up', 'cf_m_eyeline_down', 'cf_m_sirome_00', 'cf_m_sirome_00.001', 'cf_m_hitomi_00', 'cf_m_hitomi_00.001', 'cf_m_body', 'cf_m_tooth', 'cf_m_tang', 'cm_m_body']
+        bodyMatList = ['cf_m_face_00',
+                       'cf_m_mayuge_00',
+                       'cf_m_noseline_00',
+                       'cf_m_eyeline_00_up',
+                       'cf_m_eyeline_down',
+                       'cf_m_sirome_00',
+                       'cf_m_sirome_00.001',
+                       'cf_m_hitomi_00',
+                       'cf_m_hitomi_00.001',
+                       'cf_m_body',
+                       'cf_m_tooth',
+                       'cf_m_tang',
+                       'cm_m_body']
         separateMaterial(bodyMatList)
 
         #Separate the shadowcast if any, placing it in position 3
@@ -68,7 +80,7 @@ class separate_body(bpy.types.Operator):
         #Separate the bonelyfans mesh if any, placing it in position 4
         try:
             bpy.ops.mesh.select_all(action = 'DESELECT')
-            boneMatList = ['Bonelyfans']
+            boneMatList = ['Bonelyfans', 'Bonelyfans.001']
             separateMaterial(boneMatList)
         except:
             pass
@@ -115,7 +127,7 @@ class separate_body(bpy.types.Operator):
         return {'FINISHED'}
 
 if __name__ == "__main__":
-    bpy.utils.register_class(separate_Body)
+    bpy.utils.register_class(separate_body)
 
     # test call
     print((bpy.ops.kkb.separatebody('INVOKE_DEFAULT')))

@@ -130,8 +130,7 @@ def rename_bones():
     flip_animation('Left elbow')
     flip_animation('Right elbow')
 
-#C.object.pose.bones['cf_j_forearm01_L'].rotation_quaternion @= mathutils.Euler((radians(90), radians(90), radians(0))).to_quaternion()
-#C.object.pose.bones['cf_j_forearm01_L'].rotation_quaternion @= mathutils.Euler((radians(3.33), radians(0), radians(-3.33))).to_quaternion()
+#disable all IKs and rotation locks
 
 if __name__ == "__main__":
     rename_bones()
