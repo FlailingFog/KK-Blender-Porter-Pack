@@ -374,7 +374,7 @@ class bake_materials(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
 if __name__ == "__main__":
-    bpy.utils.register_class(bake_Materials)
+    bpy.utils.register_class(bake_materials)
 
     # test call
     print((bpy.ops.kkb.bakematerials('INVOKE_DEFAULT')))

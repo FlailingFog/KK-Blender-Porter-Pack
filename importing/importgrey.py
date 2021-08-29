@@ -8,8 +8,15 @@ from pathlib import Path
 from bpy.props import StringProperty, BoolProperty
 from bpy_extras.io_utils import ImportHelper
 
-def runIt():
-    fbx = Path('C:\\Users\\C\\Desktop\\GME process\\20210815_Hachikuji_Mayoi\\Hachikuji_Mayoi.fbx')
+def import_the_fbx(directory):
+
+    #delete the cube, light and camera
+    if len(bpy.data.objects) == 3:
+        for obj in bpy.data.objects:
+            bpy.data.objects.remove(obj)
+    
+    #fbx = Path('C:\\Users\\C\\Desktop\\GME process\\20210815_Hachikuji_Mayoi\\Hachikuji_Mayoi.fbx')
+    fbx = directory
     bpy.ops.import_scene.fbx(filepath=str(fbx), use_prepost_rot=False, global_scale=96)
     
     #rename all the shapekeys to be compatible with the other script
@@ -192,23 +199,19 @@ def runIt():
     #Set the view transform 
     bpy.context.scene.view_settings.view_transform = 'Standard'
 
-
-
 class import_grey(bpy.types.Operator):
     bl_idname = "kkb.importgrey"
     bl_label = "Import Grey's .fbx"
     bl_description = "Select the .fbx file from Grey's Mesh Exporter"
     bl_options = {'REGISTER', 'UNDO'}
-    
-    directory : StringProperty(maxlen=1024, default='', options={'HIDDEN'})
-    filter_glob : StringProperty(default='.fbx', options={'HIDDEN'})
-    data = None
-    mats_uv = None
-    structure = None
+
+    filepath : StringProperty(maxlen=1024, default='', options={'HIDDEN'})
+    filter_glob : StringProperty(default='*.fbx', options={'HIDDEN'})
     
     def execute(self, context): 
         
-        runIt()
+        import_the_fbx(self.filepath)
+
         return {'FINISHED'}
         
     def invoke(self, context, event):

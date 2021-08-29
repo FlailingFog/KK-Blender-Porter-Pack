@@ -33,6 +33,7 @@ from .exporting.selectbones import select_bones
 from .extras.importstudio import import_studio
 from .extras.linkshapekeys import link_shapekeys
 from .extras.importanimation import import_animation
+from .pillow.getpillow import InstallPIL
 
 from . KKPanel import PlaceholderProperties
 from . KKPanel import IMPORTING_PT_panel, IMPORTING1_PT_panel,IMPORTOPTIONS_PT_Panel, IMPORTING2_PT_panel, APPLYOPTIONS_PT_Panel, EXPORTING_PT_panel, EXTRAS_PT_panel
@@ -45,6 +46,7 @@ classes = (
     import_animation, 
     import_studio, 
     link_shapekeys,
+    InstallPIL,
 
     bone_drivers, 
     clean_armature, 

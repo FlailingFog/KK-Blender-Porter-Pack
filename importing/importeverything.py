@@ -56,7 +56,7 @@ def get_templates_and_apply(directory, useFakeUser, folderCheckEnabled):
     
     blend_file_missing = True
     for file in files:
-        if '.blend' in str(file):
+        if '.blend' in str(file) and '.blend1' not in str(file):
             filepath = str(file)
             blend_file_missing = False
     
@@ -385,7 +385,7 @@ def get_and_load_textures(directory):
     imageLoad('Template Tongue', 'Gentex', 'Maintex', 'cf_m_tang_ColorMask.png') #done on purpose
     imageLoad('Template Tongue', 'Gentex', 'MainCol', 'cf_m_tang_ColorMask.png')
     imageLoad('Template Tongue', 'Gentex', 'MainDet', 'cf_m_tang_DetailMask.png')
-    imageLoad('Template Tongue', 'Gentex', 'MainNorm', 'cf_m_tang_NormalMap.png')
+    imageLoad('Template Tongue', 'Gentex', 'MainNorm', 'cf_m_tang_NormalMap_converted.png', True)
 
     #for each material slot in the hair object, load in the hair detail mask, colormask
     currentObj = bpy.data.objects['Hair']
@@ -422,7 +422,7 @@ def get_and_load_textures(directory):
                 imageLoad(genMat.name, 'Gentex', 'Maintex', genType+'_MainTex.png', True)
                 imageLoad(genMat.name, 'Gentex', 'MainCol', genType+'_ColorMask.png', True)
                 imageLoad(genMat.name, 'Gentex', 'MainDet', genType+'_DetailMask.png', True)
-                imageLoad(genMat.name, 'Gentex', 'MainNorm', genType+'_NormalMap.png', True)
+                imageLoad(genMat.name, 'Gentex', 'MainNorm', genType+'_NormalMap_converted.png', True)
                 imageLoad(genMat.name, 'Gentex', 'Alphamask', genType+'_AlphaMask.png', True)
                 
                 MainImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Maintex'].image
@@ -630,6 +630,8 @@ class import_everything(bpy.types.Operator):
         apply_bone_widgets()
         hide_widgets()
         
+        bpy.context.space_data.shading.type = 'MATERIAL'
+
         return {'FINISHED'}
 
     def invoke(self, context, event):

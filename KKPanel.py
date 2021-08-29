@@ -256,7 +256,7 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text="Swap armature type")
-        split.operator('kkb.importanimation', text = '', icon = 'ARROW_LEFTRIGHT')
+        split.operator('kkb.getpillow', text = '', icon = 'ARROW_LEFTRIGHT')
         
 '''
         #show all icons available in blender
