@@ -15,7 +15,7 @@ The usage instructions are different based on what plugin you're using to export
 #### PMX Plugin Exports
 1a. Export the model with the pmx exporter  
 1b. Export the textures with grey's mesh exporter  
-1c. Import the pmx file into Blender using CATS  
+1c. Import the pmx file into Blender using the big "Import Model" button in CATS  
 1d. Finalize the pmx file with the Finalize PMX button  
 #### FBX Plugin Exports
 1a. Open studio  
