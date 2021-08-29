@@ -1,4 +1,4 @@
-# KK Blender Shader Pack
+# KK Blender Porter
 A plugin and a shader to get you started with setting up an exported Koikatsu character in Blender.  
 
 The plugin is a Blender addon that automates various actions, and the KK Shader is a .blend file that contains the shader, some material templates and some custom bone widgets.  
