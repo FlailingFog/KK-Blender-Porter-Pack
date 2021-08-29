@@ -61,10 +61,23 @@ def get_bone_list(kind):
         'cf_J_Eye06_s_L', 'cf_J_Eye06_s_R',
         'cf_J_Eye07_s_L', 'cf_J_Eye07_s_R',
         'cf_J_Eye08_s_L', 'cf_J_Eye08_s_R',
+        
         'cf_J_Mayu_R', 'cf_J_MayuMid_s_R', 'cf_J_MayuTip_s_R',
         'cf_J_Mayu_L', 'cf_J_MayuMid_s_L', 'cf_J_MayuTip_s_L',
+        
         'cf_J_Mouth_R', 'cf_J_Mouth_L',
-        'cf_J_Mouthup', 'cf_J_MouthLow', 'cf_J_MouthMove', 'cf_J_MouthCavity']
+        'cf_J_Mouthup', 'cf_J_MouthLow', 'cf_J_MouthMove', 'cf_J_MouthCavity',
+        
+        'cf_J_EarUp_L', 'cf_J_EarBase_ry_L', 'cf_J_EarLow_L',
+        'cf_J_CheekUp2_L', 'cf_J_Eye_rz_L', 'cf_J_Eye_rz_L', 
+        'cf_J_CheekUp_s_L', 'cf_J_CheekLow_s_L', 
+
+        'cf_J_EarUp_R', 'cf_J_EarBase_ry_R', 'cf_J_EarLow_R',
+        'cf_J_CheekUp2_R', 'cf_J_Eye_rz_R', 'cf_J_Eye_rz_R', 
+        'cf_J_CheekUp_s_R', 'cf_J_CheekLow_s_R',
+
+        'cf_J_ChinLow', 'cf_J_Chin_s', 'cf_J_ChinTip_Base', 
+        'cf_J_NoseBase', 'cf_J_NoseBridge_rx', 'cf_J_Nose_tip']
         
     elif kind == 'toe_list':
         #bones that appear on the Better Penetration armature
@@ -115,7 +128,7 @@ def get_bone_list(kind):
         'cf_d_sk_05_00', 'cf_j_sk_05_00', 'cf_j_sk_05_01', 'cf_j_sk_05_02', 'cf_j_sk_05_03', 'cf_j_sk_05_04',
         'cf_d_sk_06_00', 'cf_j_sk_06_00', 'cf_j_sk_06_01', 'cf_j_sk_06_02', 'cf_j_sk_06_03', 'cf_j_sk_06_04',
         'cf_d_sk_07_00', 'cf_j_sk_07_00', 'cf_j_sk_07_01', 'cf_j_sk_07_02', 'cf_j_sk_07_03', 'cf_j_sk_07_04']
-
+    
 def hide_extra_bones():
     #Select the armature and make it active
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -214,11 +227,12 @@ def hide_extra_bones():
     bpy.ops.object.mode_set(mode='OBJECT')
     
 def connect_finger_skirt_bones():
+    
     # Make sure finger bones on the armature are visually connected (ignores A_N_ finger bones)
     skirt_list = get_bone_list('skirt_list')
     bpy.ops.object.mode_set(mode='EDIT')
     armature = bpy.data.objects['Armature']
-    
+    '''
     armature.data.edit_bones['IndexFinger1_L'].tail = armature.data.edit_bones['IndexFinger2_L'].head
     armature.data.edit_bones['MiddleFinger1_L'].tail = armature.data.edit_bones['MiddleFinger2_L'].head
     armature.data.edit_bones['RingFinger1_L'].tail = armature.data.edit_bones['RingFinger2_L'].head
@@ -226,7 +240,7 @@ def connect_finger_skirt_bones():
     armature.data.edit_bones['IndexFinger1_R'].tail = armature.data.edit_bones['IndexFinger2_R'].head
     armature.data.edit_bones['MiddleFinger1_R'].tail = armature.data.edit_bones['MiddleFinger2_R'].head
     armature.data.edit_bones['RingFinger1_R'].tail = armature.data.edit_bones['RingFinger2_R'].head
-
+    '''
     # Make sure all toe bones are visually correct if using the better penetration armature 
     try:
         armature.data.edit_bones['Toes4_L'].tail.y = armature.data.edit_bones['Toes30_L'].head.y
@@ -266,6 +280,37 @@ def connect_finger_skirt_bones():
     
     bpy.ops.object.mode_set(mode='OBJECT')
     
+def reshow_accessory_bones():
+    armature = bpy.data.objects['Armature']
+    body = bpy.data.objects['Body']
+    
+    ### Function to check for empty vertex groups
+    def survey(obj):
+        maxWeight = {}
+        #prefill vertex group list with zeroes
+        for i in obj.vertex_groups:
+            maxWeight[i.name] = 0
+        #preserve the indexes
+        keylist = list(maxWeight)
+        #then fill in the real value using the indexes
+        for v in obj.data.vertices:
+            for g in v.groups:
+                gn = g.group
+                w = obj.vertex_groups[g.group].weight(v.index)
+                if (maxWeight.get(keylist[gn]) is None or w>maxWeight[keylist[gn]]):
+                    maxWeight[keylist[gn]] = w
+        return maxWeight
+        
+    # Find empty vertex groups
+    vertexWeightMap = survey(body)
+    
+    for bone in armature.data.bones:
+        #if the bone is hidden and isn't a "utility" bone...
+        if bone.hide == True and 'cf_pv' not in bone.name and 'Eyesx' not in bone.name and 'cf_d' not in bone.name and 'cf_s' not in bone.name and 'cf_j' not in bone.name and 'cf_J_hitomi_tx_' not in bone.name and 'cf_J_FaceRoot' not in bone.name and 'cf_J_FaceUp_t' not in bone.name and 'n_cam' not in bone.name and 'EyesLookTar' not in bone.name and 'N_move' not in bone.name and 'a_n_' not in bone.name and 'cf_hit' not in bone.name:
+            #check if it has any vertexes attached to it, and show it if it does
+            if vertexWeightMap.get(bone.name):
+                bone.hide = False
+
 class clean_armature(bpy.types.Operator):
     bl_idname = "kkb.cleanarmature"
     bl_label = "Clean armature"
@@ -275,7 +320,8 @@ class clean_armature(bpy.types.Operator):
     def execute(self, context):
         
         hide_extra_bones()
-        #connect_finger_skirt_bones()
+        connect_finger_skirt_bones()
+        reshow_accessory_bones()
         
         return {'FINISHED'}
 

@@ -39,13 +39,11 @@ class separate_body(bpy.types.Operator):
                 try:
                     bpy.context.object.active_material_index = body.data.materials.find(mat)
                     
-                    #if this is the face material, make sure it's at the top of the material list
-                    if mat == 'cf_m_face_00':
-                        def moveUp():
-                            return bpy.ops.object.material_slot_move(direction='UP')
-
-                        while moveUp() != {"CANCELLED"}:
-                            pass
+                    #moves the materials in a specific order to match the pmx file
+                    def moveUp():
+                        return bpy.ops.object.material_slot_move(direction='UP')
+                    while moveUp() != {"CANCELLED"}:
+                        pass
                     
                     bpy.ops.object.material_slot_select()
                 except:
@@ -54,19 +52,22 @@ class separate_body(bpy.types.Operator):
                     
         #Select all body related materials, then separate it from everything else
         #This puts hair/clothes in position 1 and the body in position 2
-        bodyMatList = ['cf_m_face_00',
-                       'cf_m_mayuge_00',
-                       'cf_m_noseline_00',
-                       'cf_m_eyeline_00_up',
-                       'cf_m_eyeline_down',
-                       'cf_m_sirome_00',
-                       'cf_m_sirome_00.001',
-                       'cf_m_hitomi_00',
-                       'cf_m_hitomi_00.001',
-                       'cf_m_body',
-                       'cf_m_tooth',
-                       'cf_m_tang',
-                       'cm_m_body']
+        bodyMatList = [
+            'cm_m_body.001',
+            'cf_m_body.001',
+            'cm_m_body',
+            'cf_m_body',
+            'cf_m_tang',
+            'cf_m_hitomi_00.001',
+            'cf_m_hitomi_00',
+            'cf_m_sirome_00.001',
+            'cf_m_sirome_00',
+            'cf_m_eyeline_down',
+            'cf_m_eyeline_00_up',
+            'cf_m_tooth',
+            'cf_m_noseline_00',
+            'cf_m_mayuge_00',
+            'cf_m_face_00']
         separateMaterial(bodyMatList)
 
         #Separate the shadowcast if any, placing it in position 3
@@ -108,7 +109,7 @@ class separate_body(bpy.types.Operator):
             rename[3].select_set(True)
         except:
             pass
-        #don't even care
+        
         bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name="Shadowcast Collection")
         
         #hide the new collection

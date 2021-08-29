@@ -25,12 +25,13 @@ def missing_texture_error(self, context):
     self.layout.label(text="The files cf_body_00_mc.tga and cf_face_00_mc-BC7.dds were not found in the \"Textures\" folder. \nGrab these images from /Koikatsu/chara/abdata/oo_base.unity3D with SB3U \nHit undo and try again")
 
 def hair_error(self, context):
-    self.layout.label(text="An object named \"Hair\" wasn't found. Separate this from the Clothes object.")
+    self.layout.label(text="An object named \"Hair\" wasn't found. Separate this from the Clothes object and rename it.")
 
 def get_templates_and_apply(directory, useFakeUser, folderCheckEnabled):
     #Check if a hair object exists
     if not (bpy.data.objects.get('Hair') or bpy.data.objects.get('hair')):
         bpy.context.window_manager.popup_menu(hair_error, title="Error", icon='ERROR')
+        return True
     
     #Clean material list
     armature = bpy.data.objects['Armature']
@@ -81,7 +82,7 @@ def get_templates_and_apply(directory, useFakeUser, folderCheckEnabled):
             body.material_slots[original].material = bpy.data.materials[template]
         except:
             print('material or template wasn\'t found: ' + original + ' / ' + template)
-
+    
     swap_body_material('cf_m_face_00','Template Face')
     swap_body_material('cf_m_mayuge_00','Template Eyebrows (mayuge)')
     swap_body_material('cf_m_noseline_00','Template Nose')
@@ -169,7 +170,11 @@ def get_templates_and_apply(directory, useFakeUser, folderCheckEnabled):
 
     #Import custom bone shapes
     innerpath = 'Collection'
-    templateList = ['Bone Widgets']
+    
+    if bpy.data.objects['Armature'].data.bones.get('Greybone'):
+        templateList = ['Bone Widgets fbx']
+    else:
+        templateList = ['Bone Widgets']
 
     for template in templateList:
         bpy.ops.wm.append(
@@ -194,6 +199,12 @@ def apply_bone_widgets():
     armature.data.show_bone_custom_shapes = True
     bpy.ops.object.mode_set(mode='POSE')
 
+    #Remove the .001 tag from all bone widgets
+    #This is because the KK shader has to hold duplicate widgets for pmx and fbx
+    for object in bpy.data.objects:
+        if 'Widget' in object.name:
+            object.name = object.name.replace(".001", "")
+    
     bpy.context.object.pose.bones["Spine"].custom_shape = bpy.data.objects["WidgetChest"]
     bpy.context.object.pose.bones["Chest"].custom_shape = bpy.data.objects["WidgetChest"]
     bpy.context.object.pose.bones["Upper Chest"].custom_shape = bpy.data.objects["WidgetChest"]
@@ -249,13 +260,21 @@ def apply_bone_widgets():
     for bone in restOfFace:
         bpy.context.object.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetFace']
     
-    try:
-        BPList = ['cf_j_kokan', 'cf_j_ana', 'Vagina_Root', 'Vagina_B', 'Vagina_F', 'Vagina_001_L', 'Vagina_002_L', 'Vagina_003_L', 'Vagina_004_L', 'Vagina_005_L',  'Vagina_001_R', 'Vagina_002_R', 'Vagina_003_R', 'Vagina_004_R', 'Vagina_005_R']
-        for bone in BPList:
-            bpy.context.object.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetBP']
-    except:
-        #This isn't a BP armature
-        pass
+    evenMoreOfFace = [
+    'cf_J_EarUp_L', 'cf_J_EarBase_ry_L', 'cf_J_EarLow_L',
+    'cf_J_CheekUp2_L', 'cf_J_Eye_rz_L', 'cf_J_Eye_rz_L', 
+    'cf_J_CheekUp_s_L', 'cf_J_CheekLow_s_L', 
+
+    'cf_J_EarUp_R', 'cf_J_EarBase_ry_R', 'cf_J_EarLow_R',
+    'cf_J_CheekUp2_R', 'cf_J_Eye_rz_R', 'cf_J_Eye_rz_R', 
+    'cf_J_CheekUp_s_R', 'cf_J_CheekLow_s_R',
+
+    'cf_J_ChinLow', 'cf_J_Chin_s', 'cf_J_ChinTip_Base', 
+    'cf_J_NoseBase', 'cf_J_NoseBridge_rx', 'cf_J_Nose_tip']
+    
+    for bone in evenMoreOfFace:
+        bpy.context.object.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetSpine']
+        
     
     fingerList = [
     'IndexFinger1_L', 'IndexFinger2_L', 'IndexFinger3_L',
@@ -271,10 +290,20 @@ def apply_bone_widgets():
     'Thumb0_R', 'Thumb1_R', 'Thumb2_R']
     
     for finger in fingerList:
+        print(armature.pose.bones[finger].name)
         if 'Thumb' in finger:
-            bpy.context.object.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetFingerThumb']
+            armature.pose.bones[finger].custom_shape  = bpy.data.objects['WidgetFingerThumb']
         else:
-            bpy.context.object.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetFinger']
+            armature.pose.bones[finger].custom_shape  = bpy.data.objects['WidgetFinger']
+        
+    try:
+        BPList = ['cf_j_kokan', 'cf_j_ana', 'Vagina_Root', 'Vagina_B', 'Vagina_F', 'Vagina_001_L', 'Vagina_002_L', 'Vagina_003_L', 'Vagina_004_L', 'Vagina_005_L',  'Vagina_001_R', 'Vagina_002_R', 'Vagina_003_R', 'Vagina_004_R', 'Vagina_005_R']
+        for bone in BPList:
+            armature.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetBP']
+    except:
+        #This isn't a BP armature
+        pass
+    
     
     #Make both bone layers visible
     firstTwoBoneLayers = (True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False)
@@ -555,17 +584,18 @@ def add_outlines(oneOutlineOnlyMode):
 
 def hide_widgets():
     #automatically hide bone widgets collection if it's visible
-    try:
-        bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children['Bone Widgets']
-        bpy.context.scene.view_layers[0].active_layer_collection.exclude = True
-    except:
+    for widget_col in ['Bone Widgets', 'Bone Widgets fbx']:
         try:
-            #maybe the collection is in the Collection collection
-            bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children['Collection'].children['Bone Widgets']
+            bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children[widget_col]
             bpy.context.scene.view_layers[0].active_layer_collection.exclude = True
         except:
-            #maybe the collection is already hidden
-            pass
+            try:
+                #maybe the collection is in the Collection collection
+                bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children['Collection'].children[widget_col]
+                bpy.context.scene.view_layers[0].active_layer_collection.exclude = True
+            except:
+                #maybe the collection is already hidden
+                pass
 
 class import_everything(bpy.types.Operator):
     bl_idname = "kkb.importeverything"
@@ -587,6 +617,7 @@ class import_everything(bpy.types.Operator):
         folderCheckEnabled = scene.texturecheck_bool
         oneOutlineOnlyMode = scene.textureoutline_bool
         
+        #these methods will return true if an error was encountered
         template_error = get_templates_and_apply(directory, useFakeUser, folderCheckEnabled)
         if template_error:
             return {'FINISHED'}
@@ -596,7 +627,7 @@ class import_everything(bpy.types.Operator):
             return {'FINISHED'}
         
         add_outlines(oneOutlineOnlyMode)
-        apply_bone_widgets
+        apply_bone_widgets()
         hide_widgets()
         
         return {'FINISHED'}

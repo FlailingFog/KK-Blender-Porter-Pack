@@ -24,7 +24,7 @@ class import_grey(bpy.types.Operator):
         def runIt():
             
             fbx = Path('C:\\Users\\C\\Desktop\\GME process\\20210815_Hachikuji_Mayoi\\Hachikuji_Mayoi.fbx')
-            bpy.ops.import_scene.fbx(filepath=str(fbx), use_prepost_rot=False, global_scale=500)
+            bpy.ops.import_scene.fbx(filepath=str(fbx), use_prepost_rot=False, global_scale=96)
             
             #rename all the shapekeys to be compatible with the other script
             #rename face shapekeys based on category
@@ -117,13 +117,13 @@ class import_grey(bpy.types.Operator):
             
             #create the missing armature bones
             missing_bones = [
+            'cf_pv_root',
             'cf_pv_elbo_L', 'cf_pv_elbo_R',
             'cf_pv_foot_L', 'cf_pv_foot_R',
             'cf_pv_hand_L', 'cf_pv_hand_R',
             'cf_pv_heel_L', 'cf_pv_heel_R',
             'cf_pv_knee_L', 'cf_pv_knee_R',
-            'cf_hit_head'
-            
+            'N_EyesLookTargetP', 'cf_hit_head'
             ]
             
             height_adder = Vector((0,0.1,0))
@@ -133,8 +133,7 @@ class import_grey(bpy.types.Operator):
                 new_bone.head = empty_location
                 new_bone.tail = empty_location + height_adder
                 
-            
-            #then fix the hit_head location
+            #then fix the cf hit_head location
             new_bone.head = armature.data.edit_bones['cf_s_head'].head + empty_location
             new_bone.tail = armature.data.edit_bones['cf_s_head'].head + height_adder +  empty_location
             
@@ -149,8 +148,45 @@ class import_grey(bpy.types.Operator):
                 armature.data.edit_bones['cf_j_hand_'+side].head.z = armature.data.edit_bones['cf_j_forearm01_'+side].head.z
                 armature.data.edit_bones['cf_j_hand_'+side].tail.z = armature.data.edit_bones['cf_j_forearm01_'+side].tail.z
             
+            #then recreate the eyex bone so I can use it for later
+            new_bone = armature.data.edit_bones.new('Eyesx')
+            new_bone.head = armature.data.edit_bones['cf_hit_head'].tail
+            new_bone.head.y = new_bone.head.y + 0.05
+            new_bone.tail = armature.data.edit_bones['cf_J_Mayu_R'].tail
+            new_bone.tail.x = new_bone.head.x
+            new_bone.tail.y = new_bone.head.y
+            
+            #then reparent the pv bones to the root bone
+            armature.data.edit_bones['cf_pv_root'].parent = armature.data.edit_bones['cf_j_root']
+            armature.data.edit_bones['cf_pv_root'].head = armature.data.edit_bones['cf_j_root'].head
+            armature.data.edit_bones['cf_pv_root'].tail = armature.data.edit_bones['cf_j_root'].tail
+            pv_bones = [
+            'cf_pv_elbo_L', 'cf_pv_elbo_R',
+            'cf_pv_foot_L', 'cf_pv_foot_R',
+            'cf_pv_hand_L', 'cf_pv_hand_R',
+            'cf_pv_heel_L', 'cf_pv_heel_R',
+            'cf_pv_knee_L', 'cf_pv_knee_R']
+            for bone in pv_bones:
+                armature.data.edit_bones[bone].parent = armature.data.edit_bones['cf_pv_root']
+            
             bpy.ops.object.mode_set(mode='OBJECT')
-                        
+            
+            #rename the first UV map to be consistent with the PMX file
+            #The fbx file seems to contains the extra UV maps for blush, hair shine and nipple locations
+            #but I'm not going to use these in the KK shader until pmx imports are dropped entirely
+            #remove for now because it'll probably cause issues with material baking and atlas generation
+            for obj in bpy.data.objects:
+                if obj.type == 'MESH':
+                    if obj.data.uv_layers[0]:
+                        obj.data.uv_layers[0].name = 'UVMap'
+                    
+                    try:
+                        obj.data.uv_layers.remove(obj.data.uv_layers['uv2'])
+                        obj.data.uv_layers.remove(obj.data.uv_layers['uv3'])
+                        obj.data.uv_layers.remove(obj.data.uv_layers['uv4'])
+                    except:
+                        pass
+            
             #manually scale armature down
             bpy.context.view_layer.objects.active = armature
             bpy.ops.object.mode_set(mode='EDIT')
@@ -169,7 +205,7 @@ class import_grey(bpy.types.Operator):
             
             #Set the view transform 
             bpy.context.scene.view_settings.view_transform = 'Standard'
-    
+        
         #I need a better way to do this
         runIt()
         
