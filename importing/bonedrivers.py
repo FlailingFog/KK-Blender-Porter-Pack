@@ -854,13 +854,20 @@ class bone_drivers(bpy.types.Operator):
         #The hip joint corrections aren't finished yet.
         #Enable debug mode to use them in their current state.
         scene = context.scene.placeholder
-        use_hips = scene.driver_bool
+        use_hips = scene.hip_driver_bool
         
         reparent_bones()
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+
         setup_iks()
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+
         setup_joints()
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+
         #if use_hips:
         #    setup_hips()
+        
         make_eye_controller()
         scale_final_bones()
         categorize_bones()

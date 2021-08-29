@@ -6,7 +6,6 @@ Usage:
 
 Script 90% stolen from https://blender.stackexchange.com/questions/86757/python-how-to-connect-shapekeys-via-drivers
 '''
-
 import bpy
 
 class link_shapekeys(bpy.types.Operator):
@@ -54,7 +53,7 @@ class link_shapekeys(bpy.types.Operator):
       return {'FINISHED'}
 
 if __name__ == "__main__":
-    bpy.utils.register_class(link_Shapekeys)
+    bpy.utils.register_class(link_shapekeys)
 
     # test call
     print((bpy.ops.kkb.linkshapekeys('INVOKE_DEFAULT')))

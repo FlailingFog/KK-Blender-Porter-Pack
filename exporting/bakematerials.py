@@ -271,6 +271,9 @@ class bake_materials(bpy.types.Operator):
                                             
                                             #reset folderpath after render
                                             bpy.context.scene.render.filepath = folderpath
+
+                                            #redraw the UI to let the user know the plugin is doing something
+                                            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
                                             
                                             renderedSomething = True
                                             

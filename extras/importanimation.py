@@ -78,10 +78,10 @@ def rename_bones():
     bpy.ops.object.mode_set(mode='POSE')
     
     #bpy.ops.armature.select_all(action='DESELECT')
-        
+    
     bpy.ops.object.mode_set(mode='OBJECT')
     
-    
+def correct_animation():
     #this script will copy the animation data from the active Object to the selected object:
     active_obj = bpy.context.object
     ad = bpy.context.object.animation_data
@@ -132,5 +132,22 @@ def rename_bones():
 
 #disable all IKs and rotation locks
 
+
+class import_animation(bpy.types.Operator):
+    bl_idname = "kkb.importanimation"
+    bl_label = "Import KK Animation"
+    bl_description = "Imports a KK animation (.fbx format)"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        
+        rename_bones()
+        correct_animation()
+        
+        return {'FINISHED'}
+
 if __name__ == "__main__":
-    rename_bones()
+    bpy.utils.register_class(import_animation)
+
+    # test call
+    print((bpy.ops.kkb.importanimation('INVOKE_DEFAULT')))

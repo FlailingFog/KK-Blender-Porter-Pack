@@ -4,12 +4,6 @@ import bpy
 from mathutils import Vector
 import math
 
-bpy.ops.cats_importer.import_any_model(filepath="C:\\Users\\C\\Desktop\\GME process\\5741\\model.pmx", files=[{"name":"model.pmx", "name":"model.pmx"}], directory="C:\\Users\\C\\Desktop\\GME process\\5741\\")
-    #get rid of the text files mmd tools generate
-if bpy.data.texts['Model']:
-        bpy.data.texts.remove(bpy.data.texts['Model'])
-        bpy.data.texts.remove(bpy.data.texts['Model_e'])
-
 def rename_bones():
     armature = bpy.data.objects['Model_arm']
     body = bpy.data.objects['Model_mesh']
@@ -638,14 +632,30 @@ class finalize_pmx(bpy.types.Operator):
 
     def execute(self, context): 
 
+        #bpy.ops.cats_importer.import_any_model(filepath="C:\\Users\\C\\Desktop\\GME process\\5741\\model.pmx", files=[{"name":"model.pmx", "name":"model.pmx"}], directory="C:\\Users\\C\\Desktop\\GME process\\5741\\")
+        
+        #get rid of the text files mmd tools generate
+        if bpy.data.texts['Model']:
+                bpy.data.texts.remove(bpy.data.texts['Model'])
+                bpy.data.texts.remove(bpy.data.texts['Model_e'])
+        
         rename_bones()
         reset_and_reroll_bones()
         rename_for_clarity()
         clean_and_reorganize_pmx()
+        
+        #redraw the UI after each operation to let the user know the plugin is doing something
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
         bpy.ops.kkb.shapekeys('INVOKE_DEFAULT')
+
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
         bpy.ops.kkb.separatebody('INVOKE_DEFAULT')
+
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
         bpy.ops.kkb.cleanarmature('INVOKE_DEFAULT')
-        #bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT')
+
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+        bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT')
         
         return {'FINISHED'}
     

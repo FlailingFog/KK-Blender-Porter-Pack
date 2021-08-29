@@ -1,11 +1,10 @@
 #The init file for the plugin
-
 bl_info = {
     "name" : "KK Blender Pack",
     "author" : "a blendlet",
     "location" : "View 3D > Tool Shelf > KK Scripts",
     "description" : "Scripts for automating the cleanup process of a Koikatsu export",
-    "version": (4, 3, 1), #great now I have to remember to update this number each time
+    "version": (5, 0, 0),
     "blender" : (2, 93, 0),
     "location" : "View3D",
     "category" : "3D View",
@@ -18,37 +17,52 @@ from bpy.utils import register_class, unregister_class
 from bpy.types import Panel, PropertyGroup, Scene, WindowManager
 from bpy.props import PointerProperty
 
-from .importing.finalizepmx import finalize_pmx
-from .importing.shapekeys import shape_keys
-from .importing.separatebody import separate_body
-from .importing.importtemplates import import_templates
-from .importing.importtextures import import_textures
-from .importing.cleanarmature import clean_armature
 from .importing.bonedrivers import bone_drivers
+from .importing.cleanarmature import clean_armature
+from .importing.finalizegrey import finalize_grey
+from .importing.finalizepmx import finalize_pmx
+from .importing.importeverything import import_everything
+from .importing.importgrey import import_grey
+from .importing.separatebody import separate_body
+from .importing.shapekeys import shape_keys
+
 from .exporting.bakematerials import bake_materials
 from .exporting.applymaterials import apply_materials
 from .exporting.selectbones import select_bones
+
 from .extras.importstudio import import_studio
 from .extras.linkshapekeys import link_shapekeys
+from .extras.importanimation import import_animation
 
 from . KKPanel import PlaceholderProperties
-from . KKPanel import KK_Panel
+from . KKPanel import IMPORTING_PT_panel, IMPORTING1_PT_panel,IMPORTOPTIONS_PT_Panel, IMPORTING2_PT_panel, APPLYOPTIONS_PT_Panel, EXPORTING_PT_panel, EXTRAS_PT_panel
 
 classes = (
-    finalize_pmx,
-    shape_keys, 
-    separate_body, 
-    import_templates, 
-    import_textures, 
-    clean_armature, 
-    bone_drivers, 
+    apply_materials,
     bake_materials, 
-    apply_materials, 
     select_bones, 
+
+    import_animation, 
     import_studio, 
-    link_shapekeys, 
+    link_shapekeys,
+
+    bone_drivers, 
+    clean_armature, 
+    finalize_grey, 
+    finalize_pmx, 
+    import_everything, 
+    import_grey, 
+    separate_body, 
+    shape_keys,
+
     PlaceholderProperties, 
-    KK_Panel)
+    IMPORTING_PT_panel,
+    IMPORTING1_PT_panel,
+    IMPORTOPTIONS_PT_Panel,
+    IMPORTING2_PT_panel,
+    APPLYOPTIONS_PT_Panel,
+    EXPORTING_PT_panel,
+    EXTRAS_PT_panel)
 
 def register():
     
