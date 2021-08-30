@@ -11,7 +11,7 @@ The pack has a video tutorial series below: (*click for playlist*)
 
 
 ### Text instructions (without shading instructions)
-The usage instructions are different based on what plugin you're using to export the model from Koikatsu.
+The usage instructions are different based on what plugin you're using to export the model from Koikatsu. A copy of both plugins can be found in the "plugins" folder above.
 #### If you're using the PMX plugin...
 1a. Export the model with the pmx exporter  
 1b. Export the textures with grey's mesh exporter  
