@@ -35,3 +35,6 @@ The usage instructions are different based on what plugin you're using to export
 5. Drag the KK shader.blend from this repository (above) into the Textures folder
 6. Click the Import KK Shader and Textures button and open the Textures folder
 7. Manually shade everything as shown in Parts 3-8 of the current video series
+8. **(!!) Exporting hasn't been tested yet!**
+
+
