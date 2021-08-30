@@ -24,7 +24,7 @@ The usage instructions are different based on what plugin you're using to export
 1d. Export the model and textures  
 1e. Import the model into Blender with the Import FBX button  
 1f. Scale the armature to the correct height  
-1g. Scale the hand bones to the correct size using active element scaling mode on the Left/Right wrist bones  
+1g. Scale the finger bones to the correct size using active element scaling mode on the Left/Right wrist bones  
 1h. Scale the eyebrow and eye bones to the correct height using active element scaling mode on one of the mouth bones  
 1i. Manually correct accessory positions by clicking on the object, finding it's N_move empty parent and then finding the N_move's ca_slot## empty parent. Scale down the ca_slot## empty until the accessory is the correct size  
 1j.  FInalize the fbx file with the Finalize FBX button (and don't use the Fix Model button in CATS!)  
