@@ -1,23 +1,34 @@
 #Finalize the pmx file
+#some code taken from https://github.com/FlailingFog/KK-Blender-Shader-Pack/issues/29 !
 
 import bpy
 from mathutils import Vector
 import math
 
-def rename_bones():
+# makes the pmx armature and bone names match the koikatsu armature structure and bone names
+def standardize_armature():
     armature = bpy.data.objects['Model_arm']
     body = bpy.data.objects['Model_mesh']
     empty = bpy.data.objects['Model']
     armature.parent = None
     armature.name = 'Armature'
     body.name = 'Body'
+
+    #Deselect all objects
+    bpy.ops.object.select_all(action='DESELECT')
+    #Select the Body object
+    body.select_set(True)
+    #and make it active
+    bpy.context.view_layer.objects.active = armature
+
     bpy.data.objects.remove(empty)
+
     #un-pmxify the bone names
     pmx_rename_dict = {
     '全ての親':'PMX_Allbones',
     'センター':'PMX_Centaa',
-    'p_cf_body_00':'p_cf_body_00Extra',
-    'p_cf_body_bone':'p_cf_body_00',
+    #'p_cf_body_00':'p_cf_body_00Extra',
+    #'p_cf_body_bone':'p_cf_body_00',
     '上半身':'cf_j_spine01',
     '上半身2':'cf_j_spine02',
     '首':'cf_j_neck',
@@ -71,9 +82,65 @@ def rename_bones():
     '足首.L':'cf_j_foot_L',
     '足首.R':'cf_j_foot_R',
     }
-    for bone in armature.data.bones:
-        if bone.name in pmx_rename_dict:
-            bone.name = pmx_rename_dict[bone.name]
+    for bone in pmx_rename_dict:
+        if armature.data.bones[bone]:
+            armature.data.bones[bone].name = pmx_rename_dict[bone]
+    
+    #reparent foot to leg03
+    bpy.ops.object.mode_set(mode='EDIT')
+    armature.data.edit_bones['cf_j_foot_R'].parent = armature.data.edit_bones['cf_j_leg03_R']
+    armature.data.edit_bones['cf_j_foot_L'].parent = armature.data.edit_bones['cf_j_leg03_L']
+
+    #unparent body bone to match KK
+    armature.data.edit_bones['p_cf_body_bone'].parent = None
+
+    #remove all constraints from all bones
+    bpy.ops.object.mode_set(mode='POSE')
+    for bone in armature.pose.bones:
+        for constraint in bone.constraints:
+            bone.constraints.remove(constraint)
+    
+    #remove all drivers from all armature bones
+    #animation_data is nonetype if no drivers have been created yet
+    if armature.animation_data:
+        drivers_data = armature.animation_data.drivers
+        for driver in drivers_data:  
+            armature.driver_remove(driver.data_path, -1)
+
+    #unlock the armature and all bones
+    armature.lock_location = [False, False, False]
+    armature.lock_rotation = [False, False, False]
+    armature.lock_scale = [False, False, False]
+    
+    for bone in armature.pose.bones:
+        bone.lock_location = [False, False, False]
+
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.armature.select_all(action='DESELECT')
+
+    #delete bones not under the cf_n_height bone
+    def select_children(parent):
+        try:
+            if 'cf_hit_' not in parent.name and 'k_f_' not in parent.name:
+                parent.select = True
+                parent.select_head = True
+                parent.select_tail = True
+
+            for child in parent.children:
+                select_children(child)
+        except:
+            #The script hit the last bone in the chain
+            return
+    select_children(armature.data.edit_bones['cf_n_height'])
+
+    #make sure these bones aren't deleted
+    for preserve_bone in ['cf_j_root', 'p_cf_body_bone']:
+        armature.data.edit_bones[preserve_bone].select = True
+        armature.data.edit_bones[preserve_bone].select_head = True
+        armature.data.edit_bones[preserve_bone].select_tail = True
+
+    bpy.ops.armature.select_all(action='INVERT')
+    bpy.ops.armature.delete()
 
 def reset_and_reroll_bones():
     bpy.ops.object.mode_set(mode='EDIT')
@@ -463,10 +530,10 @@ def reset_and_reroll_bones():
     
     bpy.ops.object.mode_set(mode='EDIT')
 
-def rename_for_clarity():
+def rename_bones_for_clarity():
     armature = bpy.data.objects['Armature']
     
-    #rename core bones to match unity bone names
+    #rename core bones to match unity bone names (?)
     unity_rename_dict = {
     'cf_n_height':'Center',
     'cf_j_hips':'Hips',
@@ -530,9 +597,9 @@ def rename_for_clarity():
     for bone in armature.data.bones:
         if bone.name in unity_rename_dict:
             bone.name = unity_rename_dict[bone.name]
-        
-def clean_and_reorganize_pmx():
-    #reorganize the bone structure to match the KK structure
+
+#slightly modify the armature to support IKs
+def modify_pmx_armature():
     armature = bpy.data.objects['Armature']
     body = bpy.data.objects['Body']
     
@@ -540,24 +607,6 @@ def clean_and_reorganize_pmx():
     bpy.context.view_layer.objects.active=armature
     bpy.ops.object.mode_set(mode='EDIT')
     armature.data.edit_bones['Center'].parent = None
-    armature.data.edit_bones['Right ankle'].parent = armature.data.edit_bones['cf_j_leg03_R']
-    armature.data.edit_bones['Left ankle'].parent = armature.data.edit_bones['cf_j_leg03_L']
-    
-    #delete bones not under the Center bone
-    bpy.ops.armature.select_all(action='DESELECT')
-    def select_children(parent):
-        try:
-            parent.select = True
-            parent.select_head = True
-            parent.select_tail = True
-            for child in parent.children:
-                select_children(child)
-        except:
-            #The script hit the last bone in the chain
-            return
-    select_children(armature.data.edit_bones['Center'])
-    bpy.ops.armature.select_all(action='INVERT')
-    bpy.ops.armature.delete()
     
     #relocate the tail of some bones to make IKs easier
     def relocate_tail(bone1, bone2, direction):
@@ -588,41 +637,7 @@ def clean_and_reorganize_pmx():
     relocate_tail('cf_pv_hand_R', 'Right wrist', 'hand')
     relocate_tail('cf_pv_hand_L', 'Left wrist', 'hand')
     
-    #remove all constraints from all bones
-    bpy.ops.object.mode_set(mode='POSE')
-    for bone in armature.pose.bones:
-        bones_with_constraints = [
-            constraint for constraint in bone.constraints if (
-            constraint.type == 'IK' or constraint.type == 'COPY_ROTATION' or
-            constraint.type == 'LIMIT_ROTATION')]
-        
-        for constraint in bones_with_constraints:
-            bone.constraints.remove(constraint)
-    
-    #remove all drivers from all armature bones
-    #animation_data is nonetype if no drivers have been created yet
-    if armature.animation_data != None:
-        drivers_data = armature.animation_data.drivers
-        for driver in drivers_data:  
-            armature.driver_remove(driver.data_path, -1)
-    
-    bpy.ops.object.mode_set(mode='EDIT')
-    
-    #connect all bones using CATS
-    #bpy.ops.cats_manual.connect_bones()
-    
-    #unlock the armature and all bones
-    armature.lock_location = [False, False, False]
-    armature.lock_rotation = [False, False, False]
-    armature.lock_scale = [False, False, False]
-    
-    for bone in armature.pose.bones:
-        bone.lock_location = [False, False, False]
-    
     bpy.ops.object.mode_set(mode='OBJECT')
-    
-    #Set the view transform 
-    bpy.context.scene.view_settings.view_transform = 'Standard'
     
 class finalize_pmx(bpy.types.Operator):
     bl_idname = "kkb.finalizepmx"
@@ -632,17 +647,22 @@ class finalize_pmx(bpy.types.Operator):
 
     def execute(self, context): 
 
-        #bpy.ops.cats_importer.import_any_model(filepath="C:\\Users\\C\\Desktop\\GME process\\5741\\model.pmx", files=[{"name":"model.pmx", "name":"model.pmx"}], directory="C:\\Users\\C\\Desktop\\GME process\\5741\\")
-        
-        #get rid of the text files mmd tools generate
+        scene = context.scene.placeholder
+        modify_armature = scene.armature_edit_bool
+
+        #get rid of the text files mmd tools generates
         if bpy.data.texts['Model']:
                 bpy.data.texts.remove(bpy.data.texts['Model'])
                 bpy.data.texts.remove(bpy.data.texts['Model_e'])
         
-        rename_bones()
+        standardize_armature()
         reset_and_reroll_bones()
-        rename_for_clarity()
-        clean_and_reorganize_pmx()
+        if modify_armature:
+            rename_bones_for_clarity()
+            modify_pmx_armature()
+        
+        #Set the view transform 
+        bpy.context.scene.view_settings.view_transform = 'Standard'
         
         #redraw the UI after each operation to let the user know the plugin is doing something
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)

@@ -284,14 +284,17 @@ def reshow_accessory_bones():
     armature = bpy.data.objects['Armature']
     body = bpy.data.objects['Body']
     
+    #100% repurposed from https://github.com/FlailingFog/KK-Blender-Shader-Pack/issues/29
     ### Function to check for empty vertex groups
     def survey(obj):
         maxWeight = {}
         #prefill vertex group list with zeroes
         for i in obj.vertex_groups:
             maxWeight[i.name] = 0
+
         #preserve the indexes
         keylist = list(maxWeight)
+        
         #then fill in the real value using the indexes
         for v in obj.data.vertices:
             for g in v.groups:
@@ -304,9 +307,19 @@ def reshow_accessory_bones():
     # Find empty vertex groups
     vertexWeightMap = survey(body)
     
+    dont_show_these = [
+        'cf_pv', 'Eyesx', 'cf_d', 'cf_s', 'cf_j', 
+        'cf_J_hitomi_tx_', 'cf_J_FaceRoot', 'cf_J_FaceUp_t',
+        'n_cam', 'EyesLookTar', 'N_move', 'a_n_', 'cf_hit', 'Eyex_L', 'Eyex_R']
+    
     for bone in armature.data.bones:
         #if the bone is hidden and isn't a "utility" bone...
-        if bone.hide == True and 'cf_pv' not in bone.name and 'Eyesx' not in bone.name and 'cf_d' not in bone.name and 'cf_s' not in bone.name and 'cf_j' not in bone.name and 'cf_J_hitomi_tx_' not in bone.name and 'cf_J_FaceRoot' not in bone.name and 'cf_J_FaceUp_t' not in bone.name and 'n_cam' not in bone.name and 'EyesLookTar' not in bone.name and 'N_move' not in bone.name and 'a_n_' not in bone.name and 'cf_hit' not in bone.name:
+        is_utility_bone = False
+        for this_prefix in dont_show_these:
+            if this_prefix in bone.name:
+                is_utility_bone = True
+        
+        if bone.hide == True and not is_utility_bone:
             #check if it has any vertexes attached to it, and show it if it does
             if vertexWeightMap.get(bone.name):
                 bone.hide = False
