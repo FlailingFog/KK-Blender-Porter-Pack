@@ -1,6 +1,6 @@
 #The init file for the plugin
 bl_info = {
-    "name" : "KK Blender Pack",
+    "name" : "KK Blender Porter Pack",
     "author" : "a blendlet",
     "location" : "View 3D > Tool Shelf > KK Scripts",
     "description" : "Scripts for automating the cleanup process of a Koikatsu export",

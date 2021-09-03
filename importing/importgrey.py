@@ -1,7 +1,6 @@
 #Imports the fbx file from GME and performs a few fixes
 
-import bpy
-import os
+import bpy, os
 from mathutils import Vector
 from pathlib import Path
 
@@ -15,9 +14,8 @@ def import_the_fbx(directory):
         for obj in bpy.data.objects:
             bpy.data.objects.remove(obj)
     
-    #fbx = Path('C:\\Users\\C\\Desktop\\GME process\\20210815_Hachikuji_Mayoi\\Hachikuji_Mayoi.fbx')
-    fbx = directory
-    bpy.ops.import_scene.fbx(filepath=str(fbx), use_prepost_rot=False, global_scale=96)
+    #import the fbx file
+    bpy.ops.import_scene.fbx(filepath=str(directory), use_prepost_rot=False, global_scale=96)
     
     #rename all the shapekeys to be compatible with the other script
     #rename face shapekeys based on category
@@ -154,6 +152,7 @@ def import_the_fbx(directory):
     armature.data.edit_bones['cf_pv_root'].head = armature.data.edit_bones['cf_j_root'].head
     armature.data.edit_bones['cf_pv_root'].tail = armature.data.edit_bones['cf_j_root'].tail
     pv_bones = [
+    'Greybone',
     'cf_pv_elbo_L', 'cf_pv_elbo_R',
     'cf_pv_foot_L', 'cf_pv_foot_R',
     'cf_pv_hand_L', 'cf_pv_hand_R',

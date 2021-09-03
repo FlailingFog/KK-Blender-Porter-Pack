@@ -195,7 +195,7 @@ def reset_and_reroll_bones():
     reorient('cf_j_foot_R')
     reorient('cf_j_foot_L')
     
-    #Use roll data from a reference armature to set the roll for each bone
+    #Use roll data from a reference armature dump to set the roll for each bone
     reroll_data = {
     'BodyTop':0.0,
     'p_cf_body_bone':0.0,
@@ -607,6 +607,8 @@ def modify_pmx_armature():
     bpy.context.view_layer.objects.active=armature
     bpy.ops.object.mode_set(mode='EDIT')
     armature.data.edit_bones['Center'].parent = None
+    armature.data.edit_bones.remove(armature.data.edit_bones['cf_j_root'])
+    armature.data.edit_bones.remove(armature.data.edit_bones['p_cf_body_bone'])
     
     #relocate the tail of some bones to make IKs easier
     def relocate_tail(bone1, bone2, direction):
@@ -664,7 +666,7 @@ class finalize_pmx(bpy.types.Operator):
         #Set the view transform 
         bpy.context.scene.view_settings.view_transform = 'Standard'
         
-        #redraw the UI after each operation to let the user know the plugin is doing something
+        #redraw the UI after each operation to let the user know the plugin is actually doing something
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
         bpy.ops.kkb.shapekeys('INVOKE_DEFAULT')
 

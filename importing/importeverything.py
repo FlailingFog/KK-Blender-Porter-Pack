@@ -24,6 +24,7 @@ def kk_file_error(self, context):
 def missing_texture_error(self, context):
     self.layout.label(text="The files cf_body_00_mc.tga and cf_face_00_mc-BC7.dds were not found in the \"Textures\" folder. \nGrab these images from /Koikatsu/chara/abdata/oo_base.unity3D with SB3U \nHit undo and try again")
 
+#stop if no hair object was found
 def hair_error(self, context):
     self.layout.label(text="An object named \"Hair\" wasn't found. Separate this from the Clothes object and rename it.")
 
@@ -240,10 +241,6 @@ def apply_bone_widgets():
         #the script was run in the text editor or console, so this won't work
         pass
     
-    skirtbones = [0,1,2,3,4,5,6,7]
-    for root in skirtbones:
-        bpy.context.object.pose.bones['cf_d_sk_0'+str(root)+'_00'].custom_shape = bpy.data.objects['WidgetSkirt']
-    
     # apply eye bones, mouth bones, eyebrow bones
     eyebones = [1,2,3,4,5,6,7,8]
     for piece in eyebones:
@@ -313,7 +310,10 @@ def apply_bone_widgets():
     bpy.ops.object.mode_set(mode='OBJECT')
 
 def get_and_load_textures(directory):
+
+    bpy.ops.object.mode_set(mode='OBJECT')
     print('Getting textures from: ' + directory)
+
     #lazy check to see if the user actually opened the Textures folder
     #this will false pass if the word "Texture" is anywhere else on the path but I don't care
     fileList = Path(directory).glob('*.*')
@@ -344,15 +344,15 @@ def get_and_load_textures(directory):
             print('File not found, skipping: ' + image)
         
     imageLoad('Template Body', 'BodyTextures', 'BodyMC', 'cf_body_00_mc-RGB24.tga', True)
-    imageLoad('Template Body', 'BodyTextures', 'BodyMD', 'cf_m_body_DetailMask.png', True) #female
+    imageLoad('Template Body', 'BodyTextures', 'BodyMD', 'cf_m_body_DetailMask.png', True) #cfm female
     imageLoad('Template Body', 'BodyTextures', 'BodyLine', 'cf_m_body_LineMask.png', True)
-    imageLoad('Template Body', 'BodyTextures', 'BodyMD', 'cm_m_body_DetailMask.png', True) #male
+    imageLoad('Template Body', 'BodyTextures', 'BodyMD', 'cm_m_body_DetailMask.png', True) #cmm male
     imageLoad('Template Body', 'BodyTextures', 'BodyLine', 'cm_m_body_LineMask.png', True)
     #imageLoad('BodyOptional', '')
     
-    imageLoad('Template Body', 'NippleTextures', 'NipR', 'cf_m_body_overtex1.png') #female
+    imageLoad('Template Body', 'NippleTextures', 'NipR', 'cf_m_body_overtex1.png') #cfm female
     imageLoad('Template Body', 'NippleTextures', 'NipL', 'cf_m_body_overtex1.png')
-    imageLoad('Template Body', 'NippleTextures', 'NipR', 'cm_m_body_overtex1.png') #male
+    imageLoad('Template Body', 'NippleTextures', 'NipR', 'cm_m_body_overtex1.png') #cmm male
     imageLoad('Template Body', 'NippleTextures', 'NipL', 'cm_m_body_overtex1.png')
     
     try:
@@ -597,9 +597,23 @@ def hide_widgets():
                 #maybe the collection is already hidden
                 pass
 
+def clean_orphan_data():
+    #clean up the oprhaned data
+    for block in bpy.data.materials:
+        if block.users == 0 and not block.use_fake_user:
+            bpy.data.materials.remove(block)
+
+    for block in bpy.data.textures:
+        if block.users == 0 and not block.use_fake_user:
+            bpy.data.textures.remove(block)
+    
+    for block in bpy.data.images:
+        if block.users == 0 and not block.use_fake_user:
+            bpy.data.images.remove(block)
+    
 class import_everything(bpy.types.Operator):
     bl_idname = "kkb.importeverything"
-    bl_label = "Open Textures folder"
+    bl_label = "Import Textures folder"
     bl_description = "Open the folder containing the textures and the KK Shader.blend file"
     bl_options = {'REGISTER', 'UNDO'}
     
@@ -616,21 +630,42 @@ class import_everything(bpy.types.Operator):
         useFakeUser = scene.templates_bool
         folderCheckEnabled = scene.texturecheck_bool
         oneOutlineOnlyMode = scene.textureoutline_bool
+        modify_armature = scene.armature_edit_bool
         
         #these methods will return true if an error was encountered
         template_error = get_templates_and_apply(directory, useFakeUser, folderCheckEnabled)
         if template_error:
             return {'FINISHED'}
         
+        #redraw the UI after each operation to let the user know the plugin is actually doing something
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+
         texture_error = get_and_load_textures(directory)
         if texture_error:
             return {'FINISHED'}
         
+        #redraw the UI after each operation to let the user know the plugin is actually doing something
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+
         add_outlines(oneOutlineOnlyMode)
-        apply_bone_widgets()
+        if modify_armature:
+            apply_bone_widgets()
         hide_widgets()
         
-        bpy.context.space_data.shading.type = 'MATERIAL'
+        #redraw the UI after each operation to let the user know the plugin is actually doing something
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+
+        #clean data
+        clean_orphan_data()
+
+        #set the viewport shading
+        my_areas = bpy.context.workspace.screens[0].areas
+        my_shading = 'MATERIAL'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
+
+        for area in my_areas:
+            for space in area.spaces:
+                if space.type == 'VIEW_3D':
+                    space.shading.type = my_shading 
 
         return {'FINISHED'}
 

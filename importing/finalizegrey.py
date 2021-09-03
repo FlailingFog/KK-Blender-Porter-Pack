@@ -1,6 +1,7 @@
 #Finalize the accessory placements
 
 import bpy, math
+from .finalizepmx import rename_bones_for_clarity
 from mathutils import Vector
 
 def finalize():
@@ -87,91 +88,47 @@ def finalize():
     bpy.context.view_layer.objects.active.name = 'Body'
     bpy.context.scene.cursor.location = (0.0, 0.0, 0.0)
     bpy.ops.object.origin_set(type='ORIGIN_CURSOR', center='MEDIAN')
-
-def rename_for_clarity():
-    bpy.ops.object.mode_set(mode='OBJECT')
+    
+    #modify armature to match KK armature
     armature = bpy.data.objects['Armature']
-    bpy.context.view_layer.objects.active = armature
-    #rename core bones to match unity bone names
-    unity_rename_dict = {
-    'cf_j_root':'Center',
-    'cf_j_hips':'Hips',
-    'cf_j_waist01':'Pelvis',
-    'cf_j_spine01':'Spine',
-    'cf_j_spine02':'Chest',
-    'cf_j_spine03':'Upper Chest',
-    'cf_j_neck':'Neck',
-    'cf_j_head':'Head',
-    'cf_j_shoulder_L':'Left shoulder',
-    'cf_j_shoulder_R':'Right shoulder',
-    'cf_j_arm00_L':'Left arm',
-    'cf_j_arm00_R':'Right arm',
-    'cf_j_forearm01_L':'Left elbow',
-    'cf_j_forearm01_R':'Right elbow',
-    'cf_j_hand_R':'Right wrist',
-    'cf_j_hand_L':'Left wrist',
+    armature.select_set(True)
+    bpy.context.view_layer.objects.active=armature
+    bpy.ops.object.mode_set(mode='EDIT')
 
-    'cf_j_thumb01_L':'Thumb0_L',
-    'cf_j_thumb02_L':'Thumb1_L',
-    'cf_j_thumb03_L':'Thumb2_L',
-    'cf_j_ring01_L':'RingFinger1_L',
-    'cf_j_ring02_L':'RingFinger2_L',
-    'cf_j_ring03_L':'RingFinger3_L',
-    'cf_j_middle01_L':'MiddleFinger1_L',
-    'cf_j_middle02_L':'MiddleFinger2_L',
-    'cf_j_middle03_L':'MiddleFinger3_L',
-    'cf_j_little01_L':'LittleFinger1_L',
-    'cf_j_little02_L':'LittleFinger2_L',
-    'cf_j_little03_L':'LittleFinger3_L',
-    'cf_j_index01_L':'IndexFinger1_L',
-    'cf_j_index02_L':'IndexFinger2_L',
-    'cf_j_index03_L':'IndexFinger3_L',
+    #reparent these to match the KK armature
+    armature.data.edit_bones['p_cf_body_bone'].parent = None
+    bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1) #???
+    armature.data.edit_bones.remove(armature.data.edit_bones['BodyTop'])
+    armature.data.edit_bones['cf_j_foot_R'].parent = armature.data.edit_bones['cf_j_leg03_R']
+    armature.data.edit_bones['cf_j_foot_L'].parent = armature.data.edit_bones['cf_j_leg03_L']
 
-    'cf_j_thumb01_R':'Thumb0_R',
-    'cf_j_thumb02_R':'Thumb1_R',
-    'cf_j_thumb03_R':'Thumb2_R',
-    'cf_j_ring01_R':'RingFinger1_R',
-    'cf_j_ring02_R':'RingFinger2_R',
-    'cf_j_ring03_R':'RingFinger3_R',
-    'cf_j_middle01_R':'MiddleFinger1_R',
-    'cf_j_middle02_R':'MiddleFinger2_R',
-    'cf_j_middle03_R':'MiddleFinger3_R',
-    'cf_j_little01_R':'LittleFinger1_R',
-    'cf_j_little02_R':'LittleFinger2_R',
-    'cf_j_little03_R':'LittleFinger3_R',
-    'cf_j_index01_R':'IndexFinger1_R',
-    'cf_j_index02_R':'IndexFinger2_R',
-    'cf_j_index03_R':'IndexFinger3_R',
+    #remove the cf_hit_head bone because the bone location isn't needed anymore
+    armature.data.edit_bones.remove(armature.data.edit_bones['cf_hit_head'])
+
+    #give the new eye bones the correct parents
+    armature.data.edit_bones['Eyesx'].parent = armature.data.edit_bones['cf_j_head']
+    armature.data.edit_bones['N_EyesLookTargetP'].parent = armature.data.edit_bones['cf_j_head']
+
+    #unlock the armature and all bones
+    armature.lock_location = [False, False, False]
+    armature.lock_rotation = [False, False, False]
+    armature.lock_scale = [False, False, False]
     
-    'cf_j_thigh00_L':'Left leg',
-    'cf_j_thigh00_R':'Right leg',
-    'cf_j_leg01_L':'Left knee',
-    'cf_j_leg01_R':'Right knee',
-    'cf_j_foot_L':'Left ankle',
-    'cf_j_foot_R':'Right ankle',
-    'cf_j_toes_L':'Left toe',
-    'cf_j_toes_R':'Right toe'
-    }
-    
-    for bone in armature.data.bones:
-        if bone.name in unity_rename_dict:
-            bone.name = unity_rename_dict[bone.name]
+    for bone in armature.pose.bones:
+        bone.lock_location = [False, False, False]
 
-def reorganize_fbx():
+def modify_fbx_armature():
     armature = bpy.data.objects['Armature']
     armature.select_set(True)
     bpy.context.view_layer.objects.active=armature
     
     #move armature bones that didn't have animation data up a level
     bpy.ops.object.mode_set(mode='EDIT')
+    armature.data.edit_bones['Center'].parent = None
     armature.data.edit_bones['Hips'].parent = armature.data.edit_bones['Center']
-    #armature.data.edit_bones['cf_pv_root'].parent = armature.data.edit_bones['Center']
-    armature.data.edit_bones['Center'].parent = None
-
-    #reparent these to match the KK armature
-    armature.data.edit_bones['Center'].parent = None
-    armature.data.edit_bones['Right ankle'].parent = armature.data.edit_bones['cf_j_leg03_R']
-    armature.data.edit_bones['Left ankle'].parent = armature.data.edit_bones['cf_j_leg03_L']
+    armature.data.edit_bones['cf_pv_root'].parent = armature.data.edit_bones['Center']
+    armature.data.edit_bones.remove(armature.data.edit_bones['cf_j_root'])
+    armature.data.edit_bones.remove(armature.data.edit_bones['p_cf_body_bone'])
     
     #relocate the tail of some bones to make IKs easier
     def relocate_tail(bone1, bone2, direction):
@@ -205,16 +162,6 @@ def reorganize_fbx():
     relocate_tail('cf_pv_hand_R', 'Right wrist', 'hand')
     relocate_tail('cf_pv_hand_L', 'Left wrist', 'hand')
     
-    bpy.ops.object.mode_set(mode='EDIT')
-    
-    #unlock the armature and all bones
-    armature.lock_location = [False, False, False]
-    armature.lock_rotation = [False, False, False]
-    armature.lock_scale = [False, False, False]
-    
-    for bone in armature.pose.bones:
-        bone.lock_location = [False, False, False]
-    
     bpy.ops.object.mode_set(mode='OBJECT')
 
 class finalize_grey(bpy.types.Operator):
@@ -225,11 +172,15 @@ class finalize_grey(bpy.types.Operator):
 
     def execute(self, context): 
         
+        scene = context.scene.placeholder
+        modify_armature = scene.armature_edit_bool
+
         finalize()
-        rename_for_clarity()
-        reorganize_fbx()
+        if modify_armature:
+            rename_bones_for_clarity()
+            modify_fbx_armature()
         
-        #redraw the UI after each operation to let the user know the plugin is doing something
+        #redraw the UI after each operation to let the user know the plugin is actually doing something
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
         bpy.ops.kkb.shapekeys('INVOKE_DEFAULT')
 
