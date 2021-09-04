@@ -1,5 +1,5 @@
 #Finalize the pmx file
-#some code taken from https://github.com/FlailingFog/KK-Blender-Shader-Pack/issues/29 !
+#some code stolen from https://github.com/FlailingFog/KK-Blender-Shader-Pack/issues/29 !
 
 import bpy
 from mathutils import Vector
@@ -530,7 +530,7 @@ def reset_and_reroll_bones():
     
     bpy.ops.object.mode_set(mode='EDIT')
 
-def rename_bones_for_clarity():
+def rename_bones_for_clarity(action):
     armature = bpy.data.objects['Armature']
     
     #rename core bones to match unity bone names (?)
@@ -594,10 +594,22 @@ def rename_bones_for_clarity():
     'cf_j_toes_R':'Right toe'
     }
 
-    for bone in armature.data.bones:
-        if bone.name in unity_rename_dict:
-            bone.name = unity_rename_dict[bone.name]
+    if action == 'modified':
+        for bone in armature.data.bones:
+            if bone.name in unity_rename_dict:
+                bone.name = unity_rename_dict[bone.name]
+    
+    elif action == 'stock':
+        for bone in unity_rename_dict:
+            if armature.data.bones.get(unity_rename_dict[bone]):
+                armature.data.bones[unity_rename_dict[bone]].name = bone
 
+    elif action == 'animation':
+        animation_armature = bpy.data.objects['Animation Armature']
+        for bone in unity_rename_dict:
+            if animation_armature.data.bones.get(bone):
+                animation_armature.data.bones[bone].name = unity_rename_dict[bone]
+    
 #slightly modify the armature to support IKs
 def modify_pmx_armature():
     armature = bpy.data.objects['Armature']
@@ -607,8 +619,8 @@ def modify_pmx_armature():
     bpy.context.view_layer.objects.active=armature
     bpy.ops.object.mode_set(mode='EDIT')
     armature.data.edit_bones['Center'].parent = None
-    armature.data.edit_bones.remove(armature.data.edit_bones['cf_j_root'])
-    armature.data.edit_bones.remove(armature.data.edit_bones['p_cf_body_bone'])
+    armature.data.edit_bones['cf_j_root'].parent = armature.data.edit_bones['cf_pv_root']
+    armature.data.edit_bones['p_cf_body_bone'].parent = armature.data.edit_bones['cf_pv_root']
     
     #relocate the tail of some bones to make IKs easier
     def relocate_tail(bone1, bone2, direction):
@@ -660,7 +672,7 @@ class finalize_pmx(bpy.types.Operator):
         standardize_armature()
         reset_and_reroll_bones()
         if modify_armature:
-            rename_bones_for_clarity()
+            rename_bones_for_clarity('modified')
             modify_pmx_armature()
         
         #Set the view transform 

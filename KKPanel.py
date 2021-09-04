@@ -91,6 +91,12 @@ class PlaceholderProperties(PropertyGroup):
             ("D", "Alpha Blend", ""),
         ), name="", default="B", description="Blend Mode")
 
+    rokoko_bool : BoolProperty(
+        name="Enable or Disable",
+        description="""Enable this if you want to use the rokoko plugin to transfer the fbx animation to your character.
+        Stock / no IK armatures only!""",
+        default = False)
+
 class IMPORTING_PT_panel(bpy.types.Panel):
     bl_label = 'Importing and Exporting'
     bl_category = "KKBP"
@@ -219,7 +225,7 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
-        split.label(text="4) Apply and swap baked templates:")
+        split.label(text="4) Apply or swap baked templates:")
         split.operator('kkb.applymaterials', text = '', icon = 'FILE_REFRESH')
         
         col = box.column(align=True)
@@ -269,12 +275,16 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         split = row.split(align=True, factor=splitfac)
         split.label(text="Import ripped FBX animation")
         split.operator('kkb.importanimation', text = '', icon = 'ARMATURE_DATA')
+        row = col.row(align=True)
+        split = row.split(align=True, factor=splitfac)
+        split.label(text="")
+        split.prop(context.scene.placeholder, "rokoko_bool", toggle=True, text = "Use Rokoko plugin")
         
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text="Swap armature type")
-        split.operator('kkb.getpillow', text = '', icon = 'ARROW_LEFTRIGHT')
+        split.operator('kkb.switcharmature', text = '', icon = 'ARROW_LEFTRIGHT')
         
 '''
         #put all icons available in blender at the end of the panel

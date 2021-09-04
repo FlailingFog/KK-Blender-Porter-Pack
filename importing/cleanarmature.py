@@ -16,7 +16,7 @@ def get_bone_list(kind):
         return [
         'Center',
         'Head', 'Neck', 'Upper Chest', 'Chest', 'Eyesx',
-        'cf_d_bust00', 'cf_d_bust02_L', 'cf_d_bust02_R',
+        'cf_d_bust00', 'cf_j_bust01_L', 'cf_j_bust01_R',
         
         'Left shoulder', 'Left arm', 'Left elbow', 'Left wrist', 
         'IndexFinger1_L', 'IndexFinger2_L', 'IndexFinger3_L',
@@ -47,7 +47,7 @@ def get_bone_list(kind):
         'cf_n_height', 'cf_j_hips', 'cf_j_waist01',
         'cf_j_spine01', 'cf_j_spine02', 'cf_j_spine03',
         'cf_j_neck', 'cf_j_head',
-        'cf_d_bust00', 'cf_d_bust02_L', 'cf_d_bust02_R', 'Eyesx'
+        'cf_d_bust00', 'cf_j_bust01_L', 'cf_j_bust01_R', 'Eyesx'
 
         'cf_j_shoulder_L', 'cf_j_shoulder_R', 'cf_j_arm00_L', 'cf_j_arm00_R',
         'cf_j_forearm01_L', 'cf_j_forearm01_R', 'cf_j_hand_R', 'cf_j_hand_L',
@@ -174,7 +174,10 @@ def hide_extra_bones():
     bpy.context.view_layer.objects.active=armature
     bpy.ops.object.mode_set(mode='POSE')
     
-    core_list = get_bone_list('core_list')
+    if armature.data.bones.get('Head'):
+        core_list = get_bone_list('core_list')
+    else:
+        core_list = get_bone_list('core_list_vanilla')
     non_ik = get_bone_list('non_ik')
     face_list = get_bone_list('face_list')
     toe_list = get_bone_list('toe_list')

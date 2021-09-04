@@ -127,8 +127,8 @@ def modify_fbx_armature():
     armature.data.edit_bones['Center'].parent = None
     armature.data.edit_bones['Hips'].parent = armature.data.edit_bones['Center']
     armature.data.edit_bones['cf_pv_root'].parent = armature.data.edit_bones['Center']
-    armature.data.edit_bones.remove(armature.data.edit_bones['cf_j_root'])
-    armature.data.edit_bones.remove(armature.data.edit_bones['p_cf_body_bone'])
+    armature.data.edit_bones['cf_j_root'].parent = armature.data.edit_bones['cf_pv_root']
+    armature.data.edit_bones['p_cf_body_bone'].parent = armature.data.edit_bones['cf_pv_root']
     
     #relocate the tail of some bones to make IKs easier
     def relocate_tail(bone1, bone2, direction):
@@ -166,8 +166,8 @@ def modify_fbx_armature():
 
 class finalize_grey(bpy.types.Operator):
     bl_idname = "kkb.finalizegrey"
-    bl_label = "Finalize accessory placements"
-    bl_description = "Finalize accessory placements"
+    bl_label = "Finalize .fbx file"
+    bl_description = "Finalize accessory placements and .fbx file"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context): 
@@ -177,7 +177,7 @@ class finalize_grey(bpy.types.Operator):
 
         finalize()
         if modify_armature:
-            rename_bones_for_clarity()
+            rename_bones_for_clarity('modified')
             modify_fbx_armature()
         
         #redraw the UI after each operation to let the user know the plugin is actually doing something

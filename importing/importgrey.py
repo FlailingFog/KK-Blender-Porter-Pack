@@ -86,12 +86,12 @@ def import_the_fbx(directory):
     armature = bpy.data.objects['Armature']
     armature.show_in_front = True
     
-    #Hide all root bones
     for bone in armature.pose.bones:
         bone.rotation_quaternion = (1,0,0,0)
         bone.scale = (1,1,1)
         bone.location = (0,0,0)
         
+        #Hide all root bones
         if 'root' in bone.name:
             armature.data.bones[bone.name].hide = True
     

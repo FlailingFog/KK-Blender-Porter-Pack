@@ -56,7 +56,7 @@ class select_bones(bpy.types.Operator):
     
 
 if __name__ == "__main__":
-    bpy.utils.register_class(select_Bones)
+    bpy.utils.register_class(select_bones)
 
     # test call
     print((bpy.ops.kkb.selectbones('INVOKE_DEFAULT')))

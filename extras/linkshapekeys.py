@@ -32,6 +32,12 @@ class link_shapekeys(bpy.types.Operator):
                     
                     bpy.context.object.active_material_index = body.data.materials.find(mat)
                     bpy.ops.object.material_slot_select()
+
+                    #grab the other eye material if there is one
+                    if mat == 'Template Eye (hitomi)' and 'Template Eye' in body.data.materials[body.data.materials.find(mat) + 1].name:
+                        bpy.context.object.active_material_index = body.data.materials.find(mat) + 1
+                        bpy.ops.object.material_slot_select()
+
                 except:
                     print('material wasn\'t found: ' + mat)
             bpy.ops.mesh.separate(type='SELECTED')
@@ -46,6 +52,11 @@ class link_shapekeys(bpy.types.Operator):
         separateMaterial(['Template Eyebrows (mayuge)'])
         eyebrows = bpy.data.objects['Body.001']
         eyebrows.name = 'Eyebrows'
+
+        eyes.modifiers[3].show_viewport = False
+        eyes.modifiers[3].show_render = False
+        eyebrows.modifiers[3].show_viewport = False
+        eyebrows.modifiers[3].show_render = False
 
         bpy.ops.object.mode_set(mode = 'OBJECT')
         selected_obj = [eyes, eyebrows]

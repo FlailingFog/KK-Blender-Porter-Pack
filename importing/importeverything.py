@@ -210,8 +210,8 @@ def apply_bone_widgets():
     bpy.context.object.pose.bones["Chest"].custom_shape = bpy.data.objects["WidgetChest"]
     bpy.context.object.pose.bones["Upper Chest"].custom_shape = bpy.data.objects["WidgetChest"]
     bpy.context.object.pose.bones["cf_d_bust00"].custom_shape = bpy.data.objects["WidgetBust"]
-    bpy.context.object.pose.bones["cf_d_bust02_L"].custom_shape = bpy.data.objects["WidgetBreastL"]
-    bpy.context.object.pose.bones["cf_d_bust02_R"].custom_shape = bpy.data.objects["WidgetBreastR"]
+    bpy.context.object.pose.bones["cf_j_bust01_L"].custom_shape = bpy.data.objects["WidgetBreastL"]
+    bpy.context.object.pose.bones["cf_j_bust01_R"].custom_shape = bpy.data.objects["WidgetBreastR"]
     bpy.context.object.pose.bones["Left shoulder"].custom_shape = bpy.data.objects["WidgetShoulderL"]
     bpy.context.object.pose.bones["Right shoulder"].custom_shape = bpy.data.objects["WidgetShoulderR"]
     bpy.context.object.pose.bones["cf_pv_hand_R"].custom_shape = bpy.data.objects["WidgetHandR"]
@@ -648,7 +648,7 @@ class import_everything(bpy.types.Operator):
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
         add_outlines(oneOutlineOnlyMode)
-        if modify_armature:
+        if modify_armature and bpy.data.objects['Armature'].pose.bones["Spine"].custom_shape == None:
             apply_bone_widgets()
         hide_widgets()
         

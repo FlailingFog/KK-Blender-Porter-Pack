@@ -1,3 +1,7 @@
+#fix shoulder bends (cf_d_arm01, 02, 03)
+#fix forearm bends (cf_d_wrist_L, cf_d_forearm02_L)
+
+
 '''
 AFTER CATS (BONE DRIVERS) SCRIPT
 - Adds IKs to the arms and legs using the "Pv" bones
@@ -51,7 +55,7 @@ def reparent_bones():
 
     #reparent things
     def reparent(bone,newparent):
-        #refresh the fucking armature again
+        #refresh armature?
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.mode_set(mode='EDIT')
         armature.data.edit_bones[bone].parent = armature.data.edit_bones[newparent]
@@ -633,7 +637,7 @@ def make_eye_controller():
     try:
         copy.parent = armatureData.edit_bones['Head']
     except:
-        copy.parent = armatureData.edit_bones['cf_j_head']
+        copy.parent = armatureData.edit_bones['cf_j_head'] #eye controller is added regardless of modified/stock armature
         
     if bpy.data.objects['Armature'].data.bones.get('Greybone'):
         armatureData.edit_bones['Eye Controller'].roll = math.pi/2
@@ -880,8 +884,9 @@ class bone_drivers(bpy.types.Operator):
 
             #if use_hips:
             #    setup_hips()
-            
-        make_eye_controller()
+        
+        if not bpy.data.objects['Armature'].data.bones.get('Eye Controller'):
+            make_eye_controller()
         
         if modify_armature:
             scale_final_bones()
