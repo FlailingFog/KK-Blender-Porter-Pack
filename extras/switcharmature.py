@@ -1,13 +1,13 @@
 import bpy
 from mathutils import Vector
-from ..importing.finalizepmx import finalize_pmx, rename_bones_for_clarity, modify_pmx_armature
-from ..importing.finalizegrey import finalize_grey, modify_fbx_armature
-from ..importing.bonedrivers import bone_drivers
+from ..importing.finalizepmx import rename_bones_for_clarity, modify_pmx_armature
+from ..importing.finalizegrey import modify_fbx_armature
+from ..importing.importeverything import apply_bone_widgets
 
 class switch_armature(bpy.types.Operator):
     bl_idname = "kkb.switcharmature"
     bl_label = "Switch koikatsu armature type"
-    bl_description = "Click this to switch between the vanilla koikatsu armature structure and the modified KKBP armature"
+    bl_description = "Click this to switch between the vanilla koikatsu armature structure and the modified KKBP armature. Using this after you have animated a character will ruin the animation"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
@@ -149,6 +149,7 @@ class switch_armature(bpy.types.Operator):
             scene = context.scene.placeholder
             scene.armature_edit_bool = True
             bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT')
+            apply_bone_widgets()
         
         bpy.ops.object.mode_set(mode='OBJECT')
 

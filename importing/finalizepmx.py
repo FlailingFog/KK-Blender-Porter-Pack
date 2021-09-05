@@ -121,6 +121,7 @@ def standardize_armature():
     #delete bones not under the cf_n_height bone
     def select_children(parent):
         try:
+            #don't select cf_hit, k_f_ so they get deleted
             if 'cf_hit_' not in parent.name and 'k_f_' not in parent.name:
                 parent.select = True
                 parent.select_head = True

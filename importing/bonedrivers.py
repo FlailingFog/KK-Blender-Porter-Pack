@@ -871,8 +871,9 @@ class bone_drivers(bpy.types.Operator):
         scene = context.scene.placeholder
         use_hips = scene.hip_driver_bool
         modify_armature = scene.armature_edit_bool
+        armature_not_modified = bpy.data.objects['Armature'].data.bones.get('MasterFootIK.L') == None
         
-        if modify_armature:
+        if modify_armature and armature_not_modified:
             reparent_bones()
             bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
@@ -888,7 +889,7 @@ class bone_drivers(bpy.types.Operator):
         if not bpy.data.objects['Armature'].data.bones.get('Eye Controller'):
             make_eye_controller()
         
-        if modify_armature:
+        if modify_armature and armature_not_modified:
             scale_final_bones()
             categorize_bones()
         

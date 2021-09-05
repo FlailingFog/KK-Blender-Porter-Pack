@@ -1,6 +1,6 @@
 import bpy
-from bpy.props import StringProperty, BoolProperty
-from mathutils import Vector, Quaternion
+from bpy.props import StringProperty
+from mathutils import Quaternion
 from ..importing.finalizepmx import rename_bones_for_clarity
 
 def modify_animation_armature():
@@ -88,7 +88,7 @@ def correct_animation():
 class import_animation(bpy.types.Operator):
     bl_idname = "kkb.importanimation"
     bl_label = "Import .fbx animation"
-    bl_description = "Imports a KK animation (.fbx format)"
+    bl_description = "Imports a KK animation (.fbx format) and applies it to your character"
     bl_options = {'REGISTER', 'UNDO'}
 
     filepath : StringProperty(maxlen=1024, default='', options={'HIDDEN'})
@@ -105,11 +105,13 @@ class import_animation(bpy.types.Operator):
 
         # if the character armature has drivers active, the armature is the modified armature type
         armature = bpy.data.objects['Armature']
-        if armature.animation_data.drivers[0].mute == False:
-            rename_bones_for_clarity('animation')
-            modify_animation_armature()
-            apply_animation()
-            correct_animation()
+        if armature.animation_data:
+            if armature.animation_data.drivers:
+                if armature.animation_data.drivers[0].mute == False:
+                    rename_bones_for_clarity('animation')
+                    modify_animation_armature()
+                    apply_animation()
+                    correct_animation()
         
         #else, the armature is the vanilla armature type
         #apply the animation without modifications
