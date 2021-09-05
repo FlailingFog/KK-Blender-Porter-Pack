@@ -274,7 +274,7 @@ def sample_and_convert_colors(mc_mask, texture, lut, exposure = (1, 1, 1)):
 
     return red_converted_color_light / 255, green_converted_color_light / 255, blue_converted_color_light / 255
 
-def import_colors(directory):
+def init_import_colors(directory):
     print('Getting PMX textures from: ' + directory)
 
     # "Borrowed" some logic from importeverything.py :P
@@ -475,6 +475,7 @@ def update_shaders(textures, json, light):
     ## Hair Shader
     shader_inputs = hair_shader_node_group.nodes['Group.023' if light else 'Group.024'].inputs
     shader_inputs['Light Hair color' if light else 'Dark Hair color'].default_value = hair_base_color
+    shader_inputs['Light Hair rim color' if light else 'Dark Hair rim color'].default_value = hair_root_color
     shader_inputs['Dark fade color'].default_value = hair_root_color
     shader_inputs['Light fade color'].default_value = hair_tip_color
 
@@ -514,7 +515,7 @@ class import_colors(bpy.types.Operator):
     def execute(self, context):
         directory = self.directory
 
-        import_colors(directory)
+        init_import_colors(directory)
 
         set_color_management()
 

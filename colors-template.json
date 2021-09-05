@@ -1,0 +1,51 @@
+{
+    "Note": "All values are in RGB 255",
+    "Note_1": "This value is in (KK Character Maker): Body->Chest->Nipple Color",
+	"body_nipple_color": [
+		255,
+		255,
+		255
+	],
+    "Note_2": "This value is in (KK Character Maker): Face->Makeup->Cheek Color",
+	"face_blush_color": [
+		255,
+		255,
+		255
+	],
+    "Note_3": "This value is in (KK Character Maker): Face->Eyebrows->Eyebrow Color",
+	"eyebrows_color": [
+		255,
+		255,
+		255
+	],
+    "Note_4": "Optional: The color is already set to KK's default color",
+	"tongue_color": [
+		255,
+		168,
+		168
+	],
+    "Note_5": "This value is in (KK Character Maker): Face->Eyes->Eyeliner Color",
+	"eyeliner_color": [
+		255,
+		255,
+		255
+	],
+    "Note_6": "This value corresponds to: Hair Base Color",
+	"hair_base_color": [
+		255,
+		255,
+		255
+	],
+    "Note_7": "This value corresponds to: Hair Root Color (Enable Root and Tip Color Adjustment)",
+	"hair_root_color": [
+		255,
+		255,
+		255
+	],
+    "Note_8": "This value corresponds to: Hair Tip Color (Enable Root and Tip Color Adjustment)",
+	"hair_tip_color": [
+		255,
+		255,
+		255
+	]
+}
