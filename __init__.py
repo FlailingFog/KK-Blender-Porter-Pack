@@ -22,6 +22,7 @@ from .importing.cleanarmature import clean_armature
 from .importing.finalizegrey import finalize_grey
 from .importing.finalizepmx import finalize_pmx
 from .importing.importeverything import import_everything
+from .importing.importcolors import import_colors
 from .importing.importgrey import import_grey
 from .importing.separatebody import separate_body
 from .importing.shapekeys import shape_keys
@@ -53,6 +54,7 @@ classes = (
     finalize_grey, 
     finalize_pmx, 
     import_everything, 
+    import_colors, 
     import_grey, 
     separate_body, 
     shape_keys,
