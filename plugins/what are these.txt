@@ -1,3 +1,6 @@
 Rehost of Grey's Mesh Exporter plugin by Grey from the illusion soft discord.
 
 Rehost of the PmxExport plugin by an unknown entity.
+
+Custom KK_MaterialEditor.dll for Exporting colors
+Source: https://github.com/MediaMoots/KK_Plugins/tree/colors
