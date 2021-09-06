@@ -6,16 +6,14 @@ Usage:
 - Make sure all the hair / accessory bones you want to keep are visible in pose mode
 - Run the script
 - Use the "Merge Weights to Parent" option in CATS (under Model Options)
-
-Tested in Blender 2.91
 '''
 
 import bpy
 
 class select_bones(bpy.types.Operator):
     bl_idname = "kkb.selectbones"
-    bl_label = "The select bones script"
-    bl_description = "Selects bones that aren't needed. \nThis script also unparents the Hip bone from the Root bone"
+    bl_label = "select Useless bones"
+    bl_description = "Selects bones that aren't needed. \nMake sure you have all of the hair/accessory bones\nyou want to keep are visible in pose mode!\nThis script also unparents the Hip bone from the Root bone"
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):
@@ -58,7 +56,7 @@ class select_bones(bpy.types.Operator):
     
 
 if __name__ == "__main__":
-    bpy.utils.register_class(select_Bones)
+    bpy.utils.register_class(select_bones)
 
     # test call
     print((bpy.ops.kkb.selectbones('INVOKE_DEFAULT')))

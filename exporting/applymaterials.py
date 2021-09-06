@@ -22,7 +22,8 @@ from bpy.types import Operator
 class apply_materials(bpy.types.Operator):
     bl_idname = "kkb.applymaterials"
     bl_label = "Open baked materials folder"
-    bl_description = "Open the folder that contains the baked materials"
+    bl_description = """Open the folder that contains the baked materials.
+    If you have already applied the baked materials, clicking this button will switch to the dark version of the baked materials"""
     bl_options = {'REGISTER', 'UNDO'}
     
     directory : StringProperty(maxlen=1024, default='', subtype='FILE_PATH', options={'HIDDEN'})

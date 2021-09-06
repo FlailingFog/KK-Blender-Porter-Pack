@@ -1,3 +1,7 @@
+#fix shoulder bends (cf_d_arm01, 02, 03)
+#fix forearm bends (cf_d_wrist_L, cf_d_forearm02_L)
+
+
 '''
 AFTER CATS (BONE DRIVERS) SCRIPT
 - Adds IKs to the arms and legs using the "Pv" bones
@@ -34,6 +38,7 @@ def reparent_bones():
             drivers_data = armature.animation_data.drivers
             for driver in drivers_data:  
                 armature.driver_remove(driver.data_path, -1)
+
     #Select the armature and make it active
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.ops.object.select_all(action='DESELECT')
@@ -42,6 +47,7 @@ def reparent_bones():
     bpy.context.view_layer.objects.active=armature
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.context.scene.cursor.location = (0.0, 0.0, 0.0)
+
     #separate the PV bones, so the elbow IKs rotate with the spine
     pvrootupper = newbone('cf_pv_root_upper')
     pvrootupper.tail = armature.data.edit_bones['cf_pv_root'].tail
@@ -49,13 +55,15 @@ def reparent_bones():
 
     #reparent things
     def reparent(bone,newparent):
-        #refresh the fucking armature again
+        #refresh armature?
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.mode_set(mode='EDIT')
         armature.data.edit_bones[bone].parent = armature.data.edit_bones[newparent]
+
     reparent('cf_pv_root_upper', 'Spine')
     reparent('cf_pv_elbo_R', 'cf_pv_root_upper')
     reparent('cf_pv_elbo_L', 'cf_pv_root_upper')
+
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.ops.object.mode_set(mode='EDIT')
     
@@ -626,7 +634,11 @@ def make_eye_controller():
     copy.head = armatureData.edit_bones['Eyesx'].head/2
     copy.tail = armatureData.edit_bones['Eyesx'].tail/2
     copy.matrix = armatureData.edit_bones['Eyesx'].matrix
-    copy.parent = armatureData.edit_bones['Head']
+    try:
+        copy.parent = armatureData.edit_bones['Head']
+    except:
+        copy.parent = armatureData.edit_bones['cf_j_head'] #eye controller is added regardless of modified/stock armature
+        
     if bpy.data.objects['Armature'].data.bones.get('Greybone'):
         armatureData.edit_bones['Eye Controller'].roll = math.pi/2
     else:
@@ -656,10 +668,10 @@ def make_eye_controller():
         mod.show_expanded = False
 
     if armature.pose.bones.get('Greybone'):
-        eyeUV("Left Eye UV warp",  'cf_J_hitomi_tx_L') # this is Eyex for pmx
+        eyeUV("Left Eye UV warp",  'cf_J_hitomi_tx_L') # this is cf_J_hitomi_tx_L for grey
         eyeUV("Right Eye UV warp", 'cf_J_hitomi_tx_R')
     else:
-        eyeUV("Left Eye UV warp",  'Eyex_L') # this is cf_J_hitomi_tx_L for grey
+        eyeUV("Left Eye UV warp",  'Eyex_L') # this is Eyex for pmx
         eyeUV("Right Eye UV warp", 'Eyex_R')
 
     ################### Empty group check for pmx files
@@ -677,14 +689,14 @@ def make_eye_controller():
         bpy.context.view_layer.objects.active = body
 
         #make the Eyex_L vertex group active
-        body.vertex_groups.active_index = body.vertex_groups['Eyex_L'].index #this is cf_J_hitomi_tx_L for grey
+        body.vertex_groups.active_index = body.vertex_groups['Eyex_L'].index
 
         #go into edit mode and select the vertices in the Eyex_L vertex group
         bpy.ops.object.mode_set(mode = 'EDIT')
         bpy.ops.mesh.select_all(action = 'DESELECT')
         bpy.ops.object.vertex_group_select()
 
-        #refresh the selection (this apparently needs to be done for some reason)
+        #refresh the selection (this needs to be done for some reason)
         bpy.ops.object.mode_set(mode = 'OBJECT')
         bpy.ops.object.mode_set(mode = 'EDIT')
 
@@ -728,11 +740,14 @@ def scale_final_bones():
         bpy.context.object.data.edit_bones[bone].select_tail = True
         previous_roll = bpy.context.object.data.edit_bones[bone].roll + 1
         if type == 'MIDPOINT':
-            bpy.ops.transform.resize(value=(scale, scale, scale), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=0.683013, use_proportional_connected=False, use_proportional_projected=False)
+            bpy.ops.transform.resize(value=(scale, scale, scale), orient_type='GLOBAL',
+            orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL',
+            mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH',
+            proportional_size=0.683013, use_proportional_connected=False, use_proportional_projected=False)
         else:
-            bpy.context.object.data.edit_bones[bone].tail=(bpy.context.object.data.edit_bones[bone].tail+bpy.context.object.data.edit_bones[bone].head)/2
-            bpy.context.object.data.edit_bones[bone].tail=(bpy.context.object.data.edit_bones[bone].tail+bpy.context.object.data.edit_bones[bone].head)/2
-            bpy.context.object.data.edit_bones[bone].tail=(bpy.context.object.data.edit_bones[bone].tail+bpy.context.object.data.edit_bones[bone].head)/2
+            bpy.context.object.data.edit_bones[bone].tail = (bpy.context.object.data.edit_bones[bone].tail+bpy.context.object.data.edit_bones[bone].head)/2
+            bpy.context.object.data.edit_bones[bone].tail = (bpy.context.object.data.edit_bones[bone].tail+bpy.context.object.data.edit_bones[bone].head)/2
+            bpy.context.object.data.edit_bones[bone].tail = (bpy.context.object.data.edit_bones[bone].tail+bpy.context.object.data.edit_bones[bone].head)/2
         bpy.context.object.data.edit_bones[bone].select_head = False
         bpy.context.object.data.edit_bones[bone].select_tail = False
         bpy.context.object.data.edit_bones[bone].roll = previous_roll - 1
@@ -855,22 +870,28 @@ class bone_drivers(bpy.types.Operator):
         #Enable debug mode to use them in their current state.
         scene = context.scene.placeholder
         use_hips = scene.hip_driver_bool
+        modify_armature = scene.armature_edit_bool
+        armature_not_modified = bpy.data.objects['Armature'].data.bones.get('MasterFootIK.L') == None
         
-        reparent_bones()
-        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+        if modify_armature and armature_not_modified:
+            reparent_bones()
+            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
-        setup_iks()
-        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+            setup_iks()
+            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
-        setup_joints()
-        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+            setup_joints()
+            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
-        #if use_hips:
-        #    setup_hips()
+            #if use_hips:
+            #    setup_hips()
         
-        make_eye_controller()
-        scale_final_bones()
-        categorize_bones()
+        if not bpy.data.objects['Armature'].data.bones.get('Eye Controller'):
+            make_eye_controller()
+        
+        if modify_armature and armature_not_modified:
+            scale_final_bones()
+            categorize_bones()
         
         return {'FINISHED'}
 

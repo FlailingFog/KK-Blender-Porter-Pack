@@ -125,6 +125,19 @@ class separate_body(bpy.types.Operator):
                 #maybe the collection is already hidden
                 pass
         
+        #and clean up the oprhaned data
+        for block in bpy.data.meshes:
+            if block.users == 0:
+                bpy.data.meshes.remove(block)
+
+        for block in bpy.data.cameras:
+            if block.users == 0:
+                bpy.data.cameras.remove(block)
+
+        for block in bpy.data.lights:
+            if block.users == 0:
+                bpy.data.lights.remove(block)
+
         return {'FINISHED'}
 
 if __name__ == "__main__":

@@ -16,7 +16,7 @@ def get_bone_list(kind):
         return [
         'Center',
         'Head', 'Neck', 'Upper Chest', 'Chest', 'Eyesx',
-        'cf_d_bust00', 'cf_d_bust02_L', 'cf_d_bust02_R',
+        'cf_d_bust00', 'cf_j_bust01_L', 'cf_j_bust01_R',
         
         'Left shoulder', 'Left arm', 'Left elbow', 'Left wrist', 
         'IndexFinger1_L', 'IndexFinger2_L', 'IndexFinger3_L',
@@ -40,6 +40,40 @@ def get_bone_list(kind):
         'cf_pv_elbo_L', 'cf_pv_elbo_R',
         'cf_pv_hand_L', 'cf_pv_hand_R',
         'cf_pv_foot_L', 'cf_pv_foot_R']
+
+    elif kind == 'core_list_vanilla':
+        #main bone list but vanilla
+        return [
+        'cf_n_height', 'cf_j_hips', 'cf_j_waist01',
+        'cf_j_spine01', 'cf_j_spine02', 'cf_j_spine03',
+        'cf_j_neck', 'cf_j_head',
+        'cf_d_bust00', 'cf_j_bust01_L', 'cf_j_bust01_R', 'Eyesx'
+
+        'cf_j_shoulder_L', 'cf_j_shoulder_R', 'cf_j_arm00_L', 'cf_j_arm00_R',
+        'cf_j_forearm01_L', 'cf_j_forearm01_R', 'cf_j_hand_R', 'cf_j_hand_L',
+
+        'cf_j_thumb01_L','cf_j_thumb02_L', 'cf_j_thumb03_L',
+        'cf_j_ring01_L', 'cf_j_ring02_L', 'cf_j_ring03_L', 
+        'cf_j_middle01_L','cf_j_middle02_L', 'cf_j_middle03_L', 
+        'cf_j_little01_L','cf_j_little02_L', 'cf_j_little03_L', 
+        'cf_j_index01_L','cf_j_index02_L', 'cf_j_index03_L', 
+
+        'cf_j_thumb01_R','cf_j_thumb02_R',  'cf_j_thumb03_R',
+        'cf_j_ring01_R','cf_j_ring02_R', 'cf_j_ring03_R', 
+        'cf_j_middle01_R','cf_j_middle02_R', 'cf_j_middle03_R', 
+        'cf_j_little01_R','cf_j_little02_R', 'cf_j_little03_R', 
+        'cf_j_index01_R', 'cf_j_index02_R', 'cf_j_index03_R',
+
+        'cf_j_thigh00_L', 'cf_j_thigh00_R', 'cf_j_leg01_L', 'cf_j_leg01_R',
+        'cf_j_foot_L', 'cf_j_foot_R', 'cf_j_toes_L', 'cf_j_toes_R',
+
+        'cf_d_siri_L', 'cf_d_siri_R',
+
+        'cf_pv_knee_L', 'cf_pv_knee_R',
+        'cf_pv_elbo_L', 'cf_pv_elbo_R',
+        'cf_pv_hand_L', 'cf_pv_hand_R',
+        'cf_pv_foot_L', 'cf_pv_foot_R'
+        ]
         
     elif kind == 'non_ik':
         #IK bone list
@@ -91,6 +125,7 @@ def get_bone_list(kind):
         'Toes3_R', 'Toes30_R', 'Toes4_R']
         
     elif kind == 'bp_list':
+        #more bones that appear on the Better Penetration armature
         return [
         'cf_j_Kokan', 'cf_j_Ana', 'Vagina_Root', 'Vagina_B', 'Vagina_F',
         'Vagina_L_001', 'Vagina_L_002', 'Vagina_L_003', 'Vagina_L_004', 'Vagina_L_005', 
@@ -120,14 +155,14 @@ def get_bone_list(kind):
 
     elif kind == 'skirt_list':
         return [
-        'cf_d_sk_00_00', 'cf_j_sk_00_00', 'cf_j_sk_00_01', 'cf_j_sk_00_02', 'cf_j_sk_00_03', 'cf_j_sk_00_04',
-        'cf_d_sk_01_00', 'cf_j_sk_01_00', 'cf_j_sk_01_01', 'cf_j_sk_01_02', 'cf_j_sk_01_03', 'cf_j_sk_01_04',
-        'cf_d_sk_02_00', 'cf_j_sk_02_00', 'cf_j_sk_02_01', 'cf_j_sk_02_02', 'cf_j_sk_02_03', 'cf_j_sk_02_04',
-        'cf_d_sk_03_00', 'cf_j_sk_03_00', 'cf_j_sk_03_01', 'cf_j_sk_03_02', 'cf_j_sk_03_03', 'cf_j_sk_03_04',
-        'cf_d_sk_04_00', 'cf_j_sk_04_00', 'cf_j_sk_04_01', 'cf_j_sk_04_02', 'cf_j_sk_04_03', 'cf_j_sk_04_04',
-        'cf_d_sk_05_00', 'cf_j_sk_05_00', 'cf_j_sk_05_01', 'cf_j_sk_05_02', 'cf_j_sk_05_03', 'cf_j_sk_05_04',
-        'cf_d_sk_06_00', 'cf_j_sk_06_00', 'cf_j_sk_06_01', 'cf_j_sk_06_02', 'cf_j_sk_06_03', 'cf_j_sk_06_04',
-        'cf_d_sk_07_00', 'cf_j_sk_07_00', 'cf_j_sk_07_01', 'cf_j_sk_07_02', 'cf_j_sk_07_03', 'cf_j_sk_07_04']
+        'cf_j_sk_00_00', 'cf_j_sk_00_01', 'cf_j_sk_00_02', 'cf_j_sk_00_03', 'cf_j_sk_00_04',
+        'cf_j_sk_01_00', 'cf_j_sk_01_01', 'cf_j_sk_01_02', 'cf_j_sk_01_03', 'cf_j_sk_01_04',
+        'cf_j_sk_02_00', 'cf_j_sk_02_01', 'cf_j_sk_02_02', 'cf_j_sk_02_03', 'cf_j_sk_02_04',
+        'cf_j_sk_03_00', 'cf_j_sk_03_01', 'cf_j_sk_03_02', 'cf_j_sk_03_03', 'cf_j_sk_03_04',
+        'cf_j_sk_04_00', 'cf_j_sk_04_01', 'cf_j_sk_04_02', 'cf_j_sk_04_03', 'cf_j_sk_04_04',
+        'cf_j_sk_05_00', 'cf_j_sk_05_01', 'cf_j_sk_05_02', 'cf_j_sk_05_03', 'cf_j_sk_05_04',
+        'cf_j_sk_06_00', 'cf_j_sk_06_01', 'cf_j_sk_06_02', 'cf_j_sk_06_03', 'cf_j_sk_06_04',
+        'cf_j_sk_07_00', 'cf_j_sk_07_01', 'cf_j_sk_07_02', 'cf_j_sk_07_03', 'cf_j_sk_07_04']
     
 def hide_extra_bones():
     #Select the armature and make it active
@@ -139,7 +174,10 @@ def hide_extra_bones():
     bpy.context.view_layer.objects.active=armature
     bpy.ops.object.mode_set(mode='POSE')
     
-    core_list = get_bone_list('core_list')
+    if armature.data.bones.get('Head'):
+        core_list = get_bone_list('core_list')
+    else:
+        core_list = get_bone_list('core_list_vanilla')
     non_ik = get_bone_list('non_ik')
     face_list = get_bone_list('face_list')
     toe_list = get_bone_list('toe_list')
@@ -185,12 +223,14 @@ def hide_extra_bones():
         if bone.name in core_list:
             #Make core list bones visible on layer 1
             bone.hide = False
+
         if bone.name in skirt_list or bone.name in face_list or bone.name in toe_list:
             #Make secondary bones visible on layer 2
             bone.hide = False
             bpy.ops.pose.select_all(action='DESELECT')
             bone.select = True
             bpy.ops.pose.bone_layers(layers=layer2)
+
         if bone.name in bp_list:
             #Make kokan / better penetration bones visible on layer 3
             bone.hide = False
@@ -200,18 +240,21 @@ def hide_extra_bones():
             #Also, rename the bones so you can mirror them over the x axis in pose mode
             if 'Vagina_L_' in bone.name or 'Vagina_R_' in bone.name:
                 bone.name = 'Vagina' + bone.name[8:] + '_' + bone.name[7]
+
         if bone.name in non_ik:
             #Move bones that don't need to be visible for IK to layer 17
             bone.hide = False
             bpy.ops.pose.select_all(action='DESELECT')
             bone.select = True
-            bpy.ops.pose.bone_layers(layers=layer17)                   
+            bpy.ops.pose.bone_layers(layers=layer17) 
+
         if bone.name in upper_joint_list:
             bone.hide = False
             #select and move to layer 18
             bpy.ops.pose.select_all(action='DESELECT')
             bone.select = True
             bpy.ops.pose.bone_layers(layers=layer18)
+
         if bone.name in lower_joint_list:
             bone.hide = False
             #select and move to layer 19
@@ -226,22 +269,15 @@ def hide_extra_bones():
     bpy.context.object.data.display_type = 'STICK'
     bpy.ops.object.mode_set(mode='OBJECT')
     
-def connect_finger_skirt_bones():
+#make sure certain bones are visually connected
+def visually_connect_bones():
     
-    # Make sure finger bones on the armature are visually connected (ignores A_N_ finger bones)
     skirt_list = get_bone_list('skirt_list')
     bpy.ops.object.mode_set(mode='EDIT')
     armature = bpy.data.objects['Armature']
-    '''
-    armature.data.edit_bones['IndexFinger1_L'].tail = armature.data.edit_bones['IndexFinger2_L'].head
-    armature.data.edit_bones['MiddleFinger1_L'].tail = armature.data.edit_bones['MiddleFinger2_L'].head
-    armature.data.edit_bones['RingFinger1_L'].tail = armature.data.edit_bones['RingFinger2_L'].head
 
-    armature.data.edit_bones['IndexFinger1_R'].tail = armature.data.edit_bones['IndexFinger2_R'].head
-    armature.data.edit_bones['MiddleFinger1_R'].tail = armature.data.edit_bones['MiddleFinger2_R'].head
-    armature.data.edit_bones['RingFinger1_R'].tail = armature.data.edit_bones['RingFinger2_R'].head
-    '''
     # Make sure all toe bones are visually correct if using the better penetration armature 
+    ### this needs to be redone
     try:
         armature.data.edit_bones['Toes4_L'].tail.y = armature.data.edit_bones['Toes30_L'].head.y
         armature.data.edit_bones['Toes4_L'].tail.z = armature.data.edit_bones['Toes30_L'].head.z*.8
@@ -284,14 +320,17 @@ def reshow_accessory_bones():
     armature = bpy.data.objects['Armature']
     body = bpy.data.objects['Body']
     
+    #100% repurposed from https://github.com/FlailingFog/KK-Blender-Shader-Pack/issues/29
     ### Function to check for empty vertex groups
     def survey(obj):
         maxWeight = {}
         #prefill vertex group list with zeroes
         for i in obj.vertex_groups:
             maxWeight[i.name] = 0
+
         #preserve the indexes
         keylist = list(maxWeight)
+        
         #then fill in the real value using the indexes
         for v in obj.data.vertices:
             for g in v.groups:
@@ -304,9 +343,19 @@ def reshow_accessory_bones():
     # Find empty vertex groups
     vertexWeightMap = survey(body)
     
+    dont_show_these = [
+        'cf_pv', 'Eyesx', 'cf_d', 'cf_s', 'cf_j', 
+        'cf_J_hitomi_tx_', 'cf_J_FaceRoot', 'cf_J_FaceUp_t',
+        'n_cam', 'EyesLookTar', 'N_move', 'a_n_', 'cf_hit', 'Eyex_L', 'Eyex_R']
+    
     for bone in armature.data.bones:
         #if the bone is hidden and isn't a "utility" bone...
-        if bone.hide == True and 'cf_pv' not in bone.name and 'Eyesx' not in bone.name and 'cf_d' not in bone.name and 'cf_s' not in bone.name and 'cf_j' not in bone.name and 'cf_J_hitomi_tx_' not in bone.name and 'cf_J_FaceRoot' not in bone.name and 'cf_J_FaceUp_t' not in bone.name and 'n_cam' not in bone.name and 'EyesLookTar' not in bone.name and 'N_move' not in bone.name and 'a_n_' not in bone.name and 'cf_hit' not in bone.name:
+        is_utility_bone = False
+        for this_prefix in dont_show_these:
+            if this_prefix in bone.name:
+                is_utility_bone = True
+        
+        if bone.hide == True and not is_utility_bone:
             #check if it has any vertexes attached to it, and show it if it does
             if vertexWeightMap.get(bone.name):
                 bone.hide = False
@@ -319,8 +368,12 @@ class clean_armature(bpy.types.Operator):
     
     def execute(self, context):
         
+        scene = context.scene.placeholder
+        modify_armature = scene.armature_edit_bool
+
         hide_extra_bones()
-        connect_finger_skirt_bones()
+        if modify_armature:
+            visually_connect_bones()
         reshow_accessory_bones()
         
         return {'FINISHED'}

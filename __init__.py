@@ -1,6 +1,6 @@
 #The init file for the plugin
 bl_info = {
-    "name" : "KK Blender Pack",
+    "name" : "KK Blender Porter Pack",
     "author" : "a blendlet",
     "location" : "View 3D > Tool Shelf > KK Scripts",
     "description" : "Scripts for automating the cleanup process of a Koikatsu export",
@@ -34,6 +34,7 @@ from .exporting.selectbones import select_bones
 from .extras.importstudio import import_studio
 from .extras.linkshapekeys import link_shapekeys
 from .extras.importanimation import import_animation
+from .extras.switcharmature import switch_armature
 from .pillow.getpillow import InstallPIL
 
 from . KKPanel import PlaceholderProperties
@@ -47,6 +48,7 @@ classes = (
     import_animation, 
     import_studio, 
     link_shapekeys,
+    switch_armature,
     InstallPIL,
 
     bone_drivers, 

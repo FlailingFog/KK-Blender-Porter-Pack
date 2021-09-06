@@ -364,7 +364,7 @@ class bake_materials(bpy.types.Operator):
             #disable alpha on the output
             bpy.context.scene.render.film_transparent = False
 
-        #the ultimate lazy move
+        #the first ultimate lazy move
         runIt()
                  
         return {'FINISHED'}
