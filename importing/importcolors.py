@@ -297,7 +297,7 @@ def init_import_colors(directory):
 
     lut_missing = True
     for image in bpy.data.images:
-        if 'Lut_TimeDay.png' in image.name:
+        if lut_light in image.name and lut_dark in image.name:
             lut_missing = False
     
     if lut_missing:
