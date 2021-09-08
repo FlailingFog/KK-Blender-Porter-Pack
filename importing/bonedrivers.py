@@ -434,25 +434,25 @@ def setup_joints():
         setDriver('cf_s_kneeB_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '-0.08')
 
         #knee tip corrections go up toward the waist and in toward the body
-        setDriver('cf_d_kneeF_R', 'location', 1, 'cf_j_leg01_R', 'ROT_X',  '0.1')
-        setDriver('cf_d_kneeF_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '0.1')
+        setDriver('cf_d_kneeF_R', 'location', 1, 'cf_j_leg01_R', 'ROT_X',  '0.02')
+        setDriver('cf_d_kneeF_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '-0.02')
 
-        setDriver('cf_d_kneeF_L', 'location', 1, 'cf_j_leg01_L', 'ROT_X',  '0.1')
-        setDriver('cf_d_kneeF_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '0.1')
+        setDriver('cf_d_kneeF_L', 'location', 1, 'cf_j_leg01_L', 'ROT_X',  '0.02')
+        setDriver('cf_d_kneeF_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '-0.02')
 
         #butt corrections go slightly up to the spine and in to the waist 
-        setDriver('cf_d_siri_R', 'location', 1, 'cf_j_leg01_R', 'ROT_X',  '0.2')
-        setDriver('cf_d_siri_R', 'location', 2, 'cf_j_leg01_R',  'ROT_X',  '0.2')
+        setDriver('cf_d_siri_R', 'location', 1, 'cf_j_leg01_R', 'ROT_X',  '0.02')
+        setDriver('cf_d_siri_R', 'location', 2, 'cf_j_leg01_R',  'ROT_X',  '0.02')
 
-        setDriver('cf_d_siri_L', 'location', 1, 'cf_j_leg01_L', 'ROT_X',  '0.2')
-        setDriver('cf_d_siri_L', 'location', 2, 'cf_j_leg01_L',  'ROT_X',  '0.2')
+        setDriver('cf_d_siri_L', 'location', 1, 'cf_j_leg01_L', 'ROT_X',  '0.02')
+        setDriver('cf_d_siri_L', 'location', 2, 'cf_j_leg01_L',  'ROT_X',  '0.02')
         
         #hand corrections go up to the head and in towards the elbow
-        setDriver('cf_d_hand_R', 'location', 0, 'cf_j_hand_R', 'ROT_Z',  '-1.5')
-        setDriver('cf_d_hand_R', 'location', 1, 'cf_j_hand_R', 'ROT_Z', '-1.5')
+        setDriver('cf_d_hand_R', 'location', 0, 'cf_j_hand_R', 'ROT_Z',  '-0.8')
+        setDriver('cf_d_hand_R', 'location', 1, 'cf_j_hand_R', 'ROT_Z', '-0.8')
 
-        setDriver('cf_d_hand_L', 'location', 0, 'cf_j_hand_L', 'ROT_Z', '-1.5')
-        setDriver('cf_d_hand_L', 'location', 1, 'cf_j_hand_L', 'ROT_Z', '1.5')
+        setDriver('cf_d_hand_L', 'location', 0, 'cf_j_hand_L', 'ROT_Z', '-0.8')
+        setDriver('cf_d_hand_L', 'location', 1, 'cf_j_hand_L', 'ROT_Z', '0.8')
 
         #elboback goes out to the chest and into the shoulder
         #elbo goes does the opposite
@@ -478,10 +478,10 @@ def setup_joints():
         setDriver('cf_d_shoulder02_L', 'location', 2, 'cf_j_arm00_L', 'ROT_Y',  '0.1')
 
         #leg corrections go up to the head and slightly forwards/backwards
-        setDriver('cf_s_leg_R', 'location', 1, 'cf_j_leg01_R', 'ROT_X',  '0.2', expresstype = 'moveexp')
+        setDriver('cf_s_leg_R', 'location', 1, 'cf_j_leg01_R', 'ROT_X',  '0.1', expresstype = 'moveexp')
         setDriver('cf_s_leg_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '0.2')
 
-        setDriver('cf_s_leg_L', 'location', 1, 'cf_j_leg01_L', 'ROT_X',  '0.2', expresstype = 'moveexp')
+        setDriver('cf_s_leg_L', 'location', 1, 'cf_j_leg01_L', 'ROT_X',  '0.1', expresstype = 'moveexp')
         setDriver('cf_s_leg_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '0.2')
 
         #waist correction slightly moves out to chest when lower waist rotates
