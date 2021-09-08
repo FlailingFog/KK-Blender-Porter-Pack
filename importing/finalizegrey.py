@@ -1,7 +1,6 @@
 #Finalize the accessory placements
 
 import bpy, math
-from .finalizepmx import rename_bones_for_clarity
 from mathutils import Vector
 
 def finalize():
@@ -131,6 +130,7 @@ def modify_fbx_armature():
     armature.data.edit_bones['p_cf_body_bone'].parent = armature.data.edit_bones['cf_pv_root']
     
     #relocate the tail of some bones to make IKs easier
+    #this is different from the one in finalizepmx.py
     def relocate_tail(bone1, bone2, direction):
         if direction == 'leg':
             armature.data.edit_bones[bone1].tail.y = armature.data.edit_bones[bone2].head.y
@@ -153,14 +153,15 @@ def modify_fbx_armature():
             armature.data.edit_bones[bone1].tail.y = armature.data.edit_bones[bone2].head.y
             armature.data.edit_bones[bone1].roll = 0
     
-    relocate_tail('Right knee', 'Right ankle', 'leg')
-    relocate_tail('Left knee', 'Left ankle', 'leg')
-    relocate_tail('Right ankle', 'Right toe', 'foot')
-    relocate_tail('Left ankle', 'Left toe', 'foot')
-    relocate_tail('Right elbow', 'Right wrist', 'arm')
-    relocate_tail('Left elbow', 'Left wrist', 'arm')
-    relocate_tail('cf_pv_hand_R', 'Right wrist', 'hand')
-    relocate_tail('cf_pv_hand_L', 'Left wrist', 'hand')
+    relocate_tail('cf_j_leg01_R', 'cf_j_foot_R', 'leg')
+    relocate_tail('cf_j_leg01_R', 'cf_j_toes_R', 'foot')
+    relocate_tail('cf_j_forearm01_R', 'cf_j_hand_R', 'arm')
+    relocate_tail('cf_pv_hand_R', 'cf_j_hand_R', 'hand')
+
+    relocate_tail('cf_j_leg01_L', 'cf_j_foot_L', 'leg')
+    relocate_tail('cf_j_leg01_L', 'cf_j_toes_L', 'foot')
+    relocate_tail('cf_j_forearm01_L', 'cf_j_hand_L', 'arm')
+    relocate_tail('cf_pv_hand_L', 'cf_j_hand_L', 'hand')
     
     bpy.ops.object.mode_set(mode='OBJECT')
 
@@ -177,7 +178,6 @@ class finalize_grey(bpy.types.Operator):
 
         finalize()
         if modify_armature:
-            rename_bones_for_clarity('modified')
             modify_fbx_armature()
         
         #redraw the UI after each operation to let the user know the plugin is actually doing something

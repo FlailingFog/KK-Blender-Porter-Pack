@@ -15,11 +15,6 @@ class PlaceholderProperties(PropertyGroup):
         default=1,
         description="Set this to 2 or 3 if the baked texture is blurry")
     
-    hip_driver_bool : BoolProperty(
-    name="Enable or Disable",
-    description="Enable to use in-process hip bone joint correction drivers",
-    default = False)
-    
     armature_edit_bool : BoolProperty(
     name="Enable or Disable",
     description="""Disable this to keep the stock Koikatsu armature structure.
@@ -28,8 +23,7 @@ class PlaceholderProperties(PropertyGroup):
     Disabling this will...
     --Leave you with a stock armature
     --Skip IK creation
-    --Skip Joint bone driver creation
-    --Prevent Bone Widgets from being applied to the armature
+    --Skip Eye Controller creation
     You can swap between the original structure and modified structure
     at any time by using the button in the Extras panel""",
     default = True)
@@ -93,8 +87,8 @@ class PlaceholderProperties(PropertyGroup):
 
     rokoko_bool : BoolProperty(
         name="Enable or Disable",
-        description="""Enable this if you want to use the rokoko plugin to transfer the fbx animation to your character.
-        Stock / no IK armatures only!""",
+        description="""Enable this if you don't want KKBP to process the fbx animation, and instead want to use the rokoko plugin to transfer the fbx animation to your character.
+        Stock / unmodified armatures only!""",
         default = False)
 
 class IMPORTING_PT_panel(bpy.types.Panel):
@@ -158,7 +152,6 @@ class IMPORTOPTIONS_PT_Panel(bpy.types.Panel):
         row = col.row(align=True)
         split = row.split(align = True, factor=.5)
         split.prop(context.scene.placeholder, "armature_edit_bool", toggle=True, text = "Use modified armature")
-        split.prop(context.scene.placeholder, "hip_driver_bool", toggle=True, text = "Enable hip drivers")
         
 
 class IMPORTING2_PT_panel(bpy.types.Panel):
@@ -191,12 +184,15 @@ class APPLYOPTIONS_PT_Panel(bpy.types.Panel):
         layout = self.layout
         splitfac = 0.3
         
-        col = layout.column()
+        col = layout.column(align = True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
-        split = row.split(align=True, factor=0.3)
+        split = row.split(align=True, factor=0.5)
         split.prop(context.scene.placeholder, "textureoutline_bool", toggle=True, text = "Use generic outline")
         split.prop(context.scene.placeholder, "templates_bool", toggle=True, text = "Set fake user")
+
+        row = col.row(align=True)
+        split = row.split(align = True, factor=.5)
         split.prop(context.scene.placeholder, "texturecheck_bool", toggle=True, text = "Check folder")
     
 class EXPORTING_PT_panel(bpy.types.Panel):

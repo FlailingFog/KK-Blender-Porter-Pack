@@ -301,10 +301,17 @@ def apply_bone_widgets():
         #This isn't a BP armature
         pass
     
-    
-    #Make both bone layers visible
-    firstTwoBoneLayers = (True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False)
-    bpy.ops.armature.armature_layers(layers=firstTwoBoneLayers)
+    #Make the body and clothes layers visible
+    all_layers = [
+    False, False, False, False, False, False, False, False,
+    False, False, False, False, False, False, False, False,
+    False, False, False, False, False, False, False, False,
+    False, False, False, False, False, False, False, False]
+
+    all_layers[0] = True
+    all_layers[8] = True
+    all_layers[9] = True
+    bpy.ops.armature.armature_layers(layers=all_layers)
     bpy.context.object.data.display_type = 'STICK'
     
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -336,11 +343,15 @@ def get_and_load_textures(directory):
     #Add all textures to the correct places in the body template
     currentObj = bpy.data.objects['Body']
     def imageLoad(mat, group, node, image, raw = False):
-        try:
+        if bpy.data.images[image]:
             currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].image = bpy.data.images[image]
             if raw:
                 currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].image.colorspace_settings.name = 'Raw'
-        except:
+        elif 'MainCol' in image:
+            if bpy.data.images[image[0:len(image)-4] + '.dds']:
+                currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].image = bpy.data.images[image[0:len(image)-4] + '.dds']
+            print('.dds and .png files not found, skipping: ' + image[0:len(image)-4] + '.dds')
+        else:
             print('File not found, skipping: ' + image)
         
     imageLoad('Template Body', 'BodyTextures', 'BodyMC', 'cf_body_00_mc-RGB24.tga', True)
@@ -348,7 +359,6 @@ def get_and_load_textures(directory):
     imageLoad('Template Body', 'BodyTextures', 'BodyLine', 'cf_m_body_LineMask.png', True)
     imageLoad('Template Body', 'BodyTextures', 'BodyMD', 'cm_m_body_DetailMask.png', True) #cmm male
     imageLoad('Template Body', 'BodyTextures', 'BodyLine', 'cm_m_body_LineMask.png', True)
-    #imageLoad('BodyOptional', '')
     
     imageLoad('Template Body', 'NippleTextures', 'NipR', 'cf_m_body_overtex1.png') #cfm female
     imageLoad('Template Body', 'NippleTextures', 'NipL', 'cf_m_body_overtex1.png')
@@ -644,15 +654,13 @@ class import_everything(bpy.types.Operator):
         if texture_error:
             return {'FINISHED'}
         
-        #redraw the UI after each operation to let the user know the plugin is actually doing something
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
         add_outlines(oneOutlineOnlyMode)
         if modify_armature and bpy.data.objects['Armature'].pose.bones["Spine"].custom_shape == None:
             apply_bone_widgets()
         hide_widgets()
-        
-        #redraw the UI after each operation to let the user know the plugin is actually doing something
+
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
         #clean data

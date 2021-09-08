@@ -1,6 +1,7 @@
 import bpy
 from mathutils import Vector
-from ..importing.finalizepmx import rename_bones_for_clarity, modify_pmx_armature
+from ..importing.bonedrivers import rename_bones_for_clarity
+from ..importing.finalizepmx import modify_pmx_armature
 from ..importing.finalizegrey import modify_fbx_armature
 from ..importing.importeverything import apply_bone_widgets
 

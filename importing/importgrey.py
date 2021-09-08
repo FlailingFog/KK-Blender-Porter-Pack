@@ -108,6 +108,8 @@ def import_the_fbx(directory):
     
     #create the missing armature bones
     missing_bones = [
+    'cf_j_thumb04_L', 'cf_j_index04_L', 'cf_j_middle04_L', 'cf_j_ring04_L', 'cf_j_little04_L',
+    'cf_j_thumb04_R', 'cf_j_index04_R', 'cf_j_middle04_R', 'cf_j_ring04_R', 'cf_j_little04_R',
     'cf_pv_root',
     'cf_pv_elbo_L', 'cf_pv_elbo_R',
     'cf_pv_foot_L', 'cf_pv_foot_R',

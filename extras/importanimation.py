@@ -1,7 +1,7 @@
 import bpy
 from bpy.props import StringProperty
 from mathutils import Quaternion
-from ..importing.finalizepmx import rename_bones_for_clarity
+from ..importing.bonedrivers import rename_bones_for_clarity
 
 def modify_animation_armature():
     #move armature bones that didn't have animation data up a level
