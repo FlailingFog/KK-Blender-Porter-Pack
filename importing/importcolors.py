@@ -296,9 +296,8 @@ def init_import_colors(directory):
         return True
 
     lut_missing = True
-    for image in bpy.data.images:
-        if lut_light in image.name and lut_dark in image.name:
-            lut_missing = False
+    if lut_light in bpy.data.images and lut_dark in bpy.data.images:
+        lut_missing = False
     
     if lut_missing:
         bpy.context.window_manager.popup_menu(kk_lut_error, title="Error", icon='ERROR')
