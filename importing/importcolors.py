@@ -499,14 +499,15 @@ def update_shaders(textures, json, light):
 
     ## Clothes/Other Shader
     for idx, texture in enumerate(clothes_textures):
-        r, g, b = sample_and_convert_colors(clothes_mc_masks[idx], texture, active_lut)
-        shader_inputs = clothes_shader_node_groups[idx].nodes['Group.003' if light else 'Group.004'].inputs
-        shader_inputs['Use Color mask instead? (1 = yes)'].default_value = 1
-        shader_inputs['Manually set detail color? (1 = yes)'].default_value = 0
-        shader_inputs['Color mask color (base)'].default_value = [1, 1, 1, 1]
-        shader_inputs['Color mask color (red)'].default_value = to_rgba(r)
-        shader_inputs['Color mask color (green)'].default_value = to_rgba(g)
-        shader_inputs['Color mask color (blue)'].default_value = to_rgba(b)
+        if clothes_mc_masks[idx] != None:
+            r, g, b = sample_and_convert_colors(clothes_mc_masks[idx], texture, active_lut)
+            shader_inputs = clothes_shader_node_groups[idx].nodes['Group.003' if light else 'Group.004'].inputs
+            shader_inputs['Use Color mask instead? (1 = yes)'].default_value = 1
+            shader_inputs['Manually set detail color? (1 = yes)'].default_value = 0
+            shader_inputs['Color mask color (base)'].default_value = [1, 1, 1, 1]
+            shader_inputs['Color mask color (red)'].default_value = to_rgba(r)
+            shader_inputs['Color mask color (green)'].default_value = to_rgba(g)
+            shader_inputs['Color mask color (blue)'].default_value = to_rgba(b)
 
     ## Accessories/Items Shader
     for idx, item in enumerate(item_data):
