@@ -386,7 +386,9 @@ def get_and_load_textures(directory):
     imageLoad('Template Eyewhites (sirome)', 'EyewhiteTex', 'Eyewhite', 'cf_m_sirome_00_MainTex.png')
     
     imageLoad('Template Eyeline up', 'Eyeline', 'EyelineUp', 'cf_m_eyeline_00_up_MainTex.png')
+    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineUp.001', 'cf_m_eyeline_00_up_MainTex.png')
     imageLoad('Template Eyeline up', 'Eyeline', 'EyelineDown', 'cf_m_eyeline_down_MainTex.png')
+    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineDown.001', 'cf_m_eyeline_down_MainTex.png')
     
     imageLoad('Template Eye (hitomi)', 'EyeTex', 'eyeAlpha', 'cf_m_hitomi_00_MainTex.png')
     imageLoad('Template Eye (hitomi)', 'EyeTex', 'EyeHU', 'cf_m_hitomi_00_overtex1.png')
