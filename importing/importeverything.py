@@ -371,16 +371,16 @@ def get_and_load_textures(directory):
     imageLoad('Template Face', 'FaceTextures', 'BlushMask', 'cf_m_face_00_overtex2.png')
     
     imageLoad('Template Eyebrows (mayuge)', 'BrowTextures', 'Eyebrow', 'cf_m_mayuge_00_MainTex.png')
-    imageLoad('Template Nose', 'Nose', 'Nose', 'cf_m_noseline_00_MainTex.png', True)
+    imageLoad('Template Nose', 'Nose', 'Nose', 'cf_m_noseline_00_MainTex.png')
     imageLoad('Template Teeth (tooth)', 'Teeth', 'Teeth', 'cf_m_tooth_MainTex.png')
-    imageLoad('Template Eyewhites (sirome)', 'EyewhiteTex', 'Eyewhite', 'cf_m_sirome_00_MainTex.png', True)
+    imageLoad('Template Eyewhites (sirome)', 'EyewhiteTex', 'Eyewhite', 'cf_m_sirome_00_MainTex.png')
     
     imageLoad('Template Eyeline up', 'Eyeline', 'EyelineUp', 'cf_m_eyeline_00_up_MainTex.png')
     imageLoad('Template Eyeline up', 'Eyeline', 'EyelineDown', 'cf_m_eyeline_down_MainTex.png')
     
-    imageLoad('Template Eye (hitomi)', 'EyeTex', 'eyeAlpha', 'cf_m_hitomi_00_MainTex.png', True)
-    imageLoad('Template Eye (hitomi)', 'EyeTex', 'EyeHU', 'cf_m_hitomi_00_overtex1.png', True)
-    imageLoad('Template Eye (hitomi)', 'EyeTex', 'EyeHD', 'cf_m_hitomi_00_overtex2.png', True)
+    imageLoad('Template Eye (hitomi)', 'EyeTex', 'eyeAlpha', 'cf_m_hitomi_00_MainTex.png')
+    imageLoad('Template Eye (hitomi)', 'EyeTex', 'EyeHU', 'cf_m_hitomi_00_overtex1.png')
+    imageLoad('Template Eye (hitomi)', 'EyeTex', 'EyeHD', 'cf_m_hitomi_00_overtex2.png')
     
     imageLoad('Template Tongue', 'Gentex', 'Maintex', 'cf_m_tang_ColorMask.png') #done on purpose
     imageLoad('Template Tongue', 'Gentex', 'MainCol', 'cf_m_tang_ColorMask.png')

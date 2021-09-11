@@ -22,7 +22,7 @@ def kk_json_error(self, context):
 
 #Stop if lut was detected
 def kk_lut_error(self, context):
-    self.layout.label(text="The LUT file wasn't found. Please make sure it's imported")
+    self.layout.label(text="The LUT files were not found. Please make sure they have been imported")
 
 
 ########## FUNCTIONS ##########
@@ -69,8 +69,7 @@ def color_to_KK(color, lut_name):
         
         vec3 lutColor = mix(lutcol_bot, lutcol_top, coord_frac.z);
         
-        lutColor = to_srgb(lutColor);
-        
+        //lutColor = to_srgb(lutColor);
         
         vec3 shaderColor = lutColor;
         
@@ -196,6 +195,9 @@ def sample_and_convert_colors(mc_mask, texture, lut, exposure = (1, 1, 1)):
     
     
     ########## FIND MC INDEXES ##########
+    def find_nearest(array, value):
+        idx = (np.abs(array - value)).idxmin()
+        return array[idx]
     
     # Red
     pixel_list = np.where(np.all(mc_mask_data == (1, 0, 0, 1), axis=-1))[0]
@@ -529,7 +531,7 @@ def final_cleanup(textures):
 
 def set_color_management():
     bpy.data.scenes[0].display_settings.display_device = 'sRGB'
-    bpy.data.scenes[0].view_settings.view_transform = 'Raw'
+    bpy.data.scenes[0].view_settings.view_transform = 'Standard'
     bpy.data.scenes[0].view_settings.look = 'None'
 
 class import_colors(bpy.types.Operator):
