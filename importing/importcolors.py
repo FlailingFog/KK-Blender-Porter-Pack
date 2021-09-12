@@ -69,7 +69,6 @@ def color_to_KK(color, lut_name):
         
         vec3 lutColor = mix(lutcol_bot, lutcol_top, coord_frac.z);
         
-        //lutColor = to_srgb(lutColor);
         
         vec3 shaderColor = lutColor;
         
@@ -195,42 +194,45 @@ def sample_and_convert_colors(mc_mask, texture, lut, exposure = (1, 1, 1)):
     
     
     ########## FIND MC INDEXES ##########
-    def find_nearest(array, value):
-        idx = (np.abs(array - value)).idxmin()
-        return array[idx]
+    r, g, b = mc_mask_data[:, 0], mc_mask_data[:, 1], mc_mask_data[:, 2]
+    r = r.max()
+    g = g.max()
+    b = b.max()
+
+    print(r, g, b)
     
     # Red
-    pixel_list = np.where(np.all(mc_mask_data == (1, 0, 0, 1), axis=-1))[0]
+    pixel_list = np.where(np.all(mc_mask_data == (r, 0, 0, 1), axis=-1))[0]
     if len(pixel_list) > 0:
         red_index = filter_pixel(pixel_list, texture_data)
     
     # Green
-    pixel_list = np.where(np.all(mc_mask_data >= (0, 1, 0, 1), axis=-1))[0]
+    pixel_list = np.where(np.all(mc_mask_data >= (0, g, 0, 1), axis=-1))[0]
     if len(pixel_list) > 0:
         green_index = filter_pixel(pixel_list, texture_data)
     else:
         # Green (Yellow)
-        pixel_list = np.where(np.all(mc_mask_data == (1, 1, 0, 1), axis=-1))[0]
+        pixel_list = np.where(np.all(mc_mask_data == (r, g, 0, 1), axis=-1))[0]
         if len(pixel_list) > 0:
             green_index = filter_pixel(pixel_list, texture_data)
 
     # Blue
-    pixel_list = np.where(np.all(mc_mask_data == (0, 0, 1, 1), axis=-1))[0]
+    pixel_list = np.where(np.all(mc_mask_data == (0, 0, b, 1), axis=-1))[0]
     if len(pixel_list) > 0:
         blue_index = filter_pixel(pixel_list, texture_data)
     else:
         # Blue (Cyan)
-        pixel_list = np.where(np.all(mc_mask_data == (0, 1, 1, 1), axis=-1))[0]
+        pixel_list = np.where(np.all(mc_mask_data == (0, g, b, 1), axis=-1))[0]
         if len(pixel_list) > 0:
             blue_index = filter_pixel(pixel_list, texture_data)
         else:
             # Blue (Magenta)
-            pixel_list = np.where(np.all(mc_mask_data == (1, 0, 1, 1), axis=-1))[0]
+            pixel_list = np.where(np.all(mc_mask_data == (r, 0, b, 1), axis=-1))[0]
             if len(pixel_list) > 0:
                 blue_index = filter_pixel(pixel_list, texture_data)
             else:
                 # Blue (White)
-                pixel_list = np.where(np.all(mc_mask_data == (1, 1, 1, 1), axis=-1))[0]
+                pixel_list = np.where(np.all(mc_mask_data == (r, g, b, 1), axis=-1))[0]
                 if len(pixel_list) > 0:
                     blue_index = filter_pixel(pixel_list, texture_data)
 
@@ -456,7 +458,7 @@ def update_shaders(textures, json, light):
     ### Set shader colors
 
     ## Body Shader
-    r, g, b = sample_and_convert_colors(body_mc_mask, body_texture, active_lut, (1, 1.1, 1))
+    r, g, b = sample_and_convert_colors(body_mc_mask, body_texture, active_lut)
     shader_inputs = body_shader_node_group.nodes['Group.003' if light else 'Group.002'].inputs
     shader_inputs['Skin color' if light else 'Dark skin color'].default_value = to_rgba(r)
     shader_inputs['Skin detail color' if light else 'Skin detail multiplier'].default_value = to_rgba(g)
@@ -506,7 +508,7 @@ def update_shaders(textures, json, light):
             shader_inputs = clothes_shader_node_groups[idx].nodes['Group.003' if light else 'Group.004'].inputs
             shader_inputs['Use Color mask instead? (1 = yes)'].default_value = 1
             shader_inputs['Manually set detail color? (1 = yes)'].default_value = 0
-            shader_inputs['Color mask color (base)'].default_value = [1, 1, 1, 1]
+            shader_inputs['Color mask color (base)'].default_value = [0, 0, 0, 1]
             shader_inputs['Color mask color (red)'].default_value = to_rgba(r)
             shader_inputs['Color mask color (green)'].default_value = to_rgba(g)
             shader_inputs['Color mask color (blue)'].default_value = to_rgba(b)
