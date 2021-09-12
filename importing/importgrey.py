@@ -1,14 +1,12 @@
 #Imports the fbx file from GME and performs a few fixes
 
-import bpy, os
+import bpy
 from mathutils import Vector
-from pathlib import Path
 
-from bpy.props import StringProperty, BoolProperty
-from bpy_extras.io_utils import ImportHelper
+from bpy.props import StringProperty
 
 def import_the_fbx(directory):
-
+    
     #delete the cube, light and camera
     if len(bpy.data.objects) == 3:
         for obj in bpy.data.objects:
@@ -17,6 +15,23 @@ def import_the_fbx(directory):
     #import the fbx file
     bpy.ops.import_scene.fbx(filepath=str(directory), use_prepost_rot=False, global_scale=96)
     
+    #make sure the following objects don't have a .001 tag after being imported
+    objects = [
+    'cf_Ohitomi_L',
+    'cf_Ohitomi_R',
+    'cf_O_eyeline',
+    'cf_O_eyeline_low',
+    'cf_O_face'
+    'cf_O_tooth',
+    'cf_O_noseline'
+    'o_tang',
+    'cf_O_mayuge',
+    'o_body_a']
+
+    for object in objects:
+        if bpy.data.objects[object + '.001']:
+            bpy.data.objects[object + '.001'].name = object
+
     #rename all the shapekeys to be compatible with the other script
     #rename face shapekeys based on category
     keyset = bpy.data.objects['cf_O_face'].data.shape_keys.name

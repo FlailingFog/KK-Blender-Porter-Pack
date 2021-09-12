@@ -136,6 +136,18 @@ def get_templates_and_apply(directory, useFakeUser, folderCheckEnabled):
                 template.name = 'Template ' + original.name
                 original.material = bpy.data.materials[template.name]
     
+    #give the shadowcast object the general template as well
+    shadowcast = bpy.data.objects['Shadowcast']
+    template = bpy.data.materials['Template General'].copy()
+    template.name = 'Template Shadowcast'
+    shadmat = shadowcast.material_slots[0].material
+    shadmat = bpy.data.materials[template.name]
+    shadmat.node_tree.nodes['KKShader'].inputs
+    getOut = shadmat.material.node_tree.nodes['KKShader'].inputs['Main Texture'].links[0]
+    shadmat.material.node_tree.links.remove(getOut)
+    getOut = shadmat.material.node_tree.nodes['KKShader'].inputs['Main Alpha'].links[0]
+    shadmat.material.node_tree.links.remove(getOut)
+
     # Get rid of the duplicate node groups cause there's a lot
     #stolen from somewhere
     def eliminate(node):
