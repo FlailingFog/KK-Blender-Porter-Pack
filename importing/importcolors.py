@@ -198,8 +198,6 @@ def sample_and_convert_colors(mc_mask, texture, lut, exposure = (1, 1, 1)):
     r = r.max()
     g = g.max()
     b = b.max()
-
-    print(r, g, b)
     
     # Red
     pixel_list = np.where(np.all(mc_mask_data == (r, 0, 0, 1), axis=-1))[0]
