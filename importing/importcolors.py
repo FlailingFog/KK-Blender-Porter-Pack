@@ -421,12 +421,11 @@ def update_shaders(textures, json, light):
     hair_shader_node_group = node_groups['Hair Shader']
     
     for idx, item in enumerate(json):
-        if idx > 5:
+        if idx > 4:
             shader_name = item['materialName'] + ' Shader'
             if shader_name in node_groups:
                 item_data.append(item)
                 item_shader_node_groups.append(node_groups[shader_name])
-
     ### Set single colors
 
     face_blush_color = color_to_KK(json_to_color(json[0]['color1']), active_lut) / 255
@@ -444,13 +443,21 @@ def update_shaders(textures, json, light):
     body_nipple_color = color_to_KK(json_to_color(json[4]['color1']), active_lut) / 255
     body_nipple_color = to_rgba(body_nipple_color)
 
-    hair_base_color = color_to_KK(json_to_color(json[5]['color1']), active_lut) / 255
+    hair_material_name = bpy.data.objects['Hair'].material_slots[0].name.split(' ')[1]
+    hair_material_index = 0
+
+    for idx, elm in enumerate(json):
+        if elm['materialName'] == hair_material_name:
+            hair_material_index = idx
+            break
+
+    hair_base_color = color_to_KK(json_to_color(json[idx]['color1']), active_lut) / 255
     hair_base_color = to_rgba(hair_base_color)
 
-    hair_root_color = color_to_KK(json_to_color(json[5]['color2']), active_lut) / 255
+    hair_root_color = color_to_KK(json_to_color(json[idx]['color2']), active_lut) / 255
     hair_root_color = to_rgba(hair_root_color)
 
-    hair_tip_color = color_to_KK(json_to_color(json[5]['color3']), active_lut) / 255
+    hair_tip_color = color_to_KK(json_to_color(json[idx]['color3']), active_lut) / 255
     hair_tip_color = to_rgba(hair_tip_color)
 
     ### Set shader colors
@@ -459,6 +466,7 @@ def update_shaders(textures, json, light):
     r, g, b = sample_and_convert_colors(body_mc_mask, body_texture, active_lut)
     shader_inputs = body_shader_node_group.nodes['Group.003' if light else 'Group.002'].inputs
     shader_inputs['Skin color' if light else 'Dark skin color'].default_value = to_rgba(r)
+    shader_inputs['Line mask color' if light else 'Line Mask multiplier'].default_value = to_rgba(g)
     shader_inputs['Skin detail color' if light else 'Skin detail multiplier'].default_value = to_rgba(g)
     shader_inputs['Nail Color'].default_value = to_rgba(b)
     shader_inputs['Nipple 1'].default_value = body_nipple_color
@@ -486,6 +494,7 @@ def update_shaders(textures, json, light):
     shader_inputs = tongue_shader_node_group.nodes['Group.003' if light else 'Group.004'].inputs
     shader_inputs['Use Color mask instead? (1 = yes)'].default_value = 1
     shader_inputs['Manually set detail color? (1 = yes)'].default_value = 0
+    shader_inputs['Detail intensity (green)'].default_value = 0.01
     shader_inputs['Color mask color (base)'].default_value = tongue_color
     shader_inputs['Color mask color (red)'].default_value = tongue_color
     shader_inputs['Color mask color (green)'].default_value = tongue_color
