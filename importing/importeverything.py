@@ -226,9 +226,9 @@ def apply_bone_widgets():
     bpy.context.object.pose.bones["cf_d_bust00"].custom_shape = bpy.data.objects["WidgetBust"]
     bpy.context.object.pose.bones["cf_d_bust00"].use_custom_shape_bone_size = False
     bpy.context.object.pose.bones["cf_j_bust01_L"].custom_shape = bpy.data.objects["WidgetBreastL"]
-    bpy.context.object.pose.bones["WidgetBreastL"].use_custom_shape_bone_size = False
+    bpy.context.object.pose.bones["cf_j_bust01_L"].use_custom_shape_bone_size = False
     bpy.context.object.pose.bones["cf_j_bust01_R"].custom_shape = bpy.data.objects["WidgetBreastR"]
-    bpy.context.object.pose.bones["WidgetBreastR"].use_custom_shape_bone_size = False
+    bpy.context.object.pose.bones["cf_j_bust01_R"].use_custom_shape_bone_size = False
 
     bpy.context.object.pose.bones["Left shoulder"].custom_shape = bpy.data.objects["WidgetShoulderL"]
     bpy.context.object.pose.bones["Right shoulder"].custom_shape = bpy.data.objects["WidgetShoulderR"]
@@ -248,7 +248,7 @@ def apply_bone_widgets():
     bpy.context.object.pose.bones["ToeRotator.L"].custom_shape = bpy.data.objects["WidgetToe"]
     bpy.context.object.pose.bones["HeelIK.R"].custom_shape = bpy.data.objects["WidgetHeel"]
     bpy.context.object.pose.bones["HeelIK.L"].custom_shape = bpy.data.objects["WidgetHeel"]
-    
+
     bpy.context.object.pose.bones["cf_pv_knee_R"].custom_shape = bpy.data.objects["WidgetKnee"]
     bpy.context.object.pose.bones["cf_pv_knee_L"].custom_shape = bpy.data.objects["WidgetKnee"]
     bpy.context.object.pose.bones["cf_pv_elbo_R"].custom_shape = bpy.data.objects["WidgetKnee"]
