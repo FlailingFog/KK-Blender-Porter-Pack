@@ -67,7 +67,8 @@ class separate_body(bpy.types.Operator):
             'cf_m_tooth',
             'cf_m_noseline_00',
             'cf_m_mayuge_00',
-            'cf_m_face_00']
+            'cf_m_face_00',
+            'cf_m_face_00.001']
         separateMaterial(bodyMatList)
 
         #Separate the shadowcast if any, placing it in position 3
@@ -125,6 +126,27 @@ class separate_body(bpy.types.Operator):
                 #maybe the collection is already hidden
                 pass
         
+        #also, merge certain materials for the body object to prevent odd shading issues later on
+        bpy.ops.object.select_all(action='DESELECT')
+        body = bpy.data.objects['Body']
+        body.select_set(True)
+        bpy.context.view_layer.objects.active = body
+        bpy.ops.object.mode_set(mode = 'EDIT')
+        
+        merge_list = [
+            'cm_m_body.001',
+            'cf_m_body.001',
+            'cm_m_body',
+            'cf_m_body',
+            'cf_m_face_00',
+            'cf_m_face_00.001']
+        for mat in merge_list:
+            bpy.context.object.active_material_index = body.data.materials.find(mat)
+            bpy.ops.object.material_slot_select()
+        bpy.ops.mesh.remove_doubles(threshold=0.0001)
+
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+
         #and clean up the oprhaned data
         for block in bpy.data.meshes:
             if block.users == 0:

@@ -8,9 +8,8 @@ Usage:
 
 import bpy, os
 from pathlib import Path
-from bpy.props import StringProperty, BoolProperty
-from bpy_extras.io_utils import ImportHelper
-from bpy.types import Operator
+from bpy.props import StringProperty
+from .cleanarmature import get_bone_list
 
 #Stop if this is the wrong folder
 def texture_folder_error(self, context):
@@ -62,8 +61,10 @@ def get_templates_and_apply(directory, useFakeUser, folderCheckEnabled):
             blend_file_missing = False
     
     if blend_file_missing:
-        bpy.context.window_manager.popup_menu(kk_file_error, title="Error", icon='ERROR')
-        return True
+        #grab it from the plugin directory
+        script_dir=Path(__file__).parent
+        template_path=(script_dir / '../KK Shader V5.0.blend').resolve()
+        filepath = str(template_path)
     
     innerpath = 'Material'
     templateList = ['Template Body', 'Template Outline', 'Template Body Outline', 'Template Eye (hitomi)', 'Template Eyebrows (mayuge)', 'Template Eyeline down', 'Template Eyeline up', 'Template Eyewhites (sirome)', 'Template Face', 'Template General', 'Template Hair', 'Template Mixed Metal or Shiny', 'Template Nose', 'Template Shadowcast (Standard)', 'Template Teeth (tooth)']
@@ -143,10 +144,10 @@ def get_templates_and_apply(directory, useFakeUser, folderCheckEnabled):
     shadmat = shadowcast.material_slots[0].material
     shadmat = bpy.data.materials[template.name]
     shadmat.node_tree.nodes['KKShader'].inputs
-    getOut = shadmat.material.node_tree.nodes['KKShader'].inputs['Main Texture'].links[0]
-    shadmat.material.node_tree.links.remove(getOut)
-    getOut = shadmat.material.node_tree.nodes['KKShader'].inputs['Main Alpha'].links[0]
-    shadmat.material.node_tree.links.remove(getOut)
+    getOut = shadmat.node_tree.nodes['KKShader'].inputs['Main Texture'].links[0]
+    shadmat.node_tree.links.remove(getOut)
+    getOut = shadmat.node_tree.nodes['KKShader'].inputs['Main Alpha'].links[0]
+    shadmat.node_tree.links.remove(getOut)
 
     # Get rid of the duplicate node groups cause there's a lot
     #stolen from somewhere
@@ -221,25 +222,33 @@ def apply_bone_widgets():
     bpy.context.object.pose.bones["Spine"].custom_shape = bpy.data.objects["WidgetChest"]
     bpy.context.object.pose.bones["Chest"].custom_shape = bpy.data.objects["WidgetChest"]
     bpy.context.object.pose.bones["Upper Chest"].custom_shape = bpy.data.objects["WidgetChest"]
+
     bpy.context.object.pose.bones["cf_d_bust00"].custom_shape = bpy.data.objects["WidgetBust"]
+    bpy.context.object.pose.bones["cf_d_bust00"].use_custom_shape_bone_size = False
     bpy.context.object.pose.bones["cf_j_bust01_L"].custom_shape = bpy.data.objects["WidgetBreastL"]
+    bpy.context.object.pose.bones["WidgetBreastL"].use_custom_shape_bone_size = False
     bpy.context.object.pose.bones["cf_j_bust01_R"].custom_shape = bpy.data.objects["WidgetBreastR"]
+    bpy.context.object.pose.bones["WidgetBreastR"].use_custom_shape_bone_size = False
+
     bpy.context.object.pose.bones["Left shoulder"].custom_shape = bpy.data.objects["WidgetShoulderL"]
     bpy.context.object.pose.bones["Right shoulder"].custom_shape = bpy.data.objects["WidgetShoulderR"]
     bpy.context.object.pose.bones["cf_pv_hand_R"].custom_shape = bpy.data.objects["WidgetHandR"]
     bpy.context.object.pose.bones["cf_pv_hand_L"].custom_shape = bpy.data.objects["WidgetHandL"]
+
     bpy.context.object.pose.bones["Head"].custom_shape = bpy.data.objects["WidgetHead"]
     bpy.context.object.pose.bones["Eye Controller"].custom_shape = bpy.data.objects["WidgetEye"]
     bpy.context.object.pose.bones["Neck"].custom_shape = bpy.data.objects["WidgetNeck"]
 
     bpy.context.object.pose.bones["Hips"].custom_shape = bpy.data.objects["WidgetHips"]
     bpy.context.object.pose.bones["Pelvis"].custom_shape = bpy.data.objects["WidgetPelvis"]
+
     bpy.context.object.pose.bones["MasterFootIK.R"].custom_shape = bpy.data.objects["WidgetFoot"]
     bpy.context.object.pose.bones["MasterFootIK.L"].custom_shape = bpy.data.objects["WidgetFoot"]
     bpy.context.object.pose.bones["ToeRotator.R"].custom_shape = bpy.data.objects["WidgetToe"]
     bpy.context.object.pose.bones["ToeRotator.L"].custom_shape = bpy.data.objects["WidgetToe"]
     bpy.context.object.pose.bones["HeelIK.R"].custom_shape = bpy.data.objects["WidgetHeel"]
     bpy.context.object.pose.bones["HeelIK.L"].custom_shape = bpy.data.objects["WidgetHeel"]
+    
     bpy.context.object.pose.bones["cf_pv_knee_R"].custom_shape = bpy.data.objects["WidgetKnee"]
     bpy.context.object.pose.bones["cf_pv_knee_L"].custom_shape = bpy.data.objects["WidgetKnee"]
     bpy.context.object.pose.bones["cf_pv_elbo_R"].custom_shape = bpy.data.objects["WidgetKnee"]
@@ -306,9 +315,13 @@ def apply_bone_widgets():
             armature.pose.bones[finger].custom_shape  = bpy.data.objects['WidgetFinger']
         
     try:
-        BPList = ['cf_j_kokan', 'cf_j_ana', 'Vagina_Root', 'Vagina_B', 'Vagina_F', 'Vagina_001_L', 'Vagina_002_L', 'Vagina_003_L', 'Vagina_004_L', 'Vagina_005_L',  'Vagina_001_R', 'Vagina_002_R', 'Vagina_003_R', 'Vagina_004_R', 'Vagina_005_R']
-        for bone in BPList:
-            armature.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetBP']
+        bp_list = get_bone_list('bp_list')
+        toe_list = get_bone_list('toe_list')
+        for bone in bp_list:
+            armature.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetSpine']
+            armature.pose.bones[bone].custom_shape_scale = 1.8
+        for bone in toe_list:
+            armature.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetSpine']
     except:
         #This isn't a BP armature
         pass
@@ -355,7 +368,7 @@ def get_and_load_textures(directory):
     #Add all textures to the correct places in the body template
     currentObj = bpy.data.objects['Body']
     def imageLoad(mat, group, node, image, raw = False):
-        if bpy.data.images[image]:
+        if bpy.data.images.get(image):
             currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].image = bpy.data.images[image]
             if raw:
                 currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].image.colorspace_settings.name = 'Raw'

@@ -92,20 +92,20 @@ def get_bone_list(kind):
     elif kind == 'toe_list':
         #bones that appear on the Better Penetration armature
         return [
-        'Toes0_L', 'Toes1_L', 'Toes10_L',
-        'Toes2_L', 'Toes20_L',
-        'Toes3_L', 'Toes30_L', 'Toes4_L',
+        'cf_j_toes0_L', 'cf_j_toes1_L', 'cf_j_toes10_L',
+        'cf_j_toes2_L', 'cf_j_toes20_L',
+        'cf_j_toes3_L', 'cf_j_toes30_L', 'cf_j_toes4_L',
         
-        'Toes0_R', 'Toes1_R', 'Toes10_R',
-        'Toes2_R', 'Toes20_R',
-        'Toes3_R', 'Toes30_R', 'Toes4_R']
+        'cf_j_toes0_R', 'cf_j_toes1_R', 'cf_j_toes10_R',
+        'cf_j_toes2_R', 'cf_j_toes20_R',
+        'cf_j_toes3_R', 'cf_j_toes30_R', 'cf_j_toes4_R']
         
     elif kind == 'bp_list':
         #more bones that appear on the Better Penetration armature
         return [
-        'cf_j_kokan', 'cf_j_ana', 'Vagina_Root', 'Vagina_B', 'Vagina_F',
-        'Vagina_L_001', 'Vagina_L_002', 'Vagina_L_003', 'Vagina_L_004', 'Vagina_L_005', 
-        'Vagina_R_001', 'Vagina_R_002', 'Vagina_R_003', 'Vagina_R_004', 'Vagina_R_005']
+        'cf_j_kokan', 'cf_j_ana', 'cf_J_Vagina_root', 'cf_J_Vagina_B', 'cf_J_Vagina_F',
+        'cf_J_Vagina_L.001', 'cf_J_Vagina_L.002', 'cf_J_Vagina_L.003', 'cf_J_Vagina_L.004', 'cf_J_Vagina_L.005', 
+        'cf_J_Vagina_R.001', 'cf_J_Vagina_R.002', 'cf_J_Vagina_R.003', 'cf_J_Vagina_R.004', 'cf_J_Vagina_R.005']
 
     elif kind == 'skirt_list':
         return [
@@ -257,7 +257,7 @@ def visually_connect_bones():
     
 def move_accessory_bones():
     armature = bpy.data.objects['Armature']
-    body = bpy.data.objects['Body']
+    clothes = bpy.data.objects['Clothes']
 
     
     #100% repurposed from https://github.com/FlailingFog/KK-Blender-Shader-Pack/issues/29
@@ -281,7 +281,7 @@ def move_accessory_bones():
         return maxWeight
         
     # Find empty vertex groups
-    vertexWeightMap = survey(body)
+    vertexWeightMap = survey(clothes)
     
     dont_move_these = [
         'cf_pv', 'Eyesx',
@@ -309,7 +309,7 @@ def move_accessory_bones():
             else:
                 #else, keep on layer 11
                 bone.hide = False
-                set_armature_layer(bone.name, show_layer = 10)
+                #set_armature_layer(bone.name, show_layer = 10)
 
 
 class clean_armature(bpy.types.Operator):

@@ -583,6 +583,8 @@ def modify_pmx_armature():
     #remove whatever these stupid shadow bones are
     armature.data.edit_bones.remove(armature.data.edit_bones['_dummy_目x.L'])
     armature.data.edit_bones.remove(armature.data.edit_bones['_dummy_目x.R'])
+    armature.data.edit_bones.remove(armature.data.edit_bones['_shadow_目x.L'])
+    armature.data.edit_bones.remove(armature.data.edit_bones['_shadow_目x.R'])
 
     bpy.ops.object.mode_set(mode='OBJECT')
     

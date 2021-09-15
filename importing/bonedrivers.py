@@ -880,6 +880,15 @@ class bone_drivers(bpy.types.Operator):
             categorize_bones()
             rename_bones_for_clarity('modified')
         
+        #set the viewport shading
+        my_areas = bpy.context.workspace.screens[0].areas
+        my_shading = 'MATERIAL'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
+
+        for area in my_areas:
+            for space in area.spaces:
+                if space.type == 'VIEW_3D':
+                    space.shading.type = my_shading 
+        
         return {'FINISHED'}
 
 if __name__ == "__main__":
