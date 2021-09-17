@@ -21,15 +21,15 @@ def import_the_fbx(directory):
     'cf_Ohitomi_R',
     'cf_O_eyeline',
     'cf_O_eyeline_low',
-    'cf_O_face'
+    'cf_O_face',
     'cf_O_tooth',
-    'cf_O_noseline'
+    'cf_O_noseline',
     'o_tang',
     'cf_O_mayuge',
     'o_body_a']
 
     for object in objects:
-        if bpy.data.objects[object + '.001']:
+        if bpy.data.objects.get(object + '.001'):
             bpy.data.objects[object + '.001'].name = object
 
     #rename all the shapekeys to be compatible with the other script
