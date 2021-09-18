@@ -123,9 +123,11 @@ def modify_fbx_armature():
     
     #move armature bones that didn't have animation data up a level
     bpy.ops.object.mode_set(mode='EDIT')
-    armature.data.edit_bones['Center'].parent = None
-    armature.data.edit_bones['Hips'].parent = armature.data.edit_bones['Center']
-    armature.data.edit_bones['cf_pv_root'].parent = armature.data.edit_bones['Center']
+    armature.data.edit_bones['cf_n_height'].parent = None
+    armature.data.edit_bones['cf_j_root'].parent = armature.data.edit_bones['cf_n_height']
+    armature.data.edit_bones['cf_pv_root'].parent = armature.data.edit_bones['cf_n_height']
+    
+    #store unused bones under the pv_root bone
     armature.data.edit_bones['cf_j_root'].parent = armature.data.edit_bones['cf_pv_root']
     armature.data.edit_bones['p_cf_body_bone'].parent = armature.data.edit_bones['cf_pv_root']
     
