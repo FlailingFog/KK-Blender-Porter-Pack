@@ -436,8 +436,14 @@ def get_and_load_textures(directory):
         newNode.name = hairType + ' Textures'
         
         imageLoad(hairMat.name, 'HairTextures', 'hairDetail', hairType+'_DetailMask.png')
-        imageLoad(hairMat.name, 'HairTextures', 'hairFade', hairType+'_ColorMask.png')
-        imageLoad(hairMat.name, 'HairTextures', 'hairShine', hairType+'_HairGloss.png')
+        imageLoad(hairMat.name, 'HairTextures', 'hairFade',   hairType+'_ColorMask.png')
+        imageLoad(hairMat.name, 'HairTextures', 'hairShine',  hairType+'_HairGloss.png')
+        imageLoad(hairMat.name, 'HairTextures', 'hairAlpha',  hairType+'_AlphaMask.png')
+
+        #If no alpha mask wasn't loaded in disconnect the hair alpha node to make sure this piece of hair is visible
+        if hairMat.material.node_tree.nodes['HairTextures'].node_tree.nodes['hairAlpha'].image == None:
+            getOut = hairMat.material.node_tree.nodes['HairTextures'].node_tree.nodes['Group Output'].inputs['Hair alpha'].links[0]
+            hairMat.material.node_tree.nodes['HairTextures'].node_tree.links.remove(getOut)
     
     # Loop through each material in the general object and load the textures, if any, into unique node groups
     # also make unique shader node groups so all materials are unique
@@ -510,14 +516,75 @@ def add_outlines(oneOutlineOnlyMode):
             #An alpha mask for the clothing wasn't present in the Textures folder
             bpy.data.materials['Template Body Outline'].node_tree.nodes['Clipping prevention toggle'].inputs[0].default_value = 0            
         
-    #Give the hair a unique outline group
+    #Give each piece of hair with an alphamask it's own outline group
+    ob = bpy.context.view_layer.objects['Hair']
+    bpy.context.view_layer.objects.active = ob
+
+    #Get the length of the material list before starting
+    outlineStart = len(ob.material_slots)
+    print(outlineStart)
+    
+    #done this way because the range changes length during the loop
+    for matindex in range(0, outlineStart,1):
+        genMat = ob.material_slots[matindex]
+        genType = genMat.name.replace('Template ','')
+        
+        AlphaImage = genMat.material.node_tree.nodes['HairTextures'].node_tree.nodes['hairAlpha'].image
+        if AlphaImage:
+            #set the material as active and move to the top of the material list
+            ob.active_material_index = ob.data.materials.find(genMat.name)
+
+            def moveUp():
+                return bpy.ops.object.material_slot_move(direction='UP')
+
+            while moveUp() != {"CANCELLED"}:
+                pass
+
+            OutlineMat = bpy.data.materials['Template Outline'].copy()
+            OutlineMat.name = 'Outline ' + genType
+            ob.data.materials.append(OutlineMat)
+
+            #redraw UI with each material append to prevent crashing
+            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+
+            #Make the new outline the first outline in the material list
+            ob.active_material_index = ob.data.materials.find(OutlineMat.name)
+            while ob.active_material_index > outlineStart:
+                #print(AlphaImage)
+                #print(ob.active_material_index)
+                moveUp()
+
+            #and after it's done moving...
+                bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)      
+        else:
+            print(genType + ' had no alphamask')
+
+    #separate hair outline loop to prevent crashing
+    if not oneOutlineOnlyMode:
+        bpy.context.view_layer.objects.active = ob
+        for OutlineMat in ob.material_slots:
+            if 'Outline ' in OutlineMat.name:
+                genType = OutlineMat.name.replace('Outline ','')
+                print(genType)
+                AlphaImage = genMat.material.node_tree.nodes['HairTextures'].node_tree.nodes['hairAlpha'].image      
+
+                if AlphaImage:
+                    OutlineMat.material.node_tree.nodes['outlinealpha'].image = AlphaImage
+                    OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs[0].default_value = 1.0
+                
+                OutlineMat.material.node_tree.nodes['outlinetransparency'].inputs[0].default_value = 1.0
+    else:
+        outlineStart = 200
+    
+    #Add a general outline that covers the rest of the materials on the object that don't need transparency
+
     ob = bpy.context.view_layer.objects['Hair']
     bpy.context.view_layer.objects.active = ob
     bpy.ops.object.modifier_add(type='SOLIDIFY')
     mod = ob.modifiers[1]
     mod.thickness = 0.0005
     mod.offset = 1
-    mod.material_offset = 100
+    mod.material_offset = outlineStart
     mod.use_flip_normals = True
     mod.use_rim = False
     mod.name = 'Outline Modifier'
@@ -534,7 +601,6 @@ def add_outlines(oneOutlineOnlyMode):
             
             #Get the length of the material list before starting
             outlineStart = len(ob.material_slots)
-            outlineIndex = 0
             
             #done this way because the range changes length during the loop
             for matindex in range(0, outlineStart,1):
