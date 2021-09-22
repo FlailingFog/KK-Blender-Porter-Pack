@@ -1,9 +1,7 @@
 import bpy
-import os
 from pathlib import Path
 
-from bpy.props import StringProperty, BoolProperty
-from bpy_extras.io_utils import ImportHelper
+from bpy.props import StringProperty
 
 class import_studio(bpy.types.Operator):
     bl_idname = "kkb.importstudio"
@@ -83,7 +81,11 @@ class import_studio(bpy.types.Operator):
                             bpy.data.objects.remove(object)
                             
                     elif object.type == 'MESH':
+                        #set scale and rename the first UV map
                         object.scale = [1, 1, 1]
+                        if object.data.uv_layers[0]:
+                            object.data.uv_layers[0].name = 'UVMap'
+                        
                         for material_slot in object.material_slots:
                             material = material_slot.material
                             nodes = material.node_tree.nodes

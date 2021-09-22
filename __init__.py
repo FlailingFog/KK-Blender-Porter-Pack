@@ -14,7 +14,7 @@ bl_info = {
 import bpy
 from bpy.utils import register_class, unregister_class
 
-from bpy.types import Panel, PropertyGroup, Scene, WindowManager
+from bpy.types import Scene
 from bpy.props import PointerProperty
 
 from .importing.bonedrivers import bone_drivers

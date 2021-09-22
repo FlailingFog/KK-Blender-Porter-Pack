@@ -1,5 +1,5 @@
 #Finalize the pmx file
-#some code stolen from https://github.com/FlailingFog/KK-Blender-Shader-Pack/issues/29 !
+#some code stolen from MediaMoots here https://github.com/FlailingFog/KK-Blender-Shader-Pack/issues/29
 
 import bpy
 from mathutils import Vector
@@ -7,6 +7,7 @@ import math
 
 # makes the pmx armature and bone names match the koikatsu armature structure and bone names
 def standardize_armature():
+    bpy.ops.object.mode_set(mode='OBJECT')
     armature = bpy.data.objects['Model_arm']
     body = bpy.data.objects['Model_mesh']
     empty = bpy.data.objects['Model']
@@ -34,8 +35,8 @@ def standardize_armature():
     '首':'cf_j_neck',
     '頭':'cf_j_head',
     '両目x':'Eyesx',
-    '目x.L':'Eyex_L',
-    '目x.R':'Eyex_R',
+    '目x.L':'cf_J_hitomi_tx_L',
+    '目x.R':'cf_J_hitomi_tx_R',
     '腕.L':'cf_j_arm00_L',
     '腕.R':'cf_j_arm00_R',
     'ひじ.L':'cf_j_forearm01_L',
@@ -187,8 +188,13 @@ def reset_and_reroll_bones():
         flip_finger(finger)
     
     #reset the orientation for the leg/foot bones
+    height_adder = Vector((0,0,0.1))
     def reorient(bone):
-        armature.data.edit_bones[bone].tail = armature.data.edit_bones[bone].head + height_adder  
+        print(bone)
+        armature.data.edit_bones[bone].tail = bpy.data.objects['Armature'].data.edit_bones[bone].head + height_adder
+        print(bone)
+        print(height_adder)  
+
     reorient('cf_j_thigh00_R')
     reorient('cf_j_thigh00_L')
     reorient('cf_j_leg01_R')
@@ -530,87 +536,7 @@ def reset_and_reroll_bones():
             armature.data.edit_bones[bone].roll = reroll_data[bone]
     
     bpy.ops.object.mode_set(mode='EDIT')
-
-def rename_bones_for_clarity(action):
-    armature = bpy.data.objects['Armature']
-    
-    #rename core bones to match unity bone names (?)
-    unity_rename_dict = {
-    'cf_n_height':'Center',
-    'cf_j_hips':'Hips',
-    'cf_j_waist01':'Pelvis',
-    'cf_j_spine01':'Spine',
-    'cf_j_spine02':'Chest',
-    'cf_j_spine03':'Upper Chest',
-    'cf_j_neck':'Neck',
-    'cf_j_head':'Head',
-    'cf_j_shoulder_L':'Left shoulder',
-    'cf_j_shoulder_R':'Right shoulder',
-    'cf_j_arm00_L':'Left arm',
-    'cf_j_arm00_R':'Right arm',
-    'cf_j_forearm01_L':'Left elbow',
-    'cf_j_forearm01_R':'Right elbow',
-    'cf_j_hand_R':'Right wrist',
-    'cf_j_hand_L':'Left wrist',
-
-    'cf_j_thumb01_L':'Thumb0_L',
-    'cf_j_thumb02_L':'Thumb1_L',
-    'cf_j_thumb03_L':'Thumb2_L',
-    'cf_j_ring01_L':'RingFinger1_L',
-    'cf_j_ring02_L':'RingFinger2_L',
-    'cf_j_ring03_L':'RingFinger3_L',
-    'cf_j_middle01_L':'MiddleFinger1_L',
-    'cf_j_middle02_L':'MiddleFinger2_L',
-    'cf_j_middle03_L':'MiddleFinger3_L',
-    'cf_j_little01_L':'LittleFinger1_L',
-    'cf_j_little02_L':'LittleFinger2_L',
-    'cf_j_little03_L':'LittleFinger3_L',
-    'cf_j_index01_L':'IndexFinger1_L',
-    'cf_j_index02_L':'IndexFinger2_L',
-    'cf_j_index03_L':'IndexFinger3_L',
-
-    'cf_j_thumb01_R':'Thumb0_R',
-    'cf_j_thumb02_R':'Thumb1_R',
-    'cf_j_thumb03_R':'Thumb2_R',
-    'cf_j_ring01_R':'RingFinger1_R',
-    'cf_j_ring02_R':'RingFinger2_R',
-    'cf_j_ring03_R':'RingFinger3_R',
-    'cf_j_middle01_R':'MiddleFinger1_R',
-    'cf_j_middle02_R':'MiddleFinger2_R',
-    'cf_j_middle03_R':'MiddleFinger3_R',
-    'cf_j_little01_R':'LittleFinger1_R',
-    'cf_j_little02_R':'LittleFinger2_R',
-    'cf_j_little03_R':'LittleFinger3_R',
-    'cf_j_index01_R':'IndexFinger1_R',
-    'cf_j_index02_R':'IndexFinger2_R',
-    'cf_j_index03_R':'IndexFinger3_R',
-
-    'cf_j_thigh00_L':'Left leg',
-    'cf_j_thigh00_R':'Right leg',
-    'cf_j_leg01_L':'Left knee',
-    'cf_j_leg01_R':'Right knee',
-    'cf_j_foot_L':'Left ankle',
-    'cf_j_foot_R':'Right ankle',
-    'cf_j_toes_L':'Left toe',
-    'cf_j_toes_R':'Right toe'
-    }
-
-    if action == 'modified':
-        for bone in armature.data.bones:
-            if bone.name in unity_rename_dict:
-                bone.name = unity_rename_dict[bone.name]
-    
-    elif action == 'stock':
-        for bone in unity_rename_dict:
-            if armature.data.bones.get(unity_rename_dict[bone]):
-                armature.data.bones[unity_rename_dict[bone]].name = bone
-
-    elif action == 'animation':
-        animation_armature = bpy.data.objects['Animation Armature']
-        for bone in unity_rename_dict:
-            if animation_armature.data.bones.get(bone):
-                animation_armature.data.bones[bone].name = unity_rename_dict[bone]
-    
+  
 #slightly modify the armature to support IKs
 def modify_pmx_armature():
     armature = bpy.data.objects['Armature']
@@ -619,11 +545,12 @@ def modify_pmx_armature():
     armature.select_set(True)
     bpy.context.view_layer.objects.active=armature
     bpy.ops.object.mode_set(mode='EDIT')
-    armature.data.edit_bones['Center'].parent = None
+    armature.data.edit_bones['cf_n_height'].parent = None
     armature.data.edit_bones['cf_j_root'].parent = armature.data.edit_bones['cf_pv_root']
     armature.data.edit_bones['p_cf_body_bone'].parent = armature.data.edit_bones['cf_pv_root']
     
     #relocate the tail of some bones to make IKs easier
+    #this is different from the one in finalizefbx.py
     def relocate_tail(bone1, bone2, direction):
         if direction == 'leg':
             armature.data.edit_bones[bone1].tail.z = armature.data.edit_bones[bone2].head.z
@@ -643,15 +570,22 @@ def modify_pmx_armature():
             armature.data.edit_bones[bone1].tail.z = armature.data.edit_bones[bone2].head.z
             armature.data.edit_bones[bone1].roll = 0
     
-    relocate_tail('Right knee', 'Right ankle', 'leg')
-    relocate_tail('Left knee', 'Left ankle', 'leg')
-    relocate_tail('Right ankle', 'Right toe', 'foot')
-    relocate_tail('Left ankle', 'Left toe', 'foot')
-    relocate_tail('Right elbow', 'Right wrist', 'arm')
-    relocate_tail('Left elbow', 'Left wrist', 'arm')
-    relocate_tail('cf_pv_hand_R', 'Right wrist', 'hand')
-    relocate_tail('cf_pv_hand_L', 'Left wrist', 'hand')
+    relocate_tail('cf_j_leg01_R', 'cf_j_foot_R', 'leg')
+    relocate_tail('cf_j_foot_R', 'cf_j_toes_R', 'foot')
+    relocate_tail('cf_j_forearm01_R', 'cf_j_hand_R', 'arm')
+    relocate_tail('cf_pv_hand_R', 'cf_j_hand_R', 'hand')
+
+    relocate_tail('cf_j_leg01_L', 'cf_j_foot_L', 'leg')
+    relocate_tail('cf_j_foot_L', 'cf_j_toes_L', 'foot')
+    relocate_tail('cf_j_forearm01_L', 'cf_j_hand_L', 'arm')
+    relocate_tail('cf_pv_hand_L', 'cf_j_hand_L', 'hand')
     
+    #remove whatever these stupid shadow bones are
+    armature.data.edit_bones.remove(armature.data.edit_bones['_dummy_目x.L'])
+    armature.data.edit_bones.remove(armature.data.edit_bones['_dummy_目x.R'])
+    armature.data.edit_bones.remove(armature.data.edit_bones['_shadow_目x.L'])
+    armature.data.edit_bones.remove(armature.data.edit_bones['_shadow_目x.R'])
+
     bpy.ops.object.mode_set(mode='OBJECT')
     
 class finalize_pmx(bpy.types.Operator):
@@ -673,7 +607,6 @@ class finalize_pmx(bpy.types.Operator):
         standardize_armature()
         reset_and_reroll_bones()
         if modify_armature:
-            rename_bones_for_clarity('modified')
             modify_pmx_armature()
         
         #Set the view transform 

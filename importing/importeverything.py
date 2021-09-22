@@ -8,9 +8,8 @@ Usage:
 
 import bpy, os
 from pathlib import Path
-from bpy.props import StringProperty, BoolProperty
-from bpy_extras.io_utils import ImportHelper
-from bpy.types import Operator
+from bpy.props import StringProperty
+from .cleanarmature import get_bone_list
 
 #Stop if this is the wrong folder
 def texture_folder_error(self, context):
@@ -62,8 +61,10 @@ def get_templates_and_apply(directory, useFakeUser, folderCheckEnabled):
             blend_file_missing = False
     
     if blend_file_missing:
-        bpy.context.window_manager.popup_menu(kk_file_error, title="Error", icon='ERROR')
-        return True
+        #grab it from the plugin directory
+        script_dir=Path(__file__).parent
+        template_path=(script_dir / '../KK Shader V5.0.blend').resolve()
+        filepath = str(template_path)
     
     innerpath = 'Material'
     templateList = ['Template Body', 'Template Outline', 'Template Body Outline', 'Template Eye (hitomi)', 'Template Eyebrows (mayuge)', 'Template Eyeline down', 'Template Eyeline up', 'Template Eyewhites (sirome)', 'Template Face', 'Template General', 'Template Hair', 'Template Mixed Metal or Shiny', 'Template Nose', 'Template Shadowcast (Standard)', 'Template Teeth (tooth)']
@@ -136,6 +137,18 @@ def get_templates_and_apply(directory, useFakeUser, folderCheckEnabled):
                 template.name = 'Template ' + original.name
                 original.material = bpy.data.materials[template.name]
     
+    #give the shadowcast object the general template as well
+    shadowcast = bpy.data.objects['Shadowcast']
+    template = bpy.data.materials['Template General'].copy()
+    template.name = 'Template Shadowcast'
+    shadmat = shadowcast.material_slots[0].material
+    shadmat = bpy.data.materials[template.name]
+    shadmat.node_tree.nodes['KKShader'].inputs
+    getOut = shadmat.node_tree.nodes['KKShader'].inputs['Main Texture'].links[0]
+    shadmat.node_tree.links.remove(getOut)
+    getOut = shadmat.node_tree.nodes['KKShader'].inputs['Main Alpha'].links[0]
+    shadmat.node_tree.links.remove(getOut)
+
     # Get rid of the duplicate node groups cause there's a lot
     #stolen from somewhere
     def eliminate(node):
@@ -209,25 +222,33 @@ def apply_bone_widgets():
     bpy.context.object.pose.bones["Spine"].custom_shape = bpy.data.objects["WidgetChest"]
     bpy.context.object.pose.bones["Chest"].custom_shape = bpy.data.objects["WidgetChest"]
     bpy.context.object.pose.bones["Upper Chest"].custom_shape = bpy.data.objects["WidgetChest"]
+
     bpy.context.object.pose.bones["cf_d_bust00"].custom_shape = bpy.data.objects["WidgetBust"]
+    bpy.context.object.pose.bones["cf_d_bust00"].use_custom_shape_bone_size = False
     bpy.context.object.pose.bones["cf_j_bust01_L"].custom_shape = bpy.data.objects["WidgetBreastL"]
+    bpy.context.object.pose.bones["cf_j_bust01_L"].use_custom_shape_bone_size = False
     bpy.context.object.pose.bones["cf_j_bust01_R"].custom_shape = bpy.data.objects["WidgetBreastR"]
+    bpy.context.object.pose.bones["cf_j_bust01_R"].use_custom_shape_bone_size = False
+
     bpy.context.object.pose.bones["Left shoulder"].custom_shape = bpy.data.objects["WidgetShoulderL"]
     bpy.context.object.pose.bones["Right shoulder"].custom_shape = bpy.data.objects["WidgetShoulderR"]
     bpy.context.object.pose.bones["cf_pv_hand_R"].custom_shape = bpy.data.objects["WidgetHandR"]
     bpy.context.object.pose.bones["cf_pv_hand_L"].custom_shape = bpy.data.objects["WidgetHandL"]
+
     bpy.context.object.pose.bones["Head"].custom_shape = bpy.data.objects["WidgetHead"]
     bpy.context.object.pose.bones["Eye Controller"].custom_shape = bpy.data.objects["WidgetEye"]
     bpy.context.object.pose.bones["Neck"].custom_shape = bpy.data.objects["WidgetNeck"]
 
     bpy.context.object.pose.bones["Hips"].custom_shape = bpy.data.objects["WidgetHips"]
     bpy.context.object.pose.bones["Pelvis"].custom_shape = bpy.data.objects["WidgetPelvis"]
+
     bpy.context.object.pose.bones["MasterFootIK.R"].custom_shape = bpy.data.objects["WidgetFoot"]
     bpy.context.object.pose.bones["MasterFootIK.L"].custom_shape = bpy.data.objects["WidgetFoot"]
     bpy.context.object.pose.bones["ToeRotator.R"].custom_shape = bpy.data.objects["WidgetToe"]
     bpy.context.object.pose.bones["ToeRotator.L"].custom_shape = bpy.data.objects["WidgetToe"]
     bpy.context.object.pose.bones["HeelIK.R"].custom_shape = bpy.data.objects["WidgetHeel"]
     bpy.context.object.pose.bones["HeelIK.L"].custom_shape = bpy.data.objects["WidgetHeel"]
+
     bpy.context.object.pose.bones["cf_pv_knee_R"].custom_shape = bpy.data.objects["WidgetKnee"]
     bpy.context.object.pose.bones["cf_pv_knee_L"].custom_shape = bpy.data.objects["WidgetKnee"]
     bpy.context.object.pose.bones["cf_pv_elbo_R"].custom_shape = bpy.data.objects["WidgetKnee"]
@@ -294,17 +315,28 @@ def apply_bone_widgets():
             armature.pose.bones[finger].custom_shape  = bpy.data.objects['WidgetFinger']
         
     try:
-        BPList = ['cf_j_kokan', 'cf_j_ana', 'Vagina_Root', 'Vagina_B', 'Vagina_F', 'Vagina_001_L', 'Vagina_002_L', 'Vagina_003_L', 'Vagina_004_L', 'Vagina_005_L',  'Vagina_001_R', 'Vagina_002_R', 'Vagina_003_R', 'Vagina_004_R', 'Vagina_005_R']
-        for bone in BPList:
-            armature.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetBP']
+        bp_list = get_bone_list('bp_list')
+        toe_list = get_bone_list('toe_list')
+        for bone in bp_list:
+            armature.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetSpine']
+            armature.pose.bones[bone].custom_shape_scale = 1.8
+        for bone in toe_list:
+            armature.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetSpine']
     except:
         #This isn't a BP armature
         pass
     
-    
-    #Make both bone layers visible
-    firstTwoBoneLayers = (True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False)
-    bpy.ops.armature.armature_layers(layers=firstTwoBoneLayers)
+    #Make the body and clothes layers visible
+    all_layers = [
+    False, False, False, False, False, False, False, False,
+    False, False, False, False, False, False, False, False,
+    False, False, False, False, False, False, False, False,
+    False, False, False, False, False, False, False, False]
+
+    all_layers[0] = True
+    all_layers[8] = True
+    all_layers[9] = True
+    bpy.ops.armature.armature_layers(layers=all_layers)
     bpy.context.object.data.display_type = 'STICK'
     
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -336,11 +368,15 @@ def get_and_load_textures(directory):
     #Add all textures to the correct places in the body template
     currentObj = bpy.data.objects['Body']
     def imageLoad(mat, group, node, image, raw = False):
-        try:
+        if bpy.data.images.get(image):
             currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].image = bpy.data.images[image]
             if raw:
                 currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].image.colorspace_settings.name = 'Raw'
-        except:
+        elif 'MainCol' in image:
+            if bpy.data.images[image[0:len(image)-4] + '.dds']:
+                currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].image = bpy.data.images[image[0:len(image)-4] + '.dds']
+            print('.dds and .png files not found, skipping: ' + image[0:len(image)-4] + '.dds')
+        else:
             print('File not found, skipping: ' + image)
         
     imageLoad('Template Body', 'BodyTextures', 'BodyMC', 'cf_body_00_mc-RGB24.tga', True)
@@ -348,7 +384,6 @@ def get_and_load_textures(directory):
     imageLoad('Template Body', 'BodyTextures', 'BodyLine', 'cf_m_body_LineMask.png', True)
     imageLoad('Template Body', 'BodyTextures', 'BodyMD', 'cm_m_body_DetailMask.png', True) #cmm male
     imageLoad('Template Body', 'BodyTextures', 'BodyLine', 'cm_m_body_LineMask.png', True)
-    #imageLoad('BodyOptional', '')
     
     imageLoad('Template Body', 'NippleTextures', 'NipR', 'cf_m_body_overtex1.png') #cfm female
     imageLoad('Template Body', 'NippleTextures', 'NipL', 'cf_m_body_overtex1.png')
@@ -376,7 +411,9 @@ def get_and_load_textures(directory):
     imageLoad('Template Eyewhites (sirome)', 'EyewhiteTex', 'Eyewhite', 'cf_m_sirome_00_MainTex.png')
     
     imageLoad('Template Eyeline up', 'Eyeline', 'EyelineUp', 'cf_m_eyeline_00_up_MainTex.png')
+    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineUp.001', 'cf_m_eyeline_00_up_MainTex.png')
     imageLoad('Template Eyeline up', 'Eyeline', 'EyelineDown', 'cf_m_eyeline_down_MainTex.png')
+    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineDown.001', 'cf_m_eyeline_down_MainTex.png')
     
     imageLoad('Template Eye (hitomi)', 'EyeTex', 'eyeAlpha', 'cf_m_hitomi_00_MainTex.png')
     imageLoad('Template Eye (hitomi)', 'EyeTex', 'EyeHU', 'cf_m_hitomi_00_overtex1.png')
@@ -399,8 +436,14 @@ def get_and_load_textures(directory):
         newNode.name = hairType + ' Textures'
         
         imageLoad(hairMat.name, 'HairTextures', 'hairDetail', hairType+'_DetailMask.png')
-        imageLoad(hairMat.name, 'HairTextures', 'hairFade', hairType+'_ColorMask.png')
-        imageLoad(hairMat.name, 'HairTextures', 'hairShine', hairType+'_HairGloss.png')
+        imageLoad(hairMat.name, 'HairTextures', 'hairFade',   hairType+'_ColorMask.png')
+        imageLoad(hairMat.name, 'HairTextures', 'hairShine',  hairType+'_HairGloss.png')
+        imageLoad(hairMat.name, 'HairTextures', 'hairAlpha',  hairType+'_AlphaMask.png')
+
+        #If no alpha mask wasn't loaded in disconnect the hair alpha node to make sure this piece of hair is visible
+        if hairMat.material.node_tree.nodes['HairTextures'].node_tree.nodes['hairAlpha'].image == None:
+            getOut = hairMat.material.node_tree.nodes['HairTextures'].node_tree.nodes['Group Output'].inputs['Hair alpha'].links[0]
+            hairMat.material.node_tree.nodes['HairTextures'].node_tree.links.remove(getOut)
     
     # Loop through each material in the general object and load the textures, if any, into unique node groups
     # also make unique shader node groups so all materials are unique
@@ -473,14 +516,75 @@ def add_outlines(oneOutlineOnlyMode):
             #An alpha mask for the clothing wasn't present in the Textures folder
             bpy.data.materials['Template Body Outline'].node_tree.nodes['Clipping prevention toggle'].inputs[0].default_value = 0            
         
-    #Give the hair a unique outline group
+    #Give each piece of hair with an alphamask it's own outline group
+    ob = bpy.context.view_layer.objects['Hair']
+    bpy.context.view_layer.objects.active = ob
+
+    #Get the length of the material list before starting
+    outlineStart = len(ob.material_slots)
+    print(outlineStart)
+    
+    #done this way because the range changes length during the loop
+    for matindex in range(0, outlineStart,1):
+        genMat = ob.material_slots[matindex]
+        genType = genMat.name.replace('Template ','')
+        
+        AlphaImage = genMat.material.node_tree.nodes['HairTextures'].node_tree.nodes['hairAlpha'].image
+        if AlphaImage:
+            #set the material as active and move to the top of the material list
+            ob.active_material_index = ob.data.materials.find(genMat.name)
+
+            def moveUp():
+                return bpy.ops.object.material_slot_move(direction='UP')
+
+            while moveUp() != {"CANCELLED"}:
+                pass
+
+            OutlineMat = bpy.data.materials['Template Outline'].copy()
+            OutlineMat.name = 'Outline ' + genType
+            ob.data.materials.append(OutlineMat)
+
+            #redraw UI with each material append to prevent crashing
+            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+
+            #Make the new outline the first outline in the material list
+            ob.active_material_index = ob.data.materials.find(OutlineMat.name)
+            while ob.active_material_index > outlineStart:
+                #print(AlphaImage)
+                #print(ob.active_material_index)
+                moveUp()
+
+            #and after it's done moving...
+                bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)      
+        else:
+            print(genType + ' had no alphamask')
+
+    #separate hair outline loop to prevent crashing
+    if not oneOutlineOnlyMode:
+        bpy.context.view_layer.objects.active = ob
+        for OutlineMat in ob.material_slots:
+            if 'Outline ' in OutlineMat.name:
+                genType = OutlineMat.name.replace('Outline ','')
+                print(genType)
+                AlphaImage = genMat.material.node_tree.nodes['HairTextures'].node_tree.nodes['hairAlpha'].image      
+
+                if AlphaImage:
+                    OutlineMat.material.node_tree.nodes['outlinealpha'].image = AlphaImage
+                    OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs[0].default_value = 1.0
+                
+                OutlineMat.material.node_tree.nodes['outlinetransparency'].inputs[0].default_value = 1.0
+    else:
+        outlineStart = 200
+    
+    #Add a general outline that covers the rest of the materials on the object that don't need transparency
+
     ob = bpy.context.view_layer.objects['Hair']
     bpy.context.view_layer.objects.active = ob
     bpy.ops.object.modifier_add(type='SOLIDIFY')
     mod = ob.modifiers[1]
     mod.thickness = 0.0005
     mod.offset = 1
-    mod.material_offset = 100
+    mod.material_offset = outlineStart
     mod.use_flip_normals = True
     mod.use_rim = False
     mod.name = 'Outline Modifier'
@@ -497,7 +601,6 @@ def add_outlines(oneOutlineOnlyMode):
             
             #Get the length of the material list before starting
             outlineStart = len(ob.material_slots)
-            outlineIndex = 0
             
             #done this way because the range changes length during the loop
             for matindex in range(0, outlineStart,1):
@@ -644,15 +747,13 @@ class import_everything(bpy.types.Operator):
         if texture_error:
             return {'FINISHED'}
         
-        #redraw the UI after each operation to let the user know the plugin is actually doing something
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
         add_outlines(oneOutlineOnlyMode)
         if modify_armature and bpy.data.objects['Armature'].pose.bones["Spine"].custom_shape == None:
             apply_bone_widgets()
         hide_widgets()
-        
-        #redraw the UI after each operation to let the user know the plugin is actually doing something
+
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
         #clean data
