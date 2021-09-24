@@ -52,7 +52,7 @@ class PlaceholderProperties(PropertyGroup):
     texturecheck_bool : BoolProperty(
     name="Enable or Disable",
     description="Disable this if you're 100% sure you're selecting the Textures folder correctly",
-    default = True)
+    default = False)
     
     templates_bool : BoolProperty(
     name="Enable or Disable",
