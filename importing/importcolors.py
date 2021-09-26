@@ -550,7 +550,7 @@ def update_shaders(json, light):
 
     ### Get json groups
     for idx, item in enumerate(json):
-        if idx > 3:
+        if idx > 4:
             shader_name = item['materialName'] + ' Shader'
             if shader_name in node_groups:
                 item_data.append(item)
@@ -573,34 +573,43 @@ def update_shaders(json, light):
     face_colors.append(to_rgba(color_to_KK(json_to_color(json[1]['colorInfo'][5]), active_lut) / 255))
     face_colors.append(to_rgba(color_to_KK(json_to_color(json[1]['colorInfo'][6]), active_lut) / 255))
 
-    tongue_color = to_rgba(color_to_KK(json_to_color(json[2]['colorInfo'][0]), active_lut) / 255)
+    kage_color = to_rgba(color_to_KK(json_to_color(json[2]['colorInfo'][0]), active_lut) / 255)
 
-    hair_base_color = to_rgba(color_to_KK(json_to_color(json[3]['colorInfo'][0]), active_lut) / 255)
-    hair_root_color = to_rgba(color_to_KK(json_to_color(json[3]['colorInfo'][1]), active_lut) / 255)
-    hair_tip_color = to_rgba(color_to_KK(json_to_color(json[3]['colorInfo'][2]), active_lut) / 255)
-    hair_outline_color = to_rgba(color_to_KK(json_to_color(json[3]['colorInfo'][3]), active_lut) / 255)
+    tongue_color = to_rgba(color_to_KK(json_to_color(json[3]['colorInfo'][0]), active_lut) / 255)
+
+    hair_base_color = to_rgba(color_to_KK(json_to_color(json[4]['colorInfo'][0]), active_lut) / 255)
+    hair_root_color = to_rgba(color_to_KK(json_to_color(json[4]['colorInfo'][1]), active_lut) / 255)
+    hair_tip_color = to_rgba(color_to_KK(json_to_color(json[4]['colorInfo'][2]), active_lut) / 255)
+    hair_outline_color = to_rgba(color_to_KK(json_to_color(json[4]['colorInfo'][3]), active_lut) / 255)
 
     ### Set shader colors
     ## Body Shader
     shader_inputs = body_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
-    shader_inputs['Body MC mask intensity'].default_value = 1.5
-    shader_inputs['Skin color' if light else 'Dark skin color'].default_value = body_colors[0]
-    shader_inputs['Line mask color' if light else 'Line Mask multiplier'].default_value = body_colors[1]
-    shader_inputs['Skin detail color' if light else 'Skin detail multiplier'].default_value = body_colors[1]
-    shader_inputs['Nail Color'].default_value = body_colors[2]
+    shader_inputs['Skin color'].default_value = body_colors[0]
+    shader_inputs['Skin type color'].default_value = body_colors[1]
+    shader_inputs['Skin type intensity (Base)'].default_value = 0.5
+    shader_inputs['Skin type intensity'].default_value = 1
+    shader_inputs['Skin detail color'].default_value = body_colors[1]
+    shader_inputs['Skin detail intensity'].default_value = 0.5
+    shader_inputs['Nail Color (multiplied)'].default_value = body_colors[2]
+    shader_inputs['Skin gloss intensity'].default_value = 1
+    shader_inputs['Overlay 1 color'].default_value = body_colors[4]
+
     shader_inputs['Nipple base'].default_value = body_colors[3]
     shader_inputs['Nipple base 2'].default_value = [1, 0, 0, 1] # Red
     shader_inputs['Nipple shine'].default_value = np.array(body_colors[3]) * 1.5
     shader_inputs['Nipple rim'].default_value = np.array(body_colors[3]) * 0.5
-    shader_inputs['Overlay 1 color'].default_value = body_colors[4]
+
 
     ## Face Shader
     shader_inputs = face_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
-    shader_inputs['Skin color' if light else 'Dark skin color'].default_value = body_colors[0]
-    shader_inputs['Skin detail color'].default_value = body_colors[0]
-    shader_inputs['Mouth interior color'].default_value = [1, 1, 1, 1] # Need to be from main tex
+    shader_inputs['Skin color'].default_value = body_colors[0]
+    shader_inputs['Skin detail color'].default_value = body_colors[1]
     shader_inputs['Light blush color'].default_value = face_colors[5]
+    shader_inputs['Mouth interior multiplier'].default_value = [1, 1, 1, 1]
+    
     shader_inputs['Overlay 1 color'].default_value = face_colors[6]
+
 
     ## Eyebrow Shader
     shader_inputs = eyebrows_shader_node_group.nodes['colorsLight'].inputs
@@ -610,6 +619,7 @@ def update_shaders(json, light):
     shader_inputs = eyeline_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
     shader_inputs['Eyeline base color'].default_value = [0, 0, 0, 1]
     shader_inputs['Eyeline fade color'].default_value = face_colors[1]
+    shader_inputs['Eyeline shadow color'].default_value = kage_color
 
     ## Tongue Shader
     shader_inputs = tongue_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
