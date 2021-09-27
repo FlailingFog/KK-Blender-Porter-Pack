@@ -646,6 +646,10 @@ def update_shaders(json, light):
         green_channel = to_rgba(color_to_KK(json_to_color(item['colorInfo'][1]), active_lut) / 255)
         blue_channel = to_rgba(color_to_KK(json_to_color(item['colorInfo'][2]), active_lut) / 255)
         shader_inputs = item_shader_node_groups[idx].nodes['colorsLight' if light else 'colorsDark'].inputs
+
+        if not light:
+            shader_inputs['Automatically darken color?'].default_value = 0
+
         shader_inputs['Use Color mask instead? (1 = yes)'].default_value = 1
         shader_inputs['Manually set detail color? (1 = yes)'].default_value = 0
         shader_inputs['Detail intensity (green)'].default_value = 0.1
