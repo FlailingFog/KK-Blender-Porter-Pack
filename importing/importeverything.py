@@ -483,6 +483,12 @@ def get_and_load_textures(directory):
                 imageLoad(genMat.name, 'Gentex', 'MainDet', genType+'_DetailMask.png')
                 imageLoad(genMat.name, 'Gentex', 'MainNorm', genType+'_NormalMap.png', True)
                 imageLoad(genMat.name, 'Gentex', 'Alphamask', genType+'_AlphaMask.png')
+
+                # imageLoad(genMat.name, 'Gentex', 'PatBase', genType+'_PatternMask1.png')
+                
+                imageLoad(genMat.name, 'Gentex', 'PatRed', genType+'_PatternMask1.png')
+                imageLoad(genMat.name, 'Gentex', 'PatGreen', genType+'_PatternMask2.png')
+                imageLoad(genMat.name, 'Gentex', 'PatBlue', genType+'_PatternMask3.png')
                 
                 MainImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Maintex'].image
                 AlphaImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Alphamask'].image

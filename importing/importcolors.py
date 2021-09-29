@@ -642,22 +642,38 @@ def update_shaders(json, light):
 
     ## Accessories/Items Shader
     for idx, item in enumerate(item_data):
-        red_channel = to_rgba(color_to_KK(json_to_color(item['colorInfo'][0]), active_lut) / 255)
-        green_channel = to_rgba(color_to_KK(json_to_color(item['colorInfo'][1]), active_lut) / 255)
-        blue_channel = to_rgba(color_to_KK(json_to_color(item['colorInfo'][2]), active_lut) / 255)
-        shader_inputs = item_shader_node_groups[idx].nodes['colorsLight' if light else 'colorsDark'].inputs
+        pattern_input_names = [
+            'Pattern color (red)',
+            'Pattern color (green)',
+            'Pattern color (blue)'
+        ]
 
+        color_input_names = [
+            'Color mask color (red)',
+            'Color mask color (green)',
+            'Color mask color (blue)'
+        ]
+
+        shader_inputs = item_shader_node_groups[idx].nodes['colorsLight' if light else 'colorsDark'].inputs
         if not light:
             shader_inputs['Automatically darken color?'].default_value = 0
-
-        shader_inputs['Use Color mask instead? (1 = yes)'].default_value = 1
         shader_inputs['Manually set detail color? (1 = yes)'].default_value = 0
         shader_inputs['Detail intensity (green)'].default_value = 0.1
         shader_inputs['Detail intensity (blue)'].default_value = 0.1
+        shader_inputs['Use Color mask instead? (1 = yes)'].default_value = 1
+
         shader_inputs['Color mask color (base)'].default_value = [1, 1, 1, 1]
-        shader_inputs['Color mask color (red)'].default_value = red_channel
-        shader_inputs['Color mask color (green)'].default_value = green_channel
-        shader_inputs['Color mask color (blue)'].default_value = blue_channel
+        for i, colorItem in enumerate(item['colorInfo']):
+            if i < len(color_input_names):
+                color_channel = to_rgba(color_to_KK(json_to_color(colorItem), active_lut) / 255)
+                shader_inputs[color_input_names[i]].default_value = color_channel
+
+        shader_inputs['Pattern (base)'].default_value = [1, 1, 1, 1]
+        for i, patternColor in enumerate(item['patternColors']):
+            if i < len(pattern_input_names):
+                color_channel = to_rgba(color_to_KK(json_to_color(patternColor), active_lut) / 255)
+                shader_inputs[pattern_input_names[i]].default_value = color_channel
+        
 
 def set_color_management():
     bpy.data.scenes[0].display_settings.display_device = 'sRGB'
