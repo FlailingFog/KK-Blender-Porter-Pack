@@ -382,17 +382,15 @@ def get_and_load_textures(directory):
     imageLoad('Template Body', 'BodyTextures', 'BodyMC', 'cf_m_body_ColorMask.png')
     imageLoad('Template Body', 'BodyTextures', 'BodyMD', 'cf_m_body_DetailMask.png') #cfm female
     imageLoad('Template Body', 'BodyTextures', 'BodyLine', 'cf_m_body_LineMask.png')
-
-    imageLoad('Template Body', 'BodyTextures', 'Image Texture.001', 'cf_m_body_overtex2.png') #pubic hair
-
     imageLoad('Template Body', 'BodyTextures', 'BodyNorm', 'cf_m_body_NormalMap.png')
-
 
 
     imageLoad('Template Body', 'BodyTextures', 'BodyMD', 'cm_m_body_DetailMask.png') #cmm male
     imageLoad('Template Body', 'BodyTextures', 'BodyLine', 'cm_m_body_LineMask.png')
     
-    imageLoad('Template Body', 'NippleTextures', 'NipL.001', 'cf_m_body_MainTex.png') #chara main texture
+    imageLoad('Template Body', 'NippleTextures', 'Genital', 'cf_m_body_MainTex.png') #chara main texture
+    imageLoad('Template Body', 'NippleTextures', 'Underhair', 'cf_m_body_overtex2.png') #pubic hair
+
     imageLoad('Template Body', 'NippleTextures', 'NipR', 'cf_m_body_overtex1.png') #cfm female
     imageLoad('Template Body', 'NippleTextures', 'NipL', 'cf_m_body_overtex1.png')
     imageLoad('Template Body', 'NippleTextures', 'NipR', 'cm_m_body_overtex1.png') #cmm male
