@@ -11,8 +11,8 @@ from bpy.props import StringProperty, BoolProperty
 
 
 lut_light = 'Lut_TimeDay.png'
-lut_dark = 'Lut_TimeNight.png'
-# lut_dark = 'Lut_TimeSunset.png'
+# lut_dark = 'Lut_TimeNight.png'
+lut_dark = 'Lut_TimeSunset.png'
 
 ########## ERRORS ##########
 def kk_folder_error(self, context):
@@ -455,20 +455,20 @@ def checks(directory):
 
 def load_luts():
     lut_path = os.path.dirname(os.path.abspath(__file__)) + '/luts/'
-    day_lut = bpy.data.images.load(lut_path + 'Lut_TimeDay.png', check_existing=True)
+    day_lut = bpy.data.images.load(lut_path + lut_light, check_existing=True)
     day_lut.use_fake_user = True
     day_lut.save()
 
-    night_lut = bpy.data.images.load(lut_path + 'Lut_TimeNight.png', check_existing=True)
+    night_lut = bpy.data.images.load(lut_path + lut_dark, check_existing=True)
     night_lut.use_fake_user = True
     night_lut.save()
 
 def convert_main_textures():
     ignore_list = [
-        "cf_m_eyeline_00_up_MainTex_ColoredTex.png",
-        "cf_m_eyeline_down_MainTex_ColoredTex.png",
-        "cf_m_noseline_00_MainTex_ColoredTex.png",
-        "cf_m_mayuge_00_MainTex_ColoredTex.png",
+        "cf_m_eyeline_00_up_MainTex_CT.png",
+        "cf_m_eyeline_down_MainTex_CT.png",
+        "cf_m_noseline_00_MainTex_CT.png",
+        "cf_m_mayuge_00_MainTex_CT.png",
         "cf_m_eyeline_kage_MainTex.png",
     ]
 

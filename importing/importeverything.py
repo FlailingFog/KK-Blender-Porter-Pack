@@ -416,19 +416,19 @@ def get_and_load_textures(directory):
 
 
     
-    imageLoad('Template Eyebrows (mayuge)', 'BrowTextures', 'Eyebrow', 'cf_m_mayuge_00_MainTex_ColoredTex.png')
-    imageLoad('Template Nose', 'Nose', 'Nose', 'cf_m_noseline_00_MainTex_ColoredTex.png')
-    imageLoad('Template Teeth (tooth)', 'Teeth', 'Teeth', 'cf_m_tooth_MainTex_ColoredTex.png')
-    imageLoad('Template Eyewhites (sirome)', 'EyewhiteTex', 'Eyewhite', 'cf_m_sirome_00_MainTex_ColoredTex.png')
+    imageLoad('Template Eyebrows (mayuge)', 'BrowTextures', 'Eyebrow', 'cf_m_mayuge_00_MainTex_CT.png')
+    imageLoad('Template Nose', 'Nose', 'Nose', 'cf_m_noseline_00_MainTex_CT.png')
+    imageLoad('Template Teeth (tooth)', 'Teeth', 'Teeth', 'cf_m_tooth_MainTex_CT.png')
+    imageLoad('Template Eyewhites (sirome)', 'EyewhiteTex', 'Eyewhite', 'cf_m_sirome_00_MainTex_CT.png')
     
-    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineUp', 'cf_m_eyeline_00_up_MainTex_ColoredTex.png')
-    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineUp.001', 'cf_m_eyeline_00_up_MainTex_ColoredTex.png')
-    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineDown', 'cf_m_eyeline_down_MainTex_ColoredTex.png')
-    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineDown.001', 'cf_m_eyeline_down_MainTex_ColoredTex.png')
+    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineUp', 'cf_m_eyeline_00_up_MainTex_CT.png')
+    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineUp.001', 'cf_m_eyeline_00_up_MainTex_CT.png')
+    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineDown', 'cf_m_eyeline_down_MainTex_CT.png')
+    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineDown.001', 'cf_m_eyeline_down_MainTex_CT.png')
     imageLoad('Template Eyeline up', 'Eyeline', 'EyelineKage', 'cf_m_eyeline_kage_MainTex.png')
     
     
-    imageLoad('Template Eye (hitomi)', 'EyeTex', 'eyeAlpha', 'cf_m_hitomi_00_MainTex_ColoredTex.png')
+    imageLoad('Template Eye (hitomi)', 'EyeTex', 'eyeAlpha', 'cf_m_hitomi_00_MainTex_CT.png')
     imageLoad('Template Eye (hitomi)', 'EyeTex', 'EyeHU', 'cf_m_hitomi_00_overtex1.png')
     imageLoad('Template Eye (hitomi)', 'EyeTex', 'EyeHD', 'cf_m_hitomi_00_overtex2.png')
     
@@ -476,7 +476,7 @@ def get_and_load_textures(directory):
                 newNode.name = genType + ' Textures'
                 
                 imageLoad(genMat.name, 'Gentex', 'Maintex', genType+ '_MainTex.png')
-                imageLoad(genMat.name, 'Gentex', 'Maintex', genType+'_MainTex_ColoredTex.png')
+                imageLoad(genMat.name, 'Gentex', 'Maintex', genType+'_MainTex_CT.png')
                 imageLoad(genMat.name, 'Gentex', 'MainCol', genType+'_ColorMask.png')
                 imageLoad(genMat.name, 'Gentex', 'MainDet', genType+'_DetailMask.png')
                 imageLoad(genMat.name, 'Gentex', 'MainNorm', genType+'_NormalMap.png', True)
