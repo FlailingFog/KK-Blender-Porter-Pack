@@ -24,6 +24,7 @@ def standardize_armature():
 
     bpy.data.objects.remove(empty)
 
+    '''
     #un-pmxify the bone names
     pmx_rename_dict = {
     '全ての親':'PMX_Allbones',
@@ -86,7 +87,8 @@ def standardize_armature():
     for bone in pmx_rename_dict:
         if armature.data.bones[bone]:
             armature.data.bones[bone].name = pmx_rename_dict[bone]
-    
+    '''
+
     #reparent foot to leg03
     bpy.ops.object.mode_set(mode='EDIT')
     armature.data.edit_bones['cf_j_foot_R'].parent = armature.data.edit_bones['cf_j_leg03_R']
@@ -117,6 +119,16 @@ def standardize_armature():
         bone.lock_location = [False, False, False]
 
     bpy.ops.object.mode_set(mode='EDIT')
+    
+    #recreate the eyex bone so I can use it for later
+    new_bone = armature.data.edit_bones.new('Eyesx')
+    new_bone.head = armature.data.edit_bones['cf_hit_head'].tail
+    new_bone.head.y = new_bone.head.y + 0.05
+    new_bone.tail = armature.data.edit_bones['cf_J_Mayu_R'].tail
+    new_bone.tail.x = new_bone.head.x
+    new_bone.tail.y = new_bone.head.y
+    new_bone.parent = armature.data.edit_bones['cf_j_head']
+
     bpy.ops.armature.select_all(action='DESELECT')
 
     #delete bones not under the cf_n_height bone
@@ -580,11 +592,13 @@ def modify_pmx_armature():
     relocate_tail('cf_j_forearm01_L', 'cf_j_hand_L', 'arm')
     relocate_tail('cf_pv_hand_L', 'cf_j_hand_L', 'hand')
     
+    '''
     #remove whatever these stupid shadow bones are
     armature.data.edit_bones.remove(armature.data.edit_bones['_dummy_目x.L'])
     armature.data.edit_bones.remove(armature.data.edit_bones['_dummy_目x.R'])
     armature.data.edit_bones.remove(armature.data.edit_bones['_shadow_目x.L'])
     armature.data.edit_bones.remove(armature.data.edit_bones['_shadow_目x.R'])
+    '''
 
     bpy.ops.object.mode_set(mode='OBJECT')
     
