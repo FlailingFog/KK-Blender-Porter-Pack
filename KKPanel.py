@@ -52,7 +52,7 @@ class PlaceholderProperties(PropertyGroup):
     texturecheck_bool : BoolProperty(
     name="Enable or Disable",
     description="Disable this if you're 100% sure you're selecting the Textures folder correctly",
-    default = True)
+    default = False)
     
     templates_bool : BoolProperty(
     name="Enable or Disable",
@@ -168,8 +168,13 @@ class IMPORTING2_PT_panel(bpy.types.Panel):
         
         box = layout.box()
         split2 = box.split(align=True, factor=splitfac)
-        split2.label(text="2) Import KK Shader and Textures:")
+        split2.label(text="2a) Import KK Shader and Textures:")
         split2.operator('kkb.importeverything', text = '', icon = 'BRUSHES_ALL')
+        
+        box = layout.box()
+        split2 = box.split(align=True, factor=splitfac)
+        split2.label(text="2b) Get Convert and Apply colors to Shaders:")
+        split2.operator('kkb.importcolors', text = '', icon = 'IMAGE')
 
         
 class APPLYOPTIONS_PT_Panel(bpy.types.Panel):

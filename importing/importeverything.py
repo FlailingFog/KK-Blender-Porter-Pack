@@ -21,7 +21,7 @@ def kk_file_error(self, context):
 
 #Stop if no face mc or body mc files were found
 def missing_texture_error(self, context):
-    self.layout.label(text="The files cf_body_00_mc.tga and cf_face_00_mc-BC7.dds were not found in the \"Textures\" folder. \nGrab these images from /Koikatsu/chara/abdata/oo_base.unity3D with SB3U \nHit undo and try again")
+    self.layout.label(text="The files cf_m_body_ColorMask.png and cf_m_face_00_ColorMask.png were not found in the folder.\nMake sure to open the exported folder. \nHit undo and try again")
 
 #stop if no hair object was found
 def hair_error(self, context):
@@ -356,9 +356,9 @@ def get_and_load_textures(directory):
     for image in files:
         bpy.ops.image.open(filepath=str(image))
         bpy.data.images[image.name].pack()
-        if 'cf_body_00_mc-RGB24.tga' in str(image):
+        if 'cf_m_body_ColorMask.png' in str(image):
             body_missing = False
-        if 'cf_face_00_mc-BC7.dds' in str(image):
+        if 'cf_m_face_00_ColorMask.png' in str(image):
             face_missing = False
             
     if body_missing or face_missing:
@@ -379,12 +379,18 @@ def get_and_load_textures(directory):
         else:
             print('File not found, skipping: ' + image)
         
-    imageLoad('Template Body', 'BodyTextures', 'BodyMC', 'cf_body_00_mc-RGB24.tga', True)
-    imageLoad('Template Body', 'BodyTextures', 'BodyMD', 'cf_m_body_DetailMask.png', True) #cfm female
-    imageLoad('Template Body', 'BodyTextures', 'BodyLine', 'cf_m_body_LineMask.png', True)
-    imageLoad('Template Body', 'BodyTextures', 'BodyMD', 'cm_m_body_DetailMask.png', True) #cmm male
-    imageLoad('Template Body', 'BodyTextures', 'BodyLine', 'cm_m_body_LineMask.png', True)
+    imageLoad('Template Body', 'BodyTextures', 'BodyMC', 'cf_m_body_ColorMask.png')
+    imageLoad('Template Body', 'BodyTextures', 'BodyMD', 'cf_m_body_DetailMask.png') #cfm female
+    imageLoad('Template Body', 'BodyTextures', 'BodyLine', 'cf_m_body_LineMask.png')
+    imageLoad('Template Body', 'BodyTextures', 'BodyNorm', 'cf_m_body_NormalMap.png')
+
+
+    imageLoad('Template Body', 'BodyTextures', 'BodyMD', 'cm_m_body_DetailMask.png') #cmm male
+    imageLoad('Template Body', 'BodyTextures', 'BodyLine', 'cm_m_body_LineMask.png')
     
+    imageLoad('Template Body', 'NippleTextures', 'Genital', 'cf_m_body_MainTex.png') #chara main texture
+    imageLoad('Template Body', 'NippleTextures', 'Underhair', 'cf_m_body_overtex2.png') #pubic hair
+
     imageLoad('Template Body', 'NippleTextures', 'NipR', 'cf_m_body_overtex1.png') #cfm female
     imageLoad('Template Body', 'NippleTextures', 'NipL', 'cf_m_body_overtex1.png')
     imageLoad('Template Body', 'NippleTextures', 'NipR', 'cm_m_body_overtex1.png') #cmm male
@@ -401,28 +407,35 @@ def get_and_load_textures(directory):
             #An alpha mask for the clothing wasn't present in the Textures folder
             currentObj.material_slots['Template Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].inputs['Built in transparency toggle'].default_value = 0
     
-    imageLoad('Template Face', 'FaceTextures', 'FaceMC', 'cf_face_00_mc-BC7.dds', True)
-    imageLoad('Template Face', 'FaceTextures', 'FaceMD', 'cf_m_face_00_DetailMask.png', True)
-    imageLoad('Template Face', 'FaceTextures', 'BlushMask', 'cf_m_face_00_overtex2.png')
+    imageLoad('Template Face', 'FaceTextures', 'FaceMC', 'cf_m_face_00_ColorMask.png')
+    imageLoad('Template Face', 'FaceTextures', 'FaceMD', 'cf_m_face_00_DetailMask.png')
+    imageLoad('Template Face', 'FaceTextures', 'BlushMask', 'cf_m_face_00_Texture4.png')
+    imageLoad('Template Face', 'FaceTextures', 'FaceTongue', 'cf_m_face_00_MainTex.png') #face main texture
+
+    imageLoad('Template Face', 'FaceTextures', 'BlushMask.001', 'cf_m_face_00_Texture5.png')
+
+
     
-    imageLoad('Template Eyebrows (mayuge)', 'BrowTextures', 'Eyebrow', 'cf_m_mayuge_00_MainTex.png')
-    imageLoad('Template Nose', 'Nose', 'Nose', 'cf_m_noseline_00_MainTex.png')
-    imageLoad('Template Teeth (tooth)', 'Teeth', 'Teeth', 'cf_m_tooth_MainTex.png')
-    imageLoad('Template Eyewhites (sirome)', 'EyewhiteTex', 'Eyewhite', 'cf_m_sirome_00_MainTex.png')
+    imageLoad('Template Eyebrows (mayuge)', 'BrowTextures', 'Eyebrow', 'cf_m_mayuge_00_MainTex_CT.png')
+    imageLoad('Template Nose', 'Nose', 'Nose', 'cf_m_noseline_00_MainTex_CT.png')
+    imageLoad('Template Teeth (tooth)', 'Teeth', 'Teeth', 'cf_m_tooth_MainTex_CT.png')
+    imageLoad('Template Eyewhites (sirome)', 'EyewhiteTex', 'Eyewhite', 'cf_m_sirome_00_MainTex_CT.png')
     
-    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineUp', 'cf_m_eyeline_00_up_MainTex.png')
-    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineUp.001', 'cf_m_eyeline_00_up_MainTex.png')
-    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineDown', 'cf_m_eyeline_down_MainTex.png')
-    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineDown.001', 'cf_m_eyeline_down_MainTex.png')
+    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineUp', 'cf_m_eyeline_00_up_MainTex_CT.png')
+    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineUp.001', 'cf_m_eyeline_00_up_MainTex_CT.png')
+    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineDown', 'cf_m_eyeline_down_MainTex_CT.png')
+    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineDown.001', 'cf_m_eyeline_down_MainTex_CT.png')
+    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineKage', 'cf_m_eyeline_kage_MainTex.png')
     
-    imageLoad('Template Eye (hitomi)', 'EyeTex', 'eyeAlpha', 'cf_m_hitomi_00_MainTex.png')
+    
+    imageLoad('Template Eye (hitomi)', 'EyeTex', 'eyeAlpha', 'cf_m_hitomi_00_MainTex_CT.png')
     imageLoad('Template Eye (hitomi)', 'EyeTex', 'EyeHU', 'cf_m_hitomi_00_overtex1.png')
     imageLoad('Template Eye (hitomi)', 'EyeTex', 'EyeHD', 'cf_m_hitomi_00_overtex2.png')
     
     imageLoad('Template Tongue', 'Gentex', 'Maintex', 'cf_m_tang_ColorMask.png') #done on purpose
     imageLoad('Template Tongue', 'Gentex', 'MainCol', 'cf_m_tang_ColorMask.png')
     imageLoad('Template Tongue', 'Gentex', 'MainDet', 'cf_m_tang_DetailMask.png')
-    imageLoad('Template Tongue', 'Gentex', 'MainNorm', 'cf_m_tang_NormalMap_converted.png', True)
+    imageLoad('Template Tongue', 'Gentex', 'MainNorm', 'cf_m_tang_NormalMap.png', True)
 
     #for each material slot in the hair object, load in the hair detail mask, colormask
     currentObj = bpy.data.objects['Hair']
@@ -462,11 +475,18 @@ def get_and_load_textures(directory):
                 genMat.material.node_tree.nodes['Gentex'].node_tree = newNode
                 newNode.name = genType + ' Textures'
                 
-                imageLoad(genMat.name, 'Gentex', 'Maintex', genType+'_MainTex.png', True)
-                imageLoad(genMat.name, 'Gentex', 'MainCol', genType+'_ColorMask.png', True)
-                imageLoad(genMat.name, 'Gentex', 'MainDet', genType+'_DetailMask.png', True)
-                imageLoad(genMat.name, 'Gentex', 'MainNorm', genType+'_NormalMap_converted.png', True)
-                imageLoad(genMat.name, 'Gentex', 'Alphamask', genType+'_AlphaMask.png', True)
+                imageLoad(genMat.name, 'Gentex', 'Maintex', genType+ '_MainTex.png')
+                imageLoad(genMat.name, 'Gentex', 'Maintex', genType+'_MainTex_CT.png')
+                imageLoad(genMat.name, 'Gentex', 'MainCol', genType+'_ColorMask.png')
+                imageLoad(genMat.name, 'Gentex', 'MainDet', genType+'_DetailMask.png')
+                imageLoad(genMat.name, 'Gentex', 'MainNorm', genType+'_NormalMap.png', True)
+                imageLoad(genMat.name, 'Gentex', 'Alphamask', genType+'_AlphaMask.png')
+
+                # imageLoad(genMat.name, 'Gentex', 'PatBase', genType+'_PatternMask1.png')
+                
+                imageLoad(genMat.name, 'Gentex', 'PatRed', genType+'_PatternMask1.png')
+                imageLoad(genMat.name, 'Gentex', 'PatGreen', genType+'_PatternMask2.png')
+                imageLoad(genMat.name, 'Gentex', 'PatBlue', genType+'_PatternMask3.png')
                 
                 MainImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Maintex'].image
                 AlphaImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Alphamask'].image
@@ -492,7 +512,8 @@ def add_outlines(oneOutlineOnlyMode):
     ob = bpy.context.view_layer.objects['Body']
     bpy.context.view_layer.objects.active = ob
     bpy.ops.object.modifier_add(type='SOLIDIFY')
-    mod = ob.modifiers[3]
+    mod_index = 1 if len(ob.modifiers) == 2 else 3
+    mod = ob.modifiers[mod_index]
     mod.thickness = 0.0005
     mod.offset = 0
     mod.material_offset = len(ob.material_slots)

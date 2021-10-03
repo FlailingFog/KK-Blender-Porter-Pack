@@ -1,3 +1,0 @@
-Rehost of Grey's Mesh Exporter plugin by Grey from the illusion soft discord.
-
-Rehost of the PmxExport plugin by an unknown entity.
