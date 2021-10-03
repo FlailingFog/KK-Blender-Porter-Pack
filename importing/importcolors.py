@@ -11,8 +11,9 @@ from bpy.props import StringProperty, BoolProperty
 
 
 lut_light = 'Lut_TimeDay.png'
+lut_dark = 'Lut_TimeDay.png'
 # lut_dark = 'Lut_TimeNight.png'
-lut_dark = 'Lut_TimeSunset.png'
+# lut_dark = 'Lut_TimeSunset.png'
 
 ########## ERRORS ##########
 def kk_folder_error(self, context):
