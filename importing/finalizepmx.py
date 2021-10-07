@@ -161,31 +161,45 @@ def reset_and_reroll_bones():
     armature = bpy.data.objects['Armature']
     height_adder = Vector((0,0,0.1))
     
-    #the finger bones need to be rotated a specific direction
-    #this is probably the worst way this can be done
+    #all finger bones need to be rotated a specific direction
     def rotate_thumb(bone, direction='L'):
         bpy.ops.armature.select_all(action='DESELECT')
         armature.data.edit_bones[bone].select = True
         armature.data.edit_bones[bone].select_head = True
         armature.data.edit_bones[bone].select_tail = True
-        #save location this way because it updates for some reason after the ops call
-        head_location = armature.data.edit_bones[bone].head + Vector((0,0,1))
-        if direction == 'R':
-            bpy.ops.transform.rotate(value=-1.5708, orient_axis='X', orient_type='NORMAL', orient_matrix=((0.895944, 0.444168, -0), (0, 0, 1), (0.444168, -0.895944, 0)), orient_matrix_type='NORMAL', constraint_axis=(True, False, False), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
-        else:
-            bpy.ops.transform.rotate(value=1.5708, orient_axis='X', orient_type='NORMAL', orient_matrix=((0.733637, -0.679542, 0), (0, 0, 1), (-0.679542, -0.733637, 0)), orient_matrix_type='NORMAL', constraint_axis=(True, False, False), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
-        armature.data.edit_bones[bone].head = head_location - Vector((0,0,1))
-        armature.data.edit_bones[bone].roll = 0
-        armature.data.edit_bones[bone].tail.z = head_location.z - 1
+        parent = armature.data.edit_bones[bone].parent
+        armature.data.edit_bones[bone].parent = None
+
+        #right thumbs face towards hand center
+        #left thumbs face away from hand center
+        angle = -math.pi/2
         
-    rotate_thumb('cf_j_thumb01_L')
-    rotate_thumb('cf_j_thumb02_L')
+        s = math.sin(angle)
+        c = math.cos(angle)
+
+        # translate point back to origin:
+        armature.data.edit_bones[bone].tail.x -= armature.data.edit_bones[bone].head.x
+        armature.data.edit_bones[bone].tail.y -= armature.data.edit_bones[bone].head.y
+
+        # rotate point
+        xnew = armature.data.edit_bones[bone].tail.x * c - armature.data.edit_bones[bone].tail.y * s
+        ynew = armature.data.edit_bones[bone].tail.x * s + armature.data.edit_bones[bone].tail.y * c
+
+        # translate point back:
+        armature.data.edit_bones[bone].tail.x = xnew + armature.data.edit_bones[bone].head.x
+        armature.data.edit_bones[bone].tail.y = ynew + armature.data.edit_bones[bone].head.y
+        armature.data.edit_bones[bone].roll = 0
+        armature.data.edit_bones[bone].tail.z = armature.data.edit_bones[bone].head.z
+        armature.data.edit_bones[bone].parent = parent
+        
     rotate_thumb('cf_j_thumb03_L')
-    rotate_thumb('cf_j_thumb01_R', 'R')
-    rotate_thumb('cf_j_thumb02_R', 'R')
+    rotate_thumb('cf_j_thumb02_L')
+    rotate_thumb('cf_j_thumb01_L')
     rotate_thumb('cf_j_thumb03_R', 'R')
+    rotate_thumb('cf_j_thumb02_R', 'R')
+    rotate_thumb('cf_j_thumb01_R', 'R')
     
-    height_adder = Vector((0,0,0.1))
+    height_adder = Vector((0,0,0.05))
     def flip_finger(bone):
         parent = armature.data.edit_bones[bone].parent
         armature.data.edit_bones[bone].parent = None
@@ -196,11 +210,28 @@ def reset_and_reroll_bones():
     'cf_j_index03_R', 'cf_j_index02_R', 'cf_j_index01_R',
     'cf_j_middle03_R', 'cf_j_middle02_R', 'cf_j_middle01_R',
     'cf_j_ring03_R', 'cf_j_ring02_R', 'cf_j_ring01_R',
-    'cf_j_little03_R', 'cf_j_little02_R', 'cf_j_little01_R',
+    'cf_j_little03_R', 'cf_j_little02_R', 'cf_j_little01_R'
     )
     
     for finger in finger_list:
         flip_finger(finger)
+    
+        height_adder = Vector((0,0,0.05))
+    def resize_finger(bone):
+        parent = armature.data.edit_bones[bone].parent
+        armature.data.edit_bones[bone].parent = None
+        armature.data.edit_bones[bone].tail = armature.data.edit_bones[bone].head + height_adder
+        armature.data.edit_bones[bone].parent = parent
+    
+    finger_list = (
+    'cf_j_index03_L', 'cf_j_index02_L', 'cf_j_index01_L',
+    'cf_j_middle03_L', 'cf_j_middle02_L', 'cf_j_middle01_L',
+    'cf_j_ring03_L', 'cf_j_ring02_L', 'cf_j_ring01_L',
+    'cf_j_little03_L', 'cf_j_little02_L', 'cf_j_little01_L'
+    )
+    
+    for finger in finger_list:
+        resize_finger(finger)
     
     #reset the orientation for the leg/foot bones
     height_adder = Vector((0,0,0.1))
