@@ -187,13 +187,16 @@ def reset_and_reroll_bones():
     
     height_adder = Vector((0,0,0.1))
     def flip_finger(bone):
+        parent = armature.data.edit_bones[bone].parent
+        armature.data.edit_bones[bone].parent = None
         armature.data.edit_bones[bone].tail = armature.data.edit_bones[bone].head - height_adder
+        armature.data.edit_bones[bone].parent = parent
     
     finger_list = (
-    'cf_j_index01_R', 'cf_j_index02_R', 'cf_j_index03_R',
-    'cf_j_middle01_R', 'cf_j_middle02_R', 'cf_j_middle03_R',
-    'cf_j_ring01_R', 'cf_j_ring02_R', 'cf_j_ring03_R',
-    'cf_j_little01_R', 'cf_j_little02_R', 'cf_j_little03_R',
+    'cf_j_index03_R', 'cf_j_index02_R', 'cf_j_index01_R',
+    'cf_j_middle03_R', 'cf_j_middle02_R', 'cf_j_middle01_R',
+    'cf_j_ring03_R', 'cf_j_ring02_R', 'cf_j_ring01_R',
+    'cf_j_little03_R', 'cf_j_little02_R', 'cf_j_little01_R',
     )
     
     for finger in finger_list:
