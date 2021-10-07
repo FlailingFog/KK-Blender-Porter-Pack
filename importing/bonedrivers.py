@@ -850,9 +850,9 @@ def rename_bones_for_clarity(action):
             if animation_armature.data.bones.get(bone):
                 animation_armature.data.bones[bone].name = unity_rename_dict[bone]
     
-
 #selects all materials that have "_hair" or "_ahoge" in their name to give the user a head start with separating the hair
 def begin_hair_selections():
+    bpy.ops.object.select_all(action='DESELECT')
     clothes = bpy.data.objects['Clothes']
     clothes.select_set(True)
     bpy.context.view_layer.objects.active=clothes

@@ -145,7 +145,46 @@ class separate_body(bpy.types.Operator):
             bpy.ops.object.material_slot_select()
         bpy.ops.mesh.remove_doubles(threshold=0.0001)
 
+        #then combine duplicated material slots
         bpy.ops.object.mode_set(mode = 'OBJECT')
+        bpy.ops.object.material_slot_remove_unused()
+        clothes = bpy.data.objects['Clothes']
+        bpy.ops.object.select_all(action='DESELECT')
+        clothes.select_set(True)
+        bpy.context.view_layer.objects.active=clothes
+        bpy.ops.object.mode_set(mode='EDIT')
+
+        #remap duplicate materials to the base one
+        material_list = clothes.data.materials
+        for mat in material_list:
+            if '.' in mat.name:
+                base_name, dupe_number = mat.name.split('.',2)
+                if int(dupe_number):
+                    mat.user_remap(material_list[base_name])
+                    bpy.data.materials.remove(mat)
+        
+        #Clean material slots by going through each slot and reassigning the slots that are repeated
+        repeats = {}
+        for index, mat in enumerate(material_list):
+            if mat.name not in repeats:
+                repeats[mat.name] = [index]
+                print("First entry of {} in slot {}".format(mat.name, index))
+            else:
+                repeats[mat.name].append(index)
+                print("Additional entry of {} in slot {}".format(mat.name, index))
+        
+        for material_name in list(repeats.keys()):
+            for index, material_index in enumerate(repeats[material_name]):
+                if index == 0:
+                    continue
+                print("moving duplicate material {} in slot {} to slot {}".format(material_name, index, repeats[material_name][0]))
+                clothes.active_material_index = material_index
+                bpy.ops.object.material_slot_select()
+                clothes.active_material_index = repeats[material_name][0]
+                bpy.ops.object.material_slot_assign()
+
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.material_slot_remove_unused()
 
         #and clean up the oprhaned data
         for block in bpy.data.meshes:
@@ -159,6 +198,10 @@ class separate_body(bpy.types.Operator):
         for block in bpy.data.lights:
             if block.users == 0:
                 bpy.data.lights.remove(block)
+        
+        for block in bpy.data.materials:
+            if block.users == 0:
+                bpy.data.materials.remove(block)
 
         return {'FINISHED'}
 
