@@ -851,6 +851,19 @@ def rename_bones_for_clarity(action):
                 animation_armature.data.bones[bone].name = unity_rename_dict[bone]
     
 
+#selects all materials that have "_hair" or "_ahoge" in their name to give the user a head start with separating the hair
+def begin_hair_selections():
+    clothes = bpy.data.objects['Clothes']
+    clothes.select_set(True)
+    bpy.context.view_layer.objects.active=clothes
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='DESELECT')
+
+    for index in range(len(clothes.data.materials)-1):
+        if '_hair' in clothes.data.materials[index].name or '_ahoge' in clothes.data.materials[index].name:
+            clothes.active_material_index = index
+            bpy.ops.object.material_slot_select()
+
 class bone_drivers(bpy.types.Operator):
     bl_idname = "kkb.bonedrivers"
     bl_label = "Bone Driver script"
@@ -880,6 +893,8 @@ class bone_drivers(bpy.types.Operator):
             categorize_bones()
             rename_bones_for_clarity('modified')
         
+        begin_hair_selections()
+
         #set the viewport shading
         my_areas = bpy.context.workspace.screens[0].areas
         my_shading = 'MATERIAL'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'

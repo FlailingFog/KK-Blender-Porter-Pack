@@ -601,7 +601,44 @@ def modify_pmx_armature():
     '''
 
     bpy.ops.object.mode_set(mode='OBJECT')
+
+#combine duplicate materials based on material name
+def combine_duplicate_materials():
+
+    body = bpy.data.objects['Body']
+    body.select_set(True)
+    bpy.context.view_layer.objects.active=body
+    bpy.ops.object.mode_set(mode='EDIT')
+
+    #remap duplicate materials to the base one
+    material_list = bpy.data.materials
+    for mat in material_list:
+        if '.' in mat.name:
+            base_name, dupe_number = mat.name.split('.',2)
+            if int(dupe_number):
+                mat.user_remap(material_list[base_name])
+                material_list.remove(mat)
     
+    #Clean material slots by going through each slot and reassigning the slots that are repeated
+    repeats = {}
+    for index, mat in enumerate(material_list):
+        if mat.name not in repeats:
+            repeats[mat.name] = [index]
+        else:
+            repeats[mat.name].append(index)
+    
+    for material_name in list(repeats.keys()):
+        for index, material_index in enumerate(repeats[material_name]):
+            if index == 0:
+                continue
+            body.active_material_index = material_index
+            bpy.ops.object.material_slot_select()
+            body.active_material_index = repeats[material_name][0]
+            bpy.ops.object.material_slot_assign()
+
+    bpy.ops.object.mode_set(mode='OBJECT')
+    bpy.ops.object.material_slot_remove_unused()
+
 class finalize_pmx(bpy.types.Operator):
     bl_idname = "kkb.finalizepmx"
     bl_label = "Finalize .pmx file"
@@ -623,6 +660,8 @@ class finalize_pmx(bpy.types.Operator):
         if modify_armature:
             modify_pmx_armature()
         
+        combine_duplicate_materials()
+
         #Set the view transform 
         bpy.context.scene.view_settings.view_transform = 'Standard'
         
