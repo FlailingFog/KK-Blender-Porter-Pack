@@ -111,6 +111,9 @@ class import_studio(bpy.types.Operator):
                             
                             #set emission to black
                             nodes['Principled BSDF'].inputs[17].default_value = (0, 0, 0, 1)
+
+                            #set metallic value to zero
+                            nodes['Principled BSDF'].inputs[4].default_value = 0.0
                             
                             #set normal map to srgb if it exists
                             try:

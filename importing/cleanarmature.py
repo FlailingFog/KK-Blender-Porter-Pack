@@ -119,11 +119,14 @@ def get_bone_list(kind):
         'cf_j_sk_07_00', 'cf_j_sk_07_01', 'cf_j_sk_07_02', 'cf_j_sk_07_03', 'cf_j_sk_07_04']
 
 def set_armature_layer(bone_name, show_layer, hidden = False):
+    bpy.data.armatures[0].bones[bone_name].layers = (
+        True, False, False, False, False, False, False, False,
+        False, False, False, False, False, False, False, False, 
+        False, False, False, False, False, False, False, False, 
+        False, False, False, False, False, False, False, False
+    )
     bpy.data.armatures[0].bones[bone_name].layers[show_layer] = True
-    if show_layer == 10:
-        bpy.data.armatures[0].bones[bone_name].layers[0] = False
-    else:
-        bpy.data.armatures[0].bones[bone_name].layers[10] = False
+    bpy.data.armatures[0].bones[bone_name].layers[0] = False
     bpy.data.armatures[0].bones[bone_name].hide = hidden
 
 def reorganize_armature_layers():

@@ -583,8 +583,8 @@ def make_eye_controller():
         mod.uv_layer = 'UVMap'
         mod.show_expanded = False
 
-    eyeUV("Left Eye UV warp",  'cf_J_hitomi_tx_L')
-    eyeUV("Right Eye UV warp", 'cf_J_hitomi_tx_R')
+    eyeUV("Left Eye UV warp",  'Left Eye')
+    eyeUV("Right Eye UV warp", 'Right Eye')
 
     ################### Empty group check for pmx files
 
@@ -726,17 +726,9 @@ def categorize_bones():
     bpy.ops.object.mode_set(mode='POSE')
     #move newly created bones to correct armature layers
 
-    visible_list = ['MasterFootIK.L', 'MasterFootIK.R', 'Eye Controller']
-    
-    invisible_list = [
-    'ToeRotator.L', 'HeelIK.L', 
-    'ToeRotator.R', 'HeelIK.R']
-
-    for bone in visible_list:
-        set_armature_layer(bone, 0)
-
-    for bone in invisible_list:
-        set_armature_layer(bone, 1, hidden = True)
+    set_armature_layer('MasterFootIK.L', 0)
+    set_armature_layer('MasterFootIK.R', 0)
+    set_armature_layer('Eye Controller', 0)
     
     armature.data.bones['cf_pv_root_upper'].hide = True
     
@@ -860,7 +852,8 @@ def begin_hair_selections():
     bpy.ops.mesh.select_all(action='DESELECT')
 
     for index in range(len(clothes.data.materials)-1):
-        if '_hair' in clothes.data.materials[index].name or '_ahoge' in clothes.data.materials[index].name:
+        mat_name = clothes.data.materials[index].name
+        if ('_hair' in mat_name or '_ahoge' in mat_name) and ('_ribon_' not in mat_name and '_hair_sakura_' not in mat_name):
             clothes.active_material_index = index
             bpy.ops.object.material_slot_select()
 
