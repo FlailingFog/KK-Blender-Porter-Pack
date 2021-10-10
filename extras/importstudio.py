@@ -1,7 +1,7 @@
 import bpy
 from pathlib import Path
-
 from bpy.props import StringProperty
+from ..importing.importcolors import load_luts, image_to_KK
 
 class import_studio(bpy.types.Operator):
     bl_idname = "kkb.importstudio"
@@ -17,7 +17,7 @@ class import_studio(bpy.types.Operator):
     
     def execute(self, context):        
         def runIt():
-            
+
             #Stop if no files were detected
             def fileError(self, context):
                 self.layout.label(text="No fbx files were detected in the folder you selected (including subfolders)")
@@ -36,6 +36,7 @@ class import_studio(bpy.types.Operator):
             shader_type = scene.dropdown_box 
             shadow_type = scene.shadows_dropdown 
             blend_type = scene.blend_dropdown 
+            use_lut = scene.studio_lut_bool
             
             #shader_dict = {"A": "principled", "B": "emission", "C": "kkshader", "D": "custom"}
             shadow_dict = {"A": "NONE", "B": "OPAQUE", "C": "CLIP", "D": "HASHED"}
@@ -52,20 +53,24 @@ class import_studio(bpy.types.Operator):
             
             #attempt to detect detail masks, color masks and main tex files from the selected folder/subfolders
             #normal map will always be attached on import if it's present
+
+            conversion_image_list = []
             for image in image_list:
                 if '_md-DXT' in str(image):
-                    bpy.ops.image.open(filepath=str(image))
-                    bpy.data.images[image.name].pack()
                     detected_detailmask = image.name
                 if '_mc-DXT' in str(image):
-                    bpy.ops.image.open(filepath=str(image))
-                    bpy.data.images[image.name].pack()
                     detected_colormask = image.name
                 if '_t-DXT' in str(image):
+                    detected_maintex = image.name
+                
+                #pack certain images for later
+                if '_md-DXT' in str(image) or '_mc-DXT' in str(image) or '_t-DXT' in str(image):
                     bpy.ops.image.open(filepath=str(image))
                     bpy.data.images[image.name].pack()
-                    detected_maintex = image.name
-            
+                
+                #save the images in this directory for later
+                conversion_image_list.append(image.name)
+
             if len(fbx_list) == 0:
                 bpy.context.window_manager.popup_menu(fileError, title="Error", icon='ERROR')
                 return
@@ -104,7 +109,25 @@ class import_studio(bpy.types.Operator):
                             for node in nodes:
                                 if node.type == 'OUTPUT_MATERIAL':
                                     node.name = 'Material Output'
-                            
+
+                            #Remove duplicate images
+                            for node in nodes:
+                                if node.type == 'TEX_IMAGE':
+                                    if '.00' in node.image.name and bpy.data.images.get(node.image.name[0:len(node.image.name)-4]):
+                                        node.image = bpy.data.images.get(node.image.name[0:len(node.image.name)-4])
+
+                            #DDS files need to be converted to pngs or tgas or the color conversion scripts won't work
+                            for node in nodes:
+                                if node.type == 'TEX_IMAGE':
+                                    if '.dds' in node.image.name or '.DDS' in node.image.name:
+                                        image = bpy.data.images[node.image.name]
+                                        new_path = image.filepath.replace(".dds", ".png").replace(".DDS", ".png")
+                                        new_image_name = image.name.replace(".dds", ".png").replace(".DDS", ".png")
+                                        image.save_render(bpy.path.abspath(new_path))
+                                        bpy.ops.image.open(filepath=bpy.path.abspath(new_path))
+                                        bpy.data.images[new_image_name].pack()
+                                        node.image = bpy.data.images[new_image_name]
+
                             #if two objects have the same material, and the material was already operated on, skip it
                             if nodes.get('Principled BSDF') == None:
                                 continue
@@ -307,6 +330,33 @@ class import_studio(bpy.types.Operator):
                                     nodes.remove(color_node)
                                 
                                 material.node_tree.links.new(output_node.inputs[0], custom_group.outputs[0])
+
+            #convert newly imported textures using code from importcolors.py
+            if use_lut:
+                image_list = bpy.data.images
+                lut_light = 'Lut_TimeDay.png'
+                lut_dark = 'Lut_TimeDay.png'
+                load_luts()
+
+                first = True
+                for image in image_list:
+                    image_name = image.name
+
+                    if '.00' not in image_name and '_md-DXT' not in image_name and '_mc-DXT' not in image_name and image_name in conversion_image_list:
+                        image_name = image_name.replace(".dds", ".png").replace(".DDS", ".png")
+                        image = bpy.data.images[image_name]
+                        print('converting ' + image_name)
+                        image.reload()
+                        image.colorspace_settings.name = 'sRGB'
+
+                        # Need to run image_to_KK twice for the first image due to a weird bug
+                        if first:
+                            image_to_KK(image, lut_light)
+                            first = False
+
+                        new_pixels, width, height = image_to_KK(image, lut_light)
+                        image.pixels = new_pixels
+                        #image.save()
         
         #I need a better way to do this
         runIt()

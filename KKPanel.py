@@ -1,3 +1,4 @@
+from typing import Text
 import bpy
 from bpy.types import Panel, PropertyGroup, Scene, WindowManager
 from bpy.props import (
@@ -61,6 +62,15 @@ class PlaceholderProperties(PropertyGroup):
     into Blender after your character is finished""",
     default = True)
     
+    colors_dropdown : EnumProperty(
+        items=(
+            ("A", "Dark colors: LUT Night", "Makes everything blue"),
+            ("B", "Dark colors: LUT Sunset", "Makes everything red"),
+            ("C", "Dark colors: LUT Day", "Keeps dark colors the same as the light ones"),
+            ("D", "Dark colors: Saturation based", "Makes everything saturated"),
+            ("E", "Dark colors: Value reduction", "Makes everything darker")
+        ), name="", default="A", description="Dark colors")
+    
     dropdown_box : EnumProperty(
         items=(
             ("A", "Principled BSDF", "Default shading"),
@@ -84,6 +94,11 @@ class PlaceholderProperties(PropertyGroup):
             ("C", "Alpha Hashed", ""),
             ("D", "Alpha Blend", ""),
         ), name="", default="B", description="Blend Mode")
+
+    studio_lut_bool : BoolProperty(
+        name="Enable or Disable",
+        description="""Enable this if you want the plugin to saturate the item's textures using the in-game LUT""",
+        default = False)
 
     rokoko_bool : BoolProperty(
         name="Enable or Disable",
@@ -109,7 +124,7 @@ class IMPORTING1_PT_panel(bpy.types.Panel):
     
     def draw(self,context):
         layout = self.layout
-        splitfac = 0.7
+        splitfac = 0.6
         col = layout.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=0.5)
@@ -164,17 +179,23 @@ class IMPORTING2_PT_panel(bpy.types.Panel):
     
     def draw(self,context):
         layout = self.layout
-        splitfac = 0.7
+        splitfac = 0.6
         
         box = layout.box()
         split2 = box.split(align=True, factor=splitfac)
         split2.label(text="2a) Import KK Shader and Textures:")
         split2.operator('kkb.importeverything', text = '', icon = 'BRUSHES_ALL')
         
-        box = layout.box()
-        split2 = box.split(align=True, factor=splitfac)
-        split2.label(text="2b) Get Convert and Apply colors to Shaders:")
+        col = box.column(align=True)
+        row = col.row(align = True)
+        split2 = row.split(align=True, factor=splitfac)
+        split2.label(text="2b) Convert and Apply colors to Shaders:")
         split2.operator('kkb.importcolors', text = '', icon = 'IMAGE')
+
+        row = col.row(align=True)
+        split = row.split(align = True, factor=splitfac)
+        split.label(text="")
+        split.prop(context.scene.placeholder, "colors_dropdown")
 
         
 class APPLYOPTIONS_PT_Panel(bpy.types.Panel):
@@ -195,10 +216,6 @@ class APPLYOPTIONS_PT_Panel(bpy.types.Panel):
         split = row.split(align=True, factor=0.5)
         split.prop(context.scene.placeholder, "textureoutline_bool", toggle=True, text = "Use generic outline")
         split.prop(context.scene.placeholder, "templates_bool", toggle=True, text = "Set fake user")
-
-        row = col.row(align=True)
-        split = row.split(align = True, factor=.5)
-        split.prop(context.scene.placeholder, "texturecheck_bool", toggle=True, text = "Check folder")
     
 class EXPORTING_PT_panel(bpy.types.Panel):
     bl_parent_id = "IMPORTING_PT_panel"
@@ -210,7 +227,7 @@ class EXPORTING_PT_panel(bpy.types.Panel):
     
     def draw(self,context):
         layout = self.layout
-        splitfac = 0.7
+        splitfac = 0.6
         
         box = layout.box()
         col = box.column(align=True)
@@ -219,9 +236,9 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         split.label(text="3) Bake material templates:")
         split.operator('kkb.bakematerials', text = '', icon='VIEW_CAMERA')
         row = col.row(align=True)
-        split = row.split(align=True, factor=0.5)
+        split = row.split(align=True, factor=splitfac)
         split.label(text="")
-        split.prop(context.scene.placeholder, "inc_dec_int", text = 'Multiplier:')
+        split.prop(context.scene.placeholder, "inc_dec_int", text = 'Bake multiplier:')
         
         col = box.column(align=True)
         row = col.row(align=True)
@@ -244,7 +261,7 @@ class EXTRAS_PT_panel(bpy.types.Panel):
     
     def draw(self,context):
         layout = self.layout
-        splitfac = 0.7
+        splitfac = 0.6
         
         box = layout.box()
         col = box.column(align=True)
@@ -253,24 +270,26 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         split.label(text="Import studio object")
         split.operator('kkb.importstudio', text = '', icon = 'MATCUBE')
         row = col.row(align=True)
-        split = row.split(align=True, factor=0.1)
+        split = row.split(align=True)
+        split.label(text="Shader:")
+        split.label(text="Shadows:")
+        split.label(text="Blend mode:")
         split.label(text="")
-        split.label(text="Shader")
-        split.label(text="Shadows")
-        split.label(text="Blend mode")
         row = col.row(align=True)
-        split = row.split(align=True, factor=0.1)
-        split.label(text="")
+        split = row.split(align=True)
         split.prop(context.scene.placeholder, "dropdown_box")
         split.prop(context.scene.placeholder, "shadows_dropdown")
         split.prop(context.scene.placeholder, "blend_dropdown")
+        split.prop(context.scene.placeholder, "studio_lut_bool", toggle=True, text = "Convert texture?")
         
+        box = layout.box()
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text="Separate and Link Eyebrow and Eye shapekeys")
         split.operator('kkb.linkshapekeys', text = '', icon='SPHERECURVE')
         
+        box = layout.box()
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)

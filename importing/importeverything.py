@@ -12,12 +12,8 @@ from bpy.props import StringProperty
 from .cleanarmature import get_bone_list
 
 #Stop if this is the wrong folder
-def texture_folder_error(self, context):
-    self.layout.label(text="Textures folder was not selected. (Hint: go into the \"Textures\" folder before confirming)")
-
-#Stop if no blend file was detected
-def kk_file_error(self, context):
-    self.layout.label(text="The KK Shader.blend file wasn't found. Make sure it's in the \"Textures\" folder.")
+def wrong_folder_error(self, context):
+    self.layout.label(text="The PMX folder was not selected. (Hint: go into the .pmx folder before confirming)")
 
 #Stop if no face mc or body mc files were found
 def missing_texture_error(self, context):
@@ -27,7 +23,7 @@ def missing_texture_error(self, context):
 def hair_error(self, context):
     self.layout.label(text="An object named \"Hair\" wasn't found. Separate this from the Clothes object and rename it.")
 
-def get_templates_and_apply(directory, useFakeUser, folderCheckEnabled):
+def get_templates_and_apply(directory, useFakeUser):
     #Check if a hair object exists
     if not (bpy.data.objects.get('Hair') or bpy.data.objects.get('hair')):
         bpy.context.window_manager.popup_menu(hair_error, title="Error", icon='ERROR')
@@ -47,13 +43,17 @@ def get_templates_and_apply(directory, useFakeUser, folderCheckEnabled):
     bpy.ops.object.material_slot_remove_unused()
     
     #import all material templates
-    if 'Textures' in directory or not folderCheckEnabled:
-        fileList = Path(directory).glob('*.*')
-        files = [file for file in fileList if file.is_file()]
-    else:
-        bpy.context.window_manager.popup_menu(texture_folder_error, title="Error", icon='ERROR')
-        return True
+    fileList = Path(directory).glob('*.*')
+    files = [file for file in fileList if file.is_file()]
     
+    pmx_file_missing = True
+    for file in files:
+        if '.pmx' in str(file):
+            pmx_file_missing = False
+    if pmx_file_missing:
+        bpy.context.window_manager.popup_menu(wrong_folder_error, title="Error", icon='ERROR')
+        return True
+
     blend_file_missing = True
     for file in files:
         if '.blend' in str(file) and '.blend1' not in str(file):
@@ -360,7 +360,7 @@ def get_and_load_textures(directory):
             body_missing = False
         if 'cf_m_face_00_ColorMask.png' in str(image):
             face_missing = False
-            
+    
     if body_missing or face_missing:
         bpy.context.window_manager.popup_menu(missing_texture_error, title="Error", icon='ERROR')
         return True
@@ -383,7 +383,6 @@ def get_and_load_textures(directory):
     imageLoad('Template Body', 'BodyTextures', 'BodyMD', 'cf_m_body_DetailMask.png') #cfm female
     imageLoad('Template Body', 'BodyTextures', 'BodyLine', 'cf_m_body_LineMask.png')
     imageLoad('Template Body', 'BodyTextures', 'BodyNorm', 'cf_m_body_NormalMap.png')
-
 
     imageLoad('Template Body', 'BodyTextures', 'BodyMD', 'cm_m_body_DetailMask.png') #cmm male
     imageLoad('Template Body', 'BodyTextures', 'BodyLine', 'cm_m_body_LineMask.png')
@@ -752,12 +751,11 @@ class import_everything(bpy.types.Operator):
         
         scene = context.scene.placeholder
         useFakeUser = scene.templates_bool
-        folderCheckEnabled = scene.texturecheck_bool
         oneOutlineOnlyMode = scene.textureoutline_bool
         modify_armature = scene.armature_edit_bool
         
         #these methods will return true if an error was encountered
-        template_error = get_templates_and_apply(directory, useFakeUser, folderCheckEnabled)
+        template_error = get_templates_and_apply(directory, useFakeUser)
         if template_error:
             return {'FINISHED'}
         

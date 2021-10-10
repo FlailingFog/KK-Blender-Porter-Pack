@@ -9,17 +9,11 @@ from bpy_extras.io_utils import ImportHelper
 from gpu_extras.batch import batch_for_shader
 from bpy.props import StringProperty, BoolProperty
 
-
-lut_light = 'Lut_TimeDay.png'
-lut_dark = 'Lut_TimeDay.png'
-# lut_dark = 'Lut_TimeNight.png'
-# lut_dark = 'Lut_TimeSunset.png'
-
 ########## ERRORS ##########
 def kk_folder_error(self, context):
-    self.layout.label(text="Please make sure to open the folder that was exported")
+    self.layout.label(text="Please make sure to open the folder that was exported. (Hint: go into the folder before confirming)")
 
-    
+
 ########## FUNCTIONS ##########
 def image_to_KK(image, lut_name):
     width = image.size[0]
@@ -454,7 +448,7 @@ def checks(directory):
 
     return False
 
-def load_luts():
+def load_luts(lut_light, lut_dark):
     lut_path = os.path.dirname(os.path.abspath(__file__)) + '/luts/'
     day_lut = bpy.data.images.load(lut_path + lut_light, check_existing=True)
     day_lut.use_fake_user = True
@@ -464,7 +458,7 @@ def load_luts():
     night_lut.use_fake_user = True
     night_lut.save()
 
-def convert_main_textures():
+def convert_main_textures(lut_light):
     ignore_list = [
         "cf_m_eyeline_00_up_MainTex_CT.png",
         "cf_m_eyeline_down_MainTex_CT.png",
@@ -488,7 +482,7 @@ def convert_main_textures():
             image.pixels = new_pixels
             # image.save()
 
-def load_json_colors(directory):
+def load_json_colors(directory, lut_light, lut_dark, lut_selection):
     print('Converting Colors...')
 
     # "Borrowed" some logic from importeverything.py :P
@@ -502,12 +496,12 @@ def load_json_colors(directory):
             json_file = open(json_file_path)
             json_color_data = json.load(json_file)
 
-    update_shaders(json_color_data, light = True) # Set light colors
-    update_shaders(json_color_data, light = False) # Set dark colors
+    update_shaders(json_color_data, lut_selection, lut_light, light = True) # Set light colors
+    update_shaders(json_color_data, lut_selection, lut_dark, light = False) # Set dark colors
 
     set_color_management()
 
-def update_shaders(json, light):
+def update_shaders(json, lut_selection, active_lut, light):
 
     def to_rgba(rgb):
         rgba = [rgb[0], rgb[1], rgb[2], 1]
@@ -518,7 +512,6 @@ def update_shaders(json, light):
         return rgb
 
     node_groups = bpy.data.node_groups
-    active_lut = lut_light if light else lut_dark
 
     ## Body
     body_shader_node_group = node_groups['Body Shader']
@@ -642,6 +635,7 @@ def update_shaders(json, light):
     shader_inputs['Use fade mask? (1 = yes)'].default_value = 0.5
 
     ## Accessories/Items Shader
+    uses_lut = any([lut_selection == 'A', lut_selection == 'B', lut_selection == 'C'])
     for idx, item in enumerate(item_data):
         pattern_input_names = [
             'Pattern color (red)',
@@ -656,23 +650,42 @@ def update_shaders(json, light):
         ]
 
         shader_inputs = item_shader_node_groups[idx].nodes['colorsLight' if light else 'colorsDark'].inputs
-        if not light:
+        if not light and uses_lut:
             shader_inputs['Automatically darken color?'].default_value = 0
+        elif not light and lut_selection == 'D':
+            shader_inputs['Automatically darken color?'].default_value = 1
+            shader_inputs['Auto dark color (low sat.)'].default_value = [0.278491, 0.311221, 0.700000, 1.000000]
+            shader_inputs['Auto dark color (high sat.)'].default_value = [0.531185, 0.544296, 0.700000, 1.000000]
+        elif not light and lut_selection == 'E':
+            shader_inputs['Automatically darken color?'].default_value = 0
+
         shader_inputs['Manually set detail color? (1 = yes)'].default_value = 0
         shader_inputs['Detail intensity (green)'].default_value = 0.1
         shader_inputs['Detail intensity (blue)'].default_value = 0.1
         shader_inputs['Use Color mask instead? (1 = yes)'].default_value = 1
 
-        shader_inputs['Color mask color (base)'].default_value = [1, 1, 1, 1]
+        if not light and lut_selection == 'E':
+            shader_inputs['Color mask color (base)'].default_value = [0.3, 0.3, 0.3, 0.3]
+        else:
+            shader_inputs['Color mask color (base)'].default_value = [1, 1, 1, 1]
+
         for i, colorItem in enumerate(item['colorInfo']):
             if i < len(color_input_names):
                 color_channel = to_rgba(color_to_KK(json_to_color(colorItem), active_lut) / 255)
+                if not light and lut_selection == 'E':
+                    color_channel = [x * .3 for x in color_channel]
                 shader_inputs[color_input_names[i]].default_value = color_channel
 
-        shader_inputs['Pattern (base)'].default_value = [1, 1, 1, 1]
+        if not light and lut_selection == 'E':
+            shader_inputs['Pattern (base)'].default_value = [0.3, 0.3, 0.3, 0.3]
+        else:
+            shader_inputs['Pattern (base)'].default_value =  [1, 1, 1, 1]
+
         for i, patternColor in enumerate(item['patternColors']):
             if i < len(pattern_input_names):
                 color_channel = to_rgba(color_to_KK(json_to_color(patternColor), active_lut) / 255)
+                if not light and lut_selection == 'E':
+                    color_channel = [x * .3 for x in color_channel]
                 shader_inputs[pattern_input_names[i]].default_value = color_channel
         
 
@@ -695,13 +708,23 @@ class import_colors(bpy.types.Operator):
 
     def execute(self, context):
         directory = self.directory
-
         error = checks(directory)
 
+        scene = context.scene.placeholder
+        lut_selection = scene.colors_dropdown
+        
+        if lut_selection == 'A':
+            lut_dark = 'Lut_TimeNight.png'
+        elif lut_selection == 'B':
+            lut_dark = 'Lut_TimeSunset.png'
+        else:
+            lut_dark = 'Lut_TimeDay.png'
+        lut_light = 'Lut_TimeDay.png'
+
         if not error:
-            load_luts()
-            convert_main_textures()
-            load_json_colors(directory)
+            load_luts(lut_light, lut_dark)
+            convert_main_textures(lut_light)
+            load_json_colors(directory, lut_light, lut_dark, lut_selection)
 
         return {'FINISHED'}
 

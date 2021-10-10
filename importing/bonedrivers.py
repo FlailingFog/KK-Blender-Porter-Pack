@@ -314,6 +314,10 @@ def setup_joints():
             constraint.use_y = False
             constraint.use_z = False
             constraint.invert_x = True
+        
+        elif axis == 'Z':
+            constraint.use_x = False
+            constraint.use_y = False
 
         if mix == 'add':
             constraint.mix_mode = 'ADD'
@@ -337,8 +341,8 @@ def setup_joints():
     set_copy('cf_d_wrist_L', 'cf_j_hand_L', 0.33, axis = 'X', )
     set_copy('cf_d_wrist_R', 'cf_j_hand_R', 0.33, axis = 'X')
 
-    set_copy('cf_s_leg_L', 'cf_j_thigh00_L', 0.25, axis = 'X', mix = 'add')
-    set_copy('cf_s_leg_R', 'cf_j_thigh00_R', 0.25, axis = 'X', mix = 'add')
+    #set_copy('cf_s_leg_L', 'cf_j_thigh00_L', 0.25, axis = 'X', mix = 'add')
+    #set_copy('cf_s_leg_R', 'cf_j_thigh00_R', 0.25, axis = 'X', mix = 'add')
 
     set_copy('cf_d_siri_L', 'cf_j_thigh00_L', 0.33)
     set_copy('cf_d_siri_R', 'cf_j_thigh00_R', 0.33)
@@ -356,12 +360,12 @@ def setup_joints():
     set_copy('cf_d_leg03_R', 'cf_j_leg01_R', 0.66, axis='Y')
 
     #move the waist some if only one leg is rotated
-    set_copy('cf_s_waist02', 'cf_j_thigh00_L', 0.2, mix = 'add')
-    set_copy('cf_s_waist02', 'cf_j_thigh00_R', 0.2, mix = 'add')
-    set_copy('cf_s_waist02', 'cf_j_thigh00_R', 0.2, mix = 'add')
-    set_copy('cf_s_waist02', 'cf_j_thigh00_L', 0.2, mix = 'add')
+    set_copy('cf_s_waist02', 'cf_j_thigh00_L', 0.1, mix = 'add')
+    set_copy('cf_s_waist02', 'cf_j_thigh00_R', 0.1, mix = 'add')
+    #set_copy('cf_s_waist02', 'cf_j_thigh00_R', 0.1, mix = 'add')
+    #set_copy('cf_s_waist02', 'cf_j_thigh00_L', 0.1, mix = 'add')
 
-    set_copy('cf_s_waist02', 'cf_j_waist02', 0.35, axis = 'antiX')
+    set_copy('cf_s_waist02', 'cf_j_waist02', 0.5, axis = 'antiX')
 
     #this rotation helps when doing a split
     set_copy('cf_s_leg_L', 'cf_j_thigh00_L', .9, axis = 'Z', mix = 'add')
@@ -395,8 +399,8 @@ def setup_joints():
 
         target.rotation_mode = 'AUTO' #or QUATERNION
 
-        #get the length of the driver target bone to make results consistent for different sized bones
-        targetbonelength = str(round((bpy.data.objects['Armature'].pose.bones[drivertarget].head - bpy.data.objects['Armature'].pose.bones[drivertarget].tail).length,3))
+        #use the distance to the target bone's parent to make results consistent for different sized bones
+        targetbonelength = str(round((bpy.data.objects['Armature'].pose.bones[drivertarget].head - bpy.data.objects['Armature'].pose.bones[drivertarget].parent.head).length,3))
         
         #driver expression is the rotation value of the target bone multiplied by a percentage of the driver target bone's length
         if expresstype == 'move':
@@ -423,10 +427,10 @@ def setup_joints():
             driver.driver.expression = vari.name + '*' + vari.name + '*' + targetbonelength + '*' + drivermult
 
     #Set the remaining joint correction drivers
-    #bone directions change based on the armature origin because the Y and Z axis for each bone are swapped
+    #bone directions change based on the PMX vs FBX origin because the Y and Z axis for each bone are swapped
     if bpy.data.objects['Armature'].data.bones.get('Greybone') == None:
 
-        #set knee joing corrections. These go in toward the body and down toward the foot at an exponential rate
+        #set knee joint corrections. These go in toward the body and down toward the foot at an exponential rate
         setDriver('cf_s_kneeB_R', 'location', 1, 'cf_j_leg01_R', 'ROT_X',  '-0.2', expresstype = 'moveexp')
         setDriver('cf_s_kneeB_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '-0.08')
 
@@ -441,18 +445,18 @@ def setup_joints():
         setDriver('cf_d_kneeF_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '-0.02')
 
         #butt corrections go slightly up to the spine and in to the waist 
-        setDriver('cf_d_siri_R', 'location', 1, 'cf_j_leg01_R', 'ROT_X',  '0.02')
-        setDriver('cf_d_siri_R', 'location', 2, 'cf_j_leg01_R',  'ROT_X',  '0.02')
+        setDriver('cf_d_siri_R', 'location', 1, 'cf_j_thigh00_R', 'ROT_X',  '0.02')
+        setDriver('cf_d_siri_R', 'location', 2, 'cf_j_thigh00_R',  'ROT_X',  '0.02')
 
-        setDriver('cf_d_siri_L', 'location', 1, 'cf_j_leg01_L', 'ROT_X',  '0.02')
-        setDriver('cf_d_siri_L', 'location', 2, 'cf_j_leg01_L',  'ROT_X',  '0.02')
+        setDriver('cf_d_siri_L', 'location', 1, 'cf_j_thigh00_L', 'ROT_X',  '0.02')
+        setDriver('cf_d_siri_L', 'location', 2, 'cf_j_thigh00_L',  'ROT_X',  '0.02')
         
         #hand corrections go up to the head and in towards the elbow
-        setDriver('cf_d_hand_R', 'location', 0, 'cf_j_hand_R', 'ROT_Z',  '-0.8')
-        setDriver('cf_d_hand_R', 'location', 1, 'cf_j_hand_R', 'ROT_Z', '-0.8')
+        setDriver('cf_d_hand_R', 'location', 0, 'cf_j_hand_R', 'ROT_Z',  '-0.4', expresstype = 'movePos')
+        setDriver('cf_d_hand_R', 'location', 1, 'cf_j_hand_R', 'ROT_Z', '-0.4', expresstype = 'movePos')
 
-        setDriver('cf_d_hand_L', 'location', 0, 'cf_j_hand_L', 'ROT_Z', '-0.8')
-        setDriver('cf_d_hand_L', 'location', 1, 'cf_j_hand_L', 'ROT_Z', '0.8')
+        setDriver('cf_d_hand_L', 'location', 0, 'cf_j_hand_L', 'ROT_Z', '-0.4', expresstype = 'movePos')
+        setDriver('cf_d_hand_L', 'location', 1, 'cf_j_hand_L', 'ROT_Z', '0.4', expresstype = 'movePos')
 
         #elboback goes out to the chest and into the shoulder
         #elbo goes does the opposite
@@ -478,15 +482,15 @@ def setup_joints():
         setDriver('cf_d_shoulder02_L', 'location', 2, 'cf_j_arm00_L', 'ROT_Y',  '0.1')
 
         #leg corrections go up to the head and slightly forwards/backwards
-        setDriver('cf_s_leg_R', 'location', 1, 'cf_j_leg01_R', 'ROT_X',  '0.1', expresstype = 'moveexp')
-        setDriver('cf_s_leg_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '0.2')
+        setDriver('cf_s_leg_R', 'location', 1, 'cf_j_thigh00_R', 'ROT_X',  '1', expresstype = 'moveexp')
+        setDriver('cf_s_leg_R', 'location', 2, 'cf_j_thigh00_R', 'ROT_X',  '-1.5')
 
-        setDriver('cf_s_leg_L', 'location', 1, 'cf_j_leg01_L', 'ROT_X',  '0.1', expresstype = 'moveexp')
-        setDriver('cf_s_leg_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '0.2')
+        setDriver('cf_s_leg_L', 'location', 1, 'cf_j_thigh00_L', 'ROT_X',  '1', expresstype = 'moveexp')
+        setDriver('cf_s_leg_L', 'location', 2, 'cf_j_thigh00_L', 'ROT_X',  '-1.5')
 
         #waist correction slightly moves out to chest when lower waist rotates
         setDriver('cf_s_waist02', 'location', 2, 'cf_j_waist02', 'ROT_X',  '0.2', expresstype='moveABS')
-
+'''
     else:
         setDriver('cf_s_kneeB_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '-0.29')
         setDriver('cf_s_kneeB_R', 'location', 1, 'cf_j_leg01_R', 'ROT_X',  '-0.23')
@@ -535,6 +539,7 @@ def setup_joints():
         setDriver('cf_d_shoulder02_L', 'location', 2, 'cf_j_arm00_L', 'ROT_Y',  '0.1')
 
         setDriver('cf_d_arm01_L', 'rotation_quaternion', 1, 'cf_j_arm00_L', 'ROT_X',  '-0.7')
+'''
 
 def make_eye_controller():
     armature = bpy.data.objects['Armature']
