@@ -30,7 +30,8 @@ def get_templates_and_apply(directory, useFakeUser):
         return True
     
     #Clean material list
-    armature = bpy.data.objects['Armature']
+    bpy.ops.object.mode_set(mode='OBJECT')
+    armature = bpy.data.objects['Armature']    
     armature.hide = False
     bpy.context.view_layer.objects.active = None
     bpy.ops.object.select_all(action='DESELECT')
