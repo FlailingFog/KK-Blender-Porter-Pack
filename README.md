@@ -14,9 +14,9 @@ Coming eventually
 
 Prerequisites:
 * Install [KKAPI 1.25 or higher](https://github.com/IllusionMods/IllusionModdingAPI/releases) for Koikatsu
-* Install [CATS blender plugin](https://github.com/GiveMeAllYourCats/cats-blender-plugin) for Blender
+* Download [CATS blender plugin](https://github.com/GiveMeAllYourCats/cats-blender-plugin) for Blender
 
-1. Download the repository ZIP using the green CODE button on the top right
+1. Download this repository ZIP using the green CODE button on the top right of the page
 2. Open the repository zip > go to the plugins folder > get the KKBP_Exporter.DLL file from KKBP_Exporter.zip
 3. Go to your Koikatsu install directory > go to the BepInEx > go to the plugins folder > Place the KKBP_Exporter.DLL file into this folder
 4. Start the game, go to the character creator and load your character
