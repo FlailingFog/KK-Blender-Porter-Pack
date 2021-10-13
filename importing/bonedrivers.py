@@ -849,6 +849,7 @@ def rename_bones_for_clarity(action):
     
 #selects all materials that have "_hair" or "_ahoge" in their name to give the user a head start with separating the hair
 def begin_hair_selections():
+    bpy.ops.object.mode_set(mode='OBJECT')
     bpy.ops.object.select_all(action='DESELECT')
     clothes = bpy.data.objects['Clothes']
     clothes.select_set(True)
@@ -856,7 +857,7 @@ def begin_hair_selections():
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_all(action='DESELECT')
 
-    for index in range(len(clothes.data.materials)-1):
+    for index in range(len(clothes.data.materials)):
         mat_name = clothes.data.materials[index].name
         if ('_hair' in mat_name or '_ahoge' in mat_name) and ('_ribon_' not in mat_name and '_hair_sakura_' not in mat_name):
             clothes.active_material_index = index

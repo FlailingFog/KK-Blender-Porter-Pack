@@ -134,14 +134,12 @@ def standardize_armature():
     #delete bones not under the cf_n_height bone
     def select_children(parent):
         try:
-            #don't select cf_hit, k_f_ so they get deleted
-            if 'cf_hit_' not in parent.name and 'k_f_' not in parent.name:
-                parent.select = True
-                parent.select_head = True
-                parent.select_tail = True
-
+            parent.select = True
+            parent.select_head = True
+            parent.select_tail = True
             for child in parent.children:
                 select_children(child)
+            
         except:
             #The script hit the last bone in the chain
             return
@@ -586,7 +584,7 @@ def reset_and_reroll_bones():
         if armature.data.edit_bones.get(bone):
             armature.data.edit_bones[bone].roll = reroll_data[bone]
     
-    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.object.mode_set(mode='OBJECT')
   
 #slightly modify the armature to support IKs
 def modify_pmx_armature():
@@ -630,14 +628,6 @@ def modify_pmx_armature():
     relocate_tail('cf_j_foot_L', 'cf_j_toes_L', 'foot')
     relocate_tail('cf_j_forearm01_L', 'cf_j_hand_L', 'arm')
     relocate_tail('cf_pv_hand_L', 'cf_j_hand_L', 'hand')
-    
-    '''
-    #remove whatever these stupid shadow bones are
-    armature.data.edit_bones.remove(armature.data.edit_bones['_dummy_目x.L'])
-    armature.data.edit_bones.remove(armature.data.edit_bones['_dummy_目x.R'])
-    armature.data.edit_bones.remove(armature.data.edit_bones['_shadow_目x.L'])
-    armature.data.edit_bones.remove(armature.data.edit_bones['_shadow_目x.R'])
-    '''
 
     bpy.ops.object.mode_set(mode='OBJECT')
 

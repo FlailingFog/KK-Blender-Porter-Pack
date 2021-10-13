@@ -154,6 +154,14 @@ def reorganize_armature_layers():
     for bone in bpy.data.armatures[0].bones:
         set_armature_layer(bone.name, 10, hidden=True)
 
+    #reshow cf_hit_ bones on layer 12
+    for bone in [bones for bones in bpy.data.armatures[0].bones if 'cf_hit_' in bones.name]:
+        set_armature_layer(bone.name, show_layer = 11)
+
+    #reshow k_f_ bones on layer 13
+    for bone in [bones for bones in bpy.data.armatures[0].bones if 'k_f_' in bones.name]:
+        set_armature_layer(bone.name, show_layer = 12)
+
     #reshow core bones on layer 1
     for bone in core_list:
         set_armature_layer(bone, show_layer = 0)
