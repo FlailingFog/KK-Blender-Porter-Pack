@@ -38,7 +38,7 @@ Prerequisites:
 ![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/importtemplates.png)
 16. Click the Convert and Apply colors button. Choose the folder that contains the .pmx file again. Your character should have the correct colors now.  
 ![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/importcolors.png)
-17. Edit the shaders to get the exact look you want. This includes editing the detail mask intensities, shine colors, dark colors etc
+17. Edit the shaders to get the exact look you want. This includes editing the detail mask intensities, hair highlights, eye scaling, dark colors etc
 18. Edit the armature if you need to
 19. Fix vertex group issues if you need to
 
