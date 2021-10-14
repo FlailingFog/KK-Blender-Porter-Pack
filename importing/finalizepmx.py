@@ -97,7 +97,11 @@ def standardize_armature():
     '''
 
     #reparent foot to leg03
-    bpy.ops.object.mode_set(mode='EDIT')
+    try:
+        bpy.ops.object.mode_set(mode='EDIT')
+    except:
+        armature.hide = False
+        bpy.ops.object.mode_set(mode='EDIT')
     armature.data.edit_bones['cf_j_foot_R'].parent = armature.data.edit_bones['cf_j_leg03_R']
     armature.data.edit_bones['cf_j_foot_L'].parent = armature.data.edit_bones['cf_j_leg03_L']
 
