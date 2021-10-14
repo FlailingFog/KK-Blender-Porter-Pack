@@ -362,7 +362,8 @@ def combine_shapekeys(keep_partial_shapekeys):
                     activate_shapekey('Lips_cartoon_mouth_op')
 
                 if ('_smile_sharp_op' in current_keyblock.name and cat == 'Mouth'):
-                    activate_shapekey('Teeth_smile_sharp_op1')
+                    if shapekey_block.get('Teeth_smile_sharp_op1') != None:
+                        shapekey_block['Teeth_smile_sharp_op1'].value = 0
                     activate_shapekey('Lips_smile_sharp_op')
 
                 if ('_eating_2_op' in current_keyblock.name):
