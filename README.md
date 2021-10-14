@@ -28,10 +28,10 @@ Prerequisites:
 ![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/catsimport.png)
 9. Click the Finalize PMX file button. This may take a few minutes depending on your hardware. If blender crashes, disable the "Fix eyewhites" toggle before running it  
 ![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/kkpanel1.png)
-10. When that finishes you should be in edit mode (light green box) with some of your hair selected. You can hide the armature in the outliner by clicking the eye on the top right (dark green box). Enter face select mode on the top left (red box). Shift + Click any face on any hair that isn't highlighted. This will highlight the face and also highlight the material the face is using on the material panel. In the screenshot, I have just shift + clicked the cf_m_hair_f_31_00 material, so it is highlighted. Once the face is highlighted, click the Select button on the material panel (yellow box). Continue this until all hair is selected. Do not select any hair accessories like hair bands or hair ties. You can undo a selection using ctrl + Z or by using the Deselect button on the material panel. ![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/hairselection.png)
+10. When that finishes you should be in edit mode (light green box) with some of your hair selected. Enter face select mode on the top left (red box). You can hide the armature in the outliner by clicking the eye on the top right (dark green box). Shift + Click any face on any hair that isn't highlighted. This will highlight the face and also highlight the material the face is using on the material panel. In the screenshot, I have just shift + clicked the cf_m_hair_f_31_00 material, so it is highlighted. Once the face is highlighted, click the Select button on the material panel (yellow box). Continue this until all hair is selected. Do not select any hair accessories like hair bands or hair ties. You can undo a selection using ctrl + Z or by using the Deselect button on the material panel. ![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/hairselection.png)
 11. When all hair is selected, press the P key to separate the hair by selection  
 ![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/hairseparate.png)
-12. Rename the hair object in the outliner to "Hair"  
+12. Rename the separated hair object in the outliner to "Hair"  
 ![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/rename.png)
 13. (Optional) Separate and rename any other objects if you want (accessories, underwear, etc). 
 14. Click the Import KK Shader and textures button. Choose the folder that contains the .pmx file. Your character should look black and yellow like this  
@@ -41,6 +41,7 @@ Prerequisites:
 17. Edit the shaders to get the exact look you want. This includes editing the detail mask intensities, hair highlights, eye scaling, dark colors etc
 18. Edit the armature if you need to
 19. Fix vertex group issues if you need to
+20. Setting and saving dynamic bone rotations
 
 Exporting:
 1. a
