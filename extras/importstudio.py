@@ -113,7 +113,7 @@ class import_studio(bpy.types.Operator):
                             #Remove duplicate images
                             for node in nodes:
                                 if node.type == 'TEX_IMAGE':
-                                    if '.00' in node.image.name and bpy.data.images.get(node.image.name[0:len(node.image.name)-4]):
+                                    if '.0' in node.image.name and bpy.data.images.get(node.image.name[0:len(node.image.name)-4]):
                                         node.image = bpy.data.images.get(node.image.name[0:len(node.image.name)-4])
 
                             #DDS files need to be converted to pngs or tgas or the color conversion scripts won't work
@@ -342,7 +342,7 @@ class import_studio(bpy.types.Operator):
                 for image in image_list:
                     image_name = image.name
 
-                    if '.00' not in image_name and '_md-DXT' not in image_name and '_mc-DXT' not in image_name and image_name in conversion_image_list:
+                    if '.0' not in image_name and '_md-DXT' not in image_name and '_mc-DXT' not in image_name and image_name in conversion_image_list:
                         image_name = image_name.replace(".dds", ".png").replace(".DDS", ".png")
                         image = bpy.data.images[image_name]
                         print('converting ' + image_name)

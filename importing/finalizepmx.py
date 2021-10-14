@@ -1,5 +1,12 @@
-#Finalize the pmx file
-#some code stolen from MediaMoots here https://github.com/FlailingFog/KK-Blender-Shader-Pack/issues/29
+'''
+FINALIZE PMX
+- Standardizes the armature to match the Koikatsu armature
+- Sets rolls for all bones
+- Optionally modifies the armature for IK usage
+- Runs several other scripts when finished
+
+some code stolen from MediaMoots here https://github.com/FlailingFog/KK-Blender-Shader-Pack/issues/29
+'''
 
 import bpy
 from mathutils import Vector

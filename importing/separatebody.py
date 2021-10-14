@@ -1,9 +1,8 @@
 '''
 SEPARATE BODY SCRIPT
 - Isolates the body
-- Attempts to isolate the bonelyfans and shadowcast meshes as well
-Usage:
-- Run the script
+- Attempts to isolate the bonelyfans and shadowcast meshes
+- Combines duplicated material slots
 '''
 
 import bpy
@@ -174,14 +173,17 @@ class separate_body(bpy.types.Operator):
                 print("Additional entry of {} in slot {}".format(mat.name, index))
         
         for material_name in list(repeats.keys()):
-            for index, material_index in enumerate(repeats[material_name]):
-                if index == 0:
-                    continue
-                print("moving duplicate material {} in slot {} to slot {}".format(material_name, index, repeats[material_name][0]))
-                clothes.active_material_index = material_index
-                bpy.ops.object.material_slot_select()
-                clothes.active_material_index = repeats[material_name][0]
-                bpy.ops.object.material_slot_assign()
+            if len(repeats[material_name]) > 1:
+                for repeated_slot in repeats[material_name]:
+                    #don't touch the first slot
+                    if repeated_slot == repeats[material_name][0]:
+                        continue
+                    print("moving duplicate material {} in slot {} to the original slot {}".format(material_name, repeated_slot, repeats[material_name][0]))
+                    clothes.active_material_index = repeated_slot
+                    bpy.ops.object.material_slot_select()
+                    clothes.active_material_index = repeats[material_name][0]
+                    bpy.ops.object.material_slot_assign()
+                    bpy.ops.mesh.select_all(action='DESELECT')
 
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.material_slot_remove_unused()
