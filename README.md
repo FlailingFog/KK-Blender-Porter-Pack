@@ -13,7 +13,7 @@ Coming eventually
 ### Text instructions (without shading instructions)
 
 Prerequisites:
-* Install [KKAPI 1.25 or higher](https://github.com/IllusionMods/IllusionModdingAPI/releases) for Koikatsu
+* Install [KKAPI 1.25 or higher](https://github.com/IllusionMods/IllusionModdingAPI/releases) for Koikatsu. ([Installation instructions](https://github.com/IllusionMods/IllusionModdingAPI#how-to-install))
 * Download [CATS blender plugin](https://github.com/GiveMeAllYourCats/cats-blender-plugin) for Blender
 
 1. Download this repository ZIP using the green CODE button on the top right of the page
