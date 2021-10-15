@@ -38,10 +38,17 @@ Prerequisites:
 ![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/importtemplates.png)
 16. Click the Convert and Apply colors button. Choose the folder that contains the .pmx file again. Your character should have the correct colors now.  
 ![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/importcolors.png)
-17. Edit the shaders to get the exact look you want. This includes editing the detail mask intensities, hair highlights, eye scaling, dark colors etc
-18. Edit the armature if you need to
-19. Fix vertex group issues if you need to
-20. Setting and saving dynamic bone rotations
+17. The plugin does not export dynamic bone rotations for you. If any hair or accessories are clipping and need to be re-rotated, you can select the armature and enter pose mode (top left) and rotate the bones you need rotated using the R, X, Y and Z keys.  
+![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/dynamicbones1.png)
+In this case I have rotated the bow to prevent it from clipping into the chest and rotated the hair to prevent it from sticking outward. To save this rotation as the default, exit pose mode, select the clothes object and save the rotation as a shapekey. Do this for the hair object as well.
+![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/dynamicbones2.png)
+This adds a new shapekey at the bottom of your object's shapekey list. Set it to 1.
+![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/dynamicbones3.png)
+Now save the default pose by selecting the armature, going into pose mode, selecting the bones you just rotated and pressing ctrl + A.
+![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/dynamicbones4.png)
+18. Edit the shaders to get the exact look you want. This includes editing the detail mask intensities, hair highlights, eye scaling, dark colors etc
+19. Edit the armature if you need to
+20. Fix vertex group issues if you need to
 
 Exporting:
 1. a
