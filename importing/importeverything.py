@@ -380,13 +380,13 @@ def get_and_load_textures(directory):
         else:
             print('File not found, skipping: ' + image)
         
-    imageLoad('Template Body', 'BodyTextures', 'BodyMC', 'cf_m_body_ColorMask.png')
-    imageLoad('Template Body', 'BodyTextures', 'BodyMD', 'cf_m_body_DetailMask.png') #cfm female
-    imageLoad('Template Body', 'BodyTextures', 'BodyLine', 'cf_m_body_LineMask.png')
-    imageLoad('Template Body', 'BodyTextures', 'BodyNorm', 'cf_m_body_NormalMap.png')
+    imageLoad('Template Body', 'Gentex', 'BodyMC', 'cf_m_body_ColorMask.png')
+    imageLoad('Template Body', 'Gentex', 'BodyMD', 'cf_m_body_DetailMask.png') #cfm female
+    imageLoad('Template Body', 'Gentex', 'BodyLine', 'cf_m_body_LineMask.png')
+    imageLoad('Template Body', 'Gentex', 'BodyNorm', 'cf_m_body_NormalMap.png')
 
-    imageLoad('Template Body', 'BodyTextures', 'BodyMD', 'cm_m_body_DetailMask.png') #cmm male
-    imageLoad('Template Body', 'BodyTextures', 'BodyLine', 'cm_m_body_LineMask.png')
+    imageLoad('Template Body', 'Gentex', 'BodyMD', 'cm_m_body_DetailMask.png') #cmm male
+    imageLoad('Template Body', 'Gentex', 'BodyLine', 'cm_m_body_LineMask.png')
     
     imageLoad('Template Body', 'NippleTextures', 'Genital', 'cf_m_body_MainTex.png') #chara main texture
     imageLoad('Template Body', 'NippleTextures', 'Underhair', 'cf_m_body_overtex2.png') #pubic hair
@@ -407,30 +407,30 @@ def get_and_load_textures(directory):
             #An alpha mask for the clothing wasn't present in the Textures folder
             currentObj.material_slots['Template Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].inputs['Built in transparency toggle'].default_value = 0
     
-    imageLoad('Template Face', 'FaceTextures', 'FaceMC', 'cf_m_face_00_ColorMask.png')
-    imageLoad('Template Face', 'FaceTextures', 'FaceMD', 'cf_m_face_00_DetailMask.png')
-    imageLoad('Template Face', 'FaceTextures', 'BlushMask', 'cf_m_face_00_Texture4.png')
-    imageLoad('Template Face', 'FaceTextures', 'FaceTongue', 'cf_m_face_00_MainTex.png') #face main texture
+    imageLoad('Template Face', 'Gentex', 'FaceMC', 'cf_m_face_00_ColorMask.png')
+    imageLoad('Template Face', 'Gentex', 'FaceMD', 'cf_m_face_00_DetailMask.png')
+    imageLoad('Template Face', 'Gentex', 'BlushMask', 'cf_m_face_00_Texture4.png')
+    imageLoad('Template Face', 'Gentex', 'FaceTongue', 'cf_m_face_00_MainTex.png') #face main texture
 
-    imageLoad('Template Face', 'FaceTextures', 'BlushMask.001', 'cf_m_face_00_Texture5.png')
+    imageLoad('Template Face', 'Gentex', 'BlushMask.001', 'cf_m_face_00_Texture5.png')
 
 
     
-    imageLoad('Template Eyebrows (mayuge)', 'BrowTextures', 'Eyebrow', 'cf_m_mayuge_00_MainTex_CT.png')
-    imageLoad('Template Nose', 'Nose', 'Nose', 'cf_m_noseline_00_MainTex_CT.png')
-    imageLoad('Template Teeth (tooth)', 'Teeth', 'Teeth', 'cf_m_tooth_MainTex_CT.png')
-    imageLoad('Template Eyewhites (sirome)', 'EyewhiteTex', 'Eyewhite', 'cf_m_sirome_00_MainTex_CT.png')
+    imageLoad('Template Eyebrows (mayuge)', 'Gentex', 'Eyebrow', 'cf_m_mayuge_00_MainTex_CT.png')
+    imageLoad('Template Nose', 'Gentex', 'Nose', 'cf_m_noseline_00_MainTex_CT.png')
+    imageLoad('Template Teeth (tooth)', 'Gentex', 'Teeth', 'cf_m_tooth_MainTex_CT.png')
+    imageLoad('Template Eyewhites (sirome)', 'Gentex', 'Eyewhite', 'cf_m_sirome_00_MainTex_CT.png')
     
-    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineUp', 'cf_m_eyeline_00_up_MainTex_CT.png')
-    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineUp.001', 'cf_m_eyeline_00_up_MainTex_CT.png')
-    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineDown', 'cf_m_eyeline_down_MainTex_CT.png')
-    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineDown.001', 'cf_m_eyeline_down_MainTex_CT.png')
-    imageLoad('Template Eyeline up', 'Eyeline', 'EyelineKage', 'cf_m_eyeline_kage_MainTex.png')
+    imageLoad('Template Eyeline up', 'Gentex', 'EyelineUp', 'cf_m_eyeline_00_up_MainTex_CT.png')
+    imageLoad('Template Eyeline up', 'Gentex', 'EyelineUp.001', 'cf_m_eyeline_00_up_MainTex_CT.png')
+    imageLoad('Template Eyeline up', 'Gentex', 'EyelineDown', 'cf_m_eyeline_down_MainTex_CT.png')
+    imageLoad('Template Eyeline up', 'Gentex', 'EyelineDown.001', 'cf_m_eyeline_down_MainTex_CT.png')
+    imageLoad('Template Eyeline up', 'Gentex', 'EyelineKage', 'cf_m_eyeline_kage_MainTex.png')
     
     
-    imageLoad('Template Eye (hitomi)', 'EyeTex', 'eyeAlpha', 'cf_m_hitomi_00_MainTex_CT.png')
-    imageLoad('Template Eye (hitomi)', 'EyeTex', 'EyeHU', 'cf_m_hitomi_00_overtex1.png')
-    imageLoad('Template Eye (hitomi)', 'EyeTex', 'EyeHD', 'cf_m_hitomi_00_overtex2.png')
+    imageLoad('Template Eye (hitomi)', 'Gentex', 'eyeAlpha', 'cf_m_hitomi_00_MainTex_CT.png')
+    imageLoad('Template Eye (hitomi)', 'Gentex', 'EyeHU', 'cf_m_hitomi_00_overtex1.png')
+    imageLoad('Template Eye (hitomi)', 'Gentex', 'EyeHD', 'cf_m_hitomi_00_overtex2.png')
     
     imageLoad('Template Tongue', 'Gentex', 'Maintex', 'cf_m_tang_ColorMask.png') #done on purpose
     imageLoad('Template Tongue', 'Gentex', 'MainCol', 'cf_m_tang_ColorMask.png')
@@ -444,19 +444,19 @@ def get_and_load_textures(directory):
         hairType = hairMat.name.replace('Template ','')
         
         #make a copy of the node group, use it to replace the current node group and rename it so each piece of hair has it's own unique hair texture group
-        newNode = hairMat.material.node_tree.nodes['HairTextures'].node_tree.copy()
-        hairMat.material.node_tree.nodes['HairTextures'].node_tree = newNode
+        newNode = hairMat.material.node_tree.nodes['Gentex'].node_tree.copy()
+        hairMat.material.node_tree.nodes['Gentex'].node_tree = newNode
         newNode.name = hairType + ' Textures'
         
-        imageLoad(hairMat.name, 'HairTextures', 'hairDetail', hairType+'_DetailMask.png')
-        imageLoad(hairMat.name, 'HairTextures', 'hairFade',   hairType+'_ColorMask.png')
-        imageLoad(hairMat.name, 'HairTextures', 'hairShine',  hairType+'_HairGloss.png')
-        imageLoad(hairMat.name, 'HairTextures', 'hairAlpha',  hairType+'_AlphaMask.png')
+        imageLoad(hairMat.name, 'Gentex', 'hairDetail', hairType+'_DetailMask.png')
+        imageLoad(hairMat.name, 'Gentex', 'hairFade',   hairType+'_ColorMask.png')
+        imageLoad(hairMat.name, 'Gentex', 'hairShine',  hairType+'_HairGloss.png')
+        imageLoad(hairMat.name, 'Gentex', 'hairAlpha',  hairType+'_AlphaMask.png')
 
         #If no alpha mask wasn't loaded in disconnect the hair alpha node to make sure this piece of hair is visible
-        if hairMat.material.node_tree.nodes['HairTextures'].node_tree.nodes['hairAlpha'].image == None:
-            getOut = hairMat.material.node_tree.nodes['HairTextures'].node_tree.nodes['Group Output'].inputs['Hair alpha'].links[0]
-            hairMat.material.node_tree.nodes['HairTextures'].node_tree.links.remove(getOut)
+        if hairMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairAlpha'].image == None:
+            getOut = hairMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Group Output'].inputs['Hair alpha'].links[0]
+            hairMat.material.node_tree.nodes['Gentex'].node_tree.links.remove(getOut)
     
     # Loop through each material in the general object and load the textures, if any, into unique node groups
     # also make unique shader node groups so all materials are unique
@@ -550,7 +550,7 @@ def add_outlines(oneOutlineOnlyMode):
         genMat = ob.material_slots[matindex]
         genType = genMat.name.replace('Template ','')
         
-        AlphaImage = genMat.material.node_tree.nodes['HairTextures'].node_tree.nodes['hairAlpha'].image
+        AlphaImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairAlpha'].image
         if AlphaImage:
             #set the material as active and move to the top of the material list
             ob.active_material_index = ob.data.materials.find(genMat.name)
@@ -587,7 +587,7 @@ def add_outlines(oneOutlineOnlyMode):
             if 'Outline ' in OutlineMat.name:
                 genType = OutlineMat.name.replace('Outline ','')
                 print(genType)
-                AlphaImage = genMat.material.node_tree.nodes['HairTextures'].node_tree.nodes['hairAlpha'].image      
+                AlphaImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairAlpha'].image      
 
                 if AlphaImage:
                     OutlineMat.material.node_tree.nodes['outlinealpha'].image = AlphaImage

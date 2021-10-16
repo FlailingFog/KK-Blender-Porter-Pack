@@ -863,6 +863,7 @@ def begin_hair_selections():
             clothes.active_material_index = index
             bpy.ops.object.material_slot_select()
     
+    bpy.context.tool_settings.mesh_select_mode = (False, False, True)
     bpy.data.objects['Armature'].hide = True
 
 class bone_drivers(bpy.types.Operator):

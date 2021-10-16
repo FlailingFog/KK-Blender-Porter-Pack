@@ -71,6 +71,20 @@ class PlaceholderProperties(PropertyGroup):
             ("E", "Dark colors: Value reduction", "Makes everything darker")
         ), name="", default="A", description="Dark colors")
     
+    prep_dropdown : EnumProperty(
+        items=(
+            ("A", "Very simplified", "Combines all objects, removes the outline, simplifies bones on armature layer 3 / 5 / 11 / 12 / 13, reparents hip bone"),
+            ("B", "Simplified", "Combines all objects, Removes the outline, simplifies bones on armature layer 11"),
+            ("C", "Stock", "Combines all objects, Removes the outline"),
+        ), name="", default="A", description="Prep type")
+    
+    atlas_dropdown : EnumProperty(
+        items=(
+            ("A", "Light atlas", ""),
+            ("B", "Dark atlas", ""),
+            ("C", "Normal atlas", ""),
+        ), name="", default="A", description="Atlas type")
+    
     dropdown_box : EnumProperty(
         items=(
             ("A", "Principled BSDF", "Default shading"),
@@ -233,7 +247,17 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
-        split.label(text="3) Bake material templates:")
+        split.label(text="3) Prep armature for export:")
+        split.operator('kkb.selectbones', text = '', icon = 'BONE_DATA')
+        row = col.row(align=True)
+        split = row.split(align=True, factor=splitfac)
+        split.label(text="")
+        split.prop(context.scene.placeholder, "prep_dropdown")
+
+        col = box.column(align=True)
+        row = col.row(align=True)
+        split = row.split(align=True, factor=splitfac)
+        split.label(text="4) Bake material templates:")
         split.operator('kkb.bakematerials', text = '', icon='VIEW_CAMERA')
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
@@ -243,14 +267,12 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
-        split.label(text="4) Apply or swap baked templates:")
+        split.label(text="5) Apply baked templates:")
         split.operator('kkb.applymaterials', text = '', icon = 'FILE_REFRESH')
-        
-        col = box.column(align=True)
         row = col.row(align=True)
-        split = row.split(align=True, factor=splitfac)
-        split.label(text="5) Select unused bones:")
-        split.operator('kkb.selectbones', text = '', icon = 'BONE_DATA')
+        split = row.split(align = True, factor=splitfac)
+        split.label(text="")
+        split.prop(context.scene.placeholder, "atlas_dropdown")
 
 class EXTRAS_PT_panel(bpy.types.Panel):
     bl_label = 'Extras'
