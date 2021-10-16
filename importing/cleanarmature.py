@@ -54,6 +54,7 @@ def get_bone_list(kind):
         'cf_j_arm00_L', 'cf_j_arm00_R',
         'cf_j_thigh00_L', 'cf_j_thigh00_R',
         'cf_j_leg01_L', 'cf_j_leg01_R',
+        'cf_j_leg03_L', 'cf_j_leg03_R',
         'cf_j_foot_L', 'cf_j_foot_R',
         'cf_j_hand_L', 'cf_j_hand_R',
         'cf_j_bust03_L', 'cf_j_bnip02root_L', 'cf_j_bnip02_L',

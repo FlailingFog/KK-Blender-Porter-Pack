@@ -242,7 +242,7 @@ def reset_and_reroll_bones():
     for finger in finger_list:
         resize_finger(finger)
     
-    #reset the orientation for certain bones
+    #reset the orientation of certain bones
     height_adder = Vector((0,0,0.1))
     def reorient(bone):
         print(bone)
@@ -250,16 +250,16 @@ def reset_and_reroll_bones():
         print(bone)
         print(height_adder)  
 
-    reorient('cf_j_thigh00_R')
-    reorient('cf_j_thigh00_L')
-    reorient('cf_j_leg01_R')
-    reorient('cf_j_leg01_L')
-    reorient('cf_j_foot_R')
-    reorient('cf_j_foot_L')
-    reorient('cf_d_arm01_R')
-    reorient('cf_d_arm01_L')
-    reorient('cf_d_shoulder02_R')
-    reorient('cf_d_shoulder02_L')
+    reorient_list = [
+        'cf_j_thigh00_R', 'cf_j_thigh00_L',
+        'cf_j_leg01_R', 'cf_j_leg01_L',
+        'cf_j_leg03_R', 'cf_j_leg03_L',
+        'cf_j_foot_R', 'cf_j_foot_L',
+        'cf_d_arm01_R', 'cf_d_arm01_L',
+        'cf_d_shoulder02_R', 'cf_d_shoulder02_L',]
+
+    for bone in reorient_list:
+        reorient(bone)
     
     #Use roll data from a reference armature dump to set the roll for each bone
     reroll_data = {

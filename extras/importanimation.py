@@ -40,7 +40,7 @@ def correct_animation():
     myaction = bpy.context.active_object.animation_data.action
     fcurves = myaction.fcurves
 
-    #pmx armatures have swapped x and y  rotation channels because the bone has been rotated
+    #pmx armatures have swapped x and y rotation channels because the bone has been rotated
     # the y and z channels are swapped for fbx armatures 
     def flip_animation(bone_to_flip):
         bone = armature.pose.bones[bone_to_flip]
