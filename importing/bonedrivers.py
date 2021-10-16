@@ -862,6 +862,8 @@ def begin_hair_selections():
         if ('_hair' in mat_name or '_ahoge' in mat_name) and ('_ribon_' not in mat_name and '_hair_sakura_' not in mat_name):
             clothes.active_material_index = index
             bpy.ops.object.material_slot_select()
+    
+    bpy.data.objects['Armature'].hide = True
 
 class bone_drivers(bpy.types.Operator):
     bl_idname = "kkb.bonedrivers"
