@@ -1,4 +1,4 @@
-import bpy
+import bpy, os
 from pathlib import Path
 from bpy.props import StringProperty
 from ..importing.importcolors import load_luts, image_to_KK
@@ -213,8 +213,21 @@ class import_studio(bpy.types.Operator):
                                 try:
                                     template = bpy.data.materials['Template General'].copy()
                                 except:
-                                    bpy.context.window_manager.popup_menu(kkError, title="Error", icon='ERROR')
-                                    return
+                                    script_dir=Path(__file__).parent
+                                    template_path=(script_dir / '../KK Shader V5.0.blend').resolve()
+                                    filepath = str(template_path)
+
+                                    innerpath = 'Material'
+                                    templateList = ['Template General']
+
+                                    for template in templateList:
+                                        bpy.ops.wm.append(
+                                            filepath=os.path.join(filepath, innerpath, template),
+                                            directory=os.path.join(filepath, innerpath),
+                                            filename=template,
+                                            set_fake=False
+                                            )
+                                    template = bpy.data.materials['Template General'].copy()
                                 
                                 template.name = 'Template ' + material.name
                                 material_slot.material = bpy.data.materials[template.name]
@@ -225,7 +238,7 @@ class import_studio(bpy.types.Operator):
                                     try:
                                         nodes[group].node_tree.nodes[node].image = bpy.data.images[image]
                                         if raw:
-                                            currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].image.colorspace_settings.name = 'Raw'
+                                            nodes[group].node_tree.nodes[node].image.colorspace_settings.name = 'Raw'
                                     except:
                                         print('Image not found, skipping: ' + str(image))
 
