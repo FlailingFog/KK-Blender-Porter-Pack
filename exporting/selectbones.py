@@ -12,8 +12,8 @@ import bpy
 
 class select_bones(bpy.types.Operator):
     bl_idname = "kkb.selectbones"
-    bl_label = "select Useless bones"
-    bl_description = "Selects bones that aren't needed. \nMake sure you have all of the hair/accessory bones\nyou want to keep are visible in pose mode!\nThis script also unparents the Hip bone from the Root bone"
+    bl_label = "Preps things for export"
+    bl_description = "Check the dropdown for more info"
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):

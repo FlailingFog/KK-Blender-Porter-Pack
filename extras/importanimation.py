@@ -103,15 +103,13 @@ class import_animation(bpy.types.Operator):
         animation_armature = bpy.data.objects['Armature.001']
         animation_armature.name = 'Animation Armature'
 
-        # if the character armature has drivers active, the armature is the modified armature type
+        # if the character armature has renamed bones, the armature is the modified armature type
         armature = bpy.data.objects['Armature']
-        if armature.animation_data:
-            if armature.animation_data.drivers:
-                if armature.animation_data.drivers[0].mute == False:
-                    rename_bones_for_clarity('animation')
-                    modify_animation_armature()
-                    apply_animation()
-                    correct_animation()
+        if armature.data.bones.get('Left Elbow'):
+            rename_bones_for_clarity('animation')
+            modify_animation_armature()
+            apply_animation()
+            correct_animation()
         
         #else, the armature is the vanilla armature type
         #apply the animation without modifications

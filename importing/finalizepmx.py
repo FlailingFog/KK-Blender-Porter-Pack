@@ -157,7 +157,7 @@ def standardize_armature():
     select_children(armature.data.edit_bones['cf_n_height'])
 
     #make sure these bones aren't deleted
-    for preserve_bone in ['cf_j_root', 'p_cf_body_bone']:
+    for preserve_bone in ['cf_j_root', 'p_cf_body_bone', 'cf_n_height']:
         armature.data.edit_bones[preserve_bone].select = True
         armature.data.edit_bones[preserve_bone].select_head = True
         armature.data.edit_bones[preserve_bone].select_tail = True

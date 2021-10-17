@@ -19,8 +19,6 @@ class PlaceholderProperties(PropertyGroup):
     armature_edit_bool : BoolProperty(
     name="Enable or Disable",
     description="""Disable this to keep the stock Koikatsu armature structure.
-
-    (MORE INFO!!)
     Disabling this will...
     --Leave you with a stock armature
     --Skip IK creation
@@ -141,7 +139,7 @@ class IMPORTING1_PT_panel(bpy.types.Panel):
         splitfac = 0.6
         col = layout.column(align=True)
         row = col.row(align=True)
-        split = row.split(align=True, factor=0.5)
+        split = row.split(align=True, factor=1)#factor=0.5)
         
         box1 = split.box()
         box1.label(text="")
@@ -149,7 +147,7 @@ class IMPORTING1_PT_panel(bpy.types.Panel):
         split1.label(text="1a) Finalize PMX file:")
         split1.operator('kkb.finalizepmx', text = '', icon='MODIFIER')
         
-        
+        '''
         box2 = split.box()
         split2 = box2.split(align=True, factor=splitfac)
         split2.label(text="1a) Import FBX file:")
@@ -158,6 +156,7 @@ class IMPORTING1_PT_panel(bpy.types.Panel):
         split2 = box2.split(align=True, factor=splitfac)
         split2.label(text="2b) Finalize FBX file:")
         split2.operator('kkb.finalizegrey', text = '', icon = 'MODIFIER')
+        '''
 
 
 class IMPORTOPTIONS_PT_Panel(bpy.types.Panel):
@@ -247,7 +246,7 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
-        split.label(text="3) Prep armature for export:")
+        split.label(text="3) Prep things for export:")
         split.operator('kkb.selectbones', text = '', icon = 'BONE_DATA')
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)

@@ -774,6 +774,7 @@ class import_everything(bpy.types.Operator):
             apply_bone_widgets()
         hide_widgets()
 
+        bpy.data.objects['Armature'].hide = False
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
         #clean data
