@@ -233,6 +233,10 @@ def setup_iks():
         
     heelController('cf_j_foot_L', 'cf_pv_foot_L', 'cf_j_toes_L')
     heelController('cf_j_foot_R', 'cf_pv_foot_R', 'cf_j_toes_R')
+
+    #Give the new foot IKs an mmd bone name
+    bpy.data.objects['Armature'].pose.bones['MasterFootIK.L'].mmd_bone.name_j = '左足ＩＫ'
+    bpy.data.objects['Armature'].pose.bones['MasterFootIK.R'].mmd_bone.name_j = '右足ＩＫ'
     
     #add an IK to the arm, makes the wrist bone copy the hand IK's rotation, moves elbow IKs a little closer to the body
     def armhandIK(elbowbone, handcontroller, elbowcontroller, IKangle, wristbone):

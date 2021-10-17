@@ -144,17 +144,17 @@ class IMPORTING1_PT_panel(bpy.types.Panel):
         box1 = split.box()
         box1.label(text="")
         split1 = box1.split(align=True, factor=splitfac)
-        split1.label(text="1a) Finalize PMX file:")
+        split1.label(text="1a) Finalize PMX file")
         split1.operator('kkb.finalizepmx', text = '', icon='MODIFIER')
         
         '''
         box2 = split.box()
         split2 = box2.split(align=True, factor=splitfac)
-        split2.label(text="1a) Import FBX file:")
+        split2.label(text="1a) Import FBX file")
         split2.operator('kkb.importgrey', text = '', icon = 'FILEBROWSER')
 
         split2 = box2.split(align=True, factor=splitfac)
-        split2.label(text="2b) Finalize FBX file:")
+        split2.label(text="2b) Finalize FBX file")
         split2.operator('kkb.finalizegrey', text = '', icon = 'MODIFIER')
         '''
 
@@ -196,13 +196,13 @@ class IMPORTING2_PT_panel(bpy.types.Panel):
         
         box = layout.box()
         split2 = box.split(align=True, factor=splitfac)
-        split2.label(text="2a) Import KK Shader and Textures:")
+        split2.label(text="2a) Import KK Shader and Textures")
         split2.operator('kkb.importeverything', text = '', icon = 'BRUSHES_ALL')
         
         col = box.column(align=True)
         row = col.row(align = True)
         split2 = row.split(align=True, factor=splitfac)
-        split2.label(text="2b) Convert and Apply colors to Shaders:")
+        split2.label(text="2b) Convert and Apply colors to Shaders")
         split2.operator('kkb.importcolors', text = '', icon = 'IMAGE')
 
         row = col.row(align=True)
@@ -246,8 +246,8 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
-        split.label(text="3) Prep things for export:")
-        split.operator('kkb.selectbones', text = '', icon = 'BONE_DATA')
+        split.label(text="3) Prep things for export")
+        split.operator('kkb.selectbones', text = '', icon = 'GROUP')
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text="")
@@ -256,7 +256,7 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
-        split.label(text="4) Bake material templates:")
+        split.label(text="4) Bake material templates")
         split.operator('kkb.bakematerials', text = '', icon='VIEW_CAMERA')
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
@@ -266,7 +266,7 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
-        split.label(text="5) Apply baked templates:")
+        split.label(text="5) Apply baked templates")
         split.operator('kkb.applymaterials', text = '', icon = 'FILE_REFRESH')
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
@@ -326,6 +326,12 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         split = row.split(align=True, factor=splitfac)
         split.label(text="Swap armature type")
         split.operator('kkb.switcharmature', text = '', icon = 'ARROW_LEFTRIGHT')
+
+        col = box.column(align=True)
+        row = col.row(align=True)
+        split = row.split(align=True, factor=splitfac)
+        split.label(text="Toggle hand IKs")
+        split.operator('kkb.toggleik', text = '', icon = 'BONE_DATA')
         
 '''
         #put all icons available in blender at the end of the panel

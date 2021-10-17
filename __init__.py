@@ -35,6 +35,7 @@ from .extras.importstudio import import_studio
 from .extras.linkshapekeys import link_shapekeys
 from .extras.importanimation import import_animation
 from .extras.switcharmature import switch_armature
+from .extras.toggleik import toggle_ik
 from .pillow.getpillow import InstallPIL
 
 from . KKPanel import PlaceholderProperties
@@ -49,6 +50,7 @@ classes = (
     import_studio, 
     link_shapekeys,
     switch_armature,
+    toggle_ik,
     InstallPIL,
 
     bone_drivers, 

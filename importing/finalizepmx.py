@@ -31,71 +31,6 @@ def standardize_armature():
 
     bpy.data.objects.remove(empty)
 
-    '''
-    #un-pmxify the bone names
-    pmx_rename_dict = {
-    '全ての親':'PMX_Allbones',
-    'センター':'PMX_Centaa',
-    #'p_cf_body_00':'p_cf_body_00Extra',
-    #'p_cf_body_bone':'p_cf_body_00',
-    '上半身':'cf_j_spine01',
-    '上半身2':'cf_j_spine02',
-    '首':'cf_j_neck',
-    '頭':'cf_j_head',
-    '両目x':'Eyesx',
-    '目x.L':'cf_J_hitomi_tx_L',
-    '目x.R':'cf_J_hitomi_tx_R',
-    '腕.L':'cf_j_arm00_L',
-    '腕.R':'cf_j_arm00_R',
-    'ひじ.L':'cf_j_forearm01_L',
-    'ひじ.R':'cf_j_forearm01_R',
-    '肩.L':'cf_d_shoulder02_L',
-    '肩.R':'cf_d_shoulder02_R',
-    '手首.L':'cf_j_hand_L',
-    '手首.R':'cf_j_hand_R',
-    '親指０.L':'cf_j_thumb01_L',
-    '親指１.L':'cf_j_thumb02_L',
-    '親指２.L':'cf_j_thumb03_L',
-    '薬指１.L':'cf_j_ring01_L',
-    '薬指２.L':'cf_j_ring02_L',
-    '薬指３.L':'cf_j_ring03_L',
-    '中指１.L':'cf_j_middle01_L',
-    '中指２.L':'cf_j_middle02_L',
-    '中指３.L':'cf_j_middle03_L',
-    '小指１.L':'cf_j_little01_L',
-    '小指２.L':'cf_j_little02_L',
-    '小指３.L':'cf_j_little03_L',
-    '人指１.L':'cf_j_index01_L',
-    '人指２.L':'cf_j_index02_L',
-    '人指３.L':'cf_j_index03_L',
-    '親指０.R':'cf_j_thumb01_R',
-    '親指１.R':'cf_j_thumb02_R',
-    '親指２.R':'cf_j_thumb03_R',
-    '薬指１.R':'cf_j_ring01_R',
-    '薬指２.R':'cf_j_ring02_R',
-    '薬指３.R':'cf_j_ring03_R',
-    '中指１.R':'cf_j_middle01_R',
-    '中指２.R':'cf_j_middle02_R',
-    '中指３.R':'cf_j_middle03_R',
-    '小指１.R':'cf_j_little01_R',
-    '小指２.R':'cf_j_little02_R',
-    '小指３.R':'cf_j_little03_R',
-    '人指１.R':'cf_j_index01_R',
-    '人指２.R':'cf_j_index02_R',
-    '人指３.R':'cf_j_index03_R',
-    '下半身':'cf_j_waist01',
-    '足.L':'cf_j_thigh00_L',
-    '足.R':'cf_j_thigh00_R',
-    'ひざ.L':'cf_j_leg01_L',
-    'ひざ.R':'cf_j_leg01_R',
-    '足首.L':'cf_j_foot_L',
-    '足首.R':'cf_j_foot_R',
-    }
-    for bone in pmx_rename_dict:
-        if armature.data.bones[bone]:
-            armature.data.bones[bone].name = pmx_rename_dict[bone]
-    '''
-
     #reparent foot to leg03
     try:
         bpy.ops.object.mode_set(mode='EDIT')
@@ -642,6 +577,73 @@ def modify_pmx_armature():
 
     bpy.ops.object.mode_set(mode='OBJECT')
 
+def rename_mmd_bones():
+    #renames japanese name field for importing vmds via mmd tools
+    #these names are separate from Blender's bone names
+
+    pmx_rename_dict = {
+    '全ての親':'p_cf_body_bone',
+    'センター':'cf_j_hips',
+    '上半身':'cf_j_spine01',
+    '上半身2':'cf_j_spine02',
+    '首':'cf_j_neck',
+    '頭':'cf_j_head',
+    '両目':'Eyesx',
+    '左目':'cf_J_hitomi_tx_L',
+    '右目':'cf_J_hitomi_tx_R',
+    '左腕':'cf_j_arm00_L',
+    '右腕':'cf_j_arm00_R',
+    '左ひじ':'cf_j_forearm01_L',
+    '右ひじ':'cf_j_forearm01_R',
+    '左肩':'cf_j_shoulder_L',
+    '右肩':'cf_j_shoulder_R',
+    '左手首':'cf_j_hand_L',
+    '右手首':'cf_j_hand_R',
+    '左親指０':'cf_j_thumb01_L',
+    '左親指１':'cf_j_thumb02_L',
+    '左親指２':'cf_j_thumb03_L',
+    '左薬指１':'cf_j_ring01_L',
+    '左薬指２':'cf_j_ring02_L',
+    '左薬指３':'cf_j_ring03_L',
+    '左中指１':'cf_j_middle01_L',
+    '左中指２':'cf_j_middle02_L',
+    '左中指３':'cf_j_middle03_L',
+    '左小指１':'cf_j_little01_L',
+    '左小指２':'cf_j_little02_L',
+    '左小指３':'cf_j_little03_L',
+    '左人指１':'cf_j_index01_L',
+    '左人指２':'cf_j_index02_L',
+    '左人指３':'cf_j_index03_L',
+    '右親指０':'cf_j_thumb01_R',
+    '右親指１':'cf_j_thumb02_R',
+    '右親指２':'cf_j_thumb03_R',
+    '右薬指１':'cf_j_ring01_R',
+    '右薬指２':'cf_j_ring02_R',
+    '右薬指３':'cf_j_ring03_R',
+    '右中指１':'cf_j_middle01_R',
+    '右中指２':'cf_j_middle02_R',
+    '右中指３':'cf_j_middle03_R',
+    '右小指１':'cf_j_little01_R',
+    '右小指２':'cf_j_little02_R',
+    '右小指３':'cf_j_little03_R',
+    '右人指１':'cf_j_index01_R',
+    '右人指２':'cf_j_index02_R',
+    '右人指３':'cf_j_index03_R',
+    '下半身':'cf_j_waist01',
+    '左足':'cf_j_thigh00_L',
+    '右足':'cf_j_thigh00_R',
+    '左ひざ':'cf_j_leg01_L',
+    '右ひざ':'cf_j_leg01_R',
+    '左足首':'cf_j_leg03_L',
+    '右足首':'cf_j_leg03_R',
+    }
+
+    armature = bpy.data.objects['Armature']
+    for bone in pmx_rename_dict:
+        if armature.pose.bones.get(pmx_rename_dict[bone]):
+            armature.pose.bones[pmx_rename_dict[bone]].mmd_bone.name_j = bone
+            
+
 class finalize_pmx(bpy.types.Operator):
     bl_idname = "kkb.finalizepmx"
     bl_label = "Finalize .pmx file"
@@ -662,7 +664,8 @@ class finalize_pmx(bpy.types.Operator):
         reset_and_reroll_bones()
         if modify_armature:
             modify_pmx_armature()
-
+        rename_mmd_bones()
+        
         #Set the view transform 
         bpy.context.scene.view_settings.view_transform = 'Standard'
         bpy.ops.object.select_all(action='DESELECT')
