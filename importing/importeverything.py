@@ -498,10 +498,14 @@ def get_and_load_textures(directory):
                 
                 #If no main image was loaded in, there's no alpha channel being fed into the KK Shader.
                 #Unlink the input node and make the alpha channel pure white
+                #Also, change a slider to make sure the colormask doesn't screw up later
                 if  MainImage == None:
                     getOut = genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['alphatoggle'].inputs['maintex alpha'].links[0]
                     genMat.material.node_tree.nodes['KKShader'].node_tree.links.remove(getOut)
-                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['alphatoggle'].inputs['maintex alpha'].default_value = (1,1,1,1)   
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['alphatoggle'].inputs['maintex alpha'].default_value = (1,1,1,1)
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Maintex is loaded?'].default_value = 0
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Maintex is loaded?'].default_value = 0
+
                     
                 #If an alpha mask was loaded in, enable the alpha mask toggle in the KK shader
                 if  AlphaImage != None:

@@ -64,6 +64,7 @@ class separate_body(bpy.types.Operator):
             'cf_m_eyeline_down',
             'cf_m_eyeline_00_up',
             'cf_m_tooth',
+            'cf_m_tooth.001',
             'cf_m_noseline_00',
             'cf_m_mayuge_00',
             'cf_m_face_00',

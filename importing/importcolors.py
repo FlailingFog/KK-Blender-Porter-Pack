@@ -617,10 +617,10 @@ def update_shaders(json, lut_selection, active_lut, light):
 
     ## Tongue Shader
     shader_inputs = tongue_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
-    shader_inputs['Use Color mask instead? (1 = yes)'].default_value = 1
+    #shader_inputs['Use Color mask instead? (1 = yes)'].default_value = 1
     shader_inputs['Manually set detail color? (1 = yes)'].default_value = 0
     shader_inputs['Detail intensity (green)'].default_value = 0.01
-    shader_inputs['Color mask color (base)'].default_value = tongue_color
+    shader_inputs['Color mask color (base)'].default_value = [1, 1, 1, 1]
     shader_inputs['Color mask color (red)'].default_value = tongue_color
     shader_inputs['Color mask color (green)'].default_value = tongue_color
     shader_inputs['Color mask color (blue)'].default_value = tongue_color
@@ -662,7 +662,7 @@ def update_shaders(json, lut_selection, active_lut, light):
         shader_inputs['Manually set detail color? (1 = yes)'].default_value = 0
         shader_inputs['Detail intensity (green)'].default_value = 0.1
         shader_inputs['Detail intensity (blue)'].default_value = 0.1
-        shader_inputs['Use Color mask instead? (1 = yes)'].default_value = 1
+        #shader_inputs['Use Color mask instead? (1 = yes)'].default_value = 1
 
         if not light and lut_selection == 'E':
             shader_inputs['Color mask color (base)'].default_value = [0.3, 0.3, 0.3, 0.3]
