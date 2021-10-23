@@ -737,6 +737,10 @@ def categorize_bones():
 
     set_armature_layer('MasterFootIK.L', 0)
     set_armature_layer('MasterFootIK.R', 0)
+    set_armature_layer('HeelIK.L', 0)
+    set_armature_layer('HeelIK.R', 0)
+    set_armature_layer('ToeRotator.L', 0)
+    set_armature_layer('ToeRotator.R', 0)
     set_armature_layer('Eye Controller', 0)
     
     armature.data.bones['cf_pv_root_upper'].hide = True
@@ -898,6 +902,12 @@ class bone_drivers(bpy.types.Operator):
             scale_final_bones()
             categorize_bones()
             rename_bones_for_clarity('modified')
+
+            #reset the eye vertex groups after renaming the bones
+            mod = bpy.data.objects['Body'].modifiers[1]
+            mod.vertex_group['Left Eye']
+            mod = bpy.data.objects['Body'].modifiers[2]
+            mod.vertex_group['Right Eye']
         
         begin_hair_selections()
 
