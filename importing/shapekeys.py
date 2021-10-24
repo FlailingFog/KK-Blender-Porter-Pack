@@ -244,7 +244,8 @@ def fix_eyewhite_shapekeys():
     for v in vgVerts:
         v.co.x *=-1
 
-    bm.select_flush_mode()   
+    bm.select_flush_mode()
+    bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
     body.data.update()
 
     #remove eyewhiter vertices from eyewhiteL group

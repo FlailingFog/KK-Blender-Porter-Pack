@@ -10,6 +10,7 @@ Usage:
 '''
 
 import bpy
+from .finalizepmx import survey
 
 #function that returns a type of bone list
 def get_bone_list(kind):
@@ -207,7 +208,7 @@ def reorganize_armature_layers():
     for bone in skirt_list:
         set_armature_layer(bone, show_layer = 8)
 
-    #put accessory bones on layer 10 during reshow_accessory_bones()
+    #put accessory bones on layer 10 during reshow_accessory_bones() later on
 
     bpy.ops.pose.select_all(action='DESELECT')
     
@@ -266,32 +267,11 @@ def visually_connect_bones():
             flip(skirtroot)
     
     bpy.ops.object.mode_set(mode='OBJECT')
-    
+
 def move_accessory_bones():
     armature = bpy.data.objects['Armature']
     clothes = bpy.data.objects['Clothes']
 
-    
-    #100% repurposed from https://github.com/FlailingFog/KK-Blender-Shader-Pack/issues/29
-    ### Function to check for empty vertex groups
-    def survey(obj):
-        maxWeight = {}
-        #prefill vertex group list with zeroes
-        for i in obj.vertex_groups:
-            maxWeight[i.name] = 0
-
-        #preserve the indexes
-        keylist = list(maxWeight)
-        
-        #then fill in the real value using the indexes
-        for v in obj.data.vertices:
-            for g in v.groups:
-                gn = g.group
-                w = obj.vertex_groups[g.group].weight(v.index)
-                if (maxWeight.get(keylist[gn]) is None or w>maxWeight[keylist[gn]]):
-                    maxWeight[keylist[gn]] = w
-        return maxWeight
-        
     # Find empty vertex groups
     vertexWeightMap = survey(clothes)
     

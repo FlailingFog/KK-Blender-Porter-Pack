@@ -742,6 +742,7 @@ def categorize_bones():
     set_armature_layer('ToeRotator.L', 0)
     set_armature_layer('ToeRotator.R', 0)
     set_armature_layer('Eye Controller', 0)
+    set_armature_layer('cf_d_bust00', 0)
     
     armature.data.bones['cf_pv_root_upper'].hide = True
     
@@ -905,9 +906,9 @@ class bone_drivers(bpy.types.Operator):
 
             #reset the eye vertex groups after renaming the bones
             mod = bpy.data.objects['Body'].modifiers[1]
-            mod.vertex_group['Left Eye']
+            mod.vertex_group = 'Left Eye'
             mod = bpy.data.objects['Body'].modifiers[2]
-            mod.vertex_group['Right Eye']
+            mod.vertex_group = 'Right Eye'
         
         begin_hair_selections()
 

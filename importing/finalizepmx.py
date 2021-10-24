@@ -12,6 +12,7 @@ import bpy
 from mathutils import Vector
 import math
 
+
 # makes the pmx armature and bone names match the koikatsu armature structure and bone names
 def standardize_armature():
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -576,6 +577,119 @@ def modify_pmx_armature():
     relocate_tail('cf_pv_hand_L', 'cf_j_hand_L', 'hand')
 
     bpy.ops.object.mode_set(mode='OBJECT')
+
+#100% repurposed from https://github.com/FlailingFog/KK-Blender-Shader-Pack/issues/29
+### Function to check for empty vertex groups
+#returns a dictionary in the form {vertex_group1: weight1, vertex_group2: weight2, etc}
+def survey(obj):
+    maxWeight = {}
+    #prefill vertex group list with zeroes
+    for i in obj.vertex_groups:
+        maxWeight[i.name] = 0
+
+    #preserve the indexes
+    keylist = list(maxWeight)
+    
+    #then fill in the real value using the indexes
+    for v in obj.data.vertices:
+        for g in v.groups:
+            gn = g.group
+            w = obj.vertex_groups[g.group].weight(v.index)
+            if (maxWeight.get(keylist[gn]) is None or w>maxWeight[keylist[gn]]):
+                maxWeight[keylist[gn]] = w
+    return maxWeight
+
+#Duplicated accesory vertex groups are merged. This function makes sure they're separate.
+def fix_accessories():
+    armature = bpy.data.objects['Armature']
+    body = bpy.data.objects['Body']
+
+    duplicated_groups = {} #{child_bone1:[caslot01_child_bone1, caslot02_child_bone1]}, {child_bone2: [caslot05_child_bone2]}, etc...
+
+    #if there are any duplicated bones under any ca_slot bones, rename it and put it in the duplicated groups dictionary
+    for ca_bone in armature.data.bones:
+        if 'ca_slot' in ca_bone.name:
+            for child_bone in ca_bone.children:
+                if '.0' in child_bone.name:
+                    base_child_name = child_bone.name[:-4]
+                    child_bone.name = ca_bone.name + '_' + base_child_name
+                    if duplicated_groups.get(base_child_name):
+                        duplicated_groups[base_child_name].append(child_bone.name)
+                    else:
+                        duplicated_groups[base_child_name] = []
+                        duplicated_groups[base_child_name].append(child_bone.name)
+    
+    bpy.ops.object.mode_set(mode='OBJECT')
+    armature.select_set(False)
+    body.select_set(True)
+    bpy.context.view_layer.objects.active=body
+    bpy.ops.object.mode_set(mode='EDIT')
+    for v in body.data.vertices:
+        v.select = False
+
+    #collect all vertices used by all materials
+    materialPolys = { ms.material.name : [] for ms in body.material_slots }
+    for i, p in enumerate( body.data.polygons ):
+        materialPolys[ body.material_slots[ p.material_index ].name ].append( body.data.polygons[i] )
+    materialVertices = {ms.material.name : [] for ms in body.material_slots}
+    for mat in materialPolys:
+        for polygon in materialPolys[mat]:
+            for vert in polygon.vertices:
+                materialVertices[ mat ].append( vert )
+
+    #If any of the duplicated bones have weight to them, select the vertexes of the base vertex group
+    vertexWeightMap = survey(body)
+    for base_name in duplicated_groups:
+        if vertexWeightMap.get(base_name):
+            vg_idx = body.vertex_groups.find(base_name)
+            vertices_from_group = [ v for v in body.data.vertices if vg_idx in [ vg.group for vg in v.groups ] ]
+
+            #check which materials are being used by each selected vertex
+            base_group_materials = set()
+            for mat in materialVertices:
+                for matvert in materialVertices[mat]:
+                    if matvert in vertices_from_group:
+                        base_group_materials.add(mat)
+
+            #for each material being used, find the weighted average location for each vertex in the vertex group
+            for mat in base_group_materials:
+                
+                locations_dictionary = {}
+
+                #get the total of all weights shared by the vertex group and the material
+                total_weight = None
+                for vertex in materialVertices[mat]:
+                    if vertex in vertices_from_group:
+                        #find the correct vertex group
+                        group_for_weights = 0
+                        for grp in body.data.vertices[vertex].groups:
+                            if grp.group == vg_idx:
+                                group_for_weights = grp.group
+                        
+                        #add the weight
+                        vertex_weight = body.data.vertices[vertex].groups[group_for_weights].weight
+                        total_weight = (total_weight + vertex_weight) if total_weight else vertex_weight
+
+                average_location = None
+                for vertex in materialVertices[mat]:
+                    if vertex in vertices_from_group:
+                        vertex_weight = body.data.vertices[vertex].groups[0].weight
+                        average_location = (vertex.co + average_location *(vertex_weight/total_weight)) / 2 if average_location else vertex.co
+                
+                locations_dictionary[mat] = [average_location, None]
+
+            #Get locations of each duplicate bone head and match them to the average location of each vertex group
+            
+            
+
+
+
+
+
+
+
+
+
 
 def rename_mmd_bones():
     #renames japanese name field for importing vmds via mmd tools
