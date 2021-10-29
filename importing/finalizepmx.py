@@ -134,7 +134,7 @@ def reset_and_reroll_bones():
         armature.data.edit_bones[bone].tail.x = xnew + armature.data.edit_bones[bone].head.x
         armature.data.edit_bones[bone].tail.y = ynew + armature.data.edit_bones[bone].head.y
         armature.data.edit_bones[bone].roll = 0
-        armature.data.edit_bones[bone].tail.z = armature.data.edit_bones[bone].head.z
+        #armature.data.edit_bones[bone].tail.z = armature.data.edit_bones[bone].head.z
         armature.data.edit_bones[bone].parent = parent
         
     rotate_thumb('cf_j_thumb03_L')
@@ -599,7 +599,14 @@ def survey(obj):
                 maxWeight[keylist[gn]] = w
     return maxWeight
 
-#Duplicated accesory vertex groups are merged. This function makes sure they're separate.
+'''
+Duplicated accesory vertex groups are merged. This function makes sure they're separate.
+
+Basic strategy:
+* Get bones under each ca_slot accessory bone
+* Go through each bone and match the correct vertex group to the bone
+* extract the vertices from the merged vertex group and assign them to the matched vertex group for the current bone
+'''
 def fix_accessories():
     armature = bpy.data.objects['Armature']
     body = bpy.data.objects['Body']
@@ -607,6 +614,7 @@ def fix_accessories():
     duplicated_groups = {} #{child_bone1:[caslot01_child_bone1, caslot02_child_bone1]}, {child_bone2: [caslot05_child_bone2]}, etc...
 
     #if there are any duplicated bones under any ca_slot bones, rename it and put it in the duplicated groups dictionary
+    #renaming the bone will also automatically rename the associated vertex group
     for ca_bone in armature.data.bones:
         if 'ca_slot' in ca_bone.name:
             for child_bone in ca_bone.children:
@@ -631,27 +639,28 @@ def fix_accessories():
     materialPolys = { ms.material.name : [] for ms in body.material_slots }
     for i, p in enumerate( body.data.polygons ):
         materialPolys[ body.material_slots[ p.material_index ].name ].append( body.data.polygons[i] )
+    
     materialVertices = {ms.material.name : [] for ms in body.material_slots}
     for mat in materialPolys:
         for polygon in materialPolys[mat]:
             for vert in polygon.vertices:
                 materialVertices[ mat ].append( vert )
 
-    #If any of the duplicated bones have weight to them, select the vertexes of the base vertex group
+    #Go through each base vertex group and separate the duplicates
     vertexWeightMap = survey(body)
-    for base_name in duplicated_groups:
-        if vertexWeightMap.get(base_name):
-            vg_idx = body.vertex_groups.find(base_name)
-            vertices_from_group = [ v for v in body.data.vertices if vg_idx in [ vg.group for vg in v.groups ] ]
+    for base_group in duplicated_groups:
+        if vertexWeightMap.get(base_group):
+            base_group_index = body.vertex_groups.find(base_group)
+            vertices_in_base_group = [ v for v in body.data.vertices if base_group_index in [ vg.group for vg in v.groups ] ]
 
-            #check which materials are being used by each selected vertex
+            #check which materials are being used by the vertexes in this group
             base_group_materials = set()
             for mat in materialVertices:
                 for matvert in materialVertices[mat]:
-                    if matvert in vertices_from_group:
+                    if matvert in vertices_in_base_group:
                         base_group_materials.add(mat)
 
-            #for each material being used, find the weighted average location for each vertex in the vertex group
+            #for each material being used, find the weighted average location for the vertexes in the vertex group
             for mat in base_group_materials:
                 
                 locations_dictionary = {}
@@ -659,11 +668,11 @@ def fix_accessories():
                 #get the total of all weights shared by the vertex group and the material
                 total_weight = None
                 for vertex in materialVertices[mat]:
-                    if vertex in vertices_from_group:
+                    if vertex in vertices_in_base_group:
                         #find the correct vertex group
                         group_for_weights = 0
                         for grp in body.data.vertices[vertex].groups:
-                            if grp.group == vg_idx:
+                            if grp.group == base_group_index:
                                 group_for_weights = grp.group
                         
                         #add the weight
@@ -672,18 +681,45 @@ def fix_accessories():
 
                 average_location = None
                 for vertex in materialVertices[mat]:
-                    if vertex in vertices_from_group:
+                    if vertex in vertices_in_base_group:
                         vertex_weight = body.data.vertices[vertex].groups[0].weight
                         average_location = (vertex.co + average_location *(vertex_weight/total_weight)) / 2 if average_location else vertex.co
                 
-                locations_dictionary[mat] = [average_location, None]
+                locations_dictionary[mat] = average_location
 
-            #Get locations of each duplicate bone head and match them to the average location of each vertex group
-            
-            
+            #locations dictionary holds locations per material for this base_group vertex group (mat:base_group)
+            #duplicated_groups holds the duplicated group names for the base_group in an array (base_group: [base_group.001, base_group.002])
+            #the armature has bones for base_group, base_group.001, base_group.002, etc
 
+            #Get locations of each duplicate bone head and match them to the average location of the duplicated vertex group
+            for base_group in duplicated_groups[base_group]:
+                bone_locations_dictionary = {}
+                for duplicate_group in base_group:
+                    bone_locations_dictionary[duplicate_group] = armature.data.bones[duplicate_group].head
 
+                for duplicate_bone in bone_locations_dictionary:
+                    #best material match for the bone in distance, material
+                    best_match_for_bone = [100, None]
+                    for material in locations_dictionary:
+                        distance = locations_dictionary[material] - bone_locations_dictionary[duplicate_bone]
+                        if distance < best_match_for_bone[0] or best_match_for_bone[1] == None:
+                            best_match_for_bone = [distance, material]
+                    matched_material = best_match_for_bone[1]
 
+                    #The bone and the material are now matched
+                    #move the vertex group data from the base bone to the duplicated bone, but only if it belongs to the matched material
+                    final_data = [duplicate_bone, vertices_in_base_group, matched_material]
+
+                    #add all vertices to the new group
+                    new_group = body.vertex_groups.find(duplicate_bone)
+                    body.vertex_groups.active_index = new_group
+                    body.vertex_groups.add(final_data[1], 0.0, 'ADD')
+
+                    #check if each base_group vertex is in the material group. If it is, move it
+                    materialVertices[mat]
+                    for vertex in final_data[1]:
+                        if vertex.index in materialVertices[final_data[2]]:
+                            body.data.vertices[vertex].groups[new_group].weight = body.data.vertices[vertex].groups[base_group_index].weight
 
 
 
