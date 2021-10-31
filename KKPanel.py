@@ -20,7 +20,7 @@ class PlaceholderProperties(PropertyGroup):
     name="Enable or Disable",
     description="""Disable this to keep the stock Koikatsu armature structure.
     Disabling this will...
-    --Leave you with a stock armature
+    --Leave you with a stock armature (no bone renames or rotated bones)
     --Skip IK creation
     --Skip Eye Controller creation
     You can swap between the original structure and modified structure
@@ -32,7 +32,15 @@ class PlaceholderProperties(PropertyGroup):
     description="""Enable to save the partial shapekeys that are used to generate the KK shapekeys.
     These are useless on their own""",
     default = False)
-    
+
+    fix_ackus : BoolProperty(
+    name="Enable or Disable",
+    description="""Sometimes when an accessory bone is duplicated
+    (like when two accessories of the same type are used in different slots),
+    the accessory bone weights will merge into each other.
+    Keep enabled to let KKBP automatically fix these merged vertex groups""",
+    default = True)
+
     fix_eyewhites_bool : BoolProperty(
     name="Enable or Disable",
     description="""Disable this if Blender crashes during the shapekeys script.
@@ -180,6 +188,7 @@ class IMPORTOPTIONS_PT_Panel(bpy.types.Panel):
         row = col.row(align=True)
         split = row.split(align = True, factor=.5)
         split.prop(context.scene.placeholder, "armature_edit_bool", toggle=True, text = "Use modified armature")
+        split.prop(context.scene.placeholder, "fix_ackus", toggle=True, text = "Fix accessories")
         
 
 class IMPORTING2_PT_panel(bpy.types.Panel):

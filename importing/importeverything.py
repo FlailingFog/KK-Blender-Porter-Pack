@@ -547,7 +547,7 @@ def add_outlines(oneOutlineOnlyMode):
 
     #Get the length of the material list before starting
     outlineStart = len(ob.material_slots)
-    print(outlineStart)
+    #print(outlineStart)
     
     #done this way because the range changes length during the loop
     for matindex in range(0, outlineStart,1):
@@ -590,7 +590,7 @@ def add_outlines(oneOutlineOnlyMode):
         for OutlineMat in ob.material_slots:
             if 'Outline ' in OutlineMat.name:
                 genType = OutlineMat.name.replace('Outline ','')
-                print(genType)
+                #print(genType)
                 AlphaImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairAlpha'].image      
 
                 if AlphaImage:
@@ -631,7 +631,7 @@ def add_outlines(oneOutlineOnlyMode):
             for matindex in range(0, outlineStart,1):
                 genMat = ob.material_slots[matindex]
                 genType = genMat.name.replace('Template ','')
-                print(genType)
+                #print(genType)
                 
                 try:
                     MainImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Maintex'].image

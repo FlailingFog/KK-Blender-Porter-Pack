@@ -168,10 +168,10 @@ class separate_body(bpy.types.Operator):
         for index, mat in enumerate(material_list):
             if mat.name not in repeats:
                 repeats[mat.name] = [index]
-                print("First entry of {} in slot {}".format(mat.name, index))
+                #print("First entry of {} in slot {}".format(mat.name, index))
             else:
                 repeats[mat.name].append(index)
-                print("Additional entry of {} in slot {}".format(mat.name, index))
+                #print("Additional entry of {} in slot {}".format(mat.name, index))
         
         for material_name in list(repeats.keys()):
             if len(repeats[material_name]) > 1:
