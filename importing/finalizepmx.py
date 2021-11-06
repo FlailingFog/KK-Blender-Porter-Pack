@@ -12,6 +12,20 @@ import bpy
 from mathutils import Vector
 import math
 
+def kklog(log_text, type = 'standard'):
+    if not bpy.data.texts.get('KKBP Log'):
+        bpy.data.texts.new(name='KKBP Log')
+        if bpy.data.screens.get('Scripting'):
+            for area in bpy.data.screens['Scripting'].areas:
+                if area.type == 'TEXT_EDITOR':
+                    area.spaces[0].text = bpy.data.texts['KKBP Log']
+
+    if type == 'error':
+        log_text = 'Error:          ' + log_text
+    elif type == 'warn':
+        log_text = 'Warning:        ' + log_text
+    bpy.data.texts['KKBP Log'].write(log_text + '\n')
+    print(log_text)
 
 # makes the pmx armature and bone names match the koikatsu armature structure and bone names
 def standardize_armature():
@@ -181,10 +195,10 @@ def reset_and_reroll_bones():
     #reset the orientation of certain bones
     height_adder = Vector((0,0,0.1))
     def reorient(bone):
-        print(bone)
+        #print(bone)
         armature.data.edit_bones[bone].tail = bpy.data.objects['Armature'].data.edit_bones[bone].head + height_adder
-        print(bone)
-        print(height_adder)  
+        #print(bone)
+        #print(height_adder)  
 
     reorient_list = [
         'cf_j_thigh00_R', 'cf_j_thigh00_L',
@@ -604,8 +618,8 @@ Basic strategy:
 * Get bones under each ca_slot accessory bone
 * Get the locations of the bones
 * Get the average vertex group locations separated by material
-* Match the bone and vertex group locations
-* Extract the vertices from the merged vertex group and assign them to the matched vertex group for each bone
+* Match the bone and vertex group locations per material
+* Extract the vertices from the merged vertex group and assign them to the matched vertex group for each material + vertex group / bone combo
 '''
 def fix_accessories():
     armature = bpy.data.objects['Armature']
@@ -715,53 +729,69 @@ def fix_accessories():
 
             #Get locations of each duplicate bone head and match them to the average location of each duplicated vertex group
             dupe_groups = duplicated_groups[base_group]
+            kklog("Correcting merged bones {}".format(dupe_groups))
             bone_locations_dictionary = {}
             for duplicate_group in dupe_groups:
-                bone_locations_dictionary[duplicate_group] = armature.pose.bones[duplicate_group].head
+                bone_locations_dictionary[duplicate_group] = (armature.pose.bones[duplicate_group].head)# + armature.pose.bones[duplicate_group].tail) / 2
 
             final_data = {}
+            error_dist = 0.1 #If the bone match isn't detected properly there's no point in moving it
 
-            for duplicate_bone in bone_locations_dictionary:
-                #best material match for this bone in distance, material
-                best_match_for_bone = [100, None]
-                for material in locations_dictionary:
-                    distance = locations_dictionary[material] - bone_locations_dictionary[duplicate_bone]
-                    if distance < best_match_for_bone[0] or best_match_for_bone[1] == None:
-                        best_match_for_bone = [distance, material]
-                matched_material = best_match_for_bone[1]
+            for material in locations_dictionary:
+                #best bone match for this material in distance, material
+                best_match_for_material = [100, None]
+                for duplicate_bone in bone_locations_dictionary:
+                    distance = (locations_dictionary[material] - bone_locations_dictionary[duplicate_bone]).length
+                    if (distance < best_match_for_material[0]):
+                        best_match_for_material = [distance, duplicate_bone]
+                matched_bone = best_match_for_material[1]
                 #The bone and the material are now matched
                 #move the vertex group data from the base bone to the duplicated bone, but only if it belongs to the matched material
-                final_data[duplicate_bone] = matched_material
-                #print("Matched bone {} to material {}".format(duplicate_bone, matched_material))
+                if best_match_for_material[0] < error_dist:
+                    final_data[material] = matched_bone
+                    kklog("Matched bone {} to material {} with a distance of {}".format(matched_bone, material, round(best_match_for_material[0],4)))
+                else:
+                    kklog("Bone {} was too far from material {} and not automatically separated from the vertex group {}".format(matched_bone, material, base_group), 'warn')
 
-            print("Correcting dupe groups {}".format(dupe_groups))
-            for duplicate_bone in dupe_groups:
-                print('Correcting dupe bone:' + duplicate_bone)
+            for material in final_data:
+                duplicate_bone = final_data[material]
+                #kklog("Correcting material vertices {} using the bone {}".format(material, duplicate_bone))
                 #add all base_group vertices to the new group
                 new_group_index = body.vertex_groups.find(duplicate_bone)
                 #print("The vertices for {} will be taken out of the vertex group {} placed into the new vertex group {}".format(duplicate_bone, base_group_index, new_group_index))
                 #check if each base_group vertex is in the matched material group. If it is, set the weight and remove it from the base_group
-                counter = 5
                 for vertex in vertices_in_all_groups[base_group]:
-                    #gottem = False
                     body.vertex_groups[new_group_index].add([vertex], 0.0, 'ADD')
                     for index, grp in enumerate(body.data.vertices[vertex].groups):
                         if grp.group == new_group_index:
                             new_vg_index = index
-                            gottem = True
                         elif grp.group == base_group_index:
                             old_vg_index = index
-                            gottem = True
-                    if vertex in materialVertices[final_data[duplicate_bone]]:# and gottem:
+                    if vertex in materialVertices[material]:
                         body.data.vertices[vertex].groups[new_vg_index].weight = body.data.vertices[vertex].groups[old_vg_index].weight
-                        body.data.vertices[vertex].groups[old_vg_index].weight = 0
-                        body.vertex_groups[old_vg_index].remove([vertex])
+                        #body.data.vertices[vertex].groups[old_vg_index].weight = 0
+                        #body.vertex_groups[old_vg_index].remove([vertex])
                         #print("Moved vertex {} from {} (real {}) to {} (real {}) with weight {}".format(vertex,old_vg_index,base_group_index,new_vg_index,new_group_index, body.data.vertices[vertex].groups[new_vg_index].weight))
                     #Else remove it from the new group
                     else:
                         body.vertex_groups[new_vg_index].remove([vertex])
                         #print("vertex {} was not moved from group {}".format(vertex,old_vg_index))
                 
+            #Now that the vertex weights are copied over, remove them from the original group
+            #kklog("Cleaning vertexes {}".format(dupe_groups))
+            for material in final_data:
+                duplicate_bone = final_data[material]
+                new_group_index = body.vertex_groups.find(duplicate_bone)
+                for vertex in vertices_in_all_groups[base_group]:
+                    body.vertex_groups[new_group_index].add([vertex], 0.0, 'ADD')
+                    for index, grp in enumerate(body.data.vertices[vertex].groups):
+                        if grp.group == new_group_index:
+                            new_vg_index = index
+                        elif grp.group == base_group_index:
+                            old_vg_index = index
+                    if vertex in materialVertices[material]:
+                        body.data.vertices[vertex].groups[old_vg_index].weight = 0
+                        body.vertex_groups[old_vg_index].remove([vertex])
 
 def rename_mmd_bones():
     #renames japanese name field for importing vmds via mmd tools
@@ -829,7 +859,6 @@ def rename_mmd_bones():
         if armature.pose.bones.get(pmx_rename_dict[bone]):
             armature.pose.bones[pmx_rename_dict[bone]].mmd_bone.name_j = bone
             
-
 class finalize_pmx(bpy.types.Operator):
     bl_idname = "kkb.finalizepmx"
     bl_label = "Finalize .pmx file"
@@ -847,11 +876,15 @@ class finalize_pmx(bpy.types.Operator):
                 bpy.data.texts.remove(bpy.data.texts['Model'])
                 bpy.data.texts.remove(bpy.data.texts['Model_e'])
         
+        kklog('====    KKBP Log    ====')
+
         standardize_armature()
         reset_and_reroll_bones()
         if modify_armature:
+            kklog('Modifying armature...')
             modify_pmx_armature()
         if fix_accs:
+            kklog('Fixing accessories...')
             fix_accessories()
         rename_mmd_bones()
         
@@ -860,15 +893,19 @@ class finalize_pmx(bpy.types.Operator):
         bpy.ops.object.select_all(action='DESELECT')
         
         #redraw the UI after each operation to let the user know the plugin is actually doing something
+        kklog('\nFixing shapekeys...')
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
         bpy.ops.kkb.shapekeys('INVOKE_DEFAULT')
 
+        kklog('\nSeparating body, clothes and shadowcast, then removing duplicate materials...')
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
         bpy.ops.kkb.separatebody('INVOKE_DEFAULT')
 
+        kklog('\nCategorizing bones into armature layers...')
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
         bpy.ops.kkb.cleanarmature('INVOKE_DEFAULT')
 
+        kklog('\nAdding bone drivers...')
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
         bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT')
         

@@ -2,6 +2,7 @@ import bpy, os
 import bgl
 import gpu
 import json
+from .finalizepmx import kklog
 import numpy as np
 from pathlib import Path
 from bpy.types import Operator
@@ -483,7 +484,7 @@ def convert_main_textures(lut_light):
             # image.save()
 
 def load_json_colors(directory, lut_light, lut_dark, lut_selection):
-    print('Converting Colors...')
+    kklog('\nConverting Colors...')
 
     # "Borrowed" some logic from importeverything.py :P
     file_list = Path(directory).glob('*.*')

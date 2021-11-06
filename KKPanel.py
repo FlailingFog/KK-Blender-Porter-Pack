@@ -35,7 +35,7 @@ class PlaceholderProperties(PropertyGroup):
 
     fix_ackus : BoolProperty(
     name="Enable or Disable",
-    description="""Sometimes when an accessory bone is duplicated
+    description="""[SLOW] Sometimes when an accessory bone is duplicated
     (like when two accessories of the same type are used in different slots),
     the accessory bone weights will merge into each other.
     Keep enabled to let KKBP automatically fix these merged vertex groups""",
@@ -169,7 +169,7 @@ class IMPORTING1_PT_panel(bpy.types.Panel):
 
 class IMPORTOPTIONS_PT_Panel(bpy.types.Panel):
     bl_parent_id = "IMPORTING_PT_panel"
-    bl_label = "Import options (PMX and FBX)"
+    bl_label = "Import options (Finalization)"
     bl_category = "KKBP"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"

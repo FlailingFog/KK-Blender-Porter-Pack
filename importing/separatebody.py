@@ -6,6 +6,7 @@ SEPARATE BODY SCRIPT
 '''
 
 import bpy
+from .finalizepmx import kklog
 
 class separate_body(bpy.types.Operator):
     bl_idname = "kkb.separatebody"
@@ -46,7 +47,7 @@ class separate_body(bpy.types.Operator):
                     
                     bpy.ops.object.material_slot_select()
                 except:
-                    print('material wasn\'t found: ' + mat)
+                    kklog('Material wasn\'t found when separating body materials: ' + mat, 'warn')
             bpy.ops.mesh.separate(type='SELECTED')
                     
         #Select all body related materials, then separate it from everything else
@@ -96,7 +97,7 @@ class separate_body(bpy.types.Operator):
             rename[3].name = 'Bonelyfans'
         except:
             pass
-
+        
         bpy.ops.object.mode_set(mode = 'OBJECT')
         bpy.ops.object.material_slot_remove_unused()
         
@@ -179,7 +180,7 @@ class separate_body(bpy.types.Operator):
                     #don't touch the first slot
                     if repeated_slot == repeats[material_name][0]:
                         continue
-                    print("moving duplicate material {} in slot {} to the original slot {}".format(material_name, repeated_slot, repeats[material_name][0]))
+                    kklog("Moving duplicate material {} in slot {} to the original slot {}".format(material_name, repeated_slot, repeats[material_name][0]))
                     clothes.active_material_index = repeated_slot
                     bpy.ops.object.material_slot_select()
                     clothes.active_material_index = repeats[material_name][0]

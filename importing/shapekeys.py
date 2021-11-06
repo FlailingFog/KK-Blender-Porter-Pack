@@ -9,6 +9,7 @@ Usage:
 
 import bpy
 import bmesh
+from .finalizepmx import kklog
 
 ################################
 #Translate most of the shapekeys
@@ -132,7 +133,7 @@ def translate_shapekeys():
                     bpy.ops.object.shape_key_remove()
             except:
                 #or not
-                print("Couldn't delete shapekey: " + keyblock.name)
+                kklog("Couldn't delete shapekey: " + keyblock.name, 'error')
                 pass
     
 
@@ -407,7 +408,7 @@ def combine_shapekeys(keep_partial_shapekeys):
                     body.shape_key_remove(remove_shapekey)
             except:
                 #I don't even know if this needs to be in a try catch anymore
-                print('Couldn\'t remove key:  ' + remove_shapekey.name)
+                kklog('Couldn\'t remove shapekey ' + remove_shapekey.name, 'error')
                 pass
     
     #make the basis shapekey active
@@ -430,6 +431,7 @@ class shape_keys(bpy.types.Operator):
 
         translate_shapekeys()
         if fix_eyewhites and not bpy.data.objects['Armature'].data.bones.get('Greybone'):
+            kklog('Fixing eyewhite shapekeys...')
             fix_eyewhite_shapekeys()
         combine_shapekeys(keep_partial_shapekeys)
         

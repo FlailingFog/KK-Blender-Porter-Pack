@@ -9,6 +9,7 @@ Usage:
 '''
 
 import bpy
+from ..importing.finalizepmx import kklog
 
 class select_bones(bpy.types.Operator):
     bl_idname = "kkb.selectbones"
@@ -20,6 +21,7 @@ class select_bones(bpy.types.Operator):
         scene = context.scene.placeholder
         prep_type = scene.prep_dropdown
 
+        kklog('\nPrepping for export...')
         #Combine all objects
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.select_all(action='SELECT')
@@ -35,42 +37,42 @@ class select_bones(bpy.types.Operator):
         bpy.ops.object.select_all(action='DESELECT')
         bpy.data.objects['Armature'].select_set(True)
         bpy.context.view_layer.objects.active=bpy.data.objects['Armature']
+        bpy.ops.object.mode_set(mode='POSE')
 
         if prep_type in ['A', 'B']:
             #show all bones on the armature
-            allLayers = (True, True, True, True, True, True, True, True,
+            allLayers = [True, True, True, True, True, True, True, True,
                         True, True, True, True, True, True, True, True,
                         True, True, True, True, True, True, True, True,
-                        True, True, True, True, True, True, True, True)
-            bpy.ops.pose.bone_layers(layers=allLayers)
-
-            bpy.ops.object.mode_set(mode='EDIT')
-            bpy.ops.armature.select_all(action='DESELECT')
+                        True, True, True, True, True, True, True, True]
+            bpy.data.objects['Armature'].data.layers = allLayers
+            bpy.ops.pose.select_all(action='DESELECT')
 
             #Select bones on layer 11
             armature = bpy.data.objects['Armature']
             for bone in armature.data.bones:
                 if bone.layers[10]==True:
                     bone.select = True
-                    bone.select_head = True
-                    bone.select_tail = True
-        
+            
+            kklog('Using CATS to simplify bones...')
+            bpy.ops.object.mode_set(mode='EDIT')
             bpy.ops.cats_manual.merge_weights()
 
         if prep_type == 'A':
             
             bpy.context.object.data.edit_bones['Hips'].parent = None
 
-            bpy.ops.object.mode_set(mode='EDIT')
-            bpy.ops.armature.select_all(action='DESELECT')
+            bpy.ops.object.mode_set(mode='POSE')
+            bpy.ops.pose.select_all(action='DESELECT')
 
             #Select bones on layer 3/5/12/13
             armature = bpy.data.objects['Armature']
             for bone in armature.data.bones:
                 if bone.layers[11]==True or bone.layers[12] == True or bone.layers[2] == True or bone.layers[4] == True:
                     bone.select = True
-                    bone.select_head = True
-                    bone.select_tail = True
+            
+            kklog('Using CATS to simplify more bones...')
+            bpy.ops.object.mode_set(mode='EDIT')
             bpy.ops.cats_manual.merge_weights()
 
         bpy.ops.object.mode_set(mode='OBJECT')

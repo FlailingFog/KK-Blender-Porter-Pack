@@ -13,6 +13,8 @@ Usage:
 '''
 
 import bpy, math
+
+from .finalizepmx import kklog
 from .cleanarmature import set_armature_layer
 
 #Makes a new bone on the armature
@@ -888,16 +890,19 @@ class bone_drivers(bpy.types.Operator):
         armature_not_modified = bpy.data.objects['Armature'].data.bones.get('MasterFootIK.L') == None
         
         if modify_armature and armature_not_modified:
+            kklog('Reparenting bones and setting up IKs...')
             reparent_bones()
             bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
             setup_iks()
             bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
+        kklog('Setting up joint bones...')
         setup_joints()
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
         
         if modify_armature and armature_not_modified:
+            kklog('Creating eye controller and renaming bones...')
             make_eye_controller()
             bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
             scale_final_bones()

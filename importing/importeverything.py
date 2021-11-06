@@ -9,6 +9,7 @@ Usage:
 import bpy, os
 from pathlib import Path
 from bpy.props import StringProperty
+from .finalizepmx import kklog
 from .cleanarmature import get_bone_list
 
 #Stop if this is the wrong folder
@@ -24,6 +25,10 @@ def hair_error(self, context):
     self.layout.label(text="An object named \"Hair\" wasn't found. Separate this from the Clothes object and rename it.")
 
 def get_templates_and_apply(directory, useFakeUser):
+    #if a single thing was separated but the user forgot to rename it, it's probably the hair object
+    if bpy.data.objects.get('Clothes.001') and len(bpy.data.objects) == 6:
+        bpy.data.objects['Clothes.001'].name = 'Hair'
+    
     #Check if a hair object exists
     if not (bpy.data.objects.get('Hair') or bpy.data.objects.get('hair')):
         bpy.context.window_manager.popup_menu(hair_error, title="Error", icon='ERROR')
@@ -84,7 +89,7 @@ def get_templates_and_apply(directory, useFakeUser):
         try:
             body.material_slots[original].material = bpy.data.materials[template]
         except:
-            print('material or template wasn\'t found: ' + original + ' / ' + template)
+            kklog('material or template wasn\'t found: ' + original + ' / ' + template, 'warn')
     
     swap_body_material('cf_m_face_00','Template Face')
     swap_body_material('cf_m_mayuge_00','Template Eyebrows (mayuge)')
@@ -309,7 +314,7 @@ def apply_bone_widgets():
     'Thumb0_R', 'Thumb1_R', 'Thumb2_R']
     
     for finger in fingerList:
-        print(armature.pose.bones[finger].name)
+        #print(armature.pose.bones[finger].name)
         if 'Thumb' in finger:
             armature.pose.bones[finger].custom_shape  = bpy.data.objects['WidgetFingerThumb']
         else:
@@ -345,7 +350,7 @@ def apply_bone_widgets():
 def get_and_load_textures(directory):
 
     bpy.ops.object.mode_set(mode='OBJECT')
-    print('Getting textures from: ' + directory)
+    kklog('Getting textures from: ' + directory)
 
     #lazy check to see if the user actually opened the Textures folder
     #this will false pass if the word "Texture" is anywhere else on the path but I don't care
@@ -376,9 +381,9 @@ def get_and_load_textures(directory):
         elif 'MainCol' in image:
             if bpy.data.images[image[0:len(image)-4] + '.dds']:
                 currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].image = bpy.data.images[image[0:len(image)-4] + '.dds']
-            print('.dds and .png files not found, skipping: ' + image[0:len(image)-4] + '.dds')
+            kklog('.dds and .png files not found, skipping: ' + image[0:len(image)-4] + '.dds')
         else:
-            print('File not found, skipping: ' + image)
+            kklog('File not found, skipping: ' + image)
         
     imageLoad('Template Body', 'Gentex', 'BodyMC', 'cf_m_body_ColorMask.png')
     imageLoad('Template Body', 'Gentex', 'BodyMD', 'cf_m_body_DetailMask.png') #cfm female
@@ -582,7 +587,7 @@ def add_outlines(oneOutlineOnlyMode):
             #and after it's done moving...
                 bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)      
         else:
-            print(genType + ' had no alphamask')
+            kklog(genType + ' had no alphamask')
 
     #separate hair outline loop to prevent crashing
     if not oneOutlineOnlyMode:
@@ -671,7 +676,7 @@ def add_outlines(oneOutlineOnlyMode):
                             bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
                             
                 except:
-                    print(genType + ' had a maintex image but no transparency')
+                    kklog(genType + ' had a maintex image but no transparency')
 
     #separate loop to prevent crashing
     for ob in bpy.context.view_layer.objects:
@@ -754,6 +759,8 @@ class import_everything(bpy.types.Operator):
     def execute(self, context):
         directory = self.directory
         
+        kklog('\nApplying material templates and textures...')
+
         scene = context.scene.placeholder
         useFakeUser = scene.templates_bool
         oneOutlineOnlyMode = scene.textureoutline_bool
@@ -775,6 +782,7 @@ class import_everything(bpy.types.Operator):
 
         add_outlines(oneOutlineOnlyMode)
         if modify_armature and bpy.data.objects['Armature'].pose.bones["Spine"].custom_shape == None:
+            kklog('Adding bone widgets...')
             apply_bone_widgets()
         hide_widgets()
 
