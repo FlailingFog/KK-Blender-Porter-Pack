@@ -188,7 +188,7 @@ class IMPORTOPTIONS_PT_Panel(bpy.types.Panel):
         row = col.row(align=True)
         split = row.split(align = True, factor=.5)
         split.prop(context.scene.placeholder, "armature_edit_bool", toggle=True, text = "Use modified armature")
-        split.prop(context.scene.placeholder, "fix_ackus", toggle=True, text = "Fix accessories")
+        #split.prop(context.scene.placeholder, "fix_ackus", toggle=True, text = "Fix accessories")
         
 
 class IMPORTING2_PT_panel(bpy.types.Panel):

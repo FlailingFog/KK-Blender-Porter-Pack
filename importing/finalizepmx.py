@@ -871,7 +871,7 @@ class finalize_pmx(bpy.types.Operator):
 
         scene = context.scene.placeholder
         modify_armature = scene.armature_edit_bool
-        fix_accs = scene.fix_ackus
+        #fix_accs = scene.fix_ackus
 
         #get rid of the text files mmd tools generates
         if bpy.data.texts['Model']:
@@ -885,9 +885,9 @@ class finalize_pmx(bpy.types.Operator):
         if modify_armature:
             kklog('Modifying armature...')
             modify_pmx_armature()
-        if fix_accs:
-            kklog('Fixing accessories...')
-            fix_accessories()
+        #if fix_accs:
+            #kklog('Fixing accessories...')
+            #fix_accessories()
         rename_mmd_bones()
         
         #Set the view transform 
