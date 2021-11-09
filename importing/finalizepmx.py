@@ -682,116 +682,118 @@ def fix_accessories():
 
     #Go through each base vertex group and separate the duplicates
     for base_group in vertices_in_all_groups:
-        if True:
-            #print("The base group is: {}".format(base_group))
-            base_group_index = body.vertex_groups.find(base_group)
-            #check which materials are being used by the vertexes in this group
-            base_group_materials = set()
-            for mat in materialVertices:
-                #print("Getting material verticies for {}".format(mat))
-                for matvert in materialVertices[mat]:
-                    if matvert in vertices_in_all_groups[base_group]:
-                        base_group_materials.add(mat)
-            #use each material vertex and the base group vertices to find the weighted average location for the vertexes of each material
-            locations_dictionary = {}
-            #print("Finding each material location for {} using these materials: {}".format(base_group, base_group_materials))
-            for mat in base_group_materials:
-                #get the total of all weights shared by the vertex group and the material
-                total_weight = None
-                for vertex in materialVertices[mat]:
-                    if vertex in vertices_in_all_groups[base_group]:
-                        #find the correct vertex group
-                        group_for_weights = 0
-                        for index, grp in enumerate(body.data.vertices[vertex].groups):
-                            #print("The real group index is {} and the numbering the vertex sees is {}".format(grp.group, index))
-                            if grp.group == base_group_index:
-                                group_for_weights = index
-                        #add the weight
-                        vertex_weight = body.data.vertices[vertex].groups[group_for_weights].weight
-                        total_weight = (total_weight + vertex_weight) if total_weight else vertex_weight
-                average_location = None
-                for vertex in materialVertices[mat]:
-                    if vertex in vertices_in_all_groups[base_group]:
-                        #find the correct vertex group
-                        group_for_weights = 0
-                        for index, grp in enumerate(body.data.vertices[vertex].groups):
-                            if grp.group == base_group_index:
-                                group_for_weights = index
-                        vertex_weight = body.data.vertices[vertex].groups[group_for_weights].weight
-                        average_location = (body.data.vertices[vertex].co * vertex_weight + average_location) if average_location else body.data.vertices[vertex].co * vertex_weight
-                locations_dictionary[mat] = average_location / total_weight
-                bpy.context.scene.cursor.location = locations_dictionary[mat]
-                #print("Found the location for {} at {}".format(mat, locations_dictionary[mat]) )
+        #refresh UI after each base group to let the user know it's doing something
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+        
+        #print("The base group is: {}".format(base_group))
+        base_group_index = body.vertex_groups.find(base_group)
+        #check which materials are being used by the vertexes in this group
+        base_group_materials = set()
+        for mat in materialVertices:
+            #print("Getting material verticies for {}".format(mat))
+            for matvert in materialVertices[mat]:
+                if matvert in vertices_in_all_groups[base_group]:
+                    base_group_materials.add(mat)
+        #use each material vertex and the base group vertices to find the weighted average location for the vertexes of each material
+        locations_dictionary = {}
+        #print("Finding each material location for {} using these materials: {}".format(base_group, base_group_materials))
+        for mat in base_group_materials:
+            #get the total of all weights shared by the vertex group and the material
+            total_weight = None
+            for vertex in materialVertices[mat]:
+                if vertex in vertices_in_all_groups[base_group]:
+                    #find the correct vertex group
+                    group_for_weights = 0
+                    for index, grp in enumerate(body.data.vertices[vertex].groups):
+                        #print("The real group index is {} and the numbering the vertex sees is {}".format(grp.group, index))
+                        if grp.group == base_group_index:
+                            group_for_weights = index
+                    #add the weight
+                    vertex_weight = body.data.vertices[vertex].groups[group_for_weights].weight
+                    total_weight = (total_weight + vertex_weight) if total_weight else vertex_weight
+            average_location = None
+            for vertex in materialVertices[mat]:
+                if vertex in vertices_in_all_groups[base_group]:
+                    #find the correct vertex group
+                    group_for_weights = 0
+                    for index, grp in enumerate(body.data.vertices[vertex].groups):
+                        if grp.group == base_group_index:
+                            group_for_weights = index
+                    vertex_weight = body.data.vertices[vertex].groups[group_for_weights].weight
+                    average_location = (body.data.vertices[vertex].co * vertex_weight + average_location) if average_location else body.data.vertices[vertex].co * vertex_weight
+            locations_dictionary[mat] = average_location / total_weight
+            bpy.context.scene.cursor.location = locations_dictionary[mat]
+            #print("Found the location for {} at {}".format(mat, locations_dictionary[mat]) )
 
-            #locations dictionary holds locations per material for this base_group vertex group (mat:base_group)
-            #duplicated_groups holds the duplicated group names for the base_group in an array (base_group: [slot01_base_group, slot02_base_group])
-            #the armature has bones for base_group, slot01_base_group, slot02_base_group, etc
+        #locations dictionary holds locations per material for this base_group vertex group (mat:base_group)
+        #duplicated_groups holds the duplicated group names for the base_group in an array (base_group: [slot01_base_group, slot02_base_group])
+        #the armature has bones for base_group, slot01_base_group, slot02_base_group, etc
 
-            #Get locations of each duplicate bone head and match them to the average location of each duplicated vertex group
-            dupe_groups = duplicated_groups[base_group]
-            kklog("Correcting merged bones {}".format(dupe_groups))
-            bone_locations_dictionary = {}
-            for duplicate_group in dupe_groups:
-                bone_locations_dictionary[duplicate_group] = (armature.pose.bones[duplicate_group].head)# + armature.pose.bones[duplicate_group].tail) / 2
+        #Get locations of each duplicate bone head and match them to the average location of each duplicated vertex group
+        dupe_groups = duplicated_groups[base_group]
+        kklog("Correcting merged bones {}".format(dupe_groups))
+        bone_locations_dictionary = {}
+        for duplicate_group in dupe_groups:
+            bone_locations_dictionary[duplicate_group] = (armature.pose.bones[duplicate_group].head)# + armature.pose.bones[duplicate_group].tail) / 2
 
-            final_data = {}
-            error_dist = 0.1 #If the bone match isn't detected properly there's no point in moving it
+        final_data = {}
+        error_dist = 0.1 #If the bone match isn't detected properly there's no point in moving it
 
-            for material in locations_dictionary:
-                #best bone match for this material in distance, material
-                best_match_for_material = [100, None]
-                for duplicate_bone in bone_locations_dictionary:
-                    distance = (locations_dictionary[material] - bone_locations_dictionary[duplicate_bone]).length
-                    if (distance < best_match_for_material[0]):
-                        best_match_for_material = [distance, duplicate_bone]
-                matched_bone = best_match_for_material[1]
-                #The bone and the material are now matched
-                #move the vertex group data from the base bone to the duplicated bone, but only if it belongs to the matched material
-                if best_match_for_material[0] < error_dist:
-                    final_data[material] = matched_bone
-                    kklog("Matched bone {} to material {} with a distance of {}".format(matched_bone, material, round(best_match_for_material[0],4)))
+        for material in locations_dictionary:
+            #best bone match for this material in distance, material
+            best_match_for_material = [100, None]
+            for duplicate_bone in bone_locations_dictionary:
+                distance = (locations_dictionary[material] - bone_locations_dictionary[duplicate_bone]).length
+                if (distance < best_match_for_material[0]):
+                    best_match_for_material = [distance, duplicate_bone]
+            matched_bone = best_match_for_material[1]
+            #The bone and the material are now matched
+            #move the vertex group data from the base bone to the duplicated bone, but only if it belongs to the matched material
+            if best_match_for_material[0] < error_dist:
+                final_data[material] = matched_bone
+                kklog("Matched bone {} to material {} with a distance of {}".format(matched_bone, material, round(best_match_for_material[0],4)))
+            else:
+                kklog("Bone {} was too far from material {} and not automatically separated from the vertex group {}".format(matched_bone, material, base_group), 'warn')
+
+        for material in final_data:
+            duplicate_bone = final_data[material]
+            #kklog("Correcting material vertices {} using the bone {}".format(material, duplicate_bone))
+            #add all base_group vertices to the new group
+            new_group_index = body.vertex_groups.find(duplicate_bone)
+            #print("The vertices for {} will be taken out of the vertex group {} placed into the new vertex group {}".format(duplicate_bone, base_group_index, new_group_index))
+            #check if each base_group vertex is in the matched material group. If it is, set the weight and remove it from the base_group
+            for vertex in vertices_in_all_groups[base_group]:
+                body.vertex_groups[new_group_index].add([vertex], 0.0, 'ADD')
+                for index, grp in enumerate(body.data.vertices[vertex].groups):
+                    if grp.group == new_group_index:
+                        new_vg_index = index
+                    elif grp.group == base_group_index:
+                        old_vg_index = index
+                if vertex in materialVertices[material]:
+                    body.data.vertices[vertex].groups[new_vg_index].weight = body.data.vertices[vertex].groups[old_vg_index].weight
+                    #body.data.vertices[vertex].groups[old_vg_index].weight = 0
+                    #body.vertex_groups[old_vg_index].remove([vertex])
+                    #print("Moved vertex {} from {} (real {}) to {} (real {}) with weight {}".format(vertex,old_vg_index,base_group_index,new_vg_index,new_group_index, body.data.vertices[vertex].groups[new_vg_index].weight))
+                #Else remove it from the new group
                 else:
-                    kklog("Bone {} was too far from material {} and not automatically separated from the vertex group {}".format(matched_bone, material, base_group), 'warn')
-
-            for material in final_data:
-                duplicate_bone = final_data[material]
-                #kklog("Correcting material vertices {} using the bone {}".format(material, duplicate_bone))
-                #add all base_group vertices to the new group
-                new_group_index = body.vertex_groups.find(duplicate_bone)
-                #print("The vertices for {} will be taken out of the vertex group {} placed into the new vertex group {}".format(duplicate_bone, base_group_index, new_group_index))
-                #check if each base_group vertex is in the matched material group. If it is, set the weight and remove it from the base_group
-                for vertex in vertices_in_all_groups[base_group]:
-                    body.vertex_groups[new_group_index].add([vertex], 0.0, 'ADD')
-                    for index, grp in enumerate(body.data.vertices[vertex].groups):
-                        if grp.group == new_group_index:
-                            new_vg_index = index
-                        elif grp.group == base_group_index:
-                            old_vg_index = index
-                    if vertex in materialVertices[material]:
-                        body.data.vertices[vertex].groups[new_vg_index].weight = body.data.vertices[vertex].groups[old_vg_index].weight
-                        #body.data.vertices[vertex].groups[old_vg_index].weight = 0
-                        #body.vertex_groups[old_vg_index].remove([vertex])
-                        #print("Moved vertex {} from {} (real {}) to {} (real {}) with weight {}".format(vertex,old_vg_index,base_group_index,new_vg_index,new_group_index, body.data.vertices[vertex].groups[new_vg_index].weight))
-                    #Else remove it from the new group
-                    else:
-                        body.vertex_groups[new_vg_index].remove([vertex])
-                        #print("vertex {} was not moved from group {}".format(vertex,old_vg_index))
-                
-            #Now that the vertex weights are copied over, remove them from the original group
-            #kklog("Cleaning vertexes {}".format(dupe_groups))
-            for material in final_data:
-                duplicate_bone = final_data[material]
-                new_group_index = body.vertex_groups.find(duplicate_bone)
-                for vertex in vertices_in_all_groups[base_group]:
-                    body.vertex_groups[new_group_index].add([vertex], 0.0, 'ADD')
-                    for index, grp in enumerate(body.data.vertices[vertex].groups):
-                        if grp.group == new_group_index:
-                            new_vg_index = index
-                        elif grp.group == base_group_index:
-                            old_vg_index = index
-                    if vertex in materialVertices[material]:
-                        body.data.vertices[vertex].groups[old_vg_index].weight = 0
-                        body.vertex_groups[old_vg_index].remove([vertex])
+                    body.vertex_groups[new_vg_index].remove([vertex])
+                    #print("vertex {} was not moved from group {}".format(vertex,old_vg_index))
+            
+        #Now that the vertex weights are copied over, remove them from the original group
+        #kklog("Cleaning vertexes {}".format(dupe_groups))
+        for material in final_data:
+            duplicate_bone = final_data[material]
+            new_group_index = body.vertex_groups.find(duplicate_bone)
+            for vertex in vertices_in_all_groups[base_group]:
+                body.vertex_groups[new_group_index].add([vertex], 0.0, 'ADD')
+                for index, grp in enumerate(body.data.vertices[vertex].groups):
+                    if grp.group == new_group_index:
+                        new_vg_index = index
+                    elif grp.group == base_group_index:
+                        old_vg_index = index
+                if vertex in materialVertices[material]:
+                    body.data.vertices[vertex].groups[old_vg_index].weight = 0
+                    body.vertex_groups[old_vg_index].remove([vertex])
 
 def rename_mmd_bones():
     #renames japanese name field for importing vmds via mmd tools

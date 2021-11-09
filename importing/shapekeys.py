@@ -146,12 +146,10 @@ def fix_eyewhite_shapekeys():
     body = bpy.data.objects['Body']
     body.active_shape_key_index = 0
 
-    #Remove the "Instance" tag on all materials
-    materialCount = len(body.data.materials.values())-1
-    currentMat=0
-    while currentMat <= materialCount:
-        body.data.materials[currentMat].name = body.data.materials[currentMat].name.replace(' (Instance)','')
-        currentMat+=1
+    #Remove the ### tag on the second eyewhite material
+    for mat in body.data.materials:
+        if 'cf_m_sirome_00' in mat.name and len(mat.name) > 15:
+            mat.name = 'cf_m_sirome_00.001'
 
     #Deselect all objects
     bpy.ops.object.select_all(action='DESELECT')
@@ -433,6 +431,8 @@ class shape_keys(bpy.types.Operator):
         if fix_eyewhites and not bpy.data.objects['Armature'].data.bones.get('Greybone'):
             kklog('Fixing eyewhite shapekeys...')
             fix_eyewhite_shapekeys()
+        
+        kklog('Combining shapekeys...')
         combine_shapekeys(keep_partial_shapekeys)
         
         return {'FINISHED'}

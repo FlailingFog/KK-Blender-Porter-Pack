@@ -36,10 +36,12 @@ from bpy.types import Operator
 def showError(self, context):
     self.layout.label(text="No object selected")
 
+def typeError(self, context):
+    self.layout.label(text="The selected object must be a mesh object")
+
 #returns true if an error is encountered
 def setup_image_plane():
     #Stop if no object is selected
-
     try:
         #An object was set as the active object but is not selected
         if not bpy.context.active_object.select_get():
@@ -48,6 +50,11 @@ def setup_image_plane():
     except:
         #No object is set as the active object
         bpy.context.window_manager.popup_menu(showError, title="Error", icon='ERROR')
+        return True
+
+    #Stop if the object is not a mesh object
+    if bpy.context.active_object.type != 'MESH':
+        bpy.context.window_manager.popup_menu(typeError, title="Error", icon='ERROR')
         return True
 
     #######################

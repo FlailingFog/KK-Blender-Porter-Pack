@@ -53,8 +53,8 @@ class separate_body(bpy.types.Operator):
         #Select all body related materials, then separate it from everything else
         #This puts hair/clothes in position 1 and the body in position 2
         bodyMatList = [
-            'cm_m_body.001',
-            'cf_m_body.001',
+            #'cm_m_body.001',
+            #'cf_m_body.001',
             'cm_m_body',
             'cf_m_body',
             'cf_m_tang',
@@ -135,8 +135,8 @@ class separate_body(bpy.types.Operator):
         bpy.ops.object.mode_set(mode = 'EDIT')
         
         merge_list = [
-            'cm_m_body.001',
-            'cf_m_body.001',
+            #'cm_m_body.001',
+            #'cf_m_body.001',
             'cm_m_body',
             'cf_m_body',
             'cf_m_face_00',
