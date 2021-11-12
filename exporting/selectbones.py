@@ -35,6 +35,7 @@ class select_bones(bpy.types.Operator):
         #Select the armature and make it active
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.select_all(action='DESELECT')
+        bpy.data.objects['Armature'].hide = False
         bpy.data.objects['Armature'].select_set(True)
         bpy.context.view_layer.objects.active=bpy.data.objects['Armature']
         bpy.ops.object.mode_set(mode='POSE')

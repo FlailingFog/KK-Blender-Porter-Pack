@@ -144,7 +144,7 @@ class separate_body(bpy.types.Operator):
         for mat in merge_list:
             bpy.context.object.active_material_index = body.data.materials.find(mat)
             bpy.ops.object.material_slot_select()
-        bpy.ops.mesh.remove_doubles(threshold=0.0001)
+        bpy.ops.mesh.remove_doubles(threshold=0.00001)
 
         #then combine duplicated material slots
         bpy.ops.object.mode_set(mode = 'OBJECT')
