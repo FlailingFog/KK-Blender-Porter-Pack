@@ -1,7 +1,7 @@
 # KK Blender Porter Pack
 Plugin pack for exporting and setting up Koikatsu characters in Blender.  
 
-The ```KKBP exporter``` for Koikatsu is used to export the character's mesh, armature and color data. The exported data is then processed by the ```KKBP plugin``` for Blender and the [CATS addon](https://github.com/GiveMeAllYourCats/cats-blender-plugin). Once characters are setup in Blender, they can also be saved as FBX files for use in other programs.   
+The ```KKBP exporter for Koikatsu``` is used to export the character's mesh, armature and color data. The exported data is then processed by the ```KKBP plugin for Blender``` and the [CATS addon](https://github.com/GiveMeAllYourCats/cats-blender-plugin). Once characters are setup in Blender, they can also be saved as FBX files for use in other programs.   
 The changelog for the pack [can be found here.](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/master/Changelog.md)
 The pack [also has a barebones wiki here.](https://github.com/FlailingFog/KK-Blender-Shader-Pack/wiki)
 
@@ -13,7 +13,7 @@ Coming eventually. For now, [V4's guide is here](https://www.youtube.com/watch?v
 ### Text instructions (without shading instructions)
 
 Prerequisites:
-* Install [KKAPI 1.25 or higher](https://github.com/IllusionMods/IllusionModdingAPI/releases) for Koikatsu. ([Installation instructions](https://github.com/IllusionMods/IllusionModdingAPI#how-to-install))
+* Install [HF Patch v3.13 or later](https://github.com/ManlyMarco/KK-HF_Patch) for Koikatsu.
 * Download [CATS blender plugin](https://github.com/GiveMeAllYourCats/cats-blender-plugin) for Blender
 
 1. Download this repository ZIP using the green CODE button on the top right of the page
@@ -38,18 +38,10 @@ Prerequisites:
 ![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/importtemplates.png)
 16. Click the Convert and Apply colors button. Choose the folder that contains the .pmx file again. Your character should have the correct colors now.  
 ![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/importcolors.png)
-17. The plugin does not export dynamic bone rotations for you. If any hair or accessories are clipping and need to be re-rotated, you can select the armature and enter pose mode (top left) and rotate the bones you need rotated using the R, X, Y and Z keys.  
-![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/dynamicbones1.png)
-In this case I have rotated the bow to prevent it from clipping into the chest and rotated the hair to prevent it from sticking outward. To save this rotation as the default, exit pose mode, select the clothes object and save the rotation as a shapekey. Do this for the hair object as well.
-![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/dynamicbones2.png)
-This adds a new shapekey at the bottom of your object's shapekey list. Set it to 1.
-![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/dynamicbones3.png)
-Now save the default pose by selecting the armature, going into pose mode, selecting the bones you just rotated and pressing ctrl + A.
-![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/dynamicbones4.png)
-18. Edit the shaders to get the exact look you want. This includes editing the detail mask intensities, hair highlights, eye scaling, dark colors etc
-19. Edit the armature if you need to
-20. Fix vertex group issues if you need to
+18. Edit the armature if you need to
+19. Edit the shaders to get the exact look you want. This includes editing the detail mask intensities, hair highlights, eye scaling, dark colors etc
 
 Exporting:
-1. a
+1. Click the "prep things for export button"
+2. 
 
