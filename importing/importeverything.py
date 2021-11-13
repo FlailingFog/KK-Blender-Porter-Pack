@@ -121,12 +121,15 @@ def get_templates_and_apply(directory, useFakeUser):
     tongueTemplate.node_tree.nodes['KKShader'].node_tree = newNode
     newNode.name = 'Tongue Shader'
     
-    #Make sure the hair object's name is capitalized
+    #Make sure the hair object's name is correctly capitalized
     try:
         bpy.data.objects['hair'].name = 'Hair'
     except:
-        #The hair object's name was already correctly capitalized
-        pass
+        try:
+            bpy.data.objects['HAIR'].name = 'Hair'
+        except:
+            #The hair object's name was already correctly capitalized
+            pass
     
     #Replace all of the Hair materials with hair templates and name accordingly
     hair = bpy.data.objects['Hair']
@@ -384,7 +387,8 @@ def get_and_load_textures(directory):
             kklog('.dds and .png files not found, skipping: ' + image[0:len(image)-4] + '.dds')
         else:
             kklog('File not found, skipping: ' + image)
-        
+    
+    imageLoad('Template Body', 'Gentex', 'BodyMain', 'cf_m_body_MainTex_CT.png')
     imageLoad('Template Body', 'Gentex', 'BodyMC', 'cf_m_body_ColorMask.png')
     imageLoad('Template Body', 'Gentex', 'BodyMD', 'cf_m_body_DetailMask.png') #cfm female
     imageLoad('Template Body', 'Gentex', 'BodyLine', 'cf_m_body_LineMask.png')
@@ -412,13 +416,13 @@ def get_and_load_textures(directory):
             #An alpha mask for the clothing wasn't present in the Textures folder
             currentObj.material_slots['Template Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].inputs['Built in transparency toggle'].default_value = 0
     
+    imageLoad('Template Face', 'Gentex', 'FaceMain', 'cf_m_face_00_MainTex_CT.png')
     imageLoad('Template Face', 'Gentex', 'FaceMC', 'cf_m_face_00_ColorMask.png')
     imageLoad('Template Face', 'Gentex', 'FaceMD', 'cf_m_face_00_DetailMask.png')
     imageLoad('Template Face', 'Gentex', 'BlushMask', 'cf_m_face_00_Texture4.png')
     imageLoad('Template Face', 'Gentex', 'FaceTongue', 'cf_m_face_00_MainTex.png') #face main texture
 
     imageLoad('Template Face', 'Gentex', 'BlushMask.001', 'cf_m_face_00_Texture5.png')
-
 
     
     imageLoad('Template Eyebrows (mayuge)', 'Gentex', 'Eyebrow', 'cf_m_mayuge_00_MainTex_CT.png')

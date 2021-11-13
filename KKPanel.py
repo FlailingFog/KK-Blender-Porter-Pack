@@ -126,6 +126,14 @@ class PlaceholderProperties(PropertyGroup):
         Stock / unmodified armatures only!""",
         default = False)
 
+    image_dropdown : EnumProperty(
+        items=(
+            ("A", "LUT Day", "Use Day LUT to saturate image"),
+            ("B", "LUT Night", "Use Night LUT to saturate image"),
+            ("C", "LUT Sunset", "Use Sunset LUT to saturate image")
+        ), name="", default="A", description="LUT Choice")
+    
+
 class IMPORTING_PT_panel(bpy.types.Panel):
     bl_label = 'Importing and Exporting'
     bl_category = "KKBP"
@@ -353,6 +361,23 @@ class EXTRAS_PT_panel(bpy.types.Panel):
             split.operator('kkb.linkshapekeys', icon = icon)
 '''
 
+class EDITOR_PT_panel(bpy.types.Panel):
+    bl_label = 'Convert Image'
+    bl_category = "KKBP"
+    bl_space_type = "IMAGE_EDITOR"
+    bl_region_type = "UI"
+    def draw(self,context):
+        layout = self.layout
+        splitfac = 0.6
+
+        box = layout.box()
+        col = box.column(align=True)
+        row = col.row(align = True)
+        row.operator('kkb.imageconvert', text = 'Convert image with KKBP', icon = 'IMAGE')
+
+        row = col.row(align=True)
+        row.prop(context.scene.placeholder, "image_dropdown")
+
 def register():
     bpy.utils.register_class(PlaceholderProperties)
     bpy.utils.register_class(IMPORTING_PT_panel)
@@ -362,8 +387,10 @@ def register():
     bpy.utils.register_class(APPLYOPTIONS_PT_Panel)
     bpy.utils.register_class(EXPORTING_PT_panel)
     bpy.utils.register_class(EXTRAS_PT_panel)
+    bpy.utils.register_class(EDITOR_PT_panel)
 
 def unregister():
+    bpy.utils.unregister_class(EDITOR_PT_panel)
     bpy.utils.unregister_class(EXTRAS_PT_panel)
     bpy.utils.unregister_class(EXPORTING_PT_panel)
     bpy.utils.unregister_class(APPLYOPTIONS_PT_Panel)

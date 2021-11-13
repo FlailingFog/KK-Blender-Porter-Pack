@@ -36,15 +36,17 @@ from .extras.linkshapekeys import link_shapekeys
 from .extras.importanimation import import_animation
 from .extras.switcharmature import switch_armature
 from .extras.toggleik import toggle_ik
+from .extras.imageconvert import image_convert
 from .pillow.getpillow import InstallPIL
 
 from . KKPanel import PlaceholderProperties
-from . KKPanel import IMPORTING_PT_panel, IMPORTING1_PT_panel,IMPORTOPTIONS_PT_Panel, IMPORTING2_PT_panel, APPLYOPTIONS_PT_Panel, EXPORTING_PT_panel, EXTRAS_PT_panel
+from . KKPanel import IMPORTING_PT_panel, IMPORTING1_PT_panel,IMPORTOPTIONS_PT_Panel, IMPORTING2_PT_panel, APPLYOPTIONS_PT_Panel, EXPORTING_PT_panel, EXTRAS_PT_panel, EDITOR_PT_panel
 
 classes = (
     apply_materials,
     bake_materials, 
-    select_bones, 
+    select_bones,
+    image_convert, 
 
     import_animation, 
     import_studio, 
@@ -70,7 +72,8 @@ classes = (
     IMPORTING2_PT_panel,
     APPLYOPTIONS_PT_Panel,
     EXPORTING_PT_panel,
-    EXTRAS_PT_panel)
+    EXTRAS_PT_panel,
+    EDITOR_PT_panel)
 
 def register():
     
