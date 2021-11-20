@@ -843,9 +843,9 @@ def rename_bones_for_clarity(action):
     }
 
     if action == 'modified':
-        for bone in armature.data.bones:
-            if bone.name in unity_rename_dict:
-                bone.name = unity_rename_dict[bone.name]
+        for bone in unity_rename_dict:
+            if armature.data.bones.get(bone):
+                armature.data.bones[bone].name = unity_rename_dict[bone]
     
     elif action == 'stock':
         for bone in unity_rename_dict:
@@ -853,10 +853,10 @@ def rename_bones_for_clarity(action):
                 armature.data.bones[unity_rename_dict[bone]].name = bone
 
     elif action == 'animation':
-        animation_armature = bpy.data.objects['Animation Armature']
+        armature = bpy.data.objects['Animation Armature']
         for bone in unity_rename_dict:
-            if animation_armature.data.bones.get(bone):
-                animation_armature.data.bones[bone].name = unity_rename_dict[bone]
+            if armature.data.bones.get(bone):
+                armature.data.bones[bone].name = unity_rename_dict[bone]
     
 #selects all materials that have "_hair" or "_ahoge" in their name to give the user a head start with separating the hair
 def begin_hair_selections():

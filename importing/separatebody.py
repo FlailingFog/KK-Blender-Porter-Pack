@@ -49,14 +49,10 @@ class separate_body(bpy.types.Operator):
                 except:
                     kklog('Material wasn\'t found when separating body materials: ' + mat, 'warn')
             bpy.ops.mesh.separate(type='SELECTED')
-                    
+        
         #Select all body related materials, then separate it from everything else
         #This puts hair/clothes in position 1 and the body in position 2
         bodyMatList = [
-            #'cm_m_body.001',
-            #'cf_m_body.001',
-            'cm_m_body',
-            'cf_m_body',
             'cf_m_tang',
             'cf_m_hitomi_00.001',
             'cf_m_hitomi_00',
@@ -69,9 +65,11 @@ class separate_body(bpy.types.Operator):
             'cf_m_noseline_00',
             'cf_m_mayuge_00',
             'cf_m_face_00',
-            'cf_m_face_00.001']
+            'cf_m_face_00.001',
+            'cm_m_body',
+            'cf_m_body',]
         separateMaterial(bodyMatList)
-
+        
         #Separate the shadowcast if any, placing it in position 3
         try:
             bpy.ops.mesh.select_all(action = 'DESELECT')

@@ -534,11 +534,6 @@ def add_outlines(oneOutlineOnlyMode):
     mod.use_rim = False
     mod.name = 'Outline Modifier'
     
-    #face
-    faceOutlineMat = bpy.data.materials['Template Outline'].copy()
-    faceOutlineMat.name = 'Template Face Outline'
-    ob.data.materials.append(faceOutlineMat)
-    
     #body
     ob.data.materials.append(bpy.data.materials['Template Body Outline'])
     try:
@@ -549,7 +544,21 @@ def add_outlines(oneOutlineOnlyMode):
         except:
             #An alpha mask for the clothing wasn't present in the Textures folder
             bpy.data.materials['Template Body Outline'].node_tree.nodes['Clipping prevention toggle'].inputs[0].default_value = 0            
-        
+    
+    #face
+    faceOutlineMat = bpy.data.materials['Template Outline'].copy()
+    faceOutlineMat.name = 'Template Face Outline'
+    ob.data.materials.append(faceOutlineMat)
+
+    #And give the body an inactive data transfer modifier for the shading proxy
+    mod = ob.modifiers.new(type='DATA_TRANSFER', name = 'Shadowcast shading proxy')
+    mod.show_viewport = False
+    mod.show_render = False
+    mod.object = bpy.data.objects['Shadowcast']
+    mod.use_loop_data = True
+    mod.data_types_loops = {'CUSTOM_NORMAL'}
+    mod.loop_mapping = 'POLYINTERP_LNORPROJ'
+
     #Give each piece of hair with an alphamask it's own outline group
     ob = bpy.context.view_layer.objects['Hair']
     bpy.context.view_layer.objects.active = ob

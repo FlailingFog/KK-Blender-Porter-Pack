@@ -105,7 +105,7 @@ class import_animation(bpy.types.Operator):
 
         # if the character armature has renamed bones, the armature is the modified armature type
         armature = bpy.data.objects['Armature']
-        if armature.data.bones.get('Left Elbow'):
+        if armature.data.bones.get('Left elbow'):
             rename_bones_for_clarity('animation')
             modify_animation_armature()
             apply_animation()
