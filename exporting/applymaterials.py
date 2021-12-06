@@ -87,20 +87,7 @@ def replace_images(folderpath, apply_type):
     fileList = Path(folderpath).glob('*.*')
     files = [file for file in fileList if file.is_file()]
     
-    #Get object
     object = bpy.context.active_object
-    
-    #test if an object is active and selected. 
-    try:
-        #object is active but not selected
-        if not object.select_get():
-            bpy.context.window_manager.popup_menu(showError, title="Error", icon='ERROR')
-            return
-    except:
-        #active object is Nonetype
-        bpy.context.window_manager.popup_menu(showError, title="Error", icon='ERROR')
-        return
-    
     for matslot in object.material_slots:
         material = matslot.material
         nodes = material.node_tree.nodes
@@ -151,9 +138,20 @@ class apply_materials(bpy.types.Operator):
         scene = context.scene.placeholder
         apply_type = scene.atlas_dropdown
 
+        #Stop if no object is currently selected
+        object = bpy.context.active_object
+        try:
+            #object is active but not selected
+            if not object.select_get():
+                bpy.context.window_manager.popup_menu(showError, title="Error", icon='ERROR')
+                return {'FINISHED'}
+        except:
+            #active object is Nonetype
+            bpy.context.window_manager.popup_menu(showError, title="Error", icon='ERROR')
+            return {'FINISHED'}
+
         #Get all files from the exported texture folder
         folderpath = self.directory
-        
 
         create_atlas_helpers()
         replace_images(folderpath, apply_type)
