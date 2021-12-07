@@ -34,20 +34,29 @@ class separate_body(bpy.types.Operator):
         bpy.ops.object.mode_set(mode = 'EDIT')
         bpy.ops.mesh.select_all(action = 'DESELECT')
         
-        def separateMaterial(matList):
+        def separateMaterial(matList, search_type = 'exact'):
             for mat in matList:
-                try:
-                    bpy.context.object.active_material_index = body.data.materials.find(mat)
+                mat_found = -1
+                if search_type == 'fuzzy' and ('cm_m_' in mat or 'c_m_' in mat):
+                    for matindex in range(0, len(body.data.materials), 1):
+                        if mat in body.data.materials[matindex].name:
+                            mat_found = matindex
+                else:
+                    mat_found = body.data.materials.find(mat)      
+
+                if mat_found > -1:
+                    bpy.context.object.active_material_index = mat_found
                     
-                    #moves the materials in a specific order to match the pmx file
+                    #moves the materials in a specific order to prevent transparency issues
                     def moveUp():
                         return bpy.ops.object.material_slot_move(direction='UP')
                     while moveUp() != {"CANCELLED"}:
                         pass
                     
                     bpy.ops.object.material_slot_select()
-                except:
+                else:
                     kklog('Material wasn\'t found when separating body materials: ' + mat, 'warn')
+
             bpy.ops.mesh.separate(type='SELECTED')
         
         #Select all body related materials, then separate it from everything else
@@ -67,14 +76,14 @@ class separate_body(bpy.types.Operator):
             'cf_m_face_00',
             'cf_m_face_00.001',
             'cm_m_body',
-            'cf_m_body',]
-        separateMaterial(bodyMatList)
-        
+            'cf_m_body']
+        separateMaterial(bodyMatList, 'fuzzy')
+
         #Separate the shadowcast if any, placing it in position 3
         try:
             bpy.ops.mesh.select_all(action = 'DESELECT')
             shadMatList = ['c_m_shadowcast', 'Standard']
-            separateMaterial(shadMatList)
+            separateMaterial(shadMatList, 'fuzzy')
         except:
             pass
         
