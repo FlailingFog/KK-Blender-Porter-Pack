@@ -7,7 +7,7 @@ The pack [also has a barebones wiki here.](https://github.com/FlailingFog/KK-Ble
 
 # Usage Instructions for V5
 ### Video instructions (with shading instructions)
-Coming eventually. For now, [V4's guide is here](https://www.youtube.com/watch?v=xe5A8bOh2Mk&list=PLhiuav2SCuvd5eAOb3Ct1eovFAlgv-iwe)
+Almost finished. For now, [V4's guide is here](https://www.youtube.com/watch?v=xe5A8bOh2Mk&list=PLhiuav2SCuvd5eAOb3Ct1eovFAlgv-iwe)
 
 
 ### Text instructions (without shading instructions)
