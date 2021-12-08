@@ -549,6 +549,7 @@ def add_outlines(oneOutlineOnlyMode):
     faceOutlineMat = bpy.data.materials['Template Outline'].copy()
     faceOutlineMat.name = 'Template Face Outline'
     ob.data.materials.append(faceOutlineMat)
+    faceOutlineMat.blend_method = 'CLIP'
 
     #And give the body an inactive data transfer modifier for the shading proxy
     mod = ob.modifiers.new(type='DATA_TRANSFER', name = 'Shadowcast shading proxy')
