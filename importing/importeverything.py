@@ -619,7 +619,7 @@ def add_outlines(oneOutlineOnlyMode):
     else:
         outlineStart = 200
     
-    #Add a general outline that covers the rest of the materials on the object that don't need transparency
+    #Add a general outline that covers the rest of the materials on the hair object that don't need transparency
 
     ob = bpy.context.view_layer.objects['Hair']
     bpy.context.view_layer.objects.active = ob
@@ -634,19 +634,21 @@ def add_outlines(oneOutlineOnlyMode):
     hairOutlineMat = bpy.data.materials['Template Outline'].copy()
     hairOutlineMat.name = 'Template Hair Outline'
     ob.data.materials.append(hairOutlineMat)
-     
+    
     #Add a standard outline to all other objects
     #If the material has a maintex or alphamask then give it it's own outline, mmdtools style
+    #keep a dictionary of the material length list for the next loop
+    outlineStart = {}
     for ob in bpy.context.view_layer.objects:
         if  ob.type == 'MESH' and ob.name != 'Body' and ob.name != 'Hair' and 'Widget' not in ob.name and not oneOutlineOnlyMode:
             
             bpy.context.view_layer.objects.active = ob
             
             #Get the length of the material list before starting
-            outlineStart = len(ob.material_slots)
+            outlineStart[ob.name] = len(ob.material_slots)
             
             #done this way because the range changes length during the loop
-            for matindex in range(0, outlineStart,1):
+            for matindex in range(0, outlineStart[ob.name],1):
                 genMat = ob.material_slots[matindex]
                 genType = genMat.name.replace('Template ','')
                 #print(genType)
@@ -681,7 +683,7 @@ def add_outlines(oneOutlineOnlyMode):
 
                         #Make the new outline the first outline in the material list
                         ob.active_material_index = ob.data.materials.find(OutlineMat.name)
-                        while ob.active_material_index > outlineStart:
+                        while ob.active_material_index > outlineStart[ob.name]:
                             moveUp()
                             #print(ob.active_material_index)
 
@@ -722,7 +724,7 @@ def add_outlines(oneOutlineOnlyMode):
             mod = ob.modifiers[1]
             mod.thickness = 0.0005
             mod.offset = 1
-            mod.material_offset = outlineStart
+            mod.material_offset = outlineStart[ob.name]
             mod.use_flip_normals = True
             mod.use_rim = False
             mod.name = 'Outline Modifier'
