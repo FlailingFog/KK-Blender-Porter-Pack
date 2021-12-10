@@ -41,7 +41,16 @@ Prerequisites:
 18. Edit the armature if you need to
 19. Edit the shaders to get the exact look you want. This includes editing the detail mask intensities, hair highlights, eye scaling, dark colors etc
 
-Exporting:
-1. Click the "prep things for export button"
-2. 
+### Exporting Instructions
+1. In the KKBP panel, choose which export type you want. The "Very simplified" option is suitable for Unity because it reparents the hip bone for you
+2. Click the "Prep things for export" button
+3. Select your model, click the "Bake material templates" button and choose the folder you want to store all of your baked images to (warning: there's going to be a lot)
+4. When it's done, click the "Apply baked templates" button and choose the same folder from step 3
+5. (Optional) You can rebake any blurry materials by going back to their shader nodes, setting the final "Mix Shader" node to zero, increasing the "Bake multiplier" property on the KKBP panel and then returning to step 3
+6. Go to the CATS optimization tab, generate the material list, set the layer you want each material to appear on, and click the "Save atlas to..." button. This will give you the light version of the material atlas.
+7. Hit the undo button, change the "Light atlas" menu option in the KKBP panel to "Dark atlas" and repeat step 6 to get the dark version of the material atlas.
+8. (Optional) Repeat step 7 for the "Normal atlas" option
+9. (Optional) Generate Visemes for the model in the CATS Visemes panel. I suggest using mouth_a_big, mouth_o_big and mouth_i_big
+10. (Optional) Delete any shapekeys that will not be used to reduce the size of the model file 
+11. Click the export model button in the CATS main panel to get the .fbx file
 
