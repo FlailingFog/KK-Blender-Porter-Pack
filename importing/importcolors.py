@@ -698,7 +698,7 @@ def set_color_management():
 class import_colors(bpy.types.Operator):
     bl_idname = "kkb.importcolors"
     bl_label = "Open Export folder"
-    bl_description = "Open the folder containing the model.pmx file"
+    bl_description = "Open the folder containing your model.pmx file"
     bl_options = {'REGISTER', 'UNDO'}
     
     directory : StringProperty(maxlen=1024, default='', subtype='FILE_PATH', options={'HIDDEN'})

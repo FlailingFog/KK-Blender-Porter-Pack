@@ -6,7 +6,7 @@ bl_info = {
     "description" : "Scripts for automating the cleanup process of a Koikatsu export",
     "version": (5, 0, 0),
     "blender" : (2, 93, 0),
-    "location" : "View3D",
+    "location" : "View3D, Image Editor",
     "category" : "3D View",
     "tracker_url" : "https://github.com/FlailingFog/KK-Blender-Shader-Pack/"
 }

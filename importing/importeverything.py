@@ -762,8 +762,8 @@ def clean_orphan_data():
     
 class import_everything(bpy.types.Operator):
     bl_idname = "kkb.importeverything"
-    bl_label = "Import Textures folder"
-    bl_description = "Open the folder containing the textures and the KK Shader.blend file"
+    bl_label = "Open Export folder"
+    bl_description = "Open the folder containing your model.pmx file"
     bl_options = {'REGISTER', 'UNDO'}
     
     directory : StringProperty(maxlen=1024, default='', subtype='FILE_PATH', options={'HIDDEN'})

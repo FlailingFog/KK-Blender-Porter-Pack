@@ -22,7 +22,7 @@ Limitations:
 - Does not (cannot?) account for multiple UV maps. Only the default map named "UVMap" is used.
 
 imageplane driver + shader code taken from https://blenderartists.org/t/scripts-create-camera-image-plane/580839
-Tested on Blender 2.93 LTS
+Tested on Blender 2.93 LTS, 3.0.0
 '''
 
 import bpy
@@ -221,8 +221,13 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
         print(currentmaterial)
 
         #Don't bake this material if it's an outline material
-        if 'Outline ' in currentmaterial.name or 'Template Outline' in currentmaterial.name:
+        if 'Outline ' in currentmaterial.name or 'Template Outline' in currentmaterial.name or 'Template Body Outline' in currentmaterial.name:
             continue
+
+        #Don't bake this material if the material already has the atlas nodes loaded in and the mix shader is set to 1
+        if currentmaterial.node_tree.nodes.get('KK Mix'):
+            if currentmaterial.node_tree.nodes['KK Mix'].inputs[0].default_value > 0.5:
+                continue
         
         #Turn off the normals for the raw shading node group input if this isn't a normal pass
         if nodes.get('RawShade') and bake_type != 'normal':
@@ -274,7 +279,7 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
                 bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
         #If no images were detected in a Gentex group, render a very small (64px) failsafe image
-        #this will let the script catch fully transparent materials or materials that are solid colors
+        #this will let the script catch fully transparent materials or materials that are solid colors without textures
         if not rendered_something:
             bpy.context.scene.render.resolution_x=64
             bpy.context.scene.render.resolution_y=64
@@ -303,7 +308,10 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
         if currentmaterial.node_tree.nodes.get('RawShade') and bake_type == 'normal':
             getOut = nodes['Material Output'].inputs[0].links[0]
             currentmaterial.node_tree.links.remove(getOut)
-            links.new(nodes['Rim'].outputs[0], nodes['Material Output'].inputs[0])
+            if nodes.get('KK Mix'):
+                links.new(nodes['KK Mix'].outputs[0], nodes['Material Output'].inputs[0])
+            else:
+                links.new(nodes['Rim'].outputs[0], nodes['Material Output'].inputs[0])
 
 def start_baking(folderpath, resolutionMultiplier):
     currentlySelected = bpy.context.active_object

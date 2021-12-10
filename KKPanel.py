@@ -79,9 +79,9 @@ class PlaceholderProperties(PropertyGroup):
     
     prep_dropdown : EnumProperty(
         items=(
-            ("A", "Very simplified", "Combines all objects, removes the outline, simplifies bones on armature layer 3 / 5 / 11 / 12 / 13, reparents hip bone"),
-            ("B", "Simplified", "Combines all objects, Removes the outline, simplifies bones on armature layer 11"),
-            ("C", "Stock", "Combines all objects, Removes the outline"),
+            ("A", "Very simplified", "Combines all objects, removes the outline, removes duplicate Eye material slot, simplifies bones on armature layer 3 / 5 / 11 / 12 / 13, reparents hip bone"),
+            ("B", "Simplified", "Combines all objects, Removes the outline, removes duplicate Eye material slot, simplifies bones on armature layer 11"),
+            ("C", "Stock", "Combines all objects, Removes the outline, removes duplicate Eye material slot"),
         ), name="", default="A", description="Prep type")
     
     atlas_dropdown : EnumProperty(

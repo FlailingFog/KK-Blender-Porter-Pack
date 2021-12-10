@@ -72,6 +72,7 @@ def create_atlas_helpers():
 
             #Then send that through the main mix shader
             mainMix = nodes.new('ShaderNodeMixShader')
+            mainMix.name = 'KK Mix'
             mainMix.location = outputNode.location
             outputNode.location = outputNode.location[0] + 300, outputNode.location[1]
             links.new(transpMix.outputs[0], mainMix.inputs[2])
@@ -82,6 +83,7 @@ def create_atlas_helpers():
 
             #set the mix shader's factor to 1 so the baked image is showing instead of the material
             mainMix.inputs[0].default_value=1
+
 
 def replace_images(folderpath, apply_type):
     fileList = Path(folderpath).glob('*.*')
@@ -120,6 +122,9 @@ def replace_images(folderpath, apply_type):
         
         imageNode = transpMix.inputs[0].links[0].from_node
         imageNode.image = bpy.data.images[imageName]
+
+        nodes['KK Mix'].inputs[0].default_value = 1
+        
 
 class apply_materials(bpy.types.Operator):
     bl_idname = "kkb.applymaterials"
