@@ -5,6 +5,9 @@ The ```KKBP exporter for Koikatsu``` is used to export the character's mesh, arm
 The changelog for the pack [can be found here.](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/master/Changelog.md)
 The pack [also has a barebones wiki here.](https://github.com/FlailingFog/KK-Blender-Shader-Pack/wiki)
 
+# Download
+You can download V5 of KKBP by using the green CODE button on the top right of the page > Download ZIP
+
 # Usage Instructions for V5
 ### Video instructions (with shading instructions)
 Almost finished. For now, [V4's guide is here](https://www.youtube.com/watch?v=xe5A8bOh2Mk&list=PLhiuav2SCuvd5eAOb3Ct1eovFAlgv-iwe)
