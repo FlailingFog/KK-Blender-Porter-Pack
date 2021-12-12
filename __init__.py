@@ -5,7 +5,7 @@ bl_info = {
     "location" : "View 3D > Tool Shelf > KK Scripts",
     "description" : "Scripts for automating the cleanup process of a Koikatsu export",
     "version": (5, 0, 0),
-    "blender" : (2, 93, 0),
+    "blender" : (3, 0, 0),
     "location" : "View3D, Image Editor",
     "category" : "3D View",
     "tracker_url" : "https://github.com/FlailingFog/KK-Blender-Shader-Pack/"
@@ -37,7 +37,9 @@ from .extras.importanimation import import_animation
 from .extras.switcharmature import switch_armature
 from .extras.toggleik import toggle_ik
 from .extras.imageconvert import image_convert
+from .extras.rigifywrapper import rigify_convert
 from .pillow.getpillow import InstallPIL
+
 
 from . KKPanel import PlaceholderProperties
 from . KKPanel import IMPORTING_PT_panel, IMPORTING1_PT_panel,IMPORTOPTIONS_PT_Panel, IMPORTING2_PT_panel, APPLYOPTIONS_PT_Panel, EXPORTING_PT_panel, EXTRAS_PT_panel, EDITOR_PT_panel
@@ -53,6 +55,7 @@ classes = (
     link_shapekeys,
     switch_armature,
     toggle_ik,
+    rigify_convert,
     InstallPIL,
 
     bone_drivers, 
