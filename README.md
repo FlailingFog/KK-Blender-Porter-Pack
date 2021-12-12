@@ -9,8 +9,10 @@ The pack [also has a barebones wiki here.](https://github.com/FlailingFog/KK-Ble
 You can download V5 of KKBP by using the green CODE button on the top right of the page > Download ZIP
 
 # Usage Instructions for V5
-### Video instructions (with shading instructions)
-Almost finished. For now, [V4's guide is here](https://www.youtube.com/watch?v=xe5A8bOh2Mk&list=PLhiuav2SCuvd5eAOb3Ct1eovFAlgv-iwe)
+### Incomplete video instructions (click for playlist)
+[![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/playlistthumbnail.png)](https://www.youtube.com/playlist?list=PLhiuav2SCuvcSAgT9pevHGjLWWB-NgVv3)
+
+If you want a complete guide, [V4's instructions are here](https://www.youtube.com/watch?v=xe5A8bOh2Mk&list=PLhiuav2SCuvd5eAOb3Ct1eovFAlgv-iwe)
 
 
 ### Text instructions (without shading instructions)
