@@ -1,4 +1,5 @@
-reminder for later: https://blenderartists.org/t/way-faster-normal-map-node-for-realtime-animation-playback-with-tangent-space-normals/1175379
+### Changes for V5.0.0
+
 
 ### Changes for V4.3.1:
 * Renamed the spine bones during the "1) Run right after importing" script
