@@ -33,12 +33,10 @@ class PlaceholderProperties(PropertyGroup):
     These are useless on their own""",
     default = False)
 
-    fix_ackus : BoolProperty(
+    fix_seams : BoolProperty(
     name="Enable or Disable",
-    description="""[SLOW] Sometimes when an accessory bone is duplicated
-    (like when two accessories of the same type are used in different slots),
-    the accessory bone weights will merge into each other.
-    Keep enabled to let KKBP automatically fix these merged vertex groups""",
+    description="""This performs a "remove doubles" operation on the body materials. Removing doubles also screws with the weights around certain areas
+    Disabling this will preserve the weights but may cause seams to appear around the neck and down the chest""",
     default = True)
 
     fix_eyewhites_bool : BoolProperty(
@@ -79,9 +77,9 @@ class PlaceholderProperties(PropertyGroup):
     
     prep_dropdown : EnumProperty(
         items=(
-            ("A", "Very simplified", "Combines all objects, removes the outline, removes duplicate Eye material slot, simplifies bones on armature layer 3 / 5 / 11 / 12 / 13, reparents hip bone"),
-            ("B", "Simplified", "Combines all objects, Removes the outline, removes duplicate Eye material slot, simplifies bones on armature layer 11"),
-            ("C", "Stock", "Combines all objects, Removes the outline, removes duplicate Eye material slot"),
+            ("A", "Unity - VRM compatible", "Combines all objects, removes the outline, removes duplicate Eye material slot, simplifies bones on armature layer 3 / 5 / 11 / 12 / 13, reparents hip bone"),
+            ("B", "Generic - Simplified", "Combines all objects, Removes the outline, removes duplicate Eye material slot, simplifies bones on armature layer 11"),
+            ("C", "Generic - No changes", "Combines all objects, Removes the outline, removes duplicate Eye material slot"),
         ), name="", default="A", description="Prep type")
     
     atlas_dropdown : EnumProperty(
@@ -196,7 +194,7 @@ class IMPORTOPTIONS_PT_Panel(bpy.types.Panel):
         row = col.row(align=True)
         split = row.split(align = True, factor=.5)
         split.prop(context.scene.placeholder, "armature_edit_bool", toggle=True, text = "Use modified armature")
-        #split.prop(context.scene.placeholder, "fix_ackus", toggle=True, text = "Fix accessories")
+        split.prop(context.scene.placeholder, "fix_seams", toggle=True, text = "Fix body seams")
         
 
 class IMPORTING2_PT_panel(bpy.types.Panel):
