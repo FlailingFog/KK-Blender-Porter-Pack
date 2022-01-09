@@ -28,7 +28,7 @@ class rigify_convert(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.select_all(action='DESELECT')
         armature = bpy.data.objects['Armature']
-        armature.hide = False
+        armature.hide_set(False)
         armature.select_set(True)
         bpy.context.view_layer.objects.active=armature
 
@@ -51,7 +51,7 @@ class rigify_convert(bpy.types.Operator):
                         rig.select_set(True)
                         bpy.context.view_layer.objects.active=rig
                         bpy.ops.object.parent_set(type='ARMATURE_NAME')
-            armature.hide = True
+            armature.hide_set(True)
             bpy.ops.object.select_all(action='DESELECT')
             rig.select_set(True)
             bpy.context.view_layer.objects.active=rig
