@@ -871,7 +871,6 @@ class finalize_pmx(bpy.types.Operator):
 
         scene = context.scene.placeholder
         modify_armature = scene.armature_edit_bool
-        #fix_accs = scene.fix_ackus
 
         #get rid of the text files mmd tools generates
         if bpy.data.texts['Model']:

@@ -261,7 +261,7 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
-        split.label(text="3) Prep things for export")
+        split.label(text="3) Prep for target application")
         split.operator('kkb.selectbones', text = '', icon = 'GROUP')
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)

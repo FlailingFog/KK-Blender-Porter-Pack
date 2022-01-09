@@ -20,7 +20,7 @@ class rigify_convert(bpy.types.Operator):
     bl_label = "Convert for rigify"
     bl_description = """Converts the armature to be Rigify compatible.
     The first time you click the button, the armature will be converted to a metarig.
-    Every time after you click the button, a Rigify rig will be generated and a post-gen script will be run"""
+    Every time after you click the button, a Rigify rig will be generated and a cleanup script will be run"""
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):

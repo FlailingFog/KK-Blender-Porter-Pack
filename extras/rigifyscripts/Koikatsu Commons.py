@@ -2,6 +2,12 @@ import bpy
 from typing import NamedTuple
 import mathutils
 from mathutils import Matrix
+import os
+import collections
+import json
+import re
+import bmesh
+from rna_prop_ui import rna_idprop_ui_create
 
 leftNamePrefix = "Left "
 rightNamePrefix = "Right "
@@ -9,6 +15,7 @@ leftNameSuffix1 = "_L"
 rightNameSuffix1 = "_R"
 leftNameSuffix2 = ".L"
 rightNameSuffix2 = ".R"
+copyNameSuffix = " copy"
 
 def leftNameToRightName(leftName):
     if leftName.startswith(leftNamePrefix):
@@ -20,6 +27,9 @@ def leftNameToRightName(leftName):
     return leftName
 
 bodyName = "Body"
+
+eyelidsShapeKeyName = "KK Eyes_default_cl"
+eyelidsShapeKeyCopyName = eyelidsShapeKeyName + copyNameSuffix
 
 widgetCollectionName = "Bone Widgets"
 widgetEyesName = "WidgetEyesRigify"
@@ -37,6 +47,11 @@ widgetButtockLeftName = "WidgetButtockLeft"
 widgetButtockRightName = "WidgetButtockRight"
 
 handleBoneSuffix = " handle"
+trackBoneSuffix = " track"
+markerBoneSuffix = " marker"
+xBoneSuffix = " x"
+yBoneSuffix = " y"
+zBoneSuffix = " z"
 
 originalRootBoneName = "Center"
 originalRootUpperBoneName = "cf_pv_root_upper"
@@ -49,8 +64,30 @@ rightEyeBoneName = leftNameToRightName(leftEyeBoneName)
 eyesHandleBoneName = "Eyes" + handleBoneSuffix
 leftEyeHandleBoneName = "Left eye" + handleBoneSuffix
 rightEyeHandleBoneName = leftNameToRightName(leftEyeHandleBoneName)
+eyesTrackTargetBoneName = "Eyes track target"
+eyesTrackTargetParentBoneName = eyesTrackTargetBoneName + " parent"
+eyesHandleMarkerBoneName = eyesHandleBoneName + markerBoneSuffix
+leftEyeHandleMarkerBoneName = leftEyeHandleBoneName + markerBoneSuffix
+rightEyeHandleMarkerBoneName = leftNameToRightName(leftEyeHandleMarkerBoneName)
+leftEyeHandleMarkerXBoneName = leftEyeHandleBoneName + markerBoneSuffix + xBoneSuffix
+rightEyeHandleMarkerXBoneName = leftNameToRightName(leftEyeHandleMarkerXBoneName)
+leftEyeHandleMarkerZBoneName = leftEyeHandleBoneName + markerBoneSuffix + zBoneSuffix
+rightEyeHandleMarkerZBoneName = leftNameToRightName(leftEyeHandleMarkerZBoneName)
+eyeballsBoneName = "Eyeballs"
+leftEyeballBoneName = "Left eyeball"
+rightEyeballBoneName = leftNameToRightName(leftEyeballBoneName)
+eyeballsTrackBoneName = eyeballsBoneName + trackBoneSuffix
+leftEyeballTrackBoneName = leftEyeballBoneName + trackBoneSuffix
+rightEyeballTrackBoneName = leftNameToRightName(leftEyeballTrackBoneName)
+leftEyeballTrackCorrectionBoneName = leftEyeballTrackBoneName + " correction"
+rightEyeballTrackCorrectionBoneName = leftNameToRightName(leftEyeballTrackCorrectionBoneName)
 headBoneName = "Head"
+leftHeadMarkerXBoneName = leftNamePrefix + headBoneName + markerBoneSuffix + xBoneSuffix
+rightHeadMarkerXBoneName = leftNameToRightName(leftHeadMarkerXBoneName)
+leftHeadMarkerZBoneName = leftNamePrefix + headBoneName + markerBoneSuffix + zBoneSuffix
+rightHeadMarkerZBoneName = leftNameToRightName(leftHeadMarkerZBoneName)
 neckBoneName = "Neck"
+torsoBoneName = "torso"
 upperChestBoneName = "Upper Chest"
 chestBoneName = "Chest"
 spineBoneName = "Spine"
@@ -152,7 +189,7 @@ rightHeelBoneName = leftNameToRightName(leftHeelBoneName)
 
 skirtPalmBonePrefix = "cf_d_sk"
 skirtParentBoneName = skirtPalmBonePrefix + "_top"
-skirtParentBoneCopyName = skirtParentBoneName + " copy"
+skirtParentBoneCopyName = skirtParentBoneName + copyNameSuffix
 skirtBonePrefix = "cf_j_sk"
 
 def getSkirtBoneName(palm, primaryIndex, secondaryIndex = 0):
@@ -162,8 +199,6 @@ def getSkirtBoneName(palm, primaryIndex, secondaryIndex = 0):
         prefix = skirtBonePrefix
     return prefix + "_" + str(primaryIndex).zfill(2) + "_" + str(secondaryIndex).zfill(2)
     
-targetsToChange = [leftArmBoneName, rightArmBoneName, leftElbowBoneName, rightElbowBoneName, leftLegBoneName, rightLegBoneName, leftKneeBoneName, rightKneeBoneName]
-
 originalBonePrefix = "ORG-"
 
 deformBonePrefix = "DEF-"
@@ -187,6 +222,8 @@ leftNippleDeformBone1Name = "cf_s_bnip01_L"
 rightNippleDeformBone1Name = leftNameToRightName(leftNippleDeformBone1Name)
 leftNippleDeformBone2Name = "cf_s_bnip025_L"
 rightNippleDeformBone2Name = leftNameToRightName(leftNippleDeformBone2Name)
+leftShoulderDeformBoneName = "cf_s_shoulder02_L"
+rightShoulderDeformBoneName = leftNameToRightName(leftShoulderDeformBoneName)
 leftArmDeformBone1Name = deformBonePrefix + leftArmBoneName
 rightArmDeformBone1Name = deformBonePrefix + rightArmBoneName
 leftArmDeformBone2Name = deformBonePrefix + leftArmBoneName + ".001"
@@ -396,9 +433,12 @@ rightKneeTweakBone3Name = leftNameToRightName(leftKneeTweakBone3Name)
 leftKneeFkBoneName = leftKneeBoneName + fkBoneSuffix
 rightKneeFkBoneName = leftNameToRightName(leftKneeFkBoneName)
 
+waistJointCorrectionBoneName = "cf_s_waist02"
 leftButtockJointCorrectionBoneName = "cf_d_siri_L"
 rightButtockJointCorrectionBoneName = leftNameToRightName(leftButtockJointCorrectionBoneName)
-frontLeftElbowJointCorrectionBoneName = "cf_s_elbo_L";
+leftShoulderJointCorrectionBoneName = "cf_d_shoulder02_L"
+rightShoulderJointCorrectionBoneName = leftNameToRightName(leftShoulderJointCorrectionBoneName)
+frontLeftElbowJointCorrectionBoneName = "cf_s_elbo_L"
 frontRightElbowJointCorrectionBoneName = leftNameToRightName(frontLeftElbowJointCorrectionBoneName)
 midLeftElbowJointCorrectionBoneName = "cf_s_forearm01_L"
 midRightElbowJointCorrectionBoneName = leftNameToRightName(midLeftElbowJointCorrectionBoneName)
@@ -406,6 +446,8 @@ backLeftElbowJointCorrectionBoneName = "cf_s_elboback_L";
 backRightElbowJointCorrectionBoneName = leftNameToRightName(backLeftElbowJointCorrectionBoneName)
 leftWristJointCorrectionBoneName = "cf_d_hand_L"
 rightWristJointCorrectionBoneName = leftNameToRightName(leftWristJointCorrectionBoneName)
+leftLegJointCorrectionBoneName = "cf_s_leg_L"
+rightLegJointCorrectionBoneName = leftNameToRightName(leftLegJointCorrectionBoneName)
 frontLeftKneeJointCorrectionBoneName = "cf_d_kneeF_L";
 frontRightKneeJointCorrectionBoneName = leftNameToRightName(frontLeftKneeJointCorrectionBoneName)
 midLeftKneeJointCorrectionBoneName = "cf_s_leg01_L"
@@ -413,6 +455,31 @@ midRightKneeJointCorrectionBoneName = leftNameToRightName(midLeftKneeJointCorrec
 backLeftKneeJointCorrectionBoneName = "cf_s_kneeB_L";
 backRightKneeJointCorrectionBoneName = leftNameToRightName(backLeftKneeJointCorrectionBoneName)
 
+def duplicateShapeKey(objectName, shapeKeyName, shapeKeyCopyName):
+    object = bpy.data.objects[objectName]
+    for shapeKey in object.data.shape_keys.key_blocks:
+        if shapeKey.name == shapeKeyName:
+            shapeKey.mute = False
+            oldShapeKeyValue = shapeKey.value
+            shapeKey.value = 1
+        elif shapeKey.name == shapeKeyCopyName:
+            if object.data.shape_keys.animation_data:
+                for driver in object.data.shape_keys.animation_data.drivers:
+                    if driver.data_path.startswith("key_blocks"):
+                        ownerName = driver.data_path.split('"')[1]
+                        if ownerName == shapeKey.name:
+                            object.data.shape_keys.animation_data.drivers.remove(driver)
+            object.shape_key_remove(key = shapeKey)
+        else:
+            shapeKey.mute = True
+    shapeKeyCopy = object.shape_key_add(name = shapeKeyCopyName, from_mix = True)
+    shapeKeyCopy.value = 0
+    for shapeKey in object.data.shape_keys.key_blocks:
+        shapeKey.mute = False
+        if shapeKey.name == shapeKeyName:
+            shapeKey.value = oldShapeKeyValue
+    return shapeKeyCopy
+                
 class Extremities:
     vertices = None
     coordinates = None
@@ -451,30 +518,217 @@ def findVertexGroupExtremities(vertexGroupName, objectName):
     return extremities
 
 copyTransformsConstraintBaseName = "Copy Transforms"
+copyRotationConstraintBaseName = "Copy Rotation"
+transformationConstraintBaseName = "Transformation"
+limitLocationConstraintBaseName = "Limit Location"
+armatureConstraintBaseName = "Armature"
+dampedTrackConstraintBaseName = "Damped Track"
 handleConstraintSuffix = "_Handle"
-jointCorrectionConstraintSuffix = "_Joint Correction"
+jointConstraintSuffix = "_Joint"
+eyeballConstraintSuffix = "_Eyeball"
+parentConstraintSuffix = "_Parent"
+trackConstraintSuffix = "_Track"
+locationConstraintSuffix = " Location"
+rotationConstraintSuffix = " Rotation"
+scaleConstraintSuffix = " Scale"
+correctionConstraintSuffix = " Correction"
+minConstraintSuffix = " Min"
+maxConstraintSuffix = " Max"
+
+def removeContraint(rig, boneName, constraintName):
+    constraint = rig.pose.bones[boneName].constraints.get(constraintName)
+    if constraint:
+        rig.pose.bones[boneName].constraints.remove(constraint)
 
 def addCopyTransformsConstraint(rig, boneName, subTargetBoneName, mixMode, space, constraintName):
-    copyTransformsConstraintName = constraintName
-    copyTransformsConstraint = rig.pose.bones[boneName].constraints.get(copyTransformsConstraintName)
-    if copyTransformsConstraint:
-        rig.pose.bones[boneName].constraints.remove(copyTransformsConstraint)
+    removeContraint(rig, boneName, constraintName)
     copyTransformsConstraint = rig.pose.bones[boneName].constraints.new('COPY_TRANSFORMS')
-    copyTransformsConstraint.name = copyTransformsConstraintName
+    copyTransformsConstraint.name = constraintName
     copyTransformsConstraint.target = rig
     copyTransformsConstraint.subtarget = subTargetBoneName
     copyTransformsConstraint.mix_mode = mixMode
     copyTransformsConstraint.owner_space = space
     copyTransformsConstraint.target_space = space
+    return copyTransformsConstraint
+    
+def addCopyRotationConstraint(rig, boneName, subTargetBoneName, mixMode, space, constraintName, 
+useX, invertX, useY, invertY, useZ, invertZ):
+    removeContraint(rig, boneName, constraintName)
+    copyRotationConstraint = rig.pose.bones[boneName].constraints.new('COPY_ROTATION')
+    copyRotationConstraint.name = constraintName
+    copyRotationConstraint.target = rig
+    copyRotationConstraint.subtarget = subTargetBoneName
+    copyRotationConstraint.mix_mode = mixMode
+    copyRotationConstraint.owner_space = space
+    copyRotationConstraint.target_space = space
+    copyRotationConstraint.use_x = useX
+    copyRotationConstraint.invert_x = invertX
+    copyRotationConstraint.use_y = useY
+    copyRotationConstraint.invert_y = invertY
+    copyRotationConstraint.use_z = useZ
+    copyRotationConstraint.invert_z = invertZ
+    return copyRotationConstraint
+        
+def addTransformationConstraint(rig, boneName, subTargetBoneName, mixMode, space, constraintName, 
+mapFrom, fromMinX, fromMaxX, fromMinY, fromMaxY, fromMinZ, fromMaxZ, 
+mapTo, toMinX, toMaxX, toMinY, toMaxY, toMinZ, toMaxZ):
+    removeContraint(rig, boneName, constraintName)
+    transformationConstraint = rig.pose.bones[boneName].constraints.new('TRANSFORM')
+    transformationConstraint.name = constraintName
+    transformationConstraint.target = rig
+    transformationConstraint.subtarget = subTargetBoneName
+    transformationConstraint.owner_space = space
+    transformationConstraint.target_space = space
+    transformationConstraint.map_from = mapFrom
+    if mapFrom == 'LOCATION':
+        transformationConstraint.from_min_x = fromMinX
+        transformationConstraint.from_max_x = fromMaxX
+        transformationConstraint.from_min_y = fromMinY
+        transformationConstraint.from_max_y = fromMaxY
+        transformationConstraint.from_min_z = fromMinZ
+        transformationConstraint.from_max_z = fromMaxZ
+    elif mapFrom == 'ROTATION':
+        transformationConstraint.from_min_x_rot = fromMinX
+        transformationConstraint.from_max_x_rot = fromMaxX
+        transformationConstraint.from_min_y_rot = fromMinY
+        transformationConstraint.from_max_y_rot = fromMaxY
+        transformationConstraint.from_min_z_rot = fromMinZ
+        transformationConstraint.from_max_z_rot = fromMaxZ
+    elif mapFrom == 'SCALE':
+        transformationConstraint.from_min_x_scale = fromMinX
+        transformationConstraint.from_max_x_scale = fromMaxX
+        transformationConstraint.from_min_y_scale = fromMinY
+        transformationConstraint.from_max_y_scale = fromMaxY
+        transformationConstraint.from_min_z_scale = fromMinZ
+        transformationConstraint.from_max_z_scale = fromMaxZ
+    transformationConstraint.map_to = mapTo
+    if mapTo == 'LOCATION':
+        transformationConstraint.to_min_x = toMinX
+        transformationConstraint.to_max_x = toMaxX
+        transformationConstraint.to_min_y = toMinY
+        transformationConstraint.to_max_y = toMaxY
+        transformationConstraint.to_min_z = toMinZ
+        transformationConstraint.to_max_z = toMaxZ
+        transformationConstraint.mix_mode = mixMode
+    elif mapFrom == 'ROTATION':
+        transformationConstraint.to_min_x_rot = toMinX
+        transformationConstraint.to_max_x_rot = toMaxX
+        transformationConstraint.to_min_y_rot = toMinY
+        transformationConstraint.to_max_y_rot = toMaxY
+        transformationConstraint.to_min_z_rot = toMinZ
+        transformationConstraint.to_max_z_rot = toMaxZ
+        transformationConstraint.mix_mode_rot = mixMode
+    elif mapFrom == 'SCALE':
+        transformationConstraint.to_min_x_scale = toMinX
+        transformationConstraint.to_max_x_scale = toMaxX
+        transformationConstraint.to_min_y_scale = toMinY
+        transformationConstraint.to_max_y_scale = toMaxY
+        transformationConstraint.to_min_z_scale = toMinZ
+        transformationConstraint.to_max_z_scale = toMaxZ
+        transformationConstraint.mix_mode_scale = mixMode
+    return transformationConstraint
+        
+def addLimitLocationConstraint(rig, boneName, subTargetBoneName, space, constraintName, 
+useMinX, minX, useMaxX, maxX, useMinY, minY, useMaxY, maxY, useMinZ, minZ, useMaxZ, maxZ):
+    removeContraint(rig, boneName, constraintName)
+    limitLocationConstraint = rig.pose.bones[boneName].constraints.new('LIMIT_LOCATION')
+    limitLocationConstraint.name = constraintName
+    limitLocationConstraint.owner_space = space
+    if space == 'CUSTOM':
+        limitLocationConstraint.space_object = rig
+        limitLocationConstraint.space_subtarget = subTargetBoneName
+    limitLocationConstraint.use_min_x = useMinX
+    limitLocationConstraint.min_x = minX
+    limitLocationConstraint.use_max_x = useMaxX
+    limitLocationConstraint.max_x = maxX
+    limitLocationConstraint.use_min_y = useMinY
+    limitLocationConstraint.min_y = minY
+    limitLocationConstraint.use_max_y = useMaxY
+    limitLocationConstraint.max_y = maxY
+    limitLocationConstraint.use_min_z = useMinZ
+    limitLocationConstraint.min_z = minZ
+    limitLocationConstraint.use_max_z = useMaxZ
+    limitLocationConstraint.max_z = maxZ
+    return limitLocationConstraint
+    
+def addArmatureConstraint(rig, boneName, subTargetBoneNames, constraintName):
+    removeContraint(rig, boneName, constraintName)
+    armatureConstraint = rig.pose.bones[boneName].constraints.new('ARMATURE')
+    armatureConstraint.name = constraintName
+    for index, subTargetBoneName in enumerate(subTargetBoneNames):
+        armatureConstraint.targets.new()
+        armatureConstraint.targets[index].target = rig
+        armatureConstraint.targets[index].subtarget = subTargetBoneName
+    return armatureConstraint
+        
+def addDampedTrackConstraint(rig, boneName, subTargetBoneName, constraintName):
+    removeContraint(rig, boneName, constraintName)
+    dampedTrackConstraint = rig.pose.bones[boneName].constraints.new('DAMPED_TRACK')
+    dampedTrackConstraint.name = constraintName
+    dampedTrackConstraint.target = rig
+    dampedTrackConstraint.subtarget = subTargetBoneName
+    return dampedTrackConstraint
+
+class DriverVariable(NamedTuple):
+    name: str
+    type: str
+    targetObject1: bpy.types.Object
+    targetBone1: str
+    targetTransformSpace1: str
+    targetObject2: bpy.types.Object
+    targetBone2: str
+    targetTransformSpace2: str
+    targetCustomPropertyDataPath: str
+    targetTransformType: str
+    targetRotationMode: str
+    
+def addDriver(object, objectProperty, objectPropertyCoordinateIndex, driverType, driverVariables, driverExpression):
+    if objectPropertyCoordinateIndex:
+        driver = object.driver_add(objectProperty, objectPropertyCoordinateIndex)
+    else:
+        driver = object.driver_add(objectProperty)
+    driver.driver.type = driverType
+    for driverVariable in driverVariables:
+        variable = driver.driver.variables.new()
+        variable.name = driverVariable.name
+        variable.type = driverVariable.type
+        variable.targets[0].id = driverVariable.targetObject1
+        if driverVariable.targetCustomPropertyDataPath:
+            variable.targets[0].data_path = driverVariable.targetCustomPropertyDataPath
+        if driverVariable.targetBone1:
+            variable.targets[0].bone_target = driverVariable.targetBone1
+        if driverVariable.targetTransformSpace1:
+            variable.targets[0].transform_space = driverVariable.targetTransformSpace1
+        if driverVariable.targetTransformType:
+            variable.targets[0].transform_type = driverVariable.targetTransformType
+        if driverVariable.targetRotationMode:
+            variable.targets[0].rotation_mode = driverVariable.targetRotationMode
+        if driverVariable.targetObject2:
+            variable.targets[1].id = driverVariable.targetObject2
+        if driverVariable.targetBone2:
+            variable.targets[1].bone_target = driverVariable.targetBone2
+        if driverVariable.targetTransformSpace2   :
+            variable.targets[1].transform_space = driverVariable.targetTransformSpace2
+        if driverExpression:         
+            driver.driver.expression = driverExpression
+    return driver
 
 def removeAllConstraints(rig, boneName):
         boneToMute = rig.pose.bones[boneName]
         for constraint in boneToMute.constraints:
             boneToMute.constraints.remove(constraint)
             
+def removeAllDrivers(rig, boneName):
+    for driver in rig.animation_data.drivers:
+        if driver.data_path.startswith("pose.bones"):
+            ownerName = driver.data_path.split('"')[1]
+            if ownerName == boneName:
+                rig.animation_data.drivers.remove(driver)
+            
 def deleteBone(rig, boneName):
     bone = rig.data.edit_bones.get(boneName)
     removeAllConstraints(rig, boneName)
+    removeAllDrivers(rig, boneName)
     rig.data.edit_bones.remove(bone) 
 
 def copyBone(rig, sourceBoneName, newBoneName):
@@ -489,6 +743,17 @@ def copyBone(rig, sourceBoneName, newBoneName):
     newBone.parent = sourceBone.parent
     return newBone
 
+def addBoneCustomProperty(rig, boneName, propertyName, propertyTooltip, propertyValue, propertyMinValue, propertyMaxValue):
+    """ malfunctioning version
+    bone = rig.pose.bones[boneName]
+    bone[propertyName] = propertyValue
+    if "_RNA_UI" not in bone.keys():
+        bone["_RNA_UI"] = {}
+    bone["_RNA_UI"].update({propertyName: {"description":propertyTooltip, "default":propertyValue, "min":propertyMinValue, "max":propertyMaxValue}})
+    """
+    rna_idprop_ui_create(rig.pose.bones[boneName], propertyName, default = propertyValue, min = propertyMinValue, max = propertyMaxValue, soft_min = None, soft_max = None, description = propertyTooltip)
+    return 'pose.bones["' + boneName + '"]["' + propertyName + '"]'
+        
 def copyObject(collectionName, sourceObjectName, newObjectName):
     if newObjectName in bpy.context.scene.objects or newObjectName in bpy.data.objects:
         bpy.data.objects.remove(bpy.data.objects[newObjectName])
@@ -499,7 +764,7 @@ def copyObject(collectionName, sourceObjectName, newObjectName):
     bpy.data.collections[collectionName].objects.link(newObject)
     return newObject
 
-def moveObjectOriginToBoneHead(objectName, rig, boneName):
+def moveObjectOriginToBoneHead(objectName, rig, boneName): #doesn't work after transform changes
     bpy.context.view_layer.update() #updates matrices
     object = bpy.data.objects[objectName]
     globalBoneHeadLocation = rig.location + rig.pose.bones[boneName].head
@@ -507,7 +772,20 @@ def moveObjectOriginToBoneHead(objectName, rig, boneName):
     object.data.transform(Matrix.Translation(-localBoneHeadLocation))
     object.matrix_world.translation = object.matrix_world @ localBoneHeadLocation
     
+def lockUnlockAllObjectTransforms(objectName, lock):
+    object = bpy.data.objects[objectName]
+    object.lock_location[0] = lock
+    object.lock_location[1] = lock
+    object.lock_location[2] = lock
+    object.lock_rotation[0] = lock
+    object.lock_rotation[1] = lock
+    object.lock_rotation[2] = lock
+    object.lock_scale[0] = lock
+    object.lock_scale[1] = lock
+    object.lock_scale[2] = lock
+    
 faceLayerBoneNames = [eyesHandleBoneName, leftEyeHandleBoneName, rightEyeHandleBoneName]
+faceMchLayerBoneNames = [eyesTrackTargetBoneName, eyeballsBoneName, leftEyeballBoneName, rightEyeballBoneName]
 torsoLayerBoneNames = [headBoneName, neckBoneName, upperChestBoneName, chestBoneName, spineBoneName, 
 hipsBoneName, pelvisBoneName, waistBoneName, buttocksHandleBoneName, leftButtockHandleBoneName, rightButtockHandleBoneName,
 breastsHandleBoneName, leftBreastHandleBoneName, rightBreastHandleBoneName, leftShoulderBoneName, rightShoulderBoneName]
@@ -631,20 +909,78 @@ def setRigifyLayer(rig, index, rigifyLayer):
     
 def setRootRigifyLayer(rig, boneGroupIndex):
     rig.data.rigify_layers[rootLayerIndex].group = boneGroupIndex
+
+mmdOriginalBoneLayerName = "Original bones"        
+mmdRenamedRequiredDictionaryLayerName = "Renamed required dictionary"
+mmdRenamedWordDictionaryLayerName = "Renamed word dictionary"
+mmdRenamedExtraDictionaryLayerName = "Renamed extra dictionary"
+mmdRenamedMmdBoneLayerName = "Renamed mmd_bone"
+mmdNotRenamedLayerName = "Not renamed"
+mmdOriginalShadowLayerName = "Original shadow"
+mmdOriginalDummyLayerName = "Original dummy"
+mmdShadowLayerName = "Shadow"
+mmdDummyLayerName = "Dummy"
+mmdHiddenBonesLayerName = "Hidden bones"
+mmdDeformBonesLayerName = "Deform bones"
+mmdUsefulBonesLayerName = "Useful bones"
+mmdUselessBonesLayerName = "Useless bones"
     
-def setBoneManagerLayer(rig, layerIndex, layerName, layerRow):
-    bpy.data.armatures[rig.data.name]["layer_name_" + str(layerIndex)] = layerName
-    bpy.data.armatures[rig.data.name]["rigui_id_" + str(layerIndex)] = layerRow
+class BoneManagerLayer(NamedTuple):
+        name: str
+        row: int
+        
+mmdBoneManagerLayers = [
+BoneManagerLayer(mmdOriginalBoneLayerName, 0),
+BoneManagerLayer(mmdRenamedRequiredDictionaryLayerName, 1),
+BoneManagerLayer(mmdRenamedWordDictionaryLayerName, 2),
+BoneManagerLayer(mmdRenamedExtraDictionaryLayerName, 3),
+BoneManagerLayer(mmdRenamedMmdBoneLayerName, 4),
+BoneManagerLayer(mmdNotRenamedLayerName, 5),
+BoneManagerLayer(mmdShadowLayerName, 6),
+BoneManagerLayer(mmdDummyLayerName, 7),
+BoneManagerLayer(mmdOriginalShadowLayerName, 8),
+BoneManagerLayer(mmdOriginalDummyLayerName, 9),
+BoneManagerLayer(mmdHiddenBonesLayerName, 10),
+BoneManagerLayer(mmdDeformBonesLayerName, 11),
+BoneManagerLayer(mmdUsefulBonesLayerName, 12),
+BoneManagerLayer(mmdUselessBonesLayerName, 13),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28)
+]
+
+def getMmdBoneManagerLayerIndexByName(mmdBoneManagerLayerName):
+    for index, mmdBoneManagerLayer in enumerate(mmdBoneManagerLayers):
+        if mmdBoneManagerLayer.name == mmdBoneManagerLayerName:
+            return index
+    
+def setBoneManagerLayer(rig, layer, boneManagerLayer):
+    bpy.data.armatures[rig.data.name]["layer_name_" + str(layer)] = boneManagerLayer.name
+    bpy.data.armatures[rig.data.name]["rigui_id_" + str(layer)] = boneManagerLayer.row
     
 def setBoneManagerLayersFromRigifyLayers(rig):
     for index, rigifyLayer in enumerate(rigifyLayers):
         if rigifyLayer.name != "":
-            setBoneManagerLayer(rig, index, rigifyLayer.name, rigifyLayer.row)
-    setBoneManagerLayer(rig, rootLayerIndex, rootLayerName, rootLayerRow)
-    setBoneManagerLayer(rig, defLayerIndex, defLayerName, defLayerRow)
-    setBoneManagerLayer(rig, mchLayerIndex, mchLayerName, mchLayerRow)
-    setBoneManagerLayer(rig, orgLayerIndex, orgLayerName, orgLayerRow)
-
+            setBoneManagerLayer(rig, index, BoneManagerLayer(rigifyLayer.name, rigifyLayer.row))
+    setBoneManagerLayer(rig, rootLayerIndex, BoneManagerLayer(rootLayerName, rootLayerRow))
+    setBoneManagerLayer(rig, defLayerIndex, BoneManagerLayer(defLayerName, defLayerRow))
+    setBoneManagerLayer(rig, mchLayerIndex, BoneManagerLayer(mchLayerName, mchLayerRow))
+    setBoneManagerLayer(rig, orgLayerIndex, BoneManagerLayer(orgLayerName, orgLayerRow))
     
 def assignSingleBoneLayer(rig, boneName, layerIndex):
     bone = rig.data.bones[boneName]
@@ -656,6 +992,49 @@ def assignSingleBoneLayer(rig, boneName, layerIndex):
 def assignSingleBoneLayerToList(rig, boneNamesList, layerIndex):
     for boneName in boneNamesList:
         assignSingleBoneLayer(rig, boneName, layerIndex)
+        
+def getDeformBoneNames(rig):
+    deformBoneNames = []
+    for obj in bpy.context.scene.objects: 
+        if obj.type == 'MESH':
+            me = obj.data
+            bm = bmesh.new()
+            bm.from_mesh(me)
+            #groupIndex = obj.vertex_groups.active_index
+            dvertLay = bm.verts.layers.deform.active
+            vgIndexes = []
+            if dvertLay is not None:
+                for vert in bm.verts:
+                    dvert = vert[dvertLay]
+                    for tuple in dvert.items():
+                        if tuple[1] != 0 and tuple[0] not in vgIndexes:
+                            vgIndexes.append(tuple[0])
+                            indexBone = rig.pose.bones.get(obj.vertex_groups[tuple[0]].name)
+                            if indexBone is not None and indexBone.name not in deformBoneNames:
+                                deformBoneNames.append(indexBone.name)
+    return deformBoneNames
+
+def getRelatedBoneNames(rig, boneName):
+    relatedBoneNames = []
+    bone = rig.pose.bones[boneName]                          
+    if bone.parent and bone.parent.name not in relatedBoneNames and rig.pose.bones.get(bone.parent.name):
+        relatedBoneNames.append(bone.parent.name)
+    for constraint in bone.constraints:
+        try:
+            if constraint.subtarget not in relatedBoneNames and rig.pose.bones.get(constraint.subtarget):
+                relatedBoneNames.append(constraint.subtarget)
+        except AttributeError as ex:
+            pass
+    if rig.animation_data:
+        for driver in rig.animation_data.drivers:
+            if driver.data_path.startswith("pose.bones"):
+                ownerName = driver.data_path.split('"')[1]
+                if ownerName == boneName:
+                    for variable in driver.driver.variables:
+                        for target in variable.targets:
+                            if target.bone_target not in relatedBoneNames and rig.pose.bones.get(target.bone_target):
+                                relatedBoneNames.append(target.bone_target)
+    return relatedBoneNames
         
 def lockAllPoseTransforms(rig, boneName):
     rig.pose.bones[boneName].lock_location[0] = True
@@ -670,28 +1049,137 @@ def lockAllPoseTransforms(rig, boneName):
     rig.pose.bones[boneName].lock_scale[2] = True
                 
 bonesWithDrivers = [
-backRightKneeJointCorrectionBoneName, 
-backLeftKneeJointCorrectionBoneName, 
-frontLeftKneeJointCorrectionBoneName,
-frontRightKneeJointCorrectionBoneName,
+waistJointCorrectionBoneName,
 leftButtockJointCorrectionBoneName, 
-rightButtockJointCorrectionBoneName, 
-leftWristJointCorrectionBoneName, 
-rightWristJointCorrectionBoneName,
+rightButtockJointCorrectionBoneName,
+leftShoulderJointCorrectionBoneName, 
+rightShoulderJointCorrectionBoneName, 
 backLeftElbowJointCorrectionBoneName,   
 backRightElbowJointCorrectionBoneName,
 frontLeftElbowJointCorrectionBoneName, 
 frontRightElbowJointCorrectionBoneName,
-"cf_d_leftShoulder02_L", 
-"cf_d_leftShoulder02_R", 
-"cf_s_leg_L", 
-"cf_s_leg_R", 
-"cf_s_waist02"]
+leftWristJointCorrectionBoneName, 
+rightWristJointCorrectionBoneName,
+leftLegJointCorrectionBoneName, 
+rightLegJointCorrectionBoneName, 
+backRightKneeJointCorrectionBoneName, 
+backLeftKneeJointCorrectionBoneName, 
+frontLeftKneeJointCorrectionBoneName,
+frontRightKneeJointCorrectionBoneName
+]
 
 driverTargets = [leftKneeBoneName, rightKneeBoneName, leftLegBoneName, rightLegBoneName, leftWristBoneName, rightWristBoneName, leftElbowBoneName, rightElbowBoneName, leftArmBoneName, rightArmBoneName, waistBoneName]
+
+targetsToChange = [leftArmBoneName, rightArmBoneName, leftElbowBoneName, rightElbowBoneName, leftLegBoneName, rightLegBoneName, leftKneeBoneName, rightKneeBoneName]
 
 def setBoneCustomShapeScale(rig, boneName, scale):
     if bpy.app.version[0] < 3:
         rig.pose.bones[boneName].custom_shape_scale = scale
     else:
         rig.pose.bones[boneName].custom_shape_scale_xyz = [scale, scale, scale]
+
+japHalfToFullTuples = (
+('ｳﾞ', 'ヴ'), ('ｶﾞ', 'ガ'), ('ｷﾞ', 'ギ'), ('ｸﾞ', 'グ'), ('ｹﾞ', 'ゲ'),
+('ｺﾞ', 'ゴ'), ('ｻﾞ', 'ザ'), ('ｼﾞ', 'ジ'), ('ｽﾞ', 'ズ'), ('ｾﾞ', 'ゼ'),
+('ｿﾞ', 'ゾ'), ('ﾀﾞ', 'ダ'), ('ﾁﾞ', 'ヂ'), ('ﾂﾞ', 'ヅ'), ('ﾃﾞ', 'デ'),
+('ﾄﾞ', 'ド'), ('ﾊﾞ', 'バ'), ('ﾊﾟ', 'パ'), ('ﾋﾞ', 'ビ'), ('ﾋﾟ', 'ピ'),
+('ﾌﾞ', 'ブ'), ('ﾌﾟ', 'プ'), ('ﾍﾞ', 'ベ'), ('ﾍﾟ', 'ペ'), ('ﾎﾞ', 'ボ'),
+('ﾎﾟ', 'ポ'), ('｡', '。'), ('｢', '「'), ('｣', '」'), ('､', '、'),
+('･', '・'), ('ｦ', 'ヲ'), ('ｧ', 'ァ'), ('ｨ', 'ィ'), ('ｩ', 'ゥ'),
+('ｪ', 'ェ'), ('ｫ', 'ォ'), ('ｬ', 'ャ'), ('ｭ', 'ュ'), ('ｮ', 'ョ'),
+('ｯ', 'ッ'), ('ｰ', 'ー'), ('ｱ', 'ア'), ('ｲ', 'イ'), ('ｳ', 'ウ'),
+('ｴ', 'エ'), ('ｵ', 'オ'), ('ｶ', 'カ'), ('ｷ', 'キ'), ('ｸ', 'ク'),
+('ｹ', 'ケ'), ('ｺ', 'コ'), ('ｻ', 'サ'), ('ｼ', 'シ'), ('ｽ', 'ス'),
+('ｾ', 'セ'), ('ｿ', 'ソ'), ('ﾀ', 'タ'), ('ﾁ', 'チ'), ('ﾂ', 'ツ'),
+('ﾃ', 'テ'), ('ﾄ', 'ト'), ('ﾅ', 'ナ'), ('ﾆ', 'ニ'), ('ﾇ', 'ヌ'),
+('ﾈ', 'ネ'), ('ﾉ', 'ノ'), ('ﾊ', 'ハ'), ('ﾋ', 'ヒ'), ('ﾌ', 'フ'),
+('ﾍ', 'ヘ'), ('ﾎ', 'ホ'), ('ﾏ', 'マ'), ('ﾐ', 'ミ'), ('ﾑ', 'ム'),
+('ﾒ', 'メ'), ('ﾓ', 'モ'), ('ﾔ', 'ヤ'), ('ﾕ', 'ユ'), ('ﾖ', 'ヨ'),
+('ﾗ', 'ラ'), ('ﾘ', 'リ'), ('ﾙ', 'ル'), ('ﾚ', 'レ'), ('ﾛ', 'ロ'),
+('ﾜ', 'ワ'), ('ﾝ', 'ン')
+)
+
+def fixJapChars(name):
+    for values in japHalfToFullTuples:
+        if values[0] in name:
+            name = name.replace(values[0], values[1])
+    return name
+
+japEngRequiredBoneNamesDictionary = {
+'全ての親':'mother',
+'グルーブ':'groove',
+'センター':'center',
+'上半身':'upper body',
+'上半身2':'upper body 2',
+'首':'neck',
+'頭':'head',
+'左目':'eye L',
+'下半身':'lower body',
+'左肩':'shoulder L',
+'左腕':'arm L',
+'左ひじ':'elbow L',
+'左手首':'wrist L',
+'左親指０':'thumb0L',
+'左親指１':'thumb1L',
+'左親指２':'thumb2L',
+'左人指１':'fore1L',
+'左人指２':'fore2L',
+'左人指３':'fore3L',
+'左中指１':'middle1L',
+'左中指２':'middle2L',
+'左中指３':'middle3L',
+'左薬指１':'third1L',
+'左薬指２':'third2L',
+'左薬指３':'third3L',
+'左小指１':'little1L',
+'左小指２':'little2L',
+'左小指３':'little3L',
+'左足':'legL',
+'左ひざ':'kneeL',
+'左足首':'ankleL',
+'両目':'eyes',
+'右目':'eye R',
+'右肩':'shoulderR',
+'右腕':'armR',
+'右ひじ':'elbowR',
+'右手首':'wristR',
+'右親指０':'thumb0R',
+'右親指１':'thumb1R',
+'右親指２':'thumb2R',
+'右人指１':'fore1R',
+'右人指２':'fore2R',
+'右人指３':'fore3R',
+'右中指１':'middle1R',
+'右中指２':'middle2R',
+'右中指３':'middle3R',
+'右薬指１':'third1R',
+'右薬指２':'third2R',
+'右薬指３':'third3R',
+'右小指１':'little1R',
+'右小指２':'little2R',
+'右小指３':'little3R',
+'右足':'legR',
+'右ひざ':'kneeR',
+'右足首':'ankleR',
+'左足ＩＫ':'leg IK L',
+'左つま先ＩＫ':'toe IK L',
+'右足ＩＫ':'leg IK R',
+'右つま先ＩＫ':'toe IK R'
+}
+
+japEngWordsDictionaryFileName = "dictionary.json"
+
+def loadJsonDictionaryFile(filePath, fileName):
+    dictionaryFile = os.path.join(filePath, fileName)
+    with open(dictionaryFile, encoding="utf8") as file:
+        return json.load(file, object_pairs_hook=collections.OrderedDict)
+
+japEngExtraBoneNamesDictionary = {
+'テール1':'tail 1',
+'テール2':'tail 2'
+}
+
+japCharactersRegex = u'[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf\u3400-\u4dbf]+'  # Regex to look for japanese chars
+
+def getContainedJapCharacters(string):
+    return re.findall(japCharactersRegex, string)

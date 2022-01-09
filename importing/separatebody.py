@@ -16,6 +16,9 @@ class separate_body(bpy.types.Operator):
     
     def execute(self, context):
 
+        scene = context.scene.placeholder
+        fix_seams = scene.fix_seams
+
         #Select the body and make it active
         bpy.ops.object.mode_set(mode = 'OBJECT')
         body = bpy.data.objects['Body']
@@ -139,19 +142,21 @@ class separate_body(bpy.types.Operator):
         body = bpy.data.objects['Body']
         body.select_set(True)
         bpy.context.view_layer.objects.active = body
-        bpy.ops.object.mode_set(mode = 'EDIT')
         
-        merge_list = [
-            #'cm_m_body.001',
-            #'cf_m_body.001',
-            'cm_m_body',
-            'cf_m_body',
-            'cf_m_face_00',
-            'cf_m_face_00.001']
-        for mat in merge_list:
-            bpy.context.object.active_material_index = body.data.materials.find(mat)
-            bpy.ops.object.material_slot_select()
-        bpy.ops.mesh.remove_doubles(threshold=0.00001)
+        if fix_seams:
+            bpy.ops.object.mode_set(mode = 'EDIT')
+            
+            merge_list = [
+                #'cm_m_body.001',
+                #'cf_m_body.001',
+                'cm_m_body',
+                'cf_m_body',
+                'cf_m_face_00',
+                'cf_m_face_00.001']
+            for mat in merge_list:
+                bpy.context.object.active_material_index = body.data.materials.find(mat)
+                bpy.ops.object.material_slot_select()
+            bpy.ops.mesh.remove_doubles(threshold=0.00001)
 
         #then combine duplicated material slots
         bpy.ops.object.mode_set(mode = 'OBJECT')

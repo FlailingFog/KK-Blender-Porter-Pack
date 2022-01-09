@@ -11,7 +11,7 @@ import bpy
 class link_shapekeys(bpy.types.Operator):
     bl_idname = "kkb.linkshapekeys"
     bl_label = "Link shapekeys"
-    bl_description = "Separates the Eyes and Eyebrows from the Body object and links the shapekeys to the Body object"
+    bl_description = "Separates the Eyes and Eyebrows from the Body object and links the shapekeys to the Body object. Useful for when you want to make eyes or eyebrows appear through the hair"
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):

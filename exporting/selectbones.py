@@ -13,7 +13,7 @@ from ..importing.finalizepmx import kklog
 
 class select_bones(bpy.types.Operator):
     bl_idname = "kkb.selectbones"
-    bl_label = "Preps things for export"
+    bl_label = "Prep for target application"
     bl_description = "Check the dropdown for more info"
     bl_options = {'REGISTER', 'UNDO'}
     
