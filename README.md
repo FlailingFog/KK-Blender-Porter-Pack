@@ -6,16 +6,14 @@ The changelog for the pack [can be found here.](https://github.com/FlailingFog/K
 The pack [also has a barebones wiki here.](https://github.com/FlailingFog/KK-Blender-Shader-Pack/wiki)
 
 # Download
-You can download V5 of KKBP by using the green CODE button on the top right of the page > Download ZIP
+You can download KKBP [on the release page](https://github.com/FlailingFog/KK-Blender-Porter-Pack/releases).  
+The absolute latest version can be downloaded by using the green CODE button on the top right of the page > Download ZIP
 
 # Usage Instructions for V5
-### Incomplete video instructions (click for playlist)
+### Video instructions (click for playlist)
 [![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/playlistthumbnail.png)](https://www.youtube.com/playlist?list=PLhiuav2SCuvcSAgT9pevHGjLWWB-NgVv3)
 
-If you want a complete guide, [V4's instructions are here](https://www.youtube.com/watch?v=xe5A8bOh2Mk&list=PLhiuav2SCuvd5eAOb3Ct1eovFAlgv-iwe)
-
-
-### Text instructions (without shading instructions)
+### Text instructions (no shading instructions)
 
 Prerequisites:
 * Install [HF Patch v3.13 or later](https://github.com/ManlyMarco/KK-HF_Patch) for Koikatsu.
@@ -47,9 +45,9 @@ Prerequisites:
 19. Edit the shaders to get the exact look you want. This includes editing the detail mask intensities, hair highlights, eye scaling, dark colors etc
 
 ### Exporting Instructions
-1. In the KKBP panel, choose which export type you want. The "Very simplified" option is suitable for Unity because it reparents the hip bone for you
-2. Click the "Prep things for export" button
-3. Select your model, click the "Bake material templates" button and choose the folder you want to store all of your baked images to (warning: there's going to be a lot)
+1. In the KKBP panel, choose which export type you want. There's currently a targeted export type for Unity (VRM), and a generic export type for everything else
+2. Click the "Prep for target application" button
+3. Select your model, click the "Bake material templates" button and choose the folder you want to store all of your baked images to (warning: there's going to be a lot, so an empty folder is recommended)
 4. When it's done, click the "Apply baked templates" button and choose the same folder from step 3
 5. (Optional) You can rebake any blurry materials by going back to their shader nodes, setting the final "Mix Shader" node to zero, increasing the "Bake multiplier" property on the KKBP panel and then returning to step 3
 6. Go to the CATS optimization tab, generate the material list, set the layer you want each material to appear on, and click the "Save atlas to..." button. This will give you the light version of the material atlas.
