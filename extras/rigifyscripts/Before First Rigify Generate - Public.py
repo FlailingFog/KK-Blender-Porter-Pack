@@ -36,6 +36,10 @@ def main():
             metarig.data.layers[i] = True
         else:
             metarig.data.layers[i] = False
+            
+    isMale = False
+    if koikatsuCommons.isVertexGroupEmpty(koikatsuCommons.leftNippleDeformBone1Name, koikatsuCommons.bodyName):
+        isMale = True
 
     def objToBone(obj, rig, boneName):
         """ 
@@ -310,13 +314,14 @@ def main():
     widgetBreastRight = koikatsuCommons.copyObject(koikatsuCommons.widgetCollectionName, koikatsuCommons.originalWidgetBreastRightName, koikatsuCommons.widgetBreastRightName)
     objToBone(widgetBreastRight, metarig, koikatsuCommons.breastsBoneName)
         
-    arrangeTripleWidgetSet(koikatsuCommons.widgetCollectionName, widgetBreasts, widgetBreastLeft, widgetBreastRight, True, 
-    koikatsuCommons.bodyName, koikatsuCommons.leftNippleDeformBone1Name, koikatsuCommons.rightNippleDeformBone1Name, 
-    False, None, None, None,
-    True, 0.3, 1.66427, 0.9955, 
-    True, 21, 1, 19, 
-    True, metarig, koikatsuCommons.breastsBoneName, koikatsuCommons.breastsHandleBoneName, koikatsuCommons.leftBreastBone1Name, koikatsuCommons.leftBreastHandleBoneName, koikatsuCommons.rightBreastBone1Name, koikatsuCommons.rightBreastHandleBoneName)
-    
+    if not isMale:
+        arrangeTripleWidgetSet(koikatsuCommons.widgetCollectionName, widgetBreasts, widgetBreastLeft, widgetBreastRight, True, 
+        koikatsuCommons.bodyName, koikatsuCommons.leftNippleDeformBone1Name, koikatsuCommons.rightNippleDeformBone1Name, 
+        False, None, None, None,
+        True, 0.3, 1.66427, 0.9955, 
+        True, 21, 1, 19, 
+        True, metarig, koikatsuCommons.breastsBoneName, koikatsuCommons.breastsHandleBoneName, koikatsuCommons.leftBreastBone1Name, koikatsuCommons.leftBreastHandleBoneName, koikatsuCommons.rightBreastBone1Name, koikatsuCommons.rightBreastHandleBoneName)
+        
     widgetButtocks = koikatsuCommons.copyObject(koikatsuCommons.widgetCollectionName, koikatsuCommons.originalWidgetBreastsName, koikatsuCommons.widgetButtocksName)
     objToBone(widgetButtocks, metarig, koikatsuCommons.buttocksBoneName)
     widgetButtockLeft = koikatsuCommons.copyObject(koikatsuCommons.widgetCollectionName, koikatsuCommons.originalWidgetBreastLeftName, koikatsuCommons.widgetButtockLeftName)
@@ -347,9 +352,10 @@ def main():
     metarig.pose.bones[koikatsuCommons.originalEyesBoneName].custom_shape = None
     #metarig.data.bones[koikatsuCommons.originalEyesBoneName].layers[koikatsuCommons.originalMchLayerIndex] = True
     #metarig.data.bones[koikatsuCommons.originalEyesBoneName].layers[koikatsuCommons.originalIkLayerIndex] = False
-    finalizeHandleBone(False, metarig, koikatsuCommons.breastsBoneName, koikatsuCommons.breastsHandleBoneName, widgetBreasts)
-    finalizeHandleBone(False, metarig, koikatsuCommons.leftBreastBone1Name, koikatsuCommons.leftBreastHandleBoneName, widgetBreastLeft)   
-    finalizeHandleBone(False, metarig, koikatsuCommons.rightBreastBone1Name, koikatsuCommons.rightBreastHandleBoneName, widgetBreastRight)   
+    if not isMale:
+        finalizeHandleBone(False, metarig, koikatsuCommons.breastsBoneName, koikatsuCommons.breastsHandleBoneName, widgetBreasts)
+        finalizeHandleBone(False, metarig, koikatsuCommons.leftBreastBone1Name, koikatsuCommons.leftBreastHandleBoneName, widgetBreastLeft)   
+        finalizeHandleBone(False, metarig, koikatsuCommons.rightBreastBone1Name, koikatsuCommons.rightBreastHandleBoneName, widgetBreastRight)   
     finalizeHandleBone(False, metarig, koikatsuCommons.buttocksBoneName, koikatsuCommons.buttocksHandleBoneName, widgetButtocks)   
     finalizeHandleBone(False, metarig, koikatsuCommons.leftButtockBoneName, koikatsuCommons.leftButtockHandleBoneName, widgetButtockLeft)   
     finalizeHandleBone(False, metarig, koikatsuCommons.rightButtockBoneName, koikatsuCommons.rightButtockHandleBoneName, widgetButtockRight)
@@ -1435,6 +1441,11 @@ def main():
     metarig.pose.bones[koikatsuCommons.midLeftKneeJointCorrectionBoneName].rigify_parameters.parent_bone = koikatsuCommons.leftLegDeformBone1Name
     metarig.pose.bones[koikatsuCommons.midRightKneeJointCorrectionBoneName].rigify_parameters.parent_bone = koikatsuCommons.rightLegDeformBone1Name
     
+    if isMale:
+        koikatsuCommons.torsoLayerBoneNames.remove(koikatsuCommons.breastsHandleBoneName)
+        koikatsuCommons.torsoLayerBoneNames.remove(koikatsuCommons.leftBreastHandleBoneName)
+        koikatsuCommons.torsoLayerBoneNames.remove(koikatsuCommons.rightBreastHandleBoneName)
+        
     ctrlBoneNames = []
     ctrlBoneNames.extend(koikatsuCommons.faceLayerBoneNames)
     ctrlBoneNames.extend(koikatsuCommons.faceMchLayerBoneNames)

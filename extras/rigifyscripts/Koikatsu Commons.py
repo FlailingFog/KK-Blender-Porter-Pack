@@ -479,6 +479,11 @@ def duplicateShapeKey(objectName, shapeKeyName, shapeKeyCopyName):
         if shapeKey.name == shapeKeyName:
             shapeKey.value = oldShapeKeyValue
     return shapeKeyCopy
+
+def isVertexGroupEmpty(vertexGroupName, objectName):
+    object = bpy.data.objects[objectName]
+    vertexGroup = object.vertex_groups[vertexGroupName]
+    return not any(vertexGroup.index in [g.group for g in v.groups] for v in object.data.vertices)
                 
 class Extremities:
     vertices = None

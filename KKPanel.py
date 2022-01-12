@@ -77,7 +77,7 @@ class PlaceholderProperties(PropertyGroup):
     
     prep_dropdown : EnumProperty(
         items=(
-            ("A", "Unity - VRM compatible", "Combines all objects, removes the outline, removes duplicate Eye material slot, simplifies bones on armature layer 3 / 5 / 11 / 12 / 13, reparents hip bone"),
+            ("A", "Unity - VRM compatible", "Combines all objects, removes the outline, removes duplicate Eye material slot, simplifies bones on armature layer 3 / 5 / 11 / 12 / 13, edits bone structure to match the CATS Fix Model output"),
             ("B", "Generic - Simplified", "Combines all objects, Removes the outline, removes duplicate Eye material slot, simplifies bones on armature layer 11"),
             ("C", "Generic - No changes", "Combines all objects, Removes the outline, removes duplicate Eye material slot"),
         ), name="", default="A", description="Prep type")
