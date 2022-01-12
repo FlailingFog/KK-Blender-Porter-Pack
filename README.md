@@ -19,8 +19,8 @@ Prerequisites:
 * Install [HF Patch v3.13 or later](https://github.com/ManlyMarco/KK-HF_Patch) for Koikatsu.
 * Download [CATS blender plugin](https://github.com/GiveMeAllYourCats/cats-blender-plugin) for Blender
 
-1. Download this repository ZIP using the green CODE button on the top right of the page
-2. Open the repository zip > go to the plugins folder > get the KKBP_Exporter.DLL file from KKBP_Exporter.zip
+1. Download KKBP
+2. Open the KKBP zip > go to the plugins folder > get the KKBP_Exporter.DLL file from KKBP_Exporter.zip
 3. Go to your Koikatsu install directory > go to the BepInEx > go to the plugins folder > Place the KKBP_Exporter.DLL file into this folder
 4. Start the game, go to the character creator and load your character
 5. Click the "Export Model for KKBP" button on the top of the screen
