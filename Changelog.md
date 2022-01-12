@@ -1,5 +1,29 @@
 ### Changes for V5.0.0
-
+* New export plugin, image saturation functions, and automated color setting by **MediaMoots**!
+* Rigify compatible armature conversion by an anonymous contributor!
+* Better joint correction bones!
+    * Taken from **johnbbob_la_petite** on the Koikatsu Discord
+* Better viewport performance using preview quality normal nodes!
+    * Taken from **pcanback** [on blenderartists](https://blenderartists.org/t/way-faster-normal-map-node-for-realtime-animation-playback-with-tangent-space-normals/1175379)
+* In-game animation imports!
+* New base armature!
+    * Bones are now organized by type through armature layers!
+    * Toggle for keeping the stock KK armature!
+    * Accessory bones show up automatically now!
+* Upgrades to the export process!
+    * Added a button for exporting prep!
+    * Smarter baking script!
+    * Rebaking materials at higher resolutions is easier now!
+    * Support for baking and atlasing normal maps!
+* KK shader.blend is now integrated into the plugin!
+* Easy slots for forcing light and dark colors!
+* Easy slots for makeup and body paint!
+* Easy slots for patterns!
+* Support for colorized normal maps!
+* Automatic separation of Eyes and Eyebrow materials!
+    * This allows you to make the Eyes and Eyebrows show through the hair using Cryptomatte and other compositor features
+* Shader-to-RGB nodes added to clothing color inputs!
+    * This allows you to plug metal and other types of materials into clothing colormask inputs
 
 ### Changes for V4.3.1:
 * Renamed the spine bones during the "1) Run right after importing" script
