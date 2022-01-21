@@ -37,7 +37,7 @@ def showError(self, context):
     self.layout.label(text="No object selected")
 
 def typeError(self, context):
-    self.layout.label(text="The selected object must be a mesh object")
+    self.layout.label(text="The selected object must be a mesh object (select the body instead of the armature)")
 
 #returns true if an error is encountered
 def setup_image_plane():

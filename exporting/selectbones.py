@@ -64,6 +64,12 @@ class select_bones(bpy.types.Operator):
 
             #Select bones on layer 11
             armature = bpy.data.objects['Armature']
+            armature.data.bones['Left Eye'].layers[16] = True
+            armature.data.bones['Left Eye'].layers[10] = False
+            armature.data.bones['Right Eye'].layers[16] = True
+            armature.data.bones['Right Eye'].layers[10] = False
+
+            #Select bones on layer 11
             for bone in armature.data.bones:
                 if bone.layers[10]==True:
                     bone.select = True
