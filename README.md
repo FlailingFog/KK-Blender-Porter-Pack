@@ -11,7 +11,7 @@ The absolute latest version can be downloaded by using the green CODE button on 
 
 # Usage Instructions for V5
 ### Video instructions (click for playlist)
-[![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/playlistthumbnail.png)](https://www.youtube.com/playlist?list=PLhiuav2SCuvcSAgT9pevHGjLWWB-NgVv3)
+[![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/playlistthumbnail.png)](https://www.youtube.com/playlist?list=PLhiuav2SCuvdEAbUzJxSqp61fNiPTFfwb)
 
 ### Text instructions (no shading instructions)
 
