@@ -78,8 +78,9 @@ class PlaceholderProperties(PropertyGroup):
     prep_dropdown : EnumProperty(
         items=(
             ("A", "Unity - VRM compatible", "Combines all objects, removes the outline, removes duplicate Eye material slot, moves pupil bones to layer 16, simplifies bones on armature layer 3 / 5 / 11 / 12 / 13, edits bone hierarchy"),
-            ("B", "Generic - Simplified", "Combines all objects, Removes the outline, removes duplicate Eye material slot, moves pupil bones to layer 16, simplifies bones on armature layer 11"),
-            ("C", "Generic - No changes", "Combines all objects, Removes the outline, removes duplicate Eye material slot"),
+            #("B", "MikuMikuDance - PMX compatible", " "),
+            ("C", "Generic - Simplified", "Combines all objects, Removes the outline, removes duplicate Eye material slot, moves pupil bones to layer 16, simplifies bones on armature layer 11"),
+            ("D", "Generic - No changes", "Combines all objects, Removes the outline, removes duplicate Eye material slot"),
         ), name="", default="A", description="Prep type")
     
     atlas_dropdown : EnumProperty(

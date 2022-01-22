@@ -328,6 +328,9 @@ def start_baking(folderpath, resolutionMultiplier):
     currentlySelected.select_set(True)
     bpy.context.view_layer.objects.active=currentlySelected
 
+    #remove the outline materials because they won't be baked
+    bpy.ops.object.material_slot_remove_unused()
+
     #bake the light versions of each material to the selected folder at sun intensity 5
     bake_pass(resolutionMultiplier, folderpath, 'light' , 5)
     

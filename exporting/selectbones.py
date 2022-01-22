@@ -10,6 +10,7 @@ Usage:
 
 import bpy
 from ..importing.finalizepmx import kklog
+from ..importing.bonedrivers import rename_bones_for_clarity
 
 class select_bones(bpy.types.Operator):
     bl_idname = "kkb.selectbones"
@@ -20,6 +21,8 @@ class select_bones(bpy.types.Operator):
     def execute(self, context):
         scene = context.scene.placeholder
         prep_type = scene.prep_dropdown
+
+        armature = bpy.data.objects['Armature']
 
         kklog('\nPrepping for export...')
         #Combine all objects
@@ -53,7 +56,7 @@ class select_bones(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='POSE')
 
         #If simplifying the bones...
-        if prep_type in ['A', 'B']:
+        if prep_type in ['A', 'B', 'C']:
             #show all bones on the armature
             allLayers = [True, True, True, True, True, True, True, True,
                         True, True, True, True, True, True, True, True,
@@ -76,7 +79,7 @@ class select_bones(bpy.types.Operator):
             
             kklog('Using CATS to simplify bones...')
             bpy.ops.object.mode_set(mode='EDIT')
-            bpy.ops.cats_manual.merge_weights()
+            #bpy.ops.cats_manual.merge_weights()
 
         #If exporting for VRM...
         if prep_type == 'A':
@@ -119,9 +122,100 @@ class select_bones(bpy.types.Operator):
                 if bone.name in merge_these:
                     bone.select = True
             
-            kklog('Using CATS to simplify more bones...')
+            kklog('Using CATS to simplify more bones for VRM...')
             bpy.ops.object.mode_set(mode='EDIT')
             bpy.ops.cats_manual.merge_weights()
+
+        #If exporting for MMD...
+        if prep_type == 'B':
+            #Create the empty
+            bpy.ops.object.mode_set(mode='OBJECT')
+            bpy.ops.object.empty_add(type='PLAIN_AXES', align='WORLD', location=(0, 0, 0))
+            empty = bpy.data.objects['Empty']
+            bpy.ops.object.select_all(action='DESELECT')
+            armature.parent = empty
+            bpy.context.view_layer.objects.active = armature
+
+            #rename bones to stock
+            if armature.data.bones.get('Center'):
+                bpy.ops.kkb.switcharmature('INVOKE_DEFAULT')
+            
+            #then rename bones to japanese
+            pmx_rename_dict = {
+            '全ての親':'cf_n_height',
+            'センター':'cf_j_hips',
+            '上半身':'cf_j_spine01',
+            '上半身２':'cf_j_spine02',
+            '上半身３':'cf_j_spine03',
+            '首':'cf_j_neck',
+            '頭':'cf_j_head',
+            '両目':'Eyesx',
+            '左目':'cf_J_hitomi_tx_L',
+            '右目':'cf_J_hitomi_tx_R',
+            '左腕':'cf_j_arm00_L',
+            '右腕':'cf_j_arm00_R',
+            '左ひじ':'cf_j_forearm01_L',
+            '右ひじ':'cf_j_forearm01_R',
+            '左肩':'cf_j_shoulder_L',
+            '右肩':'cf_j_shoulder_R',
+            '左手首':'cf_j_hand_L',
+            '右手首':'cf_j_hand_R',
+            '左親指０':'cf_j_thumb01_L',
+            '左親指１':'cf_j_thumb02_L',
+            '左親指２':'cf_j_thumb03_L',
+            '左薬指１':'cf_j_ring01_L',
+            '左薬指２':'cf_j_ring02_L',
+            '左薬指３':'cf_j_ring03_L',
+            '左中指１':'cf_j_middle01_L',
+            '左中指２':'cf_j_middle02_L',
+            '左中指３':'cf_j_middle03_L',
+            '左小指１':'cf_j_little01_L',
+            '左小指２':'cf_j_little02_L',
+            '左小指３':'cf_j_little03_L',
+            '左人指１':'cf_j_index01_L',
+            '左人指２':'cf_j_index02_L',
+            '左人指３':'cf_j_index03_L',
+            '右親指０':'cf_j_thumb01_R',
+            '右親指１':'cf_j_thumb02_R',
+            '右親指２':'cf_j_thumb03_R',
+            '右薬指１':'cf_j_ring01_R',
+            '右薬指２':'cf_j_ring02_R',
+            '右薬指３':'cf_j_ring03_R',
+            '右中指１':'cf_j_middle01_R',
+            '右中指２':'cf_j_middle02_R',
+            '右中指３':'cf_j_middle03_R',
+            '右小指１':'cf_j_little01_R',
+            '右小指２':'cf_j_little02_R',
+            '右小指３':'cf_j_little03_R',
+            '右人指１':'cf_j_index01_R',
+            '右人指２':'cf_j_index02_R',
+            '右人指３':'cf_j_index03_R',
+            '下半身':'cf_j_waist01',
+            '左足':'cf_j_thigh00_L',
+            '右足':'cf_j_thigh00_R',
+            '左ひざ':'cf_j_leg01_L',
+            '右ひざ':'cf_j_leg01_R',
+            '左足首':'cf_j_leg03_L',
+            '右足首':'cf_j_leg03_R',
+            }
+
+            for bone in pmx_rename_dict:
+                armature.data.bones[pmx_rename_dict[bone]].name = bone
+            
+            #Rearrange bones to match a random pmx model I found 
+            bpy.ops.object.mode_set(mode='EDIT')
+            armature.data.edit_bones['左肩'].parent = armature.data.edit_bones['上半身３']
+            armature.data.edit_bones['右肩'].parent = armature.data.edit_bones['上半身３']
+            armature.data.edit_bones['左足'].parent = armature.data.edit_bones['下半身']
+            armature.data.edit_bones['右足'].parent = armature.data.edit_bones['下半身']
+
+            #refresh the vertex groups? Bones will act as if they're detached if this isn't done
+            body.vertex_groups.active=0
+
+            kklog('Using CATS to simplify more bones for MMD...')
+
+            #use mmd_tools to convert
+            bpy.ops.mmd_tools.convert_to_mmd_model()
 
         bpy.ops.object.mode_set(mode='OBJECT')
         return {'FINISHED'}
