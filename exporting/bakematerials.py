@@ -34,10 +34,10 @@ from bpy_extras.io_utils import ImportHelper
 from bpy.types import Operator
 
 def showError(self, context):
-    self.layout.label(text="No object selected")
+    self.layout.label(text="No object selected (make sure the body object is selected)")
 
 def typeError(self, context):
-    self.layout.label(text="The selected object must be a mesh object (select the body instead of the armature)")
+    self.layout.label(text="The object to bake must be a mesh object (make sure the body object is selected)")
 
 #returns true if an error is encountered
 def setup_image_plane():
