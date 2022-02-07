@@ -457,13 +457,14 @@ def get_and_load_textures(directory):
         hairMat.material.node_tree.nodes['Gentex'].node_tree = newNode
         newNode.name = hairType + ' Textures'
         
+        imageLoad(hairMat.name, 'Gentex', 'hairMainTex',  hairType+'_MainTex_CT.png')
         imageLoad(hairMat.name, 'Gentex', 'hairDetail', hairType+'_DetailMask.png')
         imageLoad(hairMat.name, 'Gentex', 'hairFade',   hairType+'_ColorMask.png')
         imageLoad(hairMat.name, 'Gentex', 'hairShine',  hairType+'_HairGloss.png')
         imageLoad(hairMat.name, 'Gentex', 'hairAlpha',  hairType+'_AlphaMask.png')
 
         #If no alpha mask wasn't loaded in disconnect the hair alpha node to make sure this piece of hair is visible
-        if hairMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairAlpha'].image == None:
+        if hairMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairAlpha'].image == None and hairMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairMainTex'].image == None:
             getOut = hairMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Group Output'].inputs['Hair alpha'].links[0]
             hairMat.material.node_tree.nodes['Gentex'].node_tree.links.remove(getOut)
     

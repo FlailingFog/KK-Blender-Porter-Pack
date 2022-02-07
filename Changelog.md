@@ -1,3 +1,6 @@
+### Changes for V5.0.1
+* Bugfixes (see [#106](https://github.com/FlailingFog/KK-Blender-Porter-Pack/pull/106), [#95](https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/95))
+
 ### Changes for V5.0.0
 * New export plugin, image saturation functions, and automated color setting by **MediaMoots**!
 * Rigify compatible armature conversion by an anonymous contributor!
