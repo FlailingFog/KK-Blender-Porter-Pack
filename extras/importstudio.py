@@ -132,21 +132,25 @@ class import_studio(bpy.types.Operator):
                             if nodes.get('Principled BSDF') == None:
                                 continue
                             
+                            #standardize dist and subsurf because the number of nodes on the principled bsdf changes with these choices
+                            nodes['Principled BSDF'].distribution = 'GGX'
+                            nodes['Principled BSDF'].subsurface_method = 'RANDOM_WALK'
+
                             #set emission to black
-                            nodes['Principled BSDF'].inputs[17].default_value = (0, 0, 0, 1)
+                            nodes['Principled BSDF'].inputs[19].default_value = (0, 0, 0, 1)
 
                             #set metallic value to zero
-                            nodes['Principled BSDF'].inputs[4].default_value = 0.0
+                            nodes['Principled BSDF'].inputs[6].default_value = 0.0
                             
                             #set normal map to srgb if it exists
                             try:
-                                nodes['Principled BSDF'].inputs[20].links[0].from_node.inputs[1].links[0].from_node.image.colorspace_settings.name = 'sRGB'
+                                nodes['Principled BSDF'].inputs[22].links[0].from_node.inputs[1].links[0].from_node.image.colorspace_settings.name = 'sRGB'
                             except:
                                 #the normal map doesn't exist
                                 pass
                             
                             try:
-                                image_alpha = nodes['Principled BSDF'].inputs[19].links[0].from_node
+                                image_alpha = nodes['Principled BSDF'].inputs[21].links[0].from_node
                             except:
                                 #there was no image attached to the alpha node
                                 image_alpha = 'noalpha'
@@ -157,7 +161,7 @@ class import_studio(bpy.types.Operator):
                                 image = 'noimage'
                             
                             if image_alpha != 'noalpha':
-                                material.node_tree.links.new(image_alpha.outputs[1], nodes['Principled BSDF'].inputs[19])
+                                material.node_tree.links.new(image_alpha.outputs[1], nodes['Principled BSDF'].inputs[21])
                             
                             #if set to emission
                             if shader_type == 'B': 
@@ -205,8 +209,9 @@ class import_studio(bpy.types.Operator):
                                     except:
                                         pass
                                 
-                                if nodes['Principled BSDF'].inputs[20].links[0].from_node.inputs[1].links != ():
-                                    normal = nodes['Principled BSDF'].inputs[20].links[0].from_node.inputs[1].links[0].from_node.image
+                                #get normal image
+                                if nodes['Principled BSDF'].inputs[22].links[0].from_node.inputs[1].links != ():
+                                    normal = nodes['Principled BSDF'].inputs[22].links[0].from_node.inputs[1].links[0].from_node.image
                                 else:
                                     normal = 'nonormal'
                                 
@@ -349,7 +354,7 @@ class import_studio(bpy.types.Operator):
                 image_list = bpy.data.images
                 lut_light = 'Lut_TimeDay.png'
                 lut_dark = 'Lut_TimeDay.png'
-                load_luts()
+                load_luts(lut_light, lut_dark)
 
                 first = True
                 for image in image_list:
