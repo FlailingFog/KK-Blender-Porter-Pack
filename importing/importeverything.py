@@ -570,12 +570,15 @@ def add_outlines(oneOutlineOnlyMode):
     #print(outlineStart)
     
     #done this way because the range changes length during the loop
-    for matindex in range(0, outlineStart,1):
+    for matindex in range(0, outlineStart, 1):
+        #print(matindex)
         genMat = ob.material_slots[matindex]
         genType = genMat.name.replace('Template ','')
         
         AlphaImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairAlpha'].image
-        if AlphaImage:
+        MainImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairMainTex'].image
+
+        if AlphaImage or MainImage:
             #set the material as active and move to the top of the material list
             ob.active_material_index = ob.data.materials.find(genMat.name)
 
@@ -602,7 +605,7 @@ def add_outlines(oneOutlineOnlyMode):
             #and after it's done moving...
                 bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)      
         else:
-            kklog(genType + ' had no alphamask')
+            kklog(genType + ' had no alphamask or maintex')
 
     #separate hair outline loop to prevent crashing
     if not oneOutlineOnlyMode:
@@ -611,10 +614,15 @@ def add_outlines(oneOutlineOnlyMode):
             if 'Outline ' in OutlineMat.name:
                 genType = OutlineMat.name.replace('Outline ','')
                 #print(genType)
-                AlphaImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairAlpha'].image      
-
+                AlphaImage = ob.material_slots['Template ' + genType].material.node_tree.nodes['Gentex'].node_tree.nodes['hairAlpha'].image
+                MainImage = ob.material_slots['Template ' + genType].material.node_tree.nodes['Gentex'].node_tree.nodes['hairMainTex'].image
+                #print(genType)
+                #print(MainImage)
                 if AlphaImage:
                     OutlineMat.material.node_tree.nodes['outlinealpha'].image = AlphaImage
+                    OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs[0].default_value = 1.0
+                elif MainImage:
+                    OutlineMat.material.node_tree.nodes['outlinealpha'].image = MainImage
                     OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs[0].default_value = 1.0
                 
                 OutlineMat.material.node_tree.nodes['outlinetransparency'].inputs[0].default_value = 1.0
