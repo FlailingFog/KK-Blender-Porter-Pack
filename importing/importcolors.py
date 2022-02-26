@@ -575,7 +575,7 @@ def update_shaders(json, lut_selection, active_lut, light):
     hair_base_color = to_rgba(color_to_KK(json_to_color(json[4]['colorInfo'][0]), active_lut) / 255)
     hair_root_color = to_rgba(color_to_KK(json_to_color(json[4]['colorInfo'][1]), active_lut) / 255)
     hair_tip_color = to_rgba(color_to_KK(json_to_color(json[4]['colorInfo'][2]), active_lut) / 255)
-    hair_outline_color = to_rgba(color_to_KK(json_to_color(json[4]['colorInfo'][3]), active_lut) / 255)
+    #hair_outline_color = to_rgba(color_to_KK(json_to_color(json[4]['colorInfo'][3]), active_lut) / 255)
 
     ### Set shader colors
     ## Body Shader
