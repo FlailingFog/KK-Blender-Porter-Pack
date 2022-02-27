@@ -22,7 +22,7 @@ def main():
     koikatsuCommons = text.as_module()
     """
     koikatsuCommons = bpy.data.texts[koikatsuCommonsName].as_module()
-
+	
     metarig = bpy.context.active_object
 
     assert metarig.mode == "OBJECT", 'assert metarig.mode == "OBJECT"'
@@ -37,9 +37,7 @@ def main():
         else:
             metarig.data.layers[i] = False
             
-    isMale = False
-    if koikatsuCommons.isVertexGroupEmpty(koikatsuCommons.leftNippleDeformBone1Name, koikatsuCommons.bodyName):
-        isMale = True
+    isMale = koikatsuCommons.isVertexGroupEmpty(koikatsuCommons.leftNippleDeformBone1Name, koikatsuCommons.bodyName)
 
     def objToBone(obj, rig, boneName):
         """ 
@@ -780,9 +778,22 @@ def main():
     Begin Rigifying
     """
         
-    boneRoot = metarig.pose.bones.get(koikatsuCommons.rootBoneName)
-    if boneRoot is not None:
-        boneRoot.name = koikatsuCommons.rootBoneName + " renamed"
+    rootBone = metarig.pose.bones.get(koikatsuCommons.rootBoneName)
+    if rootBone is not None:
+        rootBone.name = koikatsuCommons.rootBoneName + koikatsuCommons.renamedNameSuffix
+        
+    def fixDuplicateBoneName(rig, boneName, childBoneName):
+        childBone = metarig.pose.bones.get(childBoneName)
+        if childBone.parent.name != boneName:
+            metarig.pose.bones.get(boneName).name = boneName + koikatsuCommons.renamedNameSuffix
+            metarig.pose.bones.get(childBone.parent.name).name = boneName
+    
+    fixDuplicateBoneName(metarig, koikatsuCommons.headBoneName, koikatsuCommons.originalEyesBoneName)
+    fixDuplicateBoneName(metarig, koikatsuCommons.neckBoneName, koikatsuCommons.headBoneName)
+    fixDuplicateBoneName(metarig, koikatsuCommons.upperChestBoneName, koikatsuCommons.neckBoneName)
+    fixDuplicateBoneName(metarig, koikatsuCommons.chestBoneName, koikatsuCommons.upperChestBoneName)
+    fixDuplicateBoneName(metarig, koikatsuCommons.spineBoneName, koikatsuCommons.chestBoneName)
+    fixDuplicateBoneName(metarig, koikatsuCommons.hipsBoneName, koikatsuCommons.spineBoneName)
         
     bpy.ops.pose.rigify_layer_init()
     bpy.ops.armature.rigify_add_bone_groups()
@@ -1639,6 +1650,8 @@ def main():
             bone.use_deform = True
         else:
             bone.use_deform = False
+            if bone.name not in usefulBoneNames and bone.parent and bone.parent.name in usefulBoneNames:
+                bone.use_connect = False #may otherwise cause Rigify generation failure if part of a finger chain
     
     bpy.ops.object.mode_set(mode='OBJECT')
                 

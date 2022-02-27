@@ -16,6 +16,7 @@ rightNameSuffix1 = "_R"
 leftNameSuffix2 = ".L"
 rightNameSuffix2 = ".R"
 copyNameSuffix = " copy"
+renamedNameSuffix = " renamed"
 
 def leftNameToRightName(leftName):
     if leftName.startswith(leftNamePrefix):

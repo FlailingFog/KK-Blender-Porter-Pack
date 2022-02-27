@@ -117,8 +117,10 @@ class import_studio(bpy.types.Operator):
                                         node.image = bpy.data.images.get(node.image.name[0:len(node.image.name)-4])
 
                             #DDS files need to be converted to pngs or tgas or the color conversion scripts won't work
+                            #also set images to srgb
                             for node in nodes:
                                 if node.type == 'TEX_IMAGE':
+                                    image = bpy.data.images[node.image.name].colorspace_settings.name = 'sRGB'
                                     if '.dds' in node.image.name or '.DDS' in node.image.name:
                                         image = bpy.data.images[node.image.name]
                                         new_path = image.filepath.replace(".dds", ".png").replace(".DDS", ".png")
@@ -132,25 +134,23 @@ class import_studio(bpy.types.Operator):
                             if nodes.get('Principled BSDF') == None:
                                 continue
                             
+                            emission_input = 19 if bpy.app.version[0] > 2 else 17
+                            metallic_input = 6 if bpy.app.version[0] > 2 else 4
+                            normal_input = 22 if bpy.app.version[0] > 2 else 20
+                            alpha_input = 21 if bpy.app.version[0] > 2 else 19
+
                             #standardize dist and subsurf because the number of nodes on the principled bsdf changes with these choices
                             nodes['Principled BSDF'].distribution = 'GGX'
                             nodes['Principled BSDF'].subsurface_method = 'RANDOM_WALK'
 
                             #set emission to black
-                            nodes['Principled BSDF'].inputs[19].default_value = (0, 0, 0, 1)
+                            nodes['Principled BSDF'].inputs[emission_input].default_value = (0, 0, 0, 1)
 
                             #set metallic value to zero
-                            nodes['Principled BSDF'].inputs[6].default_value = 0.0
-                            
-                            #set normal map to srgb if it exists
-                            try:
-                                nodes['Principled BSDF'].inputs[22].links[0].from_node.inputs[1].links[0].from_node.image.colorspace_settings.name = 'sRGB'
-                            except:
-                                #the normal map doesn't exist
-                                pass
+                            nodes['Principled BSDF'].inputs[metallic_input].default_value = 0.0
                             
                             try:
-                                image_alpha = nodes['Principled BSDF'].inputs[21].links[0].from_node
+                                image_alpha = nodes['Principled BSDF'].inputs[alpha_input].links[0].from_node
                             except:
                                 #there was no image attached to the alpha node
                                 image_alpha = 'noalpha'
@@ -161,7 +161,7 @@ class import_studio(bpy.types.Operator):
                                 image = 'noimage'
                             
                             if image_alpha != 'noalpha':
-                                material.node_tree.links.new(image_alpha.outputs[1], nodes['Principled BSDF'].inputs[21])
+                                material.node_tree.links.new(image_alpha.outputs[1], nodes['Principled BSDF'].inputs[alpha_input])
                             
                             #if set to emission
                             if shader_type == 'B': 
@@ -210,8 +210,8 @@ class import_studio(bpy.types.Operator):
                                         pass
                                 
                                 #get normal image
-                                if nodes['Principled BSDF'].inputs[22].links[0].from_node.inputs[1].links != ():
-                                    normal = nodes['Principled BSDF'].inputs[22].links[0].from_node.inputs[1].links[0].from_node.image
+                                if nodes['Principled BSDF'].inputs[normal_input].links[0].from_node.inputs[1].links != ():
+                                    normal = nodes['Principled BSDF'].inputs[normal_input].links[0].from_node.inputs[1].links[0].from_node.image
                                 else:
                                     normal = 'nonormal'
                                 
