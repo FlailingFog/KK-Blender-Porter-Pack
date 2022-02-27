@@ -13,7 +13,7 @@
     * If there's no plain version available, you'll get a pink placeholder texture as a warning
 * The permanant light and dark image masks in the raw shading group have been moved to the green texture group
     * This removes the need to create a unique raw shading group for every material.
-* Bugfixes (#94, #90, #105, #114)
+* Bugfixes ([#94](https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/94), [#90](https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/90), [#105](https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/105), [#114](https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/114))
 
 ### Changes for V5.0.1
 * Bugfixes (see [#106](https://github.com/FlailingFog/KK-Blender-Porter-Pack/pull/106), [#95](https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/95))
