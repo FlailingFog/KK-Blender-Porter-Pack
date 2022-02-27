@@ -170,13 +170,15 @@ class separate_body(bpy.types.Operator):
         #remap duplicate materials to the base one
         material_list = clothes.data.materials
         for mat in material_list:
-            if '.' in mat.name:
+            if '.' in mat.name[-4:]:
                 base_name, dupe_number = mat.name.split('.',2)
-                if int(dupe_number):
+                if material_list.get(base_name) and int(dupe_number):
                     mat.user_remap(material_list[base_name])
                     bpy.data.materials.remove(mat)
+                else:
+                    kklog("Somehow found a false duplicate material but didn't merge: " + mat.name, 'warn')
         
-        #Clean material slots by going through each slot and reassigning the slots that are repeated
+        #then clean material slots by going through each slot and reassigning the slots that are repeated
         repeats = {}
         for index, mat in enumerate(material_list):
             if mat.name not in repeats:
