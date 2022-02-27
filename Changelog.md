@@ -1,23 +1,49 @@
+### Changes for V5.1.0
+* Added per-character light linking to the KK shader
+    * If you have multiple characters in a scene, this allows you to "link" a light to a character, so you can achieve ideal lighting for each character and not have to fiddle with a global lighting setup that affects all characters at once. This works for up to three characters / light sources. It's enabled by default and can be found inside of the Raw Shading group.
+    * Usage: Make sure the "Light linking options (open me)" group framed in pink has it's slider set to 1, and any red lights will light your character. Import a second character, return to the ""Light linking options (open me)" group, and open it. Change the output of the pink "Match RGB output and sunlight color for light linking" frame from R to G. Any green lights will light the second character, but not the first character. Using a yellow light will light both R and G characters. Using a white light will light all characters.
+* Added reaction to colored light to the KK shader
+    * When you use a light that isn't pure white, the colors on the model will become affected by the color of the light. This is disabled by default and can be found inside of the Raw Shading group. Colored lights and light linking can't be used at the same time.
+    * Usage: Make sure the "Light linking options (open me)" group framed in pink has it's slider set to 0, and any colored lights will add additional color to your character. Any white lights will light the model like normal.
+* Updated Rigify scripts to the latest version (Feb 24th)
+* Overlay masks for Body and Face shaders now retain their original color.
+    * The "Overlay Color" inputs on the body/face shader that used to set the overlay color have been changed to "Overlay color multiplier" inputs. Keep this as a white color to preserve the overlay mask's original color. If the overlay is pure white itself, the color on the multiplier will just set the color of the overlay.
+* Added an image slot for the "plain" version of the maintex for clothing items.
+    * This can be accessed by going into the clothing shader group and setting the "Use colored maintex?" slider to zero
+* The permanant light and dark masks in the raw shading group have been moved to the green texture group
+    * This removes the need to create a unique raw shading group for every material.
+* Bugfixes (#94, #90, #105, #114)
+
 ### Changes for V5.0.1
 * Bugfixes (see [#106](https://github.com/FlailingFog/KK-Blender-Porter-Pack/pull/106), [#95](https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/95))
 
 ### Changes for V5.0.0
 * New export plugin, image saturation functions, and automated color setting by **MediaMoots**!
+    * These make the import process more than twice as fast as the previous version!
+    * Color data from the game is now extracted and applied to the shaders automatically during the import process
+    * Textures are now automatically saturated to replicate the look of the in-game saturation filter
+    * More textures are extracted than before
+    * The new export plugin fixes common bugs involving broken charamaker functionality, shapekeys and accessories
 * Rigify compatible armature conversion by an anonymous contributor!
+    * Requires Rigify and the "auto-execute scripts" setting to be enabled
+    * Adds IK toggles for fingers, skirts, and accessories
+    * Improves the eye controls with extra features like single eye manipulation and eye target tracking
+    * Adds FK <-> IK switches to limb bones
+    * Makes more armature controls accessible
 * Better joint correction bones!
     * Taken from **johnbbob_la_petite** on the Koikatsu Discord
 * Better viewport performance using preview quality normal nodes!
     * Taken from **pcanback** [on blenderartists](https://blenderartists.org/t/way-faster-normal-map-node-for-realtime-animation-playback-with-tangent-space-normals/1175379)
-* In-game animation imports!
+* Extracted in-game animation files can now be imported automatically!
 * New base armature!
-    * Bones are now organized by type through armature layers!
-    * Toggle for keeping the stock KK armature!
-    * Accessory bones show up automatically now!
+    * Bones are now organized by type through armature layers
+    * Toggle for keeping the stock KK armature
+    * Accessory bones show up automatically now
 * Upgrades to the export process!
-    * Added a button for exporting prep!
-    * Smarter baking script!
-    * Rebaking materials at higher resolutions is easier now!
-    * Support for baking and atlasing normal maps!
+    * Added a button for exporting prep
+    * Smarter baking script
+    * Rebaking materials at higher resolutions is easier now
+    * Support for baking and atlasing normal maps
 * KK shader.blend is now integrated into the plugin!
 * Easy slots for forcing light and dark colors!
 * Easy slots for makeup and body paint!
@@ -27,7 +53,6 @@
     * This allows you to make the Eyes and Eyebrows show through the hair using Cryptomatte and other compositor features
 * Shader-to-RGB nodes added to clothing color inputs!
     * This allows you to plug metal and other types of materials into clothing colormask inputs
-
 ### Changes for V4.3.1:
 * Renamed the spine bones during the "1) Run right after importing" script
     * CATS was not detecting the Spine, Chest and Upper Chest bones correctly. This resulted in the spine and chest bones being merged into one bone with awkward spine bends. Renaming the bones lets CATS detect the three bones correctly.
