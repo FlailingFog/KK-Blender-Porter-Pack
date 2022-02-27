@@ -7,7 +7,7 @@ The pack [also has a barebones wiki here.](https://github.com/FlailingFog/KK-Ble
 
 # Download
 You can download KKBP [on the release page](https://github.com/FlailingFog/KK-Blender-Porter-Pack/releases).  
-The absolute latest version can be downloaded by using the green CODE button on the top right of the page > Download ZIP
+The absolute latest version can be downloaded by using the green CODE button on the top right of the page and choosing Download ZIP
 
 # Usage Instructions for V5
 ### Video instructions (click for playlist)
