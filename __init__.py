@@ -2,13 +2,12 @@
 bl_info = {
     "name" : "KK Blender Porter Pack",
     "author" : "a blendlet",
-    "location" : "View 3D > Tool Shelf > KK Scripts",
-    "description" : "Scripts for automating cleanup of a Koikatsu export",
-    "version": (5, 0, 1),
+    "location" : "View 3D > Tool Shelf > KKBP, Image Editor > Tool Shelf > KKBP",
+    "description" : "Scripts to automate cleanup of a Koikatsu export",
+    "version": (5, 1, 0),
     "blender" : (3, 0, 0),
-    "location" : "View3D, Image Editor",
     "category" : "3D View",
-    "tracker_url" : "https://github.com/FlailingFog/KK-Blender-Shader-Pack/"
+    "tracker_url" : "https://github.com/FlailingFog/KK-Blender-Porter-Pack/"
 }
 
 import bpy

@@ -485,6 +485,7 @@ def get_and_load_textures(directory):
                 genMat.material.node_tree.nodes['Gentex'].node_tree = newNode
                 newNode.name = genType + ' Textures'
                 
+                imageLoad(genMat.name, 'Gentex', 'Maintexplain', genType+ '_MainTex.png')
                 imageLoad(genMat.name, 'Gentex', 'Maintex', genType+ '_MainTex.png')
                 imageLoad(genMat.name, 'Gentex', 'Maintex', genType+'_MainTex_CT.png')
                 imageLoad(genMat.name, 'Gentex', 'MainCol', genType+'_ColorMask.png')
