@@ -7,12 +7,13 @@
     * Usage: Make sure the "Light linking options (open me)" group framed in pink has it's slider set to 0, and any colored lights will add additional color to your character. Any white lights will light the model like normal.
 * Updated Rigify scripts to the latest version (Feb 24th)
 * Overlay masks for Body and Face shaders now retain their original color.
-    * The "Overlay Color" inputs on the body/face shader that used to set the overlay color have been changed to "Overlay color multiplier" inputs. Keep this as a white color to preserve the overlay mask's original color. If the overlay is pure white itself, the color on the multiplier will just set the color of the overlay.
+    * The "Overlay color" inputs on the body/face shader that used to set the overlay color have been changed to "Overlay color multiplier" inputs. Keep this as a white color to preserve the overlay mask's original color. If the overlay is pure white itself, the color on the multiplier will just set the color of the overlay.
 * Added an image slot for the "plain" version of the maintex for clothing items.
     * This can be accessed by going into the clothing shader group and setting the "Use colored maintex?" slider to zero
-* The permanant light and dark masks in the raw shading group have been moved to the green texture group
+    * If there's no plain version available, you'll get a pink placeholder texture as a warning
+* The permanant light and dark image masks in the raw shading group have been moved to the green texture group
     * This removes the need to create a unique raw shading group for every material.
-* Bugfixes (#94, #90, #105, #114)
+* Bugfixes ([#94](https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/94), [#90](https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/90), [#105](https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/105), [#114](https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/114))
 
 ### Changes for V5.0.1
 * Bugfixes (see [#106](https://github.com/FlailingFog/KK-Blender-Porter-Pack/pull/106), [#95](https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/95))
