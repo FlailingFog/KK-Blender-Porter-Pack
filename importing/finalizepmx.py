@@ -873,7 +873,7 @@ class finalize_pmx(bpy.types.Operator):
         modify_armature = scene.armature_edit_bool
 
         #get rid of the text files mmd tools generates
-        if bpy.data.texts['Model']:
+        if bpy.data.texts.get('Model'):
                 bpy.data.texts.remove(bpy.data.texts['Model'])
                 bpy.data.texts.remove(bpy.data.texts['Model_e'])
         
