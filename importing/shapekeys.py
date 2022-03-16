@@ -2,9 +2,7 @@
 SHAPEKEYS SCRIPT
 - Renames the face shapekeys to english
 - Creates new, full shapekeys using the existing partial shapekeys
-- Deletes the partial shapekeys if keep_partial_shapekeys is not set to True (the first variable below this description)
-Usage:
-- Run the script
+- Deletes the partial shapekeys if keep_partial_shapekeys is not set to True
 '''
 
 import bpy

@@ -113,8 +113,15 @@ class import_studio(bpy.types.Operator):
                             #Remove duplicate images
                             for node in nodes:
                                 if node.type == 'TEX_IMAGE':
-                                    if '.0' in node.image.name and bpy.data.images.get(node.image.name[0:len(node.image.name)-4]):
-                                        node.image = bpy.data.images.get(node.image.name[0:len(node.image.name)-4])
+                                    if '.0' in node.image.name or '.1' in node.image.name or '.2' in node.image.name:
+                                        #print("This image is sus: {}".format(node.image.name))
+                                        base_name, filetype, dupe_number = node.image.name.split('.',3)
+                                        #print(base_name)
+                                        #print(filetype)
+                                        #print(dupe_number)
+                                        if bpy.data.images.get(base_name + '.' + filetype) and int(dupe_number):
+                                            node.image = bpy.data.images.get(base_name + '.' + filetype)
+                                            #print("replaced {} with {}".format(node.image.name, base_name + filetype))
 
                             #DDS files need to be converted to pngs or tgas or the color conversion scripts won't work
                             #also set images to srgb
@@ -199,13 +206,16 @@ class import_studio(bpy.types.Operator):
                             elif shader_type == 'C':
                             #if set to KK shader
                                 if image_alpha != 'noalpha':
+                                    #print('i got no alpha')
                                     image_alpha = image_alpha.image
                                 if image != 'noimage':
+                                    #print('i got no image')
                                     image = image.image
                                 else:
                                     #if there's no image, try to fallback to the maintex
                                     try:
-                                        image = detected_maintex
+                                        #print('i fell into this')
+                                        image = bpy.data.images.get(detected_maintex)
                                     except:
                                         pass
                                 
@@ -255,6 +265,7 @@ class import_studio(bpy.types.Operator):
                                 new_node.name = gen_type + ' Textures'
                                 
                                 if image != 'noimage':
+                                    #print(image)
                                     imageLoad('Gentex', 'Maintex', image.name, True)
                                 else:
                                     #if there's no image, fallback to the detected maintex

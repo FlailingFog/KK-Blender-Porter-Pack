@@ -25,7 +25,7 @@ class separate_body(bpy.types.Operator):
         bpy.ops.object.select_all(action='DESELECT')
         body.select_set(True)
         bpy.context.view_layer.objects.active = body
-
+        
         #Remove the "Instance" tag on all materials
         materialCount = len(body.data.materials.values())-1
         currentMat=0
