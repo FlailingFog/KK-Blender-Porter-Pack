@@ -1,7 +1,7 @@
 '''
 IMPORT TEXTURES SCRIPT
 - Loads the material templates from the KK shader .blend
-- Loads in the textures received from Grey's Mesh Exporter
+- Loads in the textures received from the KKBP Exporter
 Usage:
 - Click the button and choose the folder that contains the textures
 '''
@@ -26,7 +26,7 @@ def hair_error(self, context):
 
 def get_templates_and_apply(directory, useFakeUser):
     #if a single thing was separated but the user forgot to rename it, it's probably the hair object
-    if bpy.data.objects.get('Clothes.001') and len(bpy.data.objects) == 6:
+    if bpy.data.objects.get('Clothes.001') and len(bpy.data.objects) == 5:
         bpy.data.objects['Clothes.001'].name = 'Hair'
     
     #Check if a hair object exists
@@ -73,7 +73,23 @@ def get_templates_and_apply(directory, useFakeUser):
         filepath = str(template_path)
     
     innerpath = 'Material'
-    templateList = ['Template Body', 'Template Outline', 'Template Body Outline', 'Template Eye (hitomi)', 'Template Eyebrows (mayuge)', 'Template Eyeline down', 'Template Eyeline up', 'Template Eyewhites (sirome)', 'Template Face', 'Template General', 'Template Hair', 'Template Mixed Metal or Shiny', 'Template Nose', 'Template Shadowcast (Standard)', 'Template Teeth (tooth)']
+    templateList = ['Template Body',
+    'Template Outline',
+    'Template Body Outline',
+    'Template Tears',
+    'Template Eye (hitomi)',
+    'Template Eyebrows (mayuge)',
+    'Template Eyeline down',
+    'Template Eyeline up',
+    'Template Eyewhites (sirome)',
+    'Template Face',
+    'Template General',
+    'Template Hair',
+    'Template Mixed Metal or Shiny',
+    'Template Nose',
+    'Template Shadowcast (Standard)',
+    'Template Teeth (tooth)',
+    'Template Fangs (tooth.001)']
 
     for template in templateList:
         bpy.ops.wm.append(
@@ -103,6 +119,8 @@ def get_templates_and_apply(directory, useFakeUser):
     swap_body_material('cf_m_body','Template Body') #female
     swap_body_material('cm_m_body','Template Body') #male
     swap_body_material('cf_m_tooth','Template Teeth (tooth)')
+    swap_body_material('cf_m_tooth.001','Template Fangs (tooth.001)')
+    swap_body_material('cf_m_namida_00','Template Tears')
     swap_body_material('cf_m_tang','Template General')
     
     #Make the tongue material unique so parts of the General Template aren't overwritten
@@ -534,6 +552,8 @@ def add_outlines(oneOutlineOnlyMode):
     mod.material_offset = len(ob.material_slots)
     mod.use_flip_normals = True
     mod.use_rim = False
+    mod.vertex_group = 'Body without Tears'
+    mod.invert_vertex_group = True
     mod.name = 'Outline Modifier'
     
     #body

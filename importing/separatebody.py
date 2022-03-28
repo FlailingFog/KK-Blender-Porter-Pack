@@ -50,7 +50,7 @@ class separate_body(bpy.types.Operator):
                 if mat_found > -1:
                     bpy.context.object.active_material_index = mat_found
                     
-                    #moves the materials in a specific order to prevent transparency issues
+                    #moves the materials in a specific order to prevent transparency issues on body
                     def moveUp():
                         return bpy.ops.object.material_slot_move(direction='UP')
                     while moveUp() != {"CANCELLED"}:
@@ -66,6 +66,9 @@ class separate_body(bpy.types.Operator):
         #This puts hair/clothes in position 1 and the body in position 2
         bodyMatList = [
             'cf_m_tang',
+            'cf_m_namida_00',
+            'cf_m_namida_00.001',
+            'cf_m_namida_00.002',
             'cf_m_hitomi_00.001',
             'cf_m_hitomi_00',
             'cf_m_sirome_00.001',
@@ -121,7 +124,6 @@ class separate_body(bpy.types.Operator):
             rename[3].select_set(True)
         except:
             pass
-        
         bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name="Shadowcast Collection")
         
         #hide the new collection
@@ -142,21 +144,71 @@ class separate_body(bpy.types.Operator):
         body = bpy.data.objects['Body']
         body.select_set(True)
         bpy.context.view_layer.objects.active = body
-        
         if fix_seams:
             bpy.ops.object.mode_set(mode = 'EDIT')
-            
-            merge_list = [
+            seam_list = [
                 #'cm_m_body.001',
                 #'cf_m_body.001',
                 'cm_m_body',
                 'cf_m_body',
                 'cf_m_face_00',
                 'cf_m_face_00.001']
-            for mat in merge_list:
+            for mat in seam_list:
                 bpy.context.object.active_material_index = body.data.materials.find(mat)
                 bpy.ops.object.material_slot_select()
             bpy.ops.mesh.remove_doubles(threshold=0.00001)
+
+        #Create a reverse shapekey for each tear material
+        armature = bpy.data.objects['Armature']
+        tear_mats = ['cf_m_namida_00.002', 'cf_m_namida_00.001', 'cf_m_namida_00']
+        for mat in tear_mats:
+            bpy.ops.object.mode_set(mode = 'OBJECT')
+            bpy.ops.object.shape_key_add(from_mix=False)
+            if '.002' in mat:
+                body.data.shape_keys.key_blocks["Key 116"].name = "Tear small"
+                bpy.context.object.active_shape_key_index = 116
+            elif '.001' in mat:
+                body.data.shape_keys.key_blocks["Key 117"].name = "Tear med"
+                bpy.context.object.active_shape_key_index = 117
+            else:
+                body.data.shape_keys.key_blocks["Key 118"].name = "Tear big"
+                bpy.context.object.active_shape_key_index = 118
+
+            bpy.ops.object.mode_set(mode = 'EDIT')
+            bpy.ops.mesh.select_all(action='DESELECT')
+            bpy.context.object.active_material_index = body.data.materials.find(mat)
+            bpy.ops.object.material_slot_select()
+            #find a random vertex location of the tear
+            bpy.ops.object.mode_set(mode = 'OBJECT')
+            selected_verts = [v for v in body.data.vertices if v.select]
+            bpy.ops.object.mode_set(mode = 'EDIT')
+            amount_to_move_tears_back = selected_verts[0].co.y - armature.data.bones['cf_j_head'].head.y
+            #create a new shapekey for the tear
+            bpy.ops.transform.translate(value=(0, abs(amount_to_move_tears_back), 0))
+            bpy.ops.object.mode_set(mode = 'OBJECT')
+            bpy.ops.cats_shapekey.shape_key_to_basis()
+        body.data.shape_keys.key_blocks["Tear big - Reverted"].name = "KK Tears big"
+        body.data.shape_keys.key_blocks["Tear med - Reverted"].name = "KK Tears med"
+        body.data.shape_keys.key_blocks["Tear small - Reverted"].name = "KK Tears small"
+
+        #Merge the tear materials
+        bpy.ops.object.mode_set(mode = 'EDIT')
+        bpy.ops.mesh.select_all(action='DESELECT')
+        tear_mats = ['cf_m_namida_00.001', 'cf_m_namida_00.002']
+        for mat in tear_mats:
+            bpy.context.object.active_material_index = body.data.materials.find(mat)
+            bpy.ops.object.material_slot_select()
+            bpy.context.object.active_material_index = body.data.materials.find('cf_m_namida_00')
+            bpy.ops.object.material_slot_assign()
+            bpy.ops.mesh.select_all(action='DESELECT')
+
+        #make a vertex group that does not contain the tears
+        bpy.ops.object.vertex_group_add()
+        bpy.ops.mesh.select_all(action='SELECT')
+        body.vertex_groups.active.name = "Body without Tears"
+        bpy.context.object.active_material_index = body.data.materials.find('cf_m_namida_00')
+        bpy.ops.object.material_slot_deselect()
+        bpy.ops.object.vertex_group_assign()
 
         #then combine duplicated material slots
         bpy.ops.object.mode_set(mode = 'OBJECT')
