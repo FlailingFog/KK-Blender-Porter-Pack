@@ -41,8 +41,8 @@ Prerequisites:
 ![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/importtemplates.png)
 16. Click the Convert and Apply colors button. Choose the folder that contains the .pmx file again. Your character should have the correct colors now.  
 ![ ](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/assets/readme/importcolors.png)
-18. Edit the armature if you need to
-19. Edit the shaders to get the exact look you want. This includes editing the detail mask intensities, hair highlights, eye scaling, dark colors etc
+18. [Edit the armature](https://www.youtube.com/watch?v=GtuVV2waX4M) if you need to
+19. [Edit the shaders to get the exact look you want](https://www.youtube.com/watch?v=w4Z-mELOSXg). This includes editing the detail mask intensities, hair highlights, eye scaling, dark colors etc
 
 ### Exporting Instructions
 1. In the KKBP panel, choose which export type you want. There's currently a targeted export type for Unity (VRM), and a generic export type for everything else
