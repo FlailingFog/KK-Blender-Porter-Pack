@@ -79,7 +79,7 @@ class select_bones(bpy.types.Operator):
             
             kklog('Using CATS to simplify bones...')
             bpy.ops.object.mode_set(mode='EDIT')
-            #bpy.ops.cats_manual.merge_weights()
+            bpy.ops.cats_manual.merge_weights()
 
         #If exporting for VRM...
         if prep_type == 'A':
