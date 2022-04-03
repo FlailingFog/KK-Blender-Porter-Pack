@@ -7,6 +7,7 @@ SEPARATE BODY SCRIPT
 
 import bpy
 from .finalizepmx import kklog
+from ..extras.linkshapekeys import link_keys
 
 class separate_body(bpy.types.Operator):
     bl_idname = "kkb.separatebody"
@@ -37,7 +38,7 @@ class separate_body(bpy.types.Operator):
         bpy.ops.object.mode_set(mode = 'EDIT')
         bpy.ops.mesh.select_all(action = 'DESELECT')
         
-        def separateMaterial(matList, search_type = 'exact'):
+        def separate_material(matList, search_type = 'exact'):
             for mat in matList:
                 mat_found = -1
                 if search_type == 'fuzzy' and ('cm_m_' in mat or 'c_m_' in mat):
@@ -83,13 +84,13 @@ class separate_body(bpy.types.Operator):
             'cf_m_face_00.001',
             'cm_m_body',
             'cf_m_body']
-        separateMaterial(bodyMatList, 'fuzzy')
+        separate_material(bodyMatList, 'fuzzy')
 
         #Separate the shadowcast if any, placing it in position 3
         try:
             bpy.ops.mesh.select_all(action = 'DESELECT')
             shadMatList = ['c_m_shadowcast', 'Standard']
-            separateMaterial(shadMatList, 'fuzzy')
+            separate_material(shadMatList, 'fuzzy')
         except:
             pass
         
@@ -97,7 +98,7 @@ class separate_body(bpy.types.Operator):
         try:
             bpy.ops.mesh.select_all(action = 'DESELECT')
             boneMatList = ['Bonelyfans', 'Bonelyfans.001']
-            separateMaterial(boneMatList)
+            separate_material(boneMatList)
         except:
             pass
         
@@ -115,13 +116,18 @@ class separate_body(bpy.types.Operator):
         bpy.ops.object.material_slot_remove_unused()
         
         #and move the shadowcast/bonelyfans to their own collection
+        #also remove shapekeys since they don't use them
         bpy.ops.object.select_all(action='DESELECT')
         try:
             rename[2].select_set(True)
+            bpy.context.view_layer.objects.active=rename[2]
+            bpy.ops.object.shape_key_remove(all=True)
         except:
             pass
         try:
             rename[3].select_set(True)
+            bpy.context.view_layer.objects.active=rename[3]
+            bpy.ops.object.shape_key_remove(all=True)
         except:
             pass
         bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name="Shadowcast Collection")
@@ -138,7 +144,7 @@ class separate_body(bpy.types.Operator):
             except:
                 #maybe the collection is already hidden
                 pass
-        
+
         #also, merge certain materials for the body object to prevent odd shading issues later on
         bpy.ops.object.select_all(action='DESELECT')
         body = bpy.data.objects['Body']
@@ -210,8 +216,19 @@ class separate_body(bpy.types.Operator):
         bpy.ops.object.material_slot_deselect()
         bpy.ops.object.vertex_group_assign()
 
-        #then combine duplicated material slots
+        #Separate tears from body object, parent it to the body so it's hidden in the outliner
+        #link shapekeys of tears to body
+        tearMats = [
+            'cf_m_namida_00']
+        bpy.ops.mesh.select_all(action='DESELECT')
+        separate_material(tearMats)
+        tears = bpy.data.objects['Body.001']
+        tears.name = 'Tears'
+        tears.parent = bpy.data.objects['Body']
         bpy.ops.object.mode_set(mode = 'OBJECT')
+        link_keys(body, [tears])
+
+        #then combine duplicated material slots
         bpy.ops.object.material_slot_remove_unused()
         clothes = bpy.data.objects['Clothes']
         bpy.ops.object.select_all(action='DESELECT')
@@ -255,6 +272,10 @@ class separate_body(bpy.types.Operator):
 
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.material_slot_remove_unused()
+
+        #remove shapekeys on clothes and hair objects since they don't need them
+        bpy.context.view_layer.objects.active=clothes
+        bpy.ops.object.shape_key_remove(all=True)
 
         #and clean up the oprhaned data
         for block in bpy.data.meshes:

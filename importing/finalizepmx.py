@@ -878,7 +878,7 @@ class finalize_pmx(bpy.types.Operator):
                 bpy.data.texts.remove(bpy.data.texts['Model_e'])
         
         kklog('====    KKBP Log    ====')
-
+        
         standardize_armature()
         reset_and_reroll_bones()
         if modify_armature:

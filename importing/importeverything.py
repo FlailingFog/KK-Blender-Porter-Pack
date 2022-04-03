@@ -26,7 +26,7 @@ def hair_error(self, context):
 
 def get_templates_and_apply(directory, useFakeUser):
     #if a single thing was separated but the user forgot to rename it, it's probably the hair object
-    if bpy.data.objects.get('Clothes.001') and len(bpy.data.objects) == 5:
+    if bpy.data.objects.get('Clothes.001') and len(bpy.data.objects) == 6:
         bpy.data.objects['Clothes.001'].name = 'Hair'
     
     #Check if a hair object exists
@@ -87,7 +87,7 @@ def get_templates_and_apply(directory, useFakeUser):
     'Template Hair',
     'Template Mixed Metal or Shiny',
     'Template Nose',
-    'Template Shadowcast (Standard)',
+    'Template Shadowcast',
     'Template Teeth (tooth)',
     'Template Fangs (tooth.001)']
 
@@ -120,11 +120,9 @@ def get_templates_and_apply(directory, useFakeUser):
     swap_body_material('cm_m_body','Template Body') #male
     swap_body_material('cf_m_tooth','Template Teeth (tooth)')
     swap_body_material('cf_m_tooth.001','Template Fangs (tooth.001)')
-    swap_body_material('cf_m_namida_00','Template Tears')
     swap_body_material('cf_m_tang','Template General')
     
     #Make the tongue material unique so parts of the General Template aren't overwritten
-    
     tongueTemplate = bpy.data.materials['Template General'].copy()
     tongueTemplate.name = 'Template Tongue'
     body.material_slots['Template General'].material = tongueTemplate
@@ -164,17 +162,15 @@ def get_templates_and_apply(directory, useFakeUser):
                 template.name = 'Template ' + original.name
                 original.material = bpy.data.materials[template.name]
     
-    #give the shadowcast object the general template as well
+    #give the shadowcast object a template as well
     shadowcast = bpy.data.objects['Shadowcast']
-    template = bpy.data.materials['Template General'].copy()
-    template.name = 'Template Shadowcast'
-    shadmat = shadowcast.material_slots[0].material
-    shadmat = bpy.data.materials[template.name]
-    shadmat.node_tree.nodes['KKShader'].inputs
-    getOut = shadmat.node_tree.nodes['KKShader'].inputs['Main Texture'].links[0]
-    shadmat.node_tree.links.remove(getOut)
-    getOut = shadmat.node_tree.nodes['KKShader'].inputs['Main Alpha'].links[0]
-    shadmat.node_tree.links.remove(getOut)
+    template = bpy.data.materials['Template Shadowcast']
+    shadowcast.material_slots[0].material = bpy.data.materials[template.name]
+
+    #give the tears a material template
+    tears = bpy.data.objects['Tears']
+    template = bpy.data.materials['Template Tears']
+    tears.material_slots[0].material = bpy.data.materials[template.name]
 
     # Get rid of the duplicate node groups cause there's a lot
     #stolen from somewhere
@@ -464,6 +460,10 @@ def get_and_load_textures(directory):
     imageLoad('Template Tongue', 'Gentex', 'MainDet', 'cf_m_tang_DetailMask.png')
     imageLoad('Template Tongue', 'Gentex', 'MainNorm', 'cf_m_tang_NormalMap.png', True)
 
+    #load the tears texture in
+    currentObj = bpy.data.objects['Tears']
+    imageLoad('Template Tears', 'Gentex', 'Maintex', 'cf_m_namida_00_MainTex_CT.png')
+
     #for each material slot in the hair object, load in the hair detail mask, colormask
     currentObj = bpy.data.objects['Hair']
  
@@ -490,11 +490,11 @@ def get_and_load_textures(directory):
     # also make unique shader node groups so all materials are unique
     
     # make a copy of the node group, use it to replace the current node group
+    not_clothes = ['Hair', 'Body', 'Tears']
     for object in bpy.context.view_layer.objects:
-        if  object.type == 'MESH' and object.name != 'Hair' and object.name != 'Body':
+        if  object.type == 'MESH' and object.name not in not_clothes:
             
             currentObj = object
-            
             for genMat in currentObj.material_slots:
                 genType = genMat.name.replace('Template ','')
                 
@@ -552,8 +552,8 @@ def add_outlines(oneOutlineOnlyMode):
     mod.material_offset = len(ob.material_slots)
     mod.use_flip_normals = True
     mod.use_rim = False
-    mod.vertex_group = 'Body without Tears'
-    mod.invert_vertex_group = True
+    #mod.vertex_group = 'Body without Tears'
+    #mod.invert_vertex_group = True
     mod.name = 'Outline Modifier'
     
     #body
@@ -588,9 +588,7 @@ def add_outlines(oneOutlineOnlyMode):
 
     #Get the length of the material list before starting
     outlineStart = len(ob.material_slots)
-    #print(outlineStart)
-    
-    #done this way because the range changes length during the loop
+
     for matindex in range(0, outlineStart, 1):
         #print(matindex)
         genMat = ob.material_slots[matindex]
@@ -671,7 +669,7 @@ def add_outlines(oneOutlineOnlyMode):
     #keep a dictionary of the material length list for the next loop
     outlineStart = {}
     for ob in bpy.context.view_layer.objects:
-        if  ob.type == 'MESH' and ob.name != 'Body' and ob.name != 'Hair' and 'Widget' not in ob.name and not oneOutlineOnlyMode:
+        if  ob.type == 'MESH' and ob.name != 'Body' and ob.name != 'Hair' and ob.name != 'Tears' and 'Widget' not in ob.name and not oneOutlineOnlyMode:
             
             bpy.context.view_layer.objects.active = ob
             
@@ -726,7 +724,7 @@ def add_outlines(oneOutlineOnlyMode):
 
     #separate loop to prevent crashing
     for ob in bpy.context.view_layer.objects:
-        if  ob.type == 'MESH' and ob.name != 'Body' and ob.name != 'Hair' and 'Widget' not in ob.name:
+        if  ob.type == 'MESH' and ob.name != 'Body' and ob.name != 'Hair' and ob.name != 'Tears' and 'Widget' not in ob.name:
             if not oneOutlineOnlyMode:
                 bpy.context.view_layer.objects.active = ob
                 for OutlineMat in ob.material_slots:
