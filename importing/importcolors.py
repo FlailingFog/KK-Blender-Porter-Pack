@@ -570,12 +570,12 @@ def update_shaders(json, lut_selection, active_lut, light):
 
     kage_color = to_rgba(color_to_KK(json_to_color(json[2]['colorInfo'][0]), active_lut) / 255)
 
-    tongue_color = to_rgba(color_to_KK(json_to_color(json[3]['colorInfo'][0]), active_lut) / 255)
+    tongue_color = to_rgba(color_to_KK(json_to_color(json[4]['colorInfo'][0]), active_lut) / 255)
 
-    hair_base_color = to_rgba(color_to_KK(json_to_color(json[4]['colorInfo'][0]), active_lut) / 255)
-    hair_root_color = to_rgba(color_to_KK(json_to_color(json[4]['colorInfo'][1]), active_lut) / 255)
-    hair_tip_color = to_rgba(color_to_KK(json_to_color(json[4]['colorInfo'][2]), active_lut) / 255)
-    #hair_outline_color = to_rgba(color_to_KK(json_to_color(json[4]['colorInfo'][3]), active_lut) / 255)
+    hair_base_color = to_rgba(color_to_KK(json_to_color(json[5]['colorInfo'][0]), active_lut) / 255)
+    hair_root_color = to_rgba(color_to_KK(json_to_color(json[5]['colorInfo'][1]), active_lut) / 255)
+    hair_tip_color = to_rgba(color_to_KK(json_to_color(json[5]['colorInfo'][2]), active_lut) / 255)
+    #hair_outline_color = to_rgba(color_to_KK(json_to_color(json[5]['colorInfo'][3]), active_lut) / 255)
 
     ### Set shader colors
     ## Body Shader

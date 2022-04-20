@@ -26,6 +26,9 @@ def translate_shapekeys():
         keyName = keyName.replace("kuti_yaeba.y00", "Fangs")
         keyName = keyName.replace("kuti_sita.t00", "Tongue")
         keyName = keyName.replace("mayuge.mayu00", "KK Eyebrows")
+        keyName = keyName.replace("eye_naL.naL00", "Tear_big")
+        keyName = keyName.replace("eye_naM.naM00", "Tear_med")
+        keyName = keyName.replace("eye_naS.naS00", "Tear_small")
         
         #Exception if a previous version of the script was already run
         if keyName.find('Eyebrows_') > -1 and keyName.find('KK Eyebrows_') == -1:
@@ -136,7 +139,7 @@ def translate_shapekeys():
     
 
 ########################################################
-#Fix the eyewhites/sirome shapekeys for pmx imports only
+#Fix the right eyewhites/sirome shapekeys for pmx imports only
 def fix_eyewhite_shapekeys():
     armature = bpy.data.objects['Armature']
 
@@ -259,6 +262,7 @@ def fix_eyewhite_shapekeys():
     bpy.ops.object.mode_set(mode = 'OBJECT')
     bpy.ops.object.mode_set(mode = 'EDIT')
     bpy.ops.mesh.normals_make_consistent(inside=False)
+    bpy.ops.mesh.select_all(action='DESELECT')
 
     bpy.ops.object.mode_set(mode = 'OBJECT')
 
@@ -271,7 +275,6 @@ def fix_eyewhite_shapekeys():
             elif 'EyeWhitesR_' in keyblock.name:
                 keyblock.vertex_group = 'EyewhitesR'
 
-
 ######################
 #Combine the shapekeys
 def combine_shapekeys(keep_partial_shapekeys):
@@ -282,13 +285,22 @@ def combine_shapekeys(keep_partial_shapekeys):
     def whatCat(keyName):
         #Eyelashes1 is used because I couldn't see a difference between the other one and they overlap if both are used
         #EyelashPos is unused because Eyelashes work better and it overlaps with Eyelashes
-        #eye_nal is unused because it apparently screws with face accessories
 
-        eyes = [keyName.find("Eyes"), keyName.find("NoseT"), keyName.find("Eyelashes1"), keyName.find("EyeWhites")]
+        eyes = [keyName.find("Eyes"),
+        keyName.find("NoseT"),
+        keyName.find("Eyelashes1"),
+        keyName.find("EyeWhites"),
+        keyName.find('Tear_big'),
+        keyName.find('Tear_med'),
+        keyName.find('Tear_small')]
         if not all(v == -1 for v in eyes):
             return 'Eyes'
 
-        mouth = [keyName.find("NoseB"), keyName.find("Lips"), keyName.find("Tongue"), keyName.find("Teeth"), keyName.find("Fangs")]
+        mouth = [keyName.find("NoseB"),
+        keyName.find("Lips"),
+        keyName.find("Tongue"),
+        keyName.find("Teeth"),
+        keyName.find("Fangs")]
         if not all(v==-1 for v in mouth):
             return 'Mouth'
 
@@ -403,7 +415,7 @@ def combine_shapekeys(keep_partial_shapekeys):
                 if ('KK ' not in remove_shapekey.name and remove_shapekey.name != shapekey_block[0].name):
                     body.shape_key_remove(remove_shapekey)
             except:
-                #I don't even know if this needs to be in a try catch anymore
+                #I don't know if this needs to be in a try catch anymore
                 kklog('Couldn\'t remove shapekey ' + remove_shapekey.name, 'error')
                 pass
     
@@ -413,7 +425,7 @@ def combine_shapekeys(keep_partial_shapekeys):
     #and reset the pivot point to median
     bpy.context.scene.tool_settings.transform_pivot_point = 'MEDIAN_POINT'
         
-        
+
 class shape_keys(bpy.types.Operator):
     bl_idname = "kkb.shapekeys"
     bl_label = "The shapekeys script"
