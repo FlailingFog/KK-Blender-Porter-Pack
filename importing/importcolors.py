@@ -24,9 +24,13 @@ def image_to_KK(image, lut_name):
     vertex_default = '''
     in vec2 a_position;
     in vec2 a_texcoord;
-
+    
+    in vec4 color;
+    out vec4 col;
+    
     void main() {
         gl_Position = vec4(a_position, 0.0, 1.0);
+        col = color;
     }
     '''
 
@@ -35,6 +39,9 @@ def image_to_KK(image, lut_name):
     uniform sampler2D tex0;
     uniform sampler2D lut;
     uniform vec2    u_resolution;
+    
+    in vec4 col;
+    out vec4 out_Color;
 
     vec3 to_srgb(vec3 c){
         c.rgb = max( 1.055 * pow( c.rgb, vec3(0.416666667,0.416666667,0.416666667) ) - 0.055, 0 );
@@ -70,7 +77,7 @@ def image_to_KK(image, lut_name):
 
         newColor = to_srgb(newColor);
         
-        gl_FragColor = vec4(newColor.rgb, texRGBA.a);
+        out_Color = vec4(newColor.rgb, texRGBA.a);
     }
     '''
 
@@ -461,17 +468,17 @@ def load_luts(lut_light, lut_dark):
 
 def convert_main_textures(lut_light):
     ignore_list = [
-        "cf_m_eyeline_00_up_MainTex_CT.png",
-        "cf_m_eyeline_down_MainTex_CT.png",
-        "cf_m_noseline_00_MainTex_CT.png",
-        "cf_m_mayuge_00_MainTex_CT.png",
-        "cf_m_eyeline_kage_MainTex.png",
+        "cf_m_eyeline_00_up_MT_CT.png",
+        "cf_m_eyeline_down_MT_CT.png",
+        "cf_m_noseline_00_MT_CT.png",
+        "cf_m_mayuge_00_MT_CT.png",
+        "cf_m_eyeline_kage_MT.png",
     ]
 
     images = bpy.data.images
     first = True
     for image in images:
-        if "_MainTex" in image.name and image.name not in ignore_list:
+        if "_MT" in image.name and image.name not in ignore_list:
             image.reload()
 
             # Need to run image_to_KK twice for the first image due to a weird bug
