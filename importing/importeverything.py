@@ -36,6 +36,7 @@ Texture Postfix Legend:
 '''
 
 import bpy, os
+import json
 from pathlib import Path
 from bpy.props import StringProperty
 from .finalizepmx import kklog
@@ -417,6 +418,13 @@ def get_and_load_textures(directory):
         bpy.context.window_manager.popup_menu(missing_texture_error, title="Error", icon='ERROR')
         return True
     
+    #Get texture data for offset and scale
+    for file in files:
+        if 'KK_TextureData.json' in str(file):
+            json_file_path = str(file)
+            json_file = open(json_file_path)
+            json_tex_data = json.load(json_file)
+    
     #Add all textures to the correct places in the body template
     currentObj = bpy.data.objects['Body']
     def imageLoad(mat, group, node, image, raw = False):
@@ -424,6 +432,7 @@ def get_and_load_textures(directory):
             currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].image = bpy.data.images[image]
             if raw:
                 currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].image.colorspace_settings.name = 'Raw'
+            applyTextureDataToImageNode(mat, group, node)
         elif 'MainCol' in image:
             if bpy.data.images[image[0:len(image)-4] + '.dds']:
                 currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].image = bpy.data.images[image[0:len(image)-4] + '.dds']
@@ -431,6 +440,23 @@ def get_and_load_textures(directory):
         else:
             kklog('File not found, skipping: ' + image)
     
+    #Added node2 for the alpha masks
+    def applyTextureDataToImageNode(mat, group, node, node2 = ''):
+        for item in json_tex_data:
+            if item["textureName"] == image:
+                #Apply Offset and Scale
+                if node2 == '':
+                    currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].texture_mapping.translation[0] = item["offset"]["x"]
+                    currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].texture_mapping.translation[1] = item["offset"]["y"]
+                    currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].texture_mapping.scale[0] = item["scale"]["x"]
+                    currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].texture_mapping.scale[1] = item["scale"]["y"]
+                else:
+                    currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].node_tree.nodes[node2].texture_mapping.translation[0] = item["offset"]["x"]
+                    currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].node_tree.nodes[node2].texture_mapping.translation[1] = item["offset"]["y"]
+                    currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].node_tree.nodes[node2].texture_mapping.scale[0] = item["scale"]["x"]
+                    currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].node_tree.nodes[node2].texture_mapping.scale[1] = item["scale"]["y"]
+                break
+            
     imageLoad('Template Body', 'Gentex', 'BodyMain', 'cf_m_body_MT_CT.png')
     imageLoad('Template Body', 'Gentex', 'BodyMC', 'cf_m_body_CM.png')
     imageLoad('Template Body', 'Gentex', 'BodyMD', 'cf_m_body_DM.png') #cfm female
@@ -451,10 +477,12 @@ def get_and_load_textures(directory):
     try:
         #add female alpha mask
         currentObj.material_slots['Template Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].node_tree.nodes['AlphaBody'].image = bpy.data.images['cf_m_body_AM.png'] #female
+        applyTextureDataToImageNode('Template Body', 'BodyShader', 'BodyTransp', 'AlphaBody')
     except:
         try:
             #maybe the character is male
             currentObj.material_slots['Template Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].node_tree.nodes['AlphaBody'].image = bpy.data.images['cm_m_body_AM.png'] #male
+            applyTextureDataToImageNode('Template Body', 'BodyShader', 'BodyTransp', 'AlphaBody')
         except:
             #An alpha mask for the clothing wasn't present in the Textures folder
             currentObj.material_slots['Template Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].inputs['Built in transparency toggle'].default_value = 0
