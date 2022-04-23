@@ -5,7 +5,7 @@ SEPARATE BODY SCRIPT
 - Combines duplicated material slots
 '''
 
-import bpy
+import bpy, traceback
 from .finalizepmx import kklog
 from ..extras.linkshapekeys import link_keys
 

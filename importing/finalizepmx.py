@@ -8,9 +8,8 @@ FINALIZE PMX
 some code stolen from MediaMoots here https://github.com/FlailingFog/KK-Blender-Shader-Pack/issues/29
 '''
 
-import bpy
+import bpy, math, traceback
 from mathutils import Vector
-import math
 
 def kklog(log_text, type = 'standard'):
     if not bpy.data.texts.get('KKBP Log'):
@@ -21,7 +20,7 @@ def kklog(log_text, type = 'standard'):
                     area.spaces[0].text = bpy.data.texts['KKBP Log']
 
     if type == 'error':
-        log_text = 'Error:          ' + log_text
+        log_text = '\nError:          ' + log_text
     elif type == 'warn':
         log_text = 'Warning:        ' + log_text
     bpy.data.texts['KKBP Log'].write(log_text + '\n')
@@ -869,49 +868,56 @@ class finalize_pmx(bpy.types.Operator):
 
     def execute(self, context): 
 
-        scene = context.scene.placeholder
-        modify_armature = scene.armature_edit_bool
+        try:
+            scene = context.scene.placeholder
+            modify_armature = scene.armature_edit_bool
 
-        #get rid of the text files mmd tools generates
-        if bpy.data.texts.get('Model'):
-                bpy.data.texts.remove(bpy.data.texts['Model'])
-                bpy.data.texts.remove(bpy.data.texts['Model_e'])
-        
-        kklog('====    KKBP Log    ====')
-        
-        standardize_armature()
-        reset_and_reroll_bones()
-        if modify_armature:
-            kklog('Modifying armature...')
-            modify_pmx_armature()
-        #if fix_accs:
-            #kklog('Fixing accessories...')
-            #fix_accessories()
-        rename_mmd_bones()
-        
-        #Set the view transform 
-        bpy.context.scene.view_settings.view_transform = 'Standard'
-        bpy.ops.object.select_all(action='DESELECT')
-        
-        #redraw the UI after each operation to let the user know the plugin is actually doing something
-        kklog('\nFixing shapekeys...')
-        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-        bpy.ops.kkb.shapekeys('INVOKE_DEFAULT')
+            #get rid of the text files mmd tools generates
+            if bpy.data.texts.get('Model'):
+                    bpy.data.texts.remove(bpy.data.texts['Model'])
+                    bpy.data.texts.remove(bpy.data.texts['Model_e'])
+            
+            kklog('====    KKBP Log    ====')
+            
+            standardize_armature()
+            reset_and_reroll_bones()
+            if modify_armature:
+                kklog('Modifying armature...')
+                modify_pmx_armature()
+            #if fix_accs:
+                #kklog('Fixing accessories...')
+                #fix_accessories()
+            rename_mmd_bones()
+            
+            #Set the view transform 
+            bpy.context.scene.view_settings.view_transform = 'Standard'
+            bpy.ops.object.select_all(action='DESELECT')
+            
+            #redraw the UI after each operation to let the user know the plugin is actually doing something
+            kklog('\nFixing shapekeys...')
+            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+            bpy.ops.kkb.shapekeys('INVOKE_DEFAULT')
 
-        kklog('\nSeparating body, clothes and shadowcast, then removing duplicate materials...')
-        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-        bpy.ops.kkb.separatebody('INVOKE_DEFAULT')
+            kklog('\nSeparating body, clothes and shadowcast, then removing duplicate materials...')
+            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+            bpy.ops.kkb.separatebody('INVOKE_DEFAULT')
 
-        kklog('\nCategorizing bones into armature layers...')
-        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-        bpy.ops.kkb.cleanarmature('INVOKE_DEFAULT')
+            kklog('\nCategorizing bones into armature layers...')
+            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+            bpy.ops.kkb.cleanarmature('INVOKE_DEFAULT')
 
-        kklog('\nAdding bone drivers...')
-        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-        bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT')
-        
-        return {'FINISHED'}
-    
+            kklog('\nAdding bone drivers...')
+            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+            bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT')
+            
+            return {'FINISHED'}
+
+        except:
+            kklog('Unknown python error occurred', type = 'error')
+            kklog(traceback.format_exc())
+            self.report({'ERROR'}, traceback.format_exc())
+            return {"CANCELLED"}
+            
 if __name__ == "__main__":
     bpy.utils.register_class(finalize_pmx)
     

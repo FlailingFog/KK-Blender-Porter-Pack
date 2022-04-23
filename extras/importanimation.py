@@ -55,25 +55,11 @@ def correct_animation():
         #and flip the channels based on armature origin
         index = 0
         while index < len(ychan):
-            if not armature.data.bones.get('Greybone'):
-                quaternion_axis_swapped = Quaternion((
-                -wchan[index].co[1],
-                -ychan[index].co[1],
-                xchan[index].co[1],
-                zchan[index].co[1]))
-            else:
-                if bone_to_flip[0] == 'R':
-                    quaternion_axis_swapped = Quaternion((
-                    -wchan[index].co[1],
-                    xchan[index].co[1],
-                    zchan[index].co[1],
-                    ychan[index].co[1]))
-                else:
-                    quaternion_axis_swapped = Quaternion((
-                    -wchan[index].co[1],
-                    xchan[index].co[1],
-                    zchan[index].co[1],
-                    -ychan[index].co[1]))
+            quaternion_axis_swapped = Quaternion((
+            -wchan[index].co[1],
+            -ychan[index].co[1],
+            xchan[index].co[1],
+            zchan[index].co[1]))
             
             wchan[index].co[1] = quaternion_axis_swapped.w
             xchan[index].co[1] = quaternion_axis_swapped.x

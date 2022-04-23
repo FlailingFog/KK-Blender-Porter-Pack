@@ -29,41 +29,27 @@ class PlaceholderProperties(PropertyGroup):
     
     delete_shapekey_bool : BoolProperty(
     name="Enable or Disable",
-    description="""Enable to save the partial shapekeys that are used to generate the KK shapekeys.
-    These are useless on their own""",
+    description="""Enable to save the partial shapekeys that are used to generate the KK shapekeys. These are useless on their own""",
     default = False)
 
     fix_seams : BoolProperty(
     name="Enable or Disable",
-    description="""This performs a "remove doubles" operation on the body materials. Removing doubles also screws with the weights around certain areas
-    Disabling this will preserve the weights but may cause seams to appear around the neck and down the chest""",
-    default = True)
-
-    fix_eyewhites_bool : BoolProperty(
-    name="Enable or Disable",
-    description="""Disable this if Blender crashes during the shapekeys script.
-    If this is disabled, mesh operations on the Eyewhites material
-    will be skipped so there may be gaps between
-    the eyes and the eyewhites""",
+    description="""This performs a "remove doubles" operation on the body materials. Removing doubles also screws with the weights around certain areas. Disabling this will preserve the weights but may cause seams to appear around the neck and down the chest""",
     default = True)
     
-    textureoutline_bool : BoolProperty(
+    texture_outline_bool : BoolProperty(
     name="Enable or Disable",
-    description="""Enable to use one generic outline material
-    as opposed to using several unique ones.
-    Checking this may cause outline transparency issues""",
+    description="""Enable to use one generic outline material as opposed to using several unique ones. Checking this may cause outline transparency issues""",
     default = False)
     
-    texturecheck_bool : BoolProperty(
+    haircheck_bool : BoolProperty(
     name="Enable or Disable",
-    description="Disable this if you're 100% sure you're selecting the Textures folder correctly",
-    default = False)
+    description="Disable this if your character doesn't have any hair. You may need to disable this if your hair is recognized as an accessory (i.e. you don't have any _HGLS files in your export folder)",
+    default = True)
     
     templates_bool : BoolProperty(
     name="Enable or Disable",
-    description="""Keep enabled to prevent the material templates from being deleted.
-    Useful if you plan to import additional accessories or Studio objects 
-    into Blender after your character is finished""",
+    description="""Keep enabled to set the KKBP material templates to fake user. This will keep them from being deleted when blender is closed. Useful if you want to apply them to other objects after your character is finished""",
     default = True)
     
     colors_dropdown : EnumProperty(
@@ -77,10 +63,21 @@ class PlaceholderProperties(PropertyGroup):
     
     prep_dropdown : EnumProperty(
         items=(
-            ("A", "Unity - VRM compatible", "Combines all objects, removes the outline, removes duplicate Eye material slot, moves pupil bones to layer 16, simplifies bones on armature layer 3 / 5 / 11 / 12 / 13, edits bone hierarchy"),
+            ("A", "Unity - VRM compatible", """Combines all objects and...
+    removes the outline,
+    removes duplicate Eye material slot,
+    moves pupil bones to layer 16,
+    simplifies bones on armature layer 3 / 5 / 11 / 12 / 13,
+    edits bone hierarchy to allow Unity to automatically detect bones"""),
             #("B", "MikuMikuDance - PMX compatible", " "),
-            ("C", "Generic - Simplified", "Combines all objects, Removes the outline, removes duplicate Eye material slot, moves pupil bones to layer 16, simplifies bones on armature layer 11"),
-            ("D", "Generic - No changes", "Combines all objects, Removes the outline, removes duplicate Eye material slot"),
+            ("C", "Generic - Simplified", """Combines all objects and...
+    Removes the outline,
+    removes duplicate Eye material slot,
+    moves pupil bones to layer 16,
+    simplifies bones on armature layer 11"""),
+            ("D", "Generic - No changes", """Combines all objects and...
+    Removes the outline,
+    removes duplicate Eye material slot"""),
         ), name="", default="A", description="Prep type")
     
     atlas_dropdown : EnumProperty(
@@ -159,28 +156,16 @@ class IMPORTING1_PT_panel(bpy.types.Panel):
         box1 = split.box()
         box1.label(text="")
         split1 = box1.split(align=True, factor=splitfac)
-        split1.label(text="1a) Finalize PMX file")
+        split1.label(text="1) Finalize PMX file")
         split1.operator('kkb.finalizepmx', text = '', icon='MODIFIER')
-        
-        '''
-        box2 = split.box()
-        split2 = box2.split(align=True, factor=splitfac)
-        split2.label(text="1a) Import FBX file")
-        split2.operator('kkb.importgrey', text = '', icon = 'FILEBROWSER')
-
-        split2 = box2.split(align=True, factor=splitfac)
-        split2.label(text="2b) Finalize FBX file")
-        split2.operator('kkb.finalizegrey', text = '', icon = 'MODIFIER')
-        '''
-
 
 class IMPORTOPTIONS_PT_Panel(bpy.types.Panel):
     bl_parent_id = "IMPORTING_PT_panel"
-    bl_label = "Import options (Finalization)"
+    bl_label = "Import options (Step 1)"
     bl_category = "KKBP"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_options = {'DEFAULT_CLOSED'}
+    #bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         layout = self.layout
@@ -189,12 +174,11 @@ class IMPORTOPTIONS_PT_Panel(bpy.types.Panel):
         
         row = col.row(align=True)
         split = row.split(align = True, factor=.5)
-        split.prop(context.scene.placeholder, "fix_eyewhites_bool", toggle=True, text = "Fix eyewhites (PMX only)")
+        split.prop(context.scene.placeholder, "armature_edit_bool", toggle=True, text = "Use modified armature")
         split.prop(context.scene.placeholder, "delete_shapekey_bool", toggle=True, text = "Save partial shapekeys")
         
         row = col.row(align=True)
         split = row.split(align = True, factor=.5)
-        split.prop(context.scene.placeholder, "armature_edit_bool", toggle=True, text = "Use modified armature")
         split.prop(context.scene.placeholder, "fix_seams", toggle=True, text = "Fix body seams")
         
 
@@ -229,11 +213,11 @@ class IMPORTING2_PT_panel(bpy.types.Panel):
         
 class APPLYOPTIONS_PT_Panel(bpy.types.Panel):
     bl_parent_id = "IMPORTING_PT_panel"
-    bl_label = "Import options (KK Shader and Textures)"
+    bl_label = "Import options (Step 2a and 2b)"
     bl_category = "KKBP"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_options = {'DEFAULT_CLOSED'}
+    #bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         layout = self.layout
@@ -243,8 +227,12 @@ class APPLYOPTIONS_PT_Panel(bpy.types.Panel):
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split = row.split(align=True, factor=0.5)
-        split.prop(context.scene.placeholder, "textureoutline_bool", toggle=True, text = "Use generic outline")
-        split.prop(context.scene.placeholder, "templates_bool", toggle=True, text = "Set fake user")
+        split.prop(context.scene.placeholder, "texture_outline_bool", toggle=True, text = "Use generic outline")
+        split.prop(context.scene.placeholder, "templates_bool", toggle=True, text = "Keep material templates")
+
+        row = col.row(align=True)
+        split = row.split(align = True, factor=.5)
+        split.prop(context.scene.placeholder, "haircheck_bool", toggle=True, text = "Check for hair")
     
 class EXPORTING_PT_panel(bpy.types.Panel):
     bl_parent_id = "IMPORTING_PT_panel"

@@ -11,8 +11,8 @@ Usage:
 Tested in Blender 2.91
 '''
 
-import bpy
-import os
+import bpy, os, traceback
+from ..importing.finalizepmx import kklog
 from pathlib import Path
 from.bakematerials import sanitizeMaterialName, showError
 
@@ -140,28 +140,35 @@ class apply_materials(bpy.types.Operator):
     structure = None
     
     def execute(self, context):
-        scene = context.scene.placeholder
-        apply_type = scene.atlas_dropdown
-
-        #Stop if no object is currently selected
-        object = bpy.context.active_object
         try:
-            #object is active but not selected
-            if not object.select_get():
+            scene = context.scene.placeholder
+            apply_type = scene.atlas_dropdown
+
+            #Stop if no object is currently selected
+            object = bpy.context.active_object
+            try:
+                #object is active but not selected
+                if not object.select_get():
+                    bpy.context.window_manager.popup_menu(showError, title="Error", icon='ERROR')
+                    return {'FINISHED'}
+            except:
+                #active object is Nonetype
                 bpy.context.window_manager.popup_menu(showError, title="Error", icon='ERROR')
                 return {'FINISHED'}
-        except:
-            #active object is Nonetype
-            bpy.context.window_manager.popup_menu(showError, title="Error", icon='ERROR')
+
+            #Get all files from the exported texture folder
+            folderpath = self.directory
+
+            create_atlas_helpers()
+            replace_images(folderpath, apply_type)
+
             return {'FINISHED'}
-
-        #Get all files from the exported texture folder
-        folderpath = self.directory
-
-        create_atlas_helpers()
-        replace_images(folderpath, apply_type)
-
-        return {'FINISHED'}
+        
+        except:
+            kklog('Unknown python error occurred', type = 'error')
+            kklog(traceback.format_exc())
+            self.report({'ERROR'}, traceback.format_exc())
+            return {"CANCELLED"}
 
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)

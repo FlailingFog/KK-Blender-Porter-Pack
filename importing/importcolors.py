@@ -1,4 +1,4 @@
-import bpy, os
+import bpy, os, traceback
 import bgl
 import gpu
 import json
@@ -715,26 +715,33 @@ class import_colors(bpy.types.Operator):
     structure = None
 
     def execute(self, context):
-        directory = self.directory
-        error = checks(directory)
+        try:
+            directory = self.directory
+            error = checks(directory)
 
-        scene = context.scene.placeholder
-        lut_selection = scene.colors_dropdown
+            scene = context.scene.placeholder
+            lut_selection = scene.colors_dropdown
+            
+            if lut_selection == 'A':
+                lut_dark = 'Lut_TimeNight.png'
+            elif lut_selection == 'B':
+                lut_dark = 'Lut_TimeSunset.png'
+            else:
+                lut_dark = 'Lut_TimeDay.png'
+            lut_light = 'Lut_TimeDay.png'
+
+            if not error:
+                load_luts(lut_light, lut_dark)
+                convert_main_textures(lut_light)
+                load_json_colors(directory, lut_light, lut_dark, lut_selection)
+
+            return {'FINISHED'}
         
-        if lut_selection == 'A':
-            lut_dark = 'Lut_TimeNight.png'
-        elif lut_selection == 'B':
-            lut_dark = 'Lut_TimeSunset.png'
-        else:
-            lut_dark = 'Lut_TimeDay.png'
-        lut_light = 'Lut_TimeDay.png'
-
-        if not error:
-            load_luts(lut_light, lut_dark)
-            convert_main_textures(lut_light)
-            load_json_colors(directory, lut_light, lut_dark, lut_selection)
-
-        return {'FINISHED'}
+        except:
+            kklog('Unknown python error occurred', type = 'error')
+            kklog(traceback.format_exc())
+            self.report({'ERROR'}, traceback.format_exc())
+            return {"CANCELLED"}
 
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)

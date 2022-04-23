@@ -9,7 +9,7 @@ Usage:
 - Run the script
 '''
 
-import bpy
+import bpy, traceback
 from .finalizepmx import survey
 
 #function that returns a type of bone list

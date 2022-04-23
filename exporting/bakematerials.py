@@ -9,9 +9,8 @@ BAKE MATERIAL TO TEXTURE SCRIPT
 --    Defaults can be changed by editing the exportType and exportColormode variables below this comment.
 
 Usage:
-- Enter the folder you want to export the textures to in the Output Properties tab
 - Select the object you want to bake in the 3D viewport
-- Run the script
+- Press the button and choose the folder to dump the images into
 - Textures are baked to the output folder
 
 Notes:
@@ -25,10 +24,9 @@ imageplane driver + shader code taken from https://blenderartists.org/t/scripts-
 Tested on Blender 2.93 LTS, 3.0.0
 '''
 
-import bpy
-import os
+import bpy, os, traceback
 from pathlib import Path
-
+from ..importing.finalizepmx import kklog
 from bpy.props import StringProperty, BoolProperty
 from bpy_extras.io_utils import ImportHelper
 from bpy.types import Operator
@@ -373,18 +371,25 @@ class bake_materials(bpy.types.Operator):
     
     def execute(self, context):
 
-        print(self.directory)
-        folderpath =  self.directory
+        try:
+            print(self.directory)
+            folderpath =  self.directory
 
-        scene = context.scene.placeholder
-        resolutionMultiplier = scene.inc_dec_int
+            scene = context.scene.placeholder
+            resolutionMultiplier = scene.inc_dec_int
 
-        if setup_image_plane():
+            if setup_image_plane():
+                return {'FINISHED'}
+            start_baking(folderpath, resolutionMultiplier)
+            cleanup()
+
             return {'FINISHED'}
-        start_baking(folderpath, resolutionMultiplier)
-        cleanup()
-
-        return {'FINISHED'}
+        
+        except:
+            kklog('Unknown python error occurred', type = 'error')
+            kklog(traceback.format_exc())
+            self.report({'ERROR'}, traceback.format_exc())
+            return {"CANCELLED"}
 
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)

@@ -5,7 +5,7 @@ SHAPEKEYS SCRIPT
 - Deletes the partial shapekeys if keep_partial_shapekeys is not set to True
 '''
 
-import bpy
+import bpy, traceback
 import bmesh
 from .finalizepmx import kklog
 
@@ -435,12 +435,8 @@ class shape_keys(bpy.types.Operator):
     def execute(self, context):
         scene = context.scene.placeholder
         keep_partial_shapekeys = scene.delete_shapekey_bool
-        fix_eyewhites = scene.fix_eyewhites_bool
 
         translate_shapekeys()
-        if fix_eyewhites and not bpy.data.objects['Armature'].data.bones.get('Greybone'):
-            kklog('Fixing eyewhite shapekeys...')
-            fix_eyewhite_shapekeys()
         
         kklog('Combining shapekeys...')
         combine_shapekeys(keep_partial_shapekeys)

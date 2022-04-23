@@ -4,9 +4,7 @@ IMPORT TEXTURES SCRIPT
 - Loads in the textures received from the KKBP Exporter
 Usage:
 - Click the button and choose the folder that contains the textures
-'''
 
-'''
 Texture Postfix Legend:
 
     _MT_CT -> _MainTex_ColorTexture
@@ -35,8 +33,7 @@ Texture Postfix Legend:
         
 '''
 
-import bpy, os
-import json
+import bpy, os, traceback, json
 from pathlib import Path
 from bpy.props import StringProperty
 from .finalizepmx import kklog
@@ -52,9 +49,10 @@ def missing_texture_error(self, context):
 
 #stop if no hair object was found
 def hair_error(self, context):
-    self.layout.label(text="An object named \"Hair\" wasn't found. Separate this from the Clothes object and rename it.")
+    self.layout.label(text="""An object named \"Hair\" wasn't found. Separate this from the Clothes object and rename it.
+    If your character doesn't have hair, disable the hair check option in the import options section below""")
 
-def get_templates_and_apply(directory, useFakeUser):
+def get_templates_and_apply(directory, use_fake_user):
     #if a single thing was separated but the user forgot to rename it, it's probably the hair object
     if bpy.data.objects.get('Clothes.001') and len(bpy.data.objects) == 6:
         bpy.data.objects['Clothes.001'].name = 'Hair'
@@ -126,7 +124,7 @@ def get_templates_and_apply(directory, useFakeUser):
             filepath=os.path.join(filepath, innerpath, template),
             directory=os.path.join(filepath, innerpath),
             filename=template,
-            set_fake=useFakeUser
+            set_fake=use_fake_user
             )
     
     #Replace all materials on the body with templates
@@ -238,10 +236,7 @@ def get_templates_and_apply(directory, useFakeUser):
     #Import custom bone shapes
     innerpath = 'Collection'
     
-    if bpy.data.objects['Armature'].data.bones.get('Greybone'):
-        templateList = ['Bone Widgets fbx']
-    else:
-        templateList = ['Bone Widgets']
+    templateList = ['Bone Widgets']
 
     for template in templateList:
         bpy.ops.wm.append(
@@ -432,7 +427,7 @@ def get_and_load_textures(directory):
             currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].image = bpy.data.images[image]
             if raw:
                 currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].image.colorspace_settings.name = 'Raw'
-            applyTextureDataToImageNode(mat, group, node)
+            applyTextureDataToImageNode(image, mat, group, node)
         elif 'MainCol' in image:
             if bpy.data.images[image[0:len(image)-4] + '.dds']:
                 currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].image = bpy.data.images[image[0:len(image)-4] + '.dds']
@@ -441,9 +436,9 @@ def get_and_load_textures(directory):
             kklog('File not found, skipping: ' + image)
     
     #Added node2 for the alpha masks
-    def applyTextureDataToImageNode(mat, group, node, node2 = ''):
+    def applyTextureDataToImageNode(image, mat, group, node, node2 = ''):
         for item in json_tex_data:
-            if item["textureName"] == image:
+            if item["textureName"] == str(image):
                 #Apply Offset and Scale
                 if node2 == '':
                     currentObj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].texture_mapping.translation[0] = item["offset"]["x"]
@@ -597,7 +592,7 @@ def get_and_load_textures(directory):
                 if  AlphaImage != None:
                     toggle = genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['alphatoggle'].inputs['Transparency toggle'].default_value = 1
 
-def add_outlines(oneOutlineOnlyMode):
+def add_outlines(single_outline_mode):
     #Add face and body outlines, then load in the clothes transparency mask to body outline
     ob = bpy.context.view_layer.objects['Body']
     bpy.context.view_layer.objects.active = ob
@@ -684,7 +679,7 @@ def add_outlines(oneOutlineOnlyMode):
             kklog(genType + ' had no alphamask or maintex')
 
     #separate hair outline loop to prevent crashing
-    if not oneOutlineOnlyMode:
+    if not single_outline_mode:
         bpy.context.view_layer.objects.active = ob
         for OutlineMat in ob.material_slots:
             if 'Outline ' in OutlineMat.name:
@@ -726,7 +721,7 @@ def add_outlines(oneOutlineOnlyMode):
     #keep a dictionary of the material length list for the next loop
     outlineStart = {}
     for ob in bpy.context.view_layer.objects:
-        if  ob.type == 'MESH' and ob.name != 'Body' and ob.name != 'Hair' and ob.name != 'Tears' and 'Widget' not in ob.name and not oneOutlineOnlyMode:
+        if  ob.type == 'MESH' and ob.name != 'Body' and ob.name != 'Hair' and ob.name != 'Tears' and 'Widget' not in ob.name and not single_outline_mode:
             
             bpy.context.view_layer.objects.active = ob
             
@@ -782,7 +777,7 @@ def add_outlines(oneOutlineOnlyMode):
     #separate loop to prevent crashing
     for ob in bpy.context.view_layer.objects:
         if  ob.type == 'MESH' and ob.name != 'Body' and ob.name != 'Hair' and ob.name != 'Tears' and 'Widget' not in ob.name:
-            if not oneOutlineOnlyMode:
+            if not single_outline_mode:
                 bpy.context.view_layer.objects.active = ob
                 for OutlineMat in ob.material_slots:
                     if 'Outline ' in OutlineMat.name:
@@ -858,51 +853,74 @@ class import_everything(bpy.types.Operator):
     structure = None
 
     def execute(self, context):
-        directory = self.directory
-        
-        kklog('\nApplying material templates and textures...')
+        try:
 
-        scene = context.scene.placeholder
-        useFakeUser = scene.templates_bool
-        oneOutlineOnlyMode = scene.textureoutline_bool
-        modify_armature = scene.armature_edit_bool
-        
-        #these methods will return true if an error was encountered
-        template_error = get_templates_and_apply(directory, useFakeUser)
-        if template_error:
+            directory = self.directory
+            
+            kklog('\nApplying material templates and textures...')
+
+            scene = context.scene.placeholder
+            use_fake_user = scene.templates_bool
+            single_outline_mode = scene.texture_outline_bool
+            modify_armature = scene.armature_edit_bool
+            bald_alert = not scene.haircheck_bool
+            
+            #create a cube that will act as a fake hair object, then delete at the end
+            if bald_alert:
+                bpy.ops.object.mode_set(mode='OBJECT')
+                bpy.ops.mesh.primitive_cube_add(size=0.5)
+                bpy.data.objects['Cube'].name = 'Hair'
+                bpy.data.materials.new(name="hairdummymat")
+                bpy.data.objects['Hair'].data.materials.append(bpy.data.materials['hairdummymat'])
+                bpy.context.view_layer.objects.active = bpy.data.objects['Hair']
+                bpy.ops.object.modifier_add(type='ARMATURE')
+
+            #these methods will return true if an error was encountered to make sure the error popup shows
+            template_error = get_templates_and_apply(directory, use_fake_user)
+            if template_error:
+                return {'FINISHED'}
+            
+            #redraw the UI after each operation to let the user know the plugin is actually doing something
+            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+
+            texture_error = get_and_load_textures(directory)
+            if texture_error:
+                return {'FINISHED'}
+            
+            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+
+            add_outlines(single_outline_mode)
+            if modify_armature and bpy.data.objects['Armature'].pose.bones["Spine"].custom_shape == None:
+                kklog('Adding bone widgets...')
+                apply_bone_widgets()
+            hide_widgets()
+
+            bpy.data.objects['Armature'].hide = False
+            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+
+            #delete the fake hair object
+            if bald_alert:
+                bpy.data.objects.remove(bpy.data.objects['Hair'], do_unlink=True)
+
+            #clean data
+            clean_orphan_data()
+
+            #set the viewport shading
+            my_areas = bpy.context.workspace.screens[0].areas
+            my_shading = 'MATERIAL'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
+
+            for area in my_areas:
+                for space in area.spaces:
+                    if space.type == 'VIEW_3D':
+                        space.shading.type = my_shading 
+
             return {'FINISHED'}
-        
-        #redraw the UI after each operation to let the user know the plugin is actually doing something
-        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
-        texture_error = get_and_load_textures(directory)
-        if texture_error:
-            return {'FINISHED'}
-        
-        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-
-        add_outlines(oneOutlineOnlyMode)
-        if modify_armature and bpy.data.objects['Armature'].pose.bones["Spine"].custom_shape == None:
-            kklog('Adding bone widgets...')
-            apply_bone_widgets()
-        hide_widgets()
-
-        bpy.data.objects['Armature'].hide = False
-        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-
-        #clean data
-        clean_orphan_data()
-
-        #set the viewport shading
-        my_areas = bpy.context.workspace.screens[0].areas
-        my_shading = 'MATERIAL'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
-
-        for area in my_areas:
-            for space in area.spaces:
-                if space.type == 'VIEW_3D':
-                    space.shading.type = my_shading 
-
-        return {'FINISHED'}
+        except:
+            kklog('Unknown python error occurred', type = 'error')
+            kklog(traceback.format_exc())
+            self.report({'ERROR'}, traceback.format_exc())
+            return {"CANCELLED"}
 
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
