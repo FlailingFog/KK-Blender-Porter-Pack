@@ -188,9 +188,13 @@ def color_to_KK(color, lut_name):
     # Some Sauce
     vertex_default = '''
     in vec2 a_position;
+    
+    in vec4 color;
+    out vec4 col;
 
     void main() {
         gl_Position = vec4(a_position, 0.0, 1.0);
+        col = color;
     }
     '''
 
@@ -198,6 +202,9 @@ def color_to_KK(color, lut_name):
     current_code = '''
     uniform vec3 inputColor;
     uniform sampler2D lut;
+    
+    in vec4 col;
+    out vec4 out_Color;
 
     vec3 to_srgb(vec3 c){
         c.rgb = max( 1.055 * pow( c.rgb, vec3(0.416666667,0.416666667,0.416666667) ) - 0.055, 0 );
@@ -226,7 +233,7 @@ def color_to_KK(color, lut_name):
         
         vec3 shaderColor = lutColor;
         
-        gl_FragColor = vec4(shaderColor.rgb, 1);
+        out_Color = vec4(shaderColor.rgb, 1);
     }
     '''
 
