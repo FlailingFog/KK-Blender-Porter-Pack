@@ -12,97 +12,103 @@ from .finalizepmx import kklog
 ################################
 #Translate most of the shapekeys
 def translate_shapekeys():
-    def renameCategory(keyName):
-        keyName = keyName.replace("eye_face.f00", "Eyes")
-        keyName = keyName.replace("kuti_face.f00", "Lips")
-        keyName = keyName.replace("eye_siroL.sL00", "EyeWhitesL")
-        keyName = keyName.replace("eye_siroR.sR00", "EyeWhitesR")
-        keyName = keyName.replace("eye_line_u.elu00", "Eyelashes1")
-        keyName = keyName.replace("eye_line_l.ell00", "Eyelashes2")
-        keyName = keyName.replace("eye_naM.naM00", "EyelashesPos")
-        keyName = keyName.replace("eye_nose.nl00", "NoseTop")
-        keyName = keyName.replace("kuti_nose.nl00", "NoseBot")
-        keyName = keyName.replace("kuti_ha.ha00", "Teeth")
-        keyName = keyName.replace("kuti_yaeba.y00", "Fangs")
-        keyName = keyName.replace("kuti_sita.t00", "Tongue")
-        keyName = keyName.replace("mayuge.mayu00", "KK Eyebrows")
-        keyName = keyName.replace("eye_naL.naL00", "Tear_big")
-        keyName = keyName.replace("eye_naM.naM00", "Tear_med")
-        keyName = keyName.replace("eye_naS.naS00", "Tear_small")
-        
-        #Exception if a previous version of the script was already run
-        if keyName.find('Eyebrows_') > -1 and keyName.find('KK Eyebrows_') == -1:
-            keyName = keyName.replace('Eyebrows_', 'KK Eyebrows_')
-            
-        return keyName 
 
-    def renameEmotion(keyName):
-        keyName = keyName.replace("_def_", "_default_")
-        keyName = keyName.replace("_egao_", "_smile_")
-        keyName = keyName.replace("_bisyou_", "_smile_sharp_")
-        keyName = keyName.replace("_uresi_ss_", "_happy_slight_")
-        keyName = keyName.replace("_uresi_s_", "_happy_moderate_")
-        keyName = keyName.replace("_uresi_", "_happy_broad_")
-        keyName = keyName.replace("_doki_ss_", "_doki_slight_")
-        keyName = keyName.replace("_doki_s_", "_doki_moderate_")
-        keyName = keyName.replace("_ikari_", "_angry_")
-        keyName = keyName.replace("_ikari02_", "_angry_2_")
-        keyName = keyName.replace("_sinken_", "_serious_")
-        keyName = keyName.replace("_sinken02_", "_serious_1_")
-        keyName = keyName.replace("_sinken03_", "_serious_2_")
-        keyName = keyName.replace("_keno_", "_hate_")
-        keyName = keyName.replace("_sabisi_", "_lonely_")
-        keyName = keyName.replace("_aseri_", "_impatient_")
-        keyName = keyName.replace("_huan_", "_displeased_")
-        keyName = keyName.replace("_human_", "_displeased_")
-        keyName = keyName.replace("_akire_", "_amazed_")
-        keyName = keyName.replace("_odoro_", "_shocked_")
-        keyName = keyName.replace("_odoro_s_", "_shocked_moderate_")
-        keyName = keyName.replace("_doya_", "_smug_")
-        keyName = keyName.replace("_pero_", "_lick_")
-        keyName = keyName.replace("_name_", "_eating_")
-        keyName = keyName.replace("_tabe_", "_eating_2_")
-        keyName = keyName.replace("_kuwae_", "_hold_in_mouth_")
-        keyName = keyName.replace("_kisu_", "_kiss_")
-        keyName = keyName.replace("_name02_", "_tongue_out_")
-        keyName = keyName.replace("_mogu_", "_chewing_")
-        keyName = keyName.replace("_niko_", "_cartoon_mouth_")
-        keyName = keyName.replace("_san_", "_triangle_")
-        
-        keyName = keyName.replace("_winkl_", "_wink_left_")
-        keyName = keyName.replace("_winkr_", "_wink_right_")
-        keyName = keyName.replace("_setunai_", "_distress_")
-        keyName = keyName.replace("_tere_", "_shy_")
-        keyName = keyName.replace("_tmara_", "_bored_")
-        keyName = keyName.replace("_tumara_", "_bored_")
-        keyName = keyName.replace("_kurusi_", "_pain_")
-        keyName = keyName.replace("_sian_", "_thinking_")
-        keyName = keyName.replace("_kanasi_", "_sad_")
-        keyName = keyName.replace("_naki_", "_crying_")
-        keyName = keyName.replace("_rakutan_", "_dejected_")
-        keyName = keyName.replace("_komaru_", "_worried_")
-        if 'gageye' not in keyName:
-            keyName = keyName.replace("_gag", "_gageye")
-        keyName = keyName.replace("_gyul_", "_squeeze_left_")
-        keyName = keyName.replace("_gyur_", "_squeeze_right_")
-        keyName = keyName.replace("_gyu_", "_squeeze_")
-        keyName = keyName.replace("_gyul02_", "_squeeze_left_2_")
-        keyName = keyName.replace("_gyur02_", "_squeeze_right_2_")
-        keyName = keyName.replace("_gyu02_", "_squeeze_2_")
-        
-        keyName = keyName.replace("_koma_", "_worried_")
-        keyName = keyName.replace("_gimoL_", "_doubt_left_")
-        keyName = keyName.replace("_gimoR_", "_doubt_right_")
-        keyName = keyName.replace("_sianL_", "_thinking_left_")
-        keyName = keyName.replace("_sianR_", "_thinking_right_")
-        keyName = keyName.replace("_oko_", "_angry_")
-        keyName = keyName.replace("_oko2L_", "_angry_left_")
-        keyName = keyName.replace("_oko2R_", "_angry_right_")
-            
-        keyName = keyName.replace("_s_", "_small_")
-        keyName = keyName.replace("_l_", "_big_")
-        
-        return keyName 
+    translation_dict = {
+        #Prefixes
+        "eye_face.f00":         "Eyes",
+        "kuti_face.f00":        "Lips",
+        "eye_siroL.sL00":       "EyeWhitesL",
+        "eye_siroR.sR00":       "EyeWhitesR",
+        "eye_line_u.elu00":     "Eyelashes1",
+        "eye_line_l.ell00":     "Eyelashes2",
+        "eye_naM.naM00":        "EyelashesPos",
+        "eye_nose.nl00":        "NoseTop",
+        "kuti_nose.nl00":       "NoseBot",
+        "kuti_ha.ha00":         "Teeth",
+        "kuti_yaeba.y00":       "Fangs",
+        "kuti_sita.t00":        "Tongue",
+        "mayuge.mayu00":        "KK Eyebrows",
+        "eye_naL.naL00":        "Tear_big",
+        "eye_naM.naM00":        "Tear_med",
+        "eye_naS.naS00":        "Tear_small",
+
+        #Prefixes (Yelan headmod exception)
+        "namida_l":             "Tear_big",
+        "namida_m":             "Tear_med",
+        "namida_s":             "Tear_small",
+        'tang.':                'Tongue',
+
+        #Emotions (eyes and mouth)
+        "_def_":                "_default_",
+        "_egao_":               "_smile_",
+        "_bisyou_":             "_smile_sharp_",
+        "_uresi_ss_":           "_happy_slight_",
+        "_uresi_s_":            "_happy_moderate_",
+        "_uresi_":              "_happy_broad_",
+        "_doki_ss_":            "_doki_slight_",
+        "_doki_s_":             "_doki_moderate_",
+        "_ikari_":              "_angry_",
+        "_ikari02_":            "_angry_2_",
+        "_sinken_":             "_serious_",
+        "_sinken02_":           "_serious_1_",
+        "_sinken03_":           "_serious_2_",
+        "_keno_":               "_hate_",
+        "_sabisi_":             "_lonely_",
+        "_aseri_":              "_impatient_",
+        "_huan_":               "_displeased_",
+        "_human_":              "_displeased_",
+        "_akire_":              "_amazed_",
+        "_odoro_":              "_shocked_",
+        "_odoro_s_":            "_shocked_moderate_",
+        "_doya_":               "_smug_",
+        "_pero_":               "_lick_",
+        "_name_":               "_eating_",
+        "_tabe_":               "_eating_2_",
+        "_kuwae_":              "_hold_in_mouth_",
+        "_kisu_":               "_kiss_",
+        "_name02_":             "_tongue_out_",
+        "_mogu_":               "_chewing_",
+        "_niko_":               "_cartoon_mouth_",
+        "_san_":                "_triangle_",
+
+        #Emotions (Eyes)
+        "_winkl_":              "_wink_left_",
+        "_winkr_":              "_wink_right_",
+        "_setunai_":            "_distress_",
+        "_tere_":               "_shy_",
+        "_tmara_":              "_bored_",
+        "_tumara_":             "_bored_",
+        "_kurusi_":             "_pain_",
+        "_sian_":               "_thinking_",
+        "_kanasi_":             "_sad_",
+        "_naki_":               "_crying_",
+        "_rakutan_":            "_dejected_",
+        "_komaru_":             "_worried_",
+        "_gag":                 "_gageye",
+        "_gyul_":               "_squeeze_left_",
+        "_gyur_":               "_squeeze_right_",
+        "_gyu_":                "_squeeze_",
+        "_gyul02_":             "_squeeze_left_2_",
+        "_gyur02_":             "_squeeze_right_2_",
+        "_gyu02_":              "_squeeze_2_",
+       
+       #Emotions (Eyebrows)
+        "_koma_":               "_worried_",
+        "_gimoL_":              "_doubt_left_",
+        "_gimoR_":              "_doubt_right_",
+        "_sianL_":              "_thinking_left_",
+        "_sianR_":              "_thinking_right_",
+        "_oko_":                "_angry_",
+        "_oko2L_":              "_angry_left_",
+        "_oko2R_":              "_angry_right_",
+       
+       #Emotions extra
+        "_s_":                  "_small_",
+        "_l_":                  "_big_",
+
+        #Emotions Yelan headmod exception
+        'T_Default':            '_default_op',
+    }
 
     body = bpy.data.objects['Body']
     body.active_shape_key_index = 0
@@ -118,12 +124,12 @@ def translate_shapekeys():
     #rename original shapekeys
     for shapekey in bpy.data.shape_keys:
         for keyblock in shapekey.key_blocks:
-            keyblock.name = renameCategory(keyblock.name)
-            keyblock.name = renameEmotion(keyblock.name)
+            for key in translation_dict:
+                if 'gageye' not in keyblock.name:
+                    keyblock.name = keyblock.name.replace(key, translation_dict[key])
             
             try:
                 #delete the KK shapekeys if the original shapekeys still exist
-                #fucking thing doesn't even work
                 if originalExists and 'KK ' in keyblock.name and 'KK Eyebrows' not in keyblock.name:
                     body.active_shape_key_index = body.data.shape_keys.key_blocks.keys().index(keyblock.name)
                     bpy.ops.object.shape_key_remove()

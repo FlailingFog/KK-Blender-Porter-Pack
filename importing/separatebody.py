@@ -171,14 +171,30 @@ class separate_body(bpy.types.Operator):
             bpy.ops.object.mode_set(mode = 'OBJECT')
             bpy.ops.object.shape_key_add(from_mix=False)
             if '.002' in mat:
-                body.data.shape_keys.key_blocks["Key 116"].name = "Tear small"
-                bpy.context.object.active_shape_key_index = 116
+                try:
+                    body.data.shape_keys.key_blocks["Key 116"].name = "Tear small"
+                    bpy.context.object.active_shape_key_index = 116
+                except:
+                    #Yelan headmod exception
+                    body.data.shape_keys.key_blocks["Key 99"].name = "Tear small"
+                    bpy.context.object.active_shape_key_index = 99
             elif '.001' in mat:
-                body.data.shape_keys.key_blocks["Key 117"].name = "Tear med"
-                bpy.context.object.active_shape_key_index = 117
+                try:
+                    body.data.shape_keys.key_blocks["Key 117"].name = "Tear med"
+                    bpy.context.object.active_shape_key_index = 117
+                except:
+                    #Yelan headmod exception
+                    body.data.shape_keys.key_blocks["Key 100"].name = "Tear med"
+                    bpy.context.object.active_shape_key_index = 100
             else:
-                body.data.shape_keys.key_blocks["Key 118"].name = "Tear big"
-                bpy.context.object.active_shape_key_index = 118
+                try:
+                    body.data.shape_keys.key_blocks["Key 118"].name = "Tear big"
+                    bpy.context.object.active_shape_key_index = 118
+                except:
+                    kklog('Yelan headmod exception activated', 'warn')
+                    #Yelan headmod exception
+                    body.data.shape_keys.key_blocks["Key 101"].name = "Tear big"
+                    bpy.context.object.active_shape_key_index = 101
 
             bpy.ops.object.mode_set(mode = 'EDIT')
             bpy.ops.mesh.select_all(action='DESELECT')
