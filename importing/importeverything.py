@@ -196,9 +196,10 @@ def get_templates_and_apply(directory, use_fake_user):
     shadowcast.material_slots[0].material = bpy.data.materials[template.name]
 
     #give the tears a material template
-    tears = bpy.data.objects['Tears']
-    template = bpy.data.materials['Template Tears']
-    tears.material_slots[0].material = bpy.data.materials[template.name]
+    if bpy.data.objects.get('Tears'):
+        tears = bpy.data.objects['Tears']
+        template = bpy.data.materials['Template Tears']
+        tears.material_slots[0].material = bpy.data.materials[template.name]
 
     # Get rid of the duplicate node groups cause there's a lot
     #stolen from somewhere
@@ -513,8 +514,9 @@ def get_and_load_textures(directory):
     imageLoad('Template Tongue', 'Gentex', 'MainNorm', 'cf_m_tang_NMP.png', True)
 
     #load the tears texture in
-    currentObj = bpy.data.objects['Tears']
-    imageLoad('Template Tears', 'Gentex', 'Maintex', 'cf_m_namida_00_MT_CT.png')
+    if bpy.data.objects.get('Tears'):
+        currentObj = bpy.data.objects['Tears']
+        imageLoad('Template Tears', 'Gentex', 'Maintex', 'cf_m_namida_00_MT_CT.png')
 
     #for each material slot in the hair object, load in the hair detail mask, colormask
     currentObj = bpy.data.objects['Hair']
