@@ -278,7 +278,7 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         split.prop(context.scene.placeholder, "atlas_dropdown")
 
 class EXTRAS_PT_panel(bpy.types.Panel):
-    bl_label = 'Extras'
+    bl_label = 'KKBP Extras'
     bl_category = "KKBP"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"

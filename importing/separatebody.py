@@ -27,6 +27,12 @@ class separate_body(bpy.types.Operator):
         body.select_set(True)
         bpy.context.view_layer.objects.active = body
         
+        #Make UV map names clearer
+        body.data.uv_layers[0].name = 'uv_main'
+        body.data.uv_layers[1].name = 'uv_nipple_and_shine'
+        body.data.uv_layers[2].name = 'uv_underhair'
+        body.data.uv_layers[3].name = 'uv_eyeshadow'
+
         #Remove the "Instance" tag on all materials
         materialCount = len(body.data.materials.values())-1
         currentMat=0

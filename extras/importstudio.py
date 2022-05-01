@@ -249,7 +249,7 @@ class import_studio(bpy.types.Operator):
                                 material = material_slot.material
                                 nodes = material.node_tree.nodes
 
-                                def imageLoad(group, node, image, raw = False):
+                                def image_load(group, node, image, raw = False):
                                     try:
                                         nodes[group].node_tree.nodes[node].image = bpy.data.images[image]
                                         if raw:
@@ -266,27 +266,27 @@ class import_studio(bpy.types.Operator):
                                 
                                 if image != 'noimage':
                                     #print(image)
-                                    imageLoad('Gentex', 'Maintex', image.name, True)
+                                    image_load('Gentex', 'Maintex', image.name, True)
                                 else:
                                     #if there's no image, fallback to the detected maintex
                                     try:
-                                        imageLoad('Gentex', 'Maintex', detected_maintex, True)
+                                        image_load('Gentex', 'Maintex', detected_maintex, True)
                                     except:
                                         #oh well
                                         pass
                                 
                                 if normal != 'nonormal':
-                                    imageLoad('Gentex', 'MainNorm', normal.name, True)
+                                    image_load('Gentex', 'MainNorm', normal.name, True)
                                 
                                 #try importing the detail mask if there is one
                                 try:
-                                    imageLoad('Gentex', 'MainDet', detected_detailmask, True)
+                                    image_load('Gentex', 'MainDet', detected_detailmask, True)
                                 except:
                                     #or not
                                     pass
                                 
                                 try:
-                                    imageLoad('Gentex', 'MainCol', detected_colormask, True)
+                                    image_load('Gentex', 'MainCol', detected_colormask, True)
                                 except:
                                     #or not
                                     pass
