@@ -1,14 +1,12 @@
 '''
 APPLY MATERIALS FOR ATLAS GENERATION
 - Replaces all materials with their baked textures
-- This makes the material templates compatible with the Material Combiner feature in CATS.
+- This allows the Material Combiner feature in CATS to recognize the baked textures
 
 Usage:
 - Select an object that has had its materials baked
 - Select the folder that holds the textures in the Output Properties tab
 - Run script
-
-Tested in Blender 2.91
 '''
 
 import bpy, os, traceback

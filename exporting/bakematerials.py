@@ -1,27 +1,23 @@
 '''
 BAKE MATERIAL TO TEXTURE SCRIPT
 - Bakes all materials of an object into image textures (to use in other programs)
-- Will only bake a material if an image node is present in the node tree
-- If no image is present, a low resolution failsafe image will be baked to account for fully opaque or transparent materials that don't rely on images
+- Will only bake a material if an image node is present in the green texture group
+- If no image is present, a low resolution failsafe image will be baked to account for fully opaque or transparent materials that don't rely on texture files
 - If multiple image files are present, only one texture will be created
-- If the multiple image files have different resolutions, a texture will be created for each resolution
+    - If the multiple image files have different resolutions, a texture will be created for each resolution
 - Export defaults to 8-bit PNG with an alpha channel.
---    Defaults can be changed by editing the exportType and exportColormode variables below this comment.
+--    Defaults can be changed by editing the exportType and exportColormode variables below.
 
 Usage:
 - Select the object you want to bake in the 3D viewport
 - Press the button and choose the folder to dump the images into
-- Textures are baked to the output folder
+- Textures are baked to that output folder
 
 Notes:
 - This script deletes all camera and light objects in the scene
 - This script sets the world color in the World tab to black
 
-Limitations:
-- Does not (cannot?) account for multiple UV maps. Only the default map named "UVMap" is used.
-
 imageplane driver + shader code taken from https://blenderartists.org/t/scripts-create-camera-image-plane/580839
-Tested on Blender 2.93 LTS, 3.0.0
 '''
 
 import bpy, os, traceback
@@ -37,49 +33,68 @@ def showError(self, context):
 def typeError(self, context):
     self.layout.label(text="The object to bake must be a mesh object (make sure the body object is selected)")
 
-#returns true if an error is encountered
-def setup_image_plane():
+#returns None if an error is encountered
+def setup_camera():
     #Stop if no object is selected
     try:
         #An object was set as the active object but is not selected
         if not bpy.context.active_object.select_get():
             bpy.context.window_manager.popup_menu(showError, title="Error", icon='ERROR')
-            return True
+            return None
     except:
         #No object is set as the active object
         bpy.context.window_manager.popup_menu(showError, title="Error", icon='ERROR')
-        return True
+        return None
 
     #Stop if the object is not a mesh object
     if bpy.context.active_object.type != 'MESH':
         bpy.context.window_manager.popup_menu(typeError, title="Error", icon='ERROR')
-        return True
+        return None
 
     #######################
+    object_to_bake = bpy.context.active_object
+
     #Select all camera and light objects
-
-    currentlySelected = bpy.context.active_object
-
-    for lightcam in bpy.context.scene.objects:
-        if lightcam.type == 'CAMERA' or lightcam.type == 'LIGHT':
-            lightcam.select_set(True)
+    for obj in bpy.context.scene.objects:
+        if obj.type == 'CAMERA' or obj.type == 'LIGHT':
+            obj.select_set(True)
         else:
-            lightcam.select_set(False)
+            obj.select_set(False)
 
     #Then delete them
     bpy.ops.object.delete()
+    
+    #Purge unused cameras and lights from orphan data
+    for block in bpy.data.cameras:
+        if block.users == 0:
+            bpy.data.cameras.remove(block)
+    for block in bpy.data.lights:
+        if block.users == 0:
+            bpy.data.lights.remove(block)
 
     #and set the world color to black 
     bpy.data.worlds[0].node_tree.nodes['Background'].inputs[0].default_value = (0,0,0,1)
-    
+    #Add a new camera
+    bpy.ops.object.camera_add(enter_editmode=False, align='VIEW', location=(0, 0, 1), rotation=(0, 0, 0))
+    #save it for later
+    camera = bpy.context.active_object
+    #and set it as the active one
+    bpy.context.scene.camera=camera
+    #Set camera to orthographic
+    bpy.data.cameras[camera.name].type='ORTHO'
+    bpy.data.cameras[camera.name].ortho_scale=6
+    bpy.context.scene.render.pixel_aspect_y=1
+    bpy.context.scene.render.pixel_aspect_x=1
+
     #reset currently selected object
-    bpy.context.view_layer.objects.active = currentlySelected
-    currentlySelected.select_set(True)
+    bpy.context.view_layer.objects.active = object_to_bake
+    object_to_bake.select_set(True)
 
-    #########################
-    #Create a camera and an image plane that will fit to the camera's dimensions using drivers
+    return camera
 
-    def SetupDriverVariables(driver, imageplane, camera):
+def setup_geometry_nodes(camera):
+    object_to_bake = bpy.context.active_object
+    def setup_driver_variables(driver, camera):
         cam_ortho_scale = driver.variables.new()
         cam_ortho_scale.name = 'cOS'
         cam_ortho_scale.type = 'SINGLE_PROP'
@@ -98,89 +113,55 @@ def setup_image_plane():
         resolution_y.targets[0].id_type = 'SCENE'
         resolution_y.targets[0].id = bpy.context.scene
         resolution_y.targets[0].data_path = 'render.resolution_y'
-
-    #Purge unused cameras and lights from orphan data
-    for block in bpy.data.cameras:
-        if block.users == 0:
-            bpy.data.cameras.remove(block)
-    for block in bpy.data.lights:
-        if block.users == 0:
-            bpy.data.lights.remove(block)
-
-    #save the currently selected object
-    currentlySelected = bpy.context.active_object
-
-    #Add a new camera
-    try:
-        #Blender 2.91
-        bpy.ops.object.camera_add(enter_editmode=False, align='VIEW', location=(0, 0, -1), rotation=(0, 0, 0), scale=(1, 1, 1))
-    except:
-        #Blender 2.83
-        bpy.ops.object.camera_add(enter_editmode=False, align='VIEW', location=(0, 0, -1), rotation=(0, 0, 0))
-
-    #save it for later
-    camera = bpy.context.active_object
-
-    #and set it as the active one
-    bpy.context.scene.camera=camera
-
-    #create imageplane
-    bpy.ops.mesh.primitive_plane_add()#radius = 0.5)
-    imageplane = bpy.context.active_object
-    imageplane.data.uv_layers[0].name = 'UVMap'
-    imageplane.name = "imageplane"
-    imageplane.lock_location[0] = True
-    imageplane.lock_location[1] = True
-    bpy.ops.object.parent_set(type='OBJECT', keep_transform=False)
-    bpy.ops.object.editmode_toggle()
-    bpy.ops.mesh.select_all(action='TOGGLE')
-    bpy.ops.transform.resize( value=(1.0,1.0,1.0))
-    bpy.ops.uv.smart_project(angle_limit=66,island_margin=0)
-    bpy.ops.uv.select_all(action='TOGGLE')
-    bpy.ops.transform.rotate(value=1.5708, orient_axis='Z')
-    bpy.ops.object.editmode_toggle()
-
-    imageplane.location = (0,0,-3)
-    imageplane.parent = camera
-
-    #Set camera to orthographic
-    bpy.data.cameras[camera.name].type='ORTHO'
-    bpy.data.cameras[camera.name].ortho_scale=3
-    bpy.context.scene.render.pixel_aspect_y=1
-    bpy.context.scene.render.pixel_aspect_x=1
-
-    #setup drivers for plane's Y scale
-    driver = imageplane.driver_add('scale',1).driver
-    driver.type = 'SCRIPTED'
-    SetupDriverVariables(driver, imageplane, camera)
-    driver.expression = "((r_y)/(r_x)*(cOS/2)) if (((r_y)/(r_x)) < 1) else (cOS/2)"
-
     #setup X scale
-    driver = imageplane.driver_add('scale',0).driver
+    driver = object_to_bake.driver_add('scale',0).driver
     driver.type = 'SCRIPTED'
-    SetupDriverVariables(driver, imageplane, camera)
-    driver.expression = "((r_x)/(r_y)*(cOS/2)) if (((r_x)/(r_y)) < 1) else (cOS/2)"
+    setup_driver_variables(driver, camera)
+    driver.expression = "((r_x)/(r_y)*(cOS)) if (((r_x)/(r_y)) < 1) else (cOS)"
+    #setup drivers for object's Y scale
+    driver = object_to_bake.driver_add('scale',1).driver
+    driver.type = 'SCRIPTED'
+    setup_driver_variables(driver, camera)
+    driver.expression = "((r_y)/(r_x)*(cOS)) if (((r_y)/(r_x)) < 1) else (cOS)"
 
     ###########################
-    #setup the material for the image plane
+    #give the object a geometry node modifier
+    geonodes = object_to_bake.modifiers.new('Flattener', 'NODES')
 
-    imageplane = bpy.context.active_object
-    if( len( imageplane.material_slots) == 0 ):
-        bpy.ops.object.material_slot_add()
+    #import the premade flattener node to unwrap the mesh into the UV structure
+    script_dir=Path(__file__).parent
+    template_path=(script_dir / '../KK Shader V5.0.blend').resolve()
+    filepath = str(template_path)
+    innerpath = 'NodeTree'
+    node = 'Flatten to UV map'
+    bpy.ops.wm.append(
+            filepath=os.path.join(filepath, innerpath, node),
+            directory=os.path.join(filepath, innerpath),
+            filename=node,
+            set_fake=True
+            )
+    
+    #place group
+    nodes = bpy.data.node_groups['Geometry Nodes'].nodes
+    group = nodes.new('GeometryNodeGroup')
+    group.node_tree = bpy.data.node_groups['Flatten to UV map']
 
-    imagemat = bpy.data.materials.new(name='dummyMat')
-    imageplane.material_slots[0].material = bpy.data.materials['dummyMat']
-    planematerial =  imageplane.material_slots[0].material
-    planematerial.use_nodes = True
+    #connect group
+    links = bpy.data.node_groups['Geometry Nodes'].links
+    links.new(group.outputs[0], nodes['Group Output'].inputs[0])
+    links.new(nodes['Group Input'].outputs[0], group.inputs[0])
 
-    #enable alpha on the output
-    bpy.context.scene.render.film_transparent = True
+    #connect new input to group
+    bpy.data.node_groups['Geometry Nodes'].inputs.new('NodeSocketVector', 'UVMap input')
+    links.new(nodes['Group Input'].outputs[1], group.inputs[1])
+    identifier = geonodes.node_group.inputs[1].identifier
+    geonodes[identifier+'_attribute_name'] = 'uv_main'
+    geonodes[identifier+'_use_attribute'] = True
 
     #Make the originally selected object active again
     bpy.ops.object.select_all(action='DESELECT')
-    currentlySelected.select_set(True)
-    bpy.context.view_layer.objects.active=currentlySelected
-
+    object_to_bake.select_set(True)
+    bpy.context.view_layer.objects.active=object_to_bake
 
 ##############################
 #Changes the material of the image plane to the material of the object,
@@ -195,24 +176,23 @@ def sanitizeMaterialName(text):
 def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
     exportType = 'PNG'
     exportColormode = 'RGBA'
-
     #get the most recently created light object
     sun = bpy.data.lights[len(bpy.data.lights)-1]
-
     #make sure shadows are turned off
     sun.use_shadow = False
-    
     #set the sun strength
     sun.energy = sun_strength
     #print('the sun is ' + str(bake_type) + ' at ' + str(sun_strength))
-
     #preserve the filepath
     folderpath = directory
     #get the currently selected object as the active object
-    objectToBake = bpy.context.active_object
-    
+    object_to_bake = bpy.context.active_object
+    #remember what order the materials are in for later
+    original_material_order = []
+    for matslot in object_to_bake.material_slots:
+        original_material_order.append(matslot.name)
     #go through each material slot
-    for currentmaterial in objectToBake.data.materials:
+    for currentmaterial in object_to_bake.data.materials:
         nodes = currentmaterial.node_tree.nodes
         links = currentmaterial.node_tree.links
 
@@ -256,15 +236,17 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
                 bpy.context.scene.render.resolution_x=highest_resolution[0] * resolutionMultiplier
                 bpy.context.scene.render.resolution_y=highest_resolution[1] * resolutionMultiplier
 
-                #set the image plane material
-                bpy.data.objects['imageplane'].data.materials[0] = currentmaterial
+                #set every material slot except the current material to be transparent
+                for matslot in object_to_bake.material_slots:
+                    if matslot.material != currentmaterial:
+                        matslot.material = bpy.data.materials['Template Eyeline down']
         
                 #then render it
                 bpy.context.scene.render.filepath = folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + dimension + ' ' + bake_type
                 bpy.context.scene.render.image_settings.file_format=exportType
                 bpy.context.scene.render.image_settings.color_mode=exportColormode
                 #bpy.context.scene.render.image_settings.color_depth='16'
-                                
+                
                 print('rendering this file:' + bpy.context.scene.render.filepath)
                 bpy.ops.render.render(write_still = True)
                 
@@ -282,8 +264,10 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
             bpy.context.scene.render.resolution_x=64
             bpy.context.scene.render.resolution_y=64
             
-            #set the material
-            bpy.data.objects['imageplane'].data.materials[0] = currentmaterial
+            #set every material slot except the current material to be transparent
+            for matslot in object_to_bake.material_slots:
+                if matslot.material != currentmaterial:
+                    matslot.material = bpy.data.materials['Template Eyeline down']
             
             #then render it
             bpy.context.scene.render.filepath = folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + '64x64' + ' ' + bake_type
@@ -310,9 +294,15 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
                 links.new(nodes['KK Mix'].outputs[0], nodes['Material Output'].inputs[0])
             else:
                 links.new(nodes['Rim'].outputs[0], nodes['Material Output'].inputs[0])
+        #reset material slots
+        for material_index in range(len(original_material_order)):
+            object_to_bake.material_slots[material_index].material = bpy.data.materials[original_material_order[material_index]]
 
 def start_baking(folderpath, resolutionMultiplier):
-    currentlySelected = bpy.context.active_object
+    #enable transparency
+    bpy.context.scene.render.film_transparent = True
+    
+    object_to_bake = bpy.context.active_object
     #Purge unused lights
     for block in bpy.data.lights:
         if block.users == 0:
@@ -323,8 +313,8 @@ def start_baking(folderpath, resolutionMultiplier):
 
     #Make the originally selected object active again
     bpy.ops.object.select_all(action='DESELECT')
-    currentlySelected.select_set(True)
-    bpy.context.view_layer.objects.active=currentlySelected
+    object_to_bake.select_set(True)
+    bpy.context.view_layer.objects.active=object_to_bake
 
     #remove the outline materials because they won't be baked
     bpy.ops.object.material_slot_remove_unused()
@@ -338,28 +328,40 @@ def start_baking(folderpath, resolutionMultiplier):
     #bake the normal maps
     bake_pass(resolutionMultiplier, folderpath, 'normal' , 0)
 
+    #Make the originally selected object active again
+    bpy.ops.object.select_all(action='DESELECT')
+    object_to_bake.select_set(True)
+    bpy.context.view_layer.objects.active=object_to_bake
+
 def cleanup():
+    #save the originally selected object
+    object_to_bake = bpy.context.active_object
     # Deselect all objects
     bpy.ops.object.select_all(action='DESELECT')
     #Select the sun
-    sun = [o for o in bpy.data.objects
-                if o.type == 'LIGHT'][0]
+    sun = [o for o in bpy.data.objects if o.type == 'LIGHT'][0]
     sun.select_set(True)
-    #Select the imageplane
-    bpy.data.objects['imageplane'].select_set(True)
     #Select the camera
-    camera = [o for o in bpy.data.objects
-                if o.type == 'CAMERA'][0]
+    camera = [o for o in bpy.data.objects if o.type == 'CAMERA'][0]
     camera.select_set(True)
     #delete them
     bpy.ops.object.delete()
-
+    #delete the geometry modifier
+    object_to_bake.modifiers.remove(object_to_bake.modifiers['Flattener'])
+    #delete the two scale drivers
+    object_to_bake.animation_data.drivers.remove(object_to_bake.animation_data.drivers[0])
+    object_to_bake.animation_data.drivers.remove(object_to_bake.animation_data.drivers[0])
+    object_to_bake.scale = (1,1,1)
     #disable alpha on the output
     bpy.context.scene.render.film_transparent = False
+    #Make the originally selected object active again
+    bpy.ops.object.select_all(action='DESELECT')
+    object_to_bake.select_set(True)
+    bpy.context.view_layer.objects.active=object_to_bake
 
 class bake_materials(bpy.types.Operator):
     bl_idname = "kkb.bakematerials"
-    bl_label = "Store baked materials here"
+    bl_label = "Store images here"
     bl_description = "Open the folder you want to bake the material templates to"
     bl_options = {'REGISTER', 'UNDO'}
     
@@ -370,21 +372,18 @@ class bake_materials(bpy.types.Operator):
     structure = None
     
     def execute(self, context):
-
         try:
             print(self.directory)
             folderpath =  self.directory
-
             scene = context.scene.placeholder
             resolutionMultiplier = scene.inc_dec_int
-
-            if setup_image_plane():
+            camera = setup_camera()
+            if camera == None:
                 return {'FINISHED'}
+            setup_geometry_nodes(camera)
             start_baking(folderpath, resolutionMultiplier)
             cleanup()
-
             return {'FINISHED'}
-        
         except:
             kklog('Unknown python error occurred', type = 'error')
             kklog(traceback.format_exc())
