@@ -17,7 +17,7 @@ Notes:
 - This script deletes all camera and light objects in the scene
 - This script sets the world color in the World tab to black
 
-imageplane driver + shader code taken from https://blenderartists.org/t/scripts-create-camera-image-plane/580839
+fillerplane driver + shader code taken from https://blenderartists.org/t/scripts-create-camera-image-plane/580839
 '''
 
 import bpy, os, traceback
@@ -92,8 +92,23 @@ def setup_camera():
 
     return camera
 
-def setup_geometry_nodes(camera):
+def setup_geometry_nodes_and_fillerplane(camera):
     object_to_bake = bpy.context.active_object
+
+    #create fillerplane
+    bpy.ops.mesh.primitive_plane_add()
+    bpy.ops.object.material_slot_add()
+    fillerplane = bpy.context.active_object
+    fillerplane.data.uv_layers[0].name = 'uv_main'
+    fillerplane.name = "fillerplane"
+    bpy.ops.object.editmode_toggle()
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.transform.resize(value=(0.5,0.5,0.5))
+    bpy.ops.uv.reset()
+    bpy.ops.object.editmode_toggle()
+
+    fillerplane.location = (0,0,-0.0001)
+
     def setup_driver_variables(driver, camera):
         cam_ortho_scale = driver.variables.new()
         cam_ortho_scale.name = 'cOS'
@@ -113,13 +128,25 @@ def setup_geometry_nodes(camera):
         resolution_y.targets[0].id_type = 'SCENE'
         resolution_y.targets[0].id = bpy.context.scene
         resolution_y.targets[0].data_path = 'render.resolution_y'
-    #setup X scale
+    
+    #setup X scale for bake object and plane
     driver = object_to_bake.driver_add('scale',0).driver
     driver.type = 'SCRIPTED'
     setup_driver_variables(driver, camera)
     driver.expression = "((r_x)/(r_y)*(cOS)) if (((r_x)/(r_y)) < 1) else (cOS)"
+
+    driver = fillerplane.driver_add('scale',0).driver
+    driver.type = 'SCRIPTED'
+    setup_driver_variables(driver, camera)
+    driver.expression = "((r_x)/(r_y)*(cOS)) if (((r_x)/(r_y)) < 1) else (cOS)"
+
     #setup drivers for object's Y scale
     driver = object_to_bake.driver_add('scale',1).driver
+    driver.type = 'SCRIPTED'
+    setup_driver_variables(driver, camera)
+    driver.expression = "((r_y)/(r_x)*(cOS)) if (((r_y)/(r_x)) < 1) else (cOS)"
+
+    driver = fillerplane.driver_add('scale',1).driver
     driver.type = 'SCRIPTED'
     setup_driver_variables(driver, camera)
     driver.expression = "((r_y)/(r_x)*(cOS)) if (((r_y)/(r_x)) < 1) else (cOS)"
@@ -137,8 +164,7 @@ def setup_geometry_nodes(camera):
     bpy.ops.wm.append(
             filepath=os.path.join(filepath, innerpath, node),
             directory=os.path.join(filepath, innerpath),
-            filename=node,
-            set_fake=True
+            filename=node
             )
     
     #place group
@@ -146,7 +172,7 @@ def setup_geometry_nodes(camera):
     group = nodes.new('GeometryNodeGroup')
     group.node_tree = bpy.data.node_groups['Flatten to UV map']
 
-    #connect group
+    #connect group and make new input
     links = bpy.data.node_groups['Geometry Nodes'].links
     links.new(group.outputs[0], nodes['Group Output'].inputs[0])
     links.new(nodes['Group Input'].outputs[0], group.inputs[0])
@@ -191,6 +217,8 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
     original_material_order = []
     for matslot in object_to_bake.material_slots:
         original_material_order.append(matslot.name)
+    #get the filler plane
+    fillerplane = bpy.data.objects['fillerplane']
     #go through each material slot
     for currentmaterial in object_to_bake.data.materials:
         nodes = currentmaterial.node_tree.nodes
@@ -240,9 +268,12 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
                 for matslot in object_to_bake.material_slots:
                     if matslot.material != currentmaterial:
                         matslot.material = bpy.data.materials['Template Eyeline down']
-        
+                
+                #set the filler plane to the current material
+                fillerplane.material_slots[0].material = currentmaterial
+
                 #then render it
-                bpy.context.scene.render.filepath = folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + dimension + ' ' + bake_type
+                bpy.context.scene.render.filepath = folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + bake_type
                 bpy.context.scene.render.image_settings.file_format=exportType
                 bpy.context.scene.render.image_settings.color_mode=exportColormode
                 #bpy.context.scene.render.image_settings.color_depth='16'
@@ -270,14 +301,14 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
                     matslot.material = bpy.data.materials['Template Eyeline down']
             
             #then render it
-            bpy.context.scene.render.filepath = folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + '64x64' + ' ' + bake_type
+            bpy.context.scene.render.filepath = folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + bake_type
             bpy.context.scene.render.image_settings.file_format=exportType
             bpy.context.scene.render.image_settings.color_mode=exportColormode
             #bpy.context.scene.render.image_settings.color_depth='16'
             
             print('rendering this file:' + bpy.context.scene.render.filepath)
             bpy.ops.render.render(write_still = True)
-            #print(imageplane.data.materials[0])
+            #print(fillerplane.data.materials[0])
             
             #reset folderpath after render
             bpy.context.scene.render.filepath = folderpath
@@ -301,6 +332,7 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
 def start_baking(folderpath, resolutionMultiplier):
     #enable transparency
     bpy.context.scene.render.film_transparent = True
+    bpy.context.scene.render.filter_size = 0.50
     
     object_to_bake = bpy.context.active_object
     #Purge unused lights
@@ -344,10 +376,13 @@ def cleanup():
     #Select the camera
     camera = [o for o in bpy.data.objects if o.type == 'CAMERA'][0]
     camera.select_set(True)
+    #Select fillerplane
+    bpy.data.objects['fillerplane'].select_set(True)
     #delete them
     bpy.ops.object.delete()
     #delete the geometry modifier
     object_to_bake.modifiers.remove(object_to_bake.modifiers['Flattener'])
+    bpy.data.node_groups.remove(bpy.data.node_groups['Geometry Nodes'])
     #delete the two scale drivers
     object_to_bake.animation_data.drivers.remove(object_to_bake.animation_data.drivers[0])
     object_to_bake.animation_data.drivers.remove(object_to_bake.animation_data.drivers[0])
@@ -358,6 +393,7 @@ def cleanup():
     bpy.ops.object.select_all(action='DESELECT')
     object_to_bake.select_set(True)
     bpy.context.view_layer.objects.active=object_to_bake
+    bpy.context.scene.render.filter_size = 1.5
 
 class bake_materials(bpy.types.Operator):
     bl_idname = "kkb.bakematerials"
@@ -380,7 +416,7 @@ class bake_materials(bpy.types.Operator):
             camera = setup_camera()
             if camera == None:
                 return {'FINISHED'}
-            setup_geometry_nodes(camera)
+            setup_geometry_nodes_and_fillerplane(camera)
             start_baking(folderpath, resolutionMultiplier)
             cleanup()
             return {'FINISHED'}
