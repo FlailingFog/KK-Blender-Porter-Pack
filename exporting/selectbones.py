@@ -39,6 +39,15 @@ def main(prep_type):
         body.active_material_index = index
         bpy.ops.object.material_slot_remove()
 
+    #remove the second Template Eyewhite slot if there are two of the same name in a row
+    eye_index = 0
+    for mat_slot_index in range(len(body.material_slots)):
+        if body.material_slots[mat_slot_index].name == 'Template Eyewhites (sirome)':
+            index = mat_slot_index
+    if body.material_slots[index].name == body.material_slots[index-1].name:
+        body.active_material_index = index
+        bpy.ops.object.material_slot_remove()
+
     #Select the armature and make it active
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.ops.object.select_all(action='DESELECT')
