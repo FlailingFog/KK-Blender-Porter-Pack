@@ -278,6 +278,7 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
                 bpy.context.scene.render.image_settings.color_mode=exportColormode
                 #bpy.context.scene.render.image_settings.color_depth='16'
                 
+                bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
                 print('rendering this file:' + bpy.context.scene.render.filepath)
                 bpy.ops.render.render(write_still = True)
                 
@@ -298,14 +299,19 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
             #set every material slot except the current material to be transparent
             for matslot in object_to_bake.material_slots:
                 if matslot.material != currentmaterial:
+                    #print("changed {} to {}".format(matslot.material, currentmaterial))
                     matslot.material = bpy.data.materials['Template Eyeline down']
-            
+
+            #set the filler plane to the current material
+            fillerplane.material_slots[0].material = currentmaterial
+
             #then render it
             bpy.context.scene.render.filepath = folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + bake_type
             bpy.context.scene.render.image_settings.file_format=exportType
             bpy.context.scene.render.image_settings.color_mode=exportColormode
             #bpy.context.scene.render.image_settings.color_depth='16'
             
+            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
             print('rendering this file:' + bpy.context.scene.render.filepath)
             bpy.ops.render.render(write_still = True)
             #print(fillerplane.data.materials[0])
@@ -417,6 +423,7 @@ class bake_materials(bpy.types.Operator):
             if camera == None:
                 return {'FINISHED'}
             setup_geometry_nodes_and_fillerplane(camera)
+            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
             start_baking(folderpath, resolutionMultiplier)
             cleanup()
             return {'FINISHED'}
