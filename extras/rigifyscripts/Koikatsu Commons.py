@@ -97,6 +97,21 @@ pelvisBoneName = "Pelvis"
 waistBoneName = "cf_j_waist02"
 crotchBoneName = "cf_j_kokan"
 anusBoneName = "cf_j_ana"
+betterPenetrationRootCrotchBoneName = "cf_J_Vagina_root"
+betterPenetrationFrontCrotchBoneName = "cf_J_Vagina_F"
+betterPenetrationLeftCrotchBoneBaseName = "cf_J_Vagina_L"
+betterPenetrationRightCrotchBoneBaseName = leftNameToRightName(betterPenetrationLeftCrotchBoneBaseName)
+betterPenetrationLeftCrotchBone1Name = betterPenetrationLeftCrotchBoneBaseName + ".001"
+betterPenetrationRightCrotchBone1Name = betterPenetrationRightCrotchBoneBaseName + ".001"
+betterPenetrationLeftCrotchBone2Name = betterPenetrationLeftCrotchBoneBaseName + ".002"
+betterPenetrationRightCrotchBone2Name = betterPenetrationRightCrotchBoneBaseName + ".002"
+betterPenetrationLeftCrotchBone3Name = betterPenetrationLeftCrotchBoneBaseName + ".003"
+betterPenetrationRightCrotchBone3Name = betterPenetrationRightCrotchBoneBaseName + ".003"
+betterPenetrationLeftCrotchBone4Name = betterPenetrationLeftCrotchBoneBaseName + ".004"
+betterPenetrationRightCrotchBone4Name = betterPenetrationRightCrotchBoneBaseName + ".004"
+betterPenetrationLeftCrotchBone5Name = betterPenetrationLeftCrotchBoneBaseName + ".005"
+betterPenetrationRightCrotchBone5Name = betterPenetrationRightCrotchBoneBaseName + ".005"
+betterPenetrationBackCrotchBoneName = "cf_J_Vagina_B"
 buttocksBoneName = "Buttocks"
 leftButtockBoneName = "cf_j_siri_L"
 rightButtockBoneName = leftNameToRightName(leftButtockBoneName)
@@ -798,7 +813,10 @@ breastsHandleBoneName, leftBreastHandleBoneName, rightBreastHandleBoneName, left
 torsoTweakLayerBoneNames = [crotchBoneName, anusBoneName, leftBreastBone2Name, rightBreastBone2Name, leftBreastBone3Name,
 rightBreastBone3Name, leftNippleBone1Name, rightNippleBone1Name, leftNippleBone2Name, rightNippleBone2Name, leftBreastDeformBone1Name, 
 rightBreastDeformBone1Name, leftBreastDeformBone2Name, rightBreastDeformBone2Name, leftBreastDeformBone3Name, rightBreastDeformBone3Name, 
-leftNippleDeformBone1Name, rightNippleDeformBone1Name, leftNippleDeformBone2Name, rightNippleDeformBone2Name]
+leftNippleDeformBone1Name, rightNippleDeformBone1Name, leftNippleDeformBone2Name, rightNippleDeformBone2Name, betterPenetrationRootCrotchBoneName, 
+betterPenetrationFrontCrotchBoneName, betterPenetrationLeftCrotchBone1Name, betterPenetrationRightCrotchBone1Name, betterPenetrationLeftCrotchBone2Name, 
+betterPenetrationRightCrotchBone2Name, betterPenetrationLeftCrotchBone3Name, betterPenetrationRightCrotchBone3Name, betterPenetrationLeftCrotchBone4Name, 
+betterPenetrationRightCrotchBone4Name, betterPenetrationLeftCrotchBone5Name, betterPenetrationRightCrotchBone5Name, betterPenetrationBackCrotchBoneName]
 leftArmIkLayerBoneNames = [leftArmBoneName, leftElbowBoneName, leftWristBoneName]
 rightArmIkLayerBoneNames = [rightArmBoneName, rightElbowBoneName, rightWristBoneName]
 leftLegIkLayerBoneNames = [leftLegBoneName, leftKneeBoneName, leftAnkleBoneName, leftToeBoneName, leftHeelBoneName]
@@ -990,10 +1008,11 @@ def setBoneManagerLayersFromRigifyLayers(rig):
     
 def assignSingleBoneLayer(rig, boneName, layerIndex):
     bone = rig.data.bones[boneName]
-    bone.layers[layerIndex] = True
-    for index in range(32):
-        if index != layerIndex:
-            bone.layers[index] = False
+    if bone:
+        bone.layers[layerIndex] = True
+        for index in range(32):
+            if index != layerIndex:
+                bone.layers[index] = False
             
 def assignSingleBoneLayerToList(rig, boneNamesList, layerIndex):
     for boneName in boneNamesList:

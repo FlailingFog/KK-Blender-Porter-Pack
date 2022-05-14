@@ -41,7 +41,7 @@ class rigify_convert(bpy.types.Operator):
             exec(text.as_string())
             
             #make sure things are parented correctly and hide original armature
-            rig = bpy.data.objects['rig']
+            rig = bpy.context.active_object
             if len(armature.children):
                 for child in armature.children:
                     if child.name != 'Bonelyfans' and child.name != 'Shadowcast':

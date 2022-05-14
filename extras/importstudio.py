@@ -6,7 +6,7 @@ from ..importing.importcolors import load_luts, image_to_KK
 class import_studio(bpy.types.Operator):
     bl_idname = "kkb.importstudio"
     bl_label = "Import studio object"
-    bl_description = "Open the folder containing the fbx files"
+    bl_description = "Open the folder containing the fbx files exported with SB3Utility"
     bl_options = {'REGISTER', 'UNDO'}
     
     directory : StringProperty(maxlen=1024, default='', subtype='FILE_PATH', options={'HIDDEN'})
