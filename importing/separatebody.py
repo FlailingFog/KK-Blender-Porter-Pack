@@ -44,8 +44,32 @@ class separate_body(bpy.types.Operator):
         bpy.ops.object.mode_set(mode = 'EDIT')
         bpy.ops.mesh.select_all(action = 'DESELECT')
         
-        def separate_material(matList, search_type = 'exact'):
-            for mat in matList:
+        #mark certain materials as freestyle faces
+        def mark_as_freestyle(mat_list, search_type = 'exact'):
+            for mat in mat_list:
+                mat_found = body.data.materials.find(mat)      
+                if mat_found > -1:
+                    bpy.context.object.active_material_index = mat_found
+                    bpy.ops.object.material_slot_select()
+                else:
+                    kklog('Material wasn\'t found when separating body materials: ' + mat, 'warn')
+            bpy.ops.mesh.mark_freestyle_face(clear=False)
+
+        freestyle_list = [
+            'cf_m_hitomi_00.001',
+            'cf_m_hitomi_00',
+            'cf_m_sirome_00.001',
+            'cf_m_sirome_00',
+            'cf_m_eyeline_down',
+            'cf_m_eyeline_00_up',
+            'cf_m_noseline_00',
+            'cf_m_mayuge_00',]
+        mark_as_freestyle(freestyle_list)
+
+        bpy.ops.mesh.select_all(action = 'DESELECT')
+
+        def separate_material(mat_list, search_type = 'exact'):
+            for mat in mat_list:
                 mat_found = -1
                 if search_type == 'fuzzy' and ('cm_m_' in mat or 'c_m_' in mat):
                     for matindex in range(0, len(body.data.materials), 1):

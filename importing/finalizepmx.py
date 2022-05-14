@@ -8,7 +8,7 @@ FINALIZE PMX
 some code stolen from MediaMoots here https://github.com/FlailingFog/KK-Blender-Shader-Pack/issues/29
 '''
 
-import bpy, math, traceback
+import bpy, math, traceback, time
 from mathutils import Vector
 
 def kklog(log_text, type = 'standard'):
@@ -879,6 +879,8 @@ class finalize_pmx(bpy.types.Operator):
             
             kklog('====    KKBP Log    ====')
             
+            last_step = time.time()
+            
             standardize_armature()
             reset_and_reroll_bones()
             if modify_armature:
@@ -894,22 +896,31 @@ class finalize_pmx(bpy.types.Operator):
             bpy.ops.object.select_all(action='DESELECT')
             
             #redraw the UI after each operation to let the user know the plugin is actually doing something
+            #kklog(str(time.time() - last_step))
+            last_step = time.time()
             kklog('\nFixing shapekeys...')
             bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
             bpy.ops.kkb.shapekeys('INVOKE_DEFAULT')
 
+            #kklog(str(time.time() - last_step))
+            last_step = time.time()
             kklog('\nSeparating body, clothes and shadowcast, then removing duplicate materials...')
             bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
             bpy.ops.kkb.separatebody('INVOKE_DEFAULT')
 
+            #kklog(str(time.time() - last_step))
+            last_step = time.time()
             kklog('\nCategorizing bones into armature layers...')
             bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
             bpy.ops.kkb.cleanarmature('INVOKE_DEFAULT')
 
+            #kklog(str(time.time() - last_step))
+            last_step = time.time()
             kklog('\nAdding bone drivers...')
             bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
             bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT')
             
+            #kklog(str(time.time() - last_step))
             return {'FINISHED'}
 
         except:

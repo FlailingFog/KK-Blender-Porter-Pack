@@ -33,7 +33,7 @@ Texture Postfix Legend:
         
 '''
 
-import bpy, os, traceback, json
+import bpy, os, traceback, json, time
 from pathlib import Path
 from bpy.props import StringProperty
 from .finalizepmx import kklog
@@ -392,7 +392,11 @@ def apply_bone_widgets():
 def get_and_load_textures(directory):
 
     bpy.ops.object.mode_set(mode='OBJECT')
-    kklog('Getting textures from: ' + directory)
+    if r"C:\Users" in directory:
+        print_directory =  directory[directory.find('\\', 10):]
+    else:
+        print_directory = directory
+    kklog('Getting textures from: ' + print_directory)
 
     #lazy check to see if the user actually opened the Textures folder
     #this will false pass if the word "Texture" is anywhere else on the path but I don't care
@@ -869,7 +873,7 @@ class import_everything(bpy.types.Operator):
 
     def execute(self, context):
         try:
-
+            last_step = time.time()
             directory = self.directory
             
             kklog('\nApplying material templates and textures...')
@@ -903,9 +907,10 @@ class import_everything(bpy.types.Operator):
                 return {'FINISHED'}
             
             bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-
+            
             add_outlines(single_outline_mode)
             if modify_armature and bpy.data.objects['Armature'].pose.bones["Spine"].custom_shape == None:
+                #kklog(str(time.time() - last_step))
                 kklog('Adding bone widgets...')
                 apply_bone_widgets()
             hide_widgets()
@@ -928,7 +933,7 @@ class import_everything(bpy.types.Operator):
                 for space in area.spaces:
                     if space.type == 'VIEW_3D':
                         space.shading.type = my_shading 
-
+            #kklog(str(time.time() - last_step))
             return {'FINISHED'}
 
         except:
