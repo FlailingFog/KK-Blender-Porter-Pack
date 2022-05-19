@@ -60,6 +60,7 @@ class separate_body(bpy.types.Operator):
             'cf_m_hitomi_00',
             'cf_m_sirome_00.001',
             'cf_m_sirome_00',
+            'cf_m_eyeline_kage',
             'cf_m_eyeline_down',
             'cf_m_eyeline_00_up',
             'cf_m_noseline_00',
@@ -97,6 +98,7 @@ class separate_body(bpy.types.Operator):
         #This puts hair/clothes in position 1 and the body in position 2
         bodyMatList = [
             'cf_m_tang',
+            'cf_m_eyeline_kage',
             'cf_m_namida_00',
             'cf_m_namida_00.001',
             'cf_m_namida_00.002',
