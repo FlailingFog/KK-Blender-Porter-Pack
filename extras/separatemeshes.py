@@ -53,31 +53,36 @@ def do_separate_meshes(json_smr_data):
     #To keep track if a mesh has been separated already
     separated_meshes = []
     
-    #Loop over each material in the Clothes object
-    for mat in clothes_data.materials:
+    #Loop over each renderer in KK_SMRData.json
+    for row in json_smr_data:
+        #Deselect everything
+        bpy.ops.object.mode_set(mode = 'OBJECT')
         bpy.ops.object.select_all(action='DESELECT')
         bpy.ops.object.mode_set(mode = 'EDIT')
         bpy.ops.mesh.select_all(action = 'DESELECT')
         
-        if mat.name in separated_meshes:
+        #Loop over each renderer material and select it
+        found_a_material = False
+        for mat_name in row['SMRMaterialNames']:
+            found_mat_idx = clothes_data.materials.find(mat_name)
+            
+            if found_mat_idx > -1 and mat_name not in separated_meshes:
+                separated_meshes.append(mat_name)
+                
+                bpy.context.object.active_material_index = found_mat_idx
+                bpy.ops.object.material_slot_select()
+                found_a_material = True
+            
+        if not found_a_material:
             continue
         
-        for row in json_smr_data:
-            if mat.name in row['SMRMaterialNames']:
-                separated_meshes.append(mat.name)
-                
-                #Find and select the material
-                bpy.context.object.active_material_index = clothes_data.materials.find(mat.name)
-                bpy.ops.object.material_slot_select()
-                
-                #Seperate to a new mesh
-                bpy.ops.mesh.separate(type='SELECTED')
-                
-                #Remove unused materials from the new object and rename it to it's corresponding Renderer name
-                bpy.ops.object.mode_set(mode = 'OBJECT')
-                bpy.ops.object.material_slot_remove_unused()
-                bpy.context.selected_objects[0].name = row['SMRName']
-                break
+        #Seperate to a new mesh
+        bpy.ops.mesh.separate(type='SELECTED')
+        
+        #Remove unused materials from the new object and rename it to it's corresponding Renderer name
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+        bpy.ops.object.material_slot_remove_unused()
+        bpy.context.selected_objects[0].name = row['SMRName']
     bpy.ops.object.select_all(action='DESELECT')
     
     #Pass 2: Clean up
