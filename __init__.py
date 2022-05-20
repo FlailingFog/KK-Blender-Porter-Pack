@@ -35,6 +35,7 @@ from .extras.linkshapekeys import link_shapekeys
 from .extras.importanimation import import_animation
 from .extras.switcharmature import switch_armature
 from .extras.separatemeshes import separate_meshes
+from .extras.separatemeshes import export_separate_meshes
 from .extras.toggleik import toggle_ik
 from .extras.imageconvert import image_convert
 from .extras.rigifywrapper import rigify_convert
@@ -55,6 +56,7 @@ classes = (
     link_shapekeys,
     switch_armature,
     separate_meshes,
+    export_separate_meshes,
     toggle_ik,
     rigify_convert,
     InstallPIL,

@@ -344,11 +344,18 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         split.label(text="Toggle hand IKs")
         split.operator('kkb.toggleik', text = '', icon = 'BONE_DATA')
         
+        box = layout.box()
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text="Seperate Meshes by Renderers")
         split.operator('kkb.separatemeshes', text = '', icon = 'MESH_DATA')
+        
+        col = box.column(align=True)
+        row = col.row(align=True)
+        split = row.split(align=True, factor=splitfac)
+        split.label(text="Export Seperate Meshes")
+        split.operator('kkb.exportseparatemeshes', text = '', icon = 'EXPORT')
         
 
         #put all icons available in blender at the end of the panel

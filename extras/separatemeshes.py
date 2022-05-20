@@ -1,7 +1,19 @@
 import bpy
 import json
 from pathlib import Path
-from bpy.props import StringProperty
+from bpy.props import (
+        StringProperty,
+        BoolProperty,
+        FloatProperty,
+        EnumProperty,
+        )
+from bpy_extras.io_utils import (
+        ImportHelper,
+        ExportHelper,
+        orientation_helper,
+        path_reference_mode,
+        axis_conversion,
+        )
 
 ########## ERRORS ##########
 def kk_folder_error(self, context):
@@ -92,7 +104,7 @@ def do_separate_meshes(json_smr_data):
      
 class separate_meshes(bpy.types.Operator):
     bl_idname = "kkb.separatemeshes"
-    bl_label = "Open Export folder"
+    bl_label = "Separate Meshes"
     bl_description = "Open the folder containing the KK_SMRData.json file"
     bl_options = {'REGISTER', 'UNDO'}
     
@@ -105,6 +117,42 @@ class separate_meshes(bpy.types.Operator):
         
         if not error:
             load_smr_data(directory)
+
+        return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+   
+
+
+########## EXPORTER ##########
+def export_meshes(directory):
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+
+    armature = bpy.data.objects['Armature']
+    for obj in bpy.data.objects:
+        if obj.parent == armature and obj.visible_get():
+            bpy.ops.object.select_all(action='DESELECT')
+            
+            armature.select_set(True)
+            obj.select_set(True)
+            
+            bpy.ops.export_scene.fbx(filepath = directory + obj.name + '.fbx', use_selection = True, use_active_collection = False, global_scale = 1.0, apply_unit_scale = True, apply_scale_options = 'FBX_SCALE_NONE', use_space_transform = True, bake_space_transform = False, object_types={'ARMATURE', 'MESH'}, use_mesh_modifiers = True, use_mesh_modifiers_render = True, mesh_smooth_type  = 'FACE', use_subsurf = False, use_mesh_edges = False, use_tspace = False, use_custom_props = False, add_leaf_bones = False, primary_bone_axis= 'Z', secondary_bone_axis='Y', use_armature_deform_only = False, armature_nodetype = 'NULL', bake_anim = False, bake_anim_use_all_bones = False, bake_anim_use_nla_strips = False, bake_anim_use_all_actions = True, bake_anim_force_startend_keying = True, bake_anim_step = 1.0, bake_anim_simplify_factor = 0, path_mode = 'AUTO', embed_textures = False, batch_mode = 'OFF', use_batch_own_dir = True, axis_forward='-Y', axis_up='Z')
+ 
+class export_separate_meshes(bpy.types.Operator, ExportHelper):
+    bl_idname = "kkb.exportseparatemeshes"
+    bl_label = "Export Separate Meshes"
+    bl_description = "Choose where to export meshes"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    filepath : StringProperty(maxlen=1024, default='', subtype='FILE_PATH', options={'HIDDEN'})
+    filter_glob : StringProperty(default='', options={'HIDDEN'})
+
+    def execute(self, context):
+        filepath = self.filepath
+        
+        export_meshes(filepath)
 
         return {'FINISHED'}
     
