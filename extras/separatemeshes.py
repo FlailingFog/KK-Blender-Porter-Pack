@@ -50,15 +50,18 @@ def load_smr_data(directory):
             json_file = open(json_file_path)
             json_smr_data = json.load(json_file)
             
-    do_separate_meshes(json_smr_data)
+    separate_clothes(json_smr_data)
+    separate_body(json_smr_data)
             
-def do_separate_meshes(json_smr_data): 
+def separate_clothes(json_smr_data): 
     #Get Clothes and it's object data
     clothes = bpy.data.objects['Clothes']
     clothes_data = clothes.data
     
     #Pass 1: To make sure each material has a mesh
     #Select the Clothes object and remove it's unused material slots
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    bpy.ops.object.select_all(action='DESELECT')
     clothes.select_set(True)
     bpy.ops.object.material_slot_remove_unused()
     
@@ -70,6 +73,7 @@ def do_separate_meshes(json_smr_data):
         #Deselect everything
         bpy.ops.object.mode_set(mode = 'OBJECT')
         bpy.ops.object.select_all(action='DESELECT')
+        bpy.context.view_layer.objects.active = clothes
         bpy.ops.object.mode_set(mode = 'EDIT')
         bpy.ops.mesh.select_all(action = 'DESELECT')
         
@@ -102,6 +106,66 @@ def do_separate_meshes(json_smr_data):
     clothes.select_set(True)
     bpy.ops.object.material_slot_remove_unused()
      
+def separate_body(json_smr_data):
+    body = bpy.data.objects['Body']
+    body_data = body.data
+    
+    body_obj_material_map = {
+        'cf_Ohitomi_L' : 'cf_m_sirome_00',
+        'cf_Ohitomi_R' : 'cf_m_sirome_00.001',
+        'cf_Ohitomi_L02' : 'cf_m_hitomi_00',
+        'cf_Ohitomi_R02' : 'cf_m_hitomi_00.001',
+    }
+    
+    #Pass 1: To make sure each material has a mesh
+    #Select the Body object and remove it's unused material slots
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    bpy.ops.object.select_all(action='DESELECT')
+    body.select_set(True)
+    bpy.ops.object.material_slot_remove_unused()
+    
+    #Loop over each renderer in KK_SMRData.json
+    for row in json_smr_data:
+        #Deselect everything
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+        bpy.ops.object.select_all(action='DESELECT')
+        bpy.context.view_layer.objects.active = body
+
+        if row['SMRName'] not in body_obj_material_map:
+            continue
+        
+        bpy.ops.object.mode_set(mode = 'EDIT')
+        bpy.ops.mesh.select_all(action = 'DESELECT')
+        
+        #Loop over each renderer material and select it
+        found_a_material = False
+        for mat_name in row['SMRMaterialNames']:
+            found_mat_idx = body_data.materials.find(body_obj_material_map[row['SMRName']])
+            
+            if found_mat_idx > -1:               
+                bpy.context.object.active_material_index = found_mat_idx
+                bpy.ops.object.material_slot_select()
+                found_a_material = True
+            
+        if not found_a_material:
+            continue
+        
+        #Seperate to a new mesh
+        bpy.ops.mesh.separate(type='SELECTED')
+        
+        #Remove unused materials from the new object and rename it to it's corresponding Renderer name
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+        bpy.ops.object.material_slot_remove_unused()
+        bpy.context.selected_objects[0].name = row['SMRName']
+    bpy.ops.object.select_all(action='DESELECT')
+    
+    #Pass 2: Clean up
+    #Select the Body object and remove it's unused material slots
+    body.select_set(True)
+    bpy.ops.object.material_slot_remove_unused()
+    bpy.ops.object.select_all(action='DESELECT')
+    
+     
 class separate_meshes(bpy.types.Operator):
     bl_idname = "kkb.separatemeshes"
     bl_label = "Separate Meshes"
@@ -129,17 +193,32 @@ class separate_meshes(bpy.types.Operator):
 ########## EXPORTER ##########
 def export_meshes(directory):
     bpy.ops.object.mode_set(mode = 'OBJECT')
+    
+    obj_material_map = {
+        'cf_Ohitomi_L' : 'cf_m_sirome_00',
+        'cf_Ohitomi_R' : 'cf_m_sirome_00',
+        'cf_Ohitomi_L02' : 'cf_m_hitomi_00',
+        'cf_Ohitomi_R02' : 'cf_m_hitomi_00',
+    }
 
     armature = bpy.data.objects['Armature']
     for obj in bpy.data.objects:
         if obj.parent == armature and obj.visible_get():
             bpy.ops.object.select_all(action='DESELECT')
             
+            bpy.context.view_layer.objects.active = armature
             armature.select_set(True)
             obj.select_set(True)
             
+            #Special case rename
+            if obj.name in obj_material_map:
+                obj.data.materials[0].name = obj_material_map[obj.name]
+            
             bpy.ops.export_scene.fbx(filepath = directory + obj.name + '.fbx', use_selection = True, use_active_collection = False, global_scale = 1.0, apply_unit_scale = True, apply_scale_options = 'FBX_SCALE_NONE', use_space_transform = True, bake_space_transform = False, object_types={'ARMATURE', 'MESH'}, use_mesh_modifiers = True, use_mesh_modifiers_render = True, mesh_smooth_type  = 'FACE', use_subsurf = False, use_mesh_edges = False, use_tspace = False, use_custom_props = False, add_leaf_bones = False, primary_bone_axis= 'Z', secondary_bone_axis='Y', use_armature_deform_only = False, armature_nodetype = 'NULL', bake_anim = False, bake_anim_use_all_bones = False, bake_anim_use_nla_strips = False, bake_anim_use_all_actions = True, bake_anim_force_startend_keying = True, bake_anim_step = 1.0, bake_anim_simplify_factor = 0, path_mode = 'AUTO', embed_textures = False, batch_mode = 'OFF', use_batch_own_dir = True, axis_forward='-X', axis_up='Z')
- 
+                
+    bpy.ops.object.select_all(action='DESELECT')
+                
+                
 class export_separate_meshes(bpy.types.Operator, ExportHelper):
     bl_idname = "kkb.exportseparatemeshes"
     bl_label = "Export Separate Meshes"
