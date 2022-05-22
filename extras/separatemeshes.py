@@ -58,10 +58,14 @@ def separate_clothes(json_smr_data):
     clothes = bpy.data.objects['Clothes']
     clothes_data = clothes.data
     
+    materialname = clothes_data.materials[0].name
+    use_template_name = "Template " in materialname
+    
     #Pass 1: To make sure each material has a mesh
     #Select the Clothes object and remove it's unused material slots
     bpy.ops.object.mode_set(mode = 'OBJECT')
     bpy.ops.object.select_all(action='DESELECT')
+    bpy.context.view_layer.objects.active = clothes
     clothes.select_set(True)
     bpy.ops.object.material_slot_remove_unused()
     
@@ -80,7 +84,7 @@ def separate_clothes(json_smr_data):
         #Loop over each renderer material and select it
         found_a_material = False
         for mat_name in row['SMRMaterialNames']:
-            found_mat_idx = clothes_data.materials.find(mat_name)
+            found_mat_idx = clothes_data.materials.find(("Template " if use_template_name else "") + mat_name)
             
             if found_mat_idx > -1 and mat_name not in separated_meshes:
                 separated_meshes.append(mat_name)
@@ -110,6 +114,12 @@ def separate_body(json_smr_data):
     body = bpy.data.objects['Body']
     body_data = body.data
     
+    use_template_name = "Template " in body_data.materials[0].name
+    
+    #If user has applied materials then don't separate body.
+    if use_template_name:
+        return
+    
     body_obj_material_map = {
         'cf_Ohitomi_L' : 'cf_m_sirome_00',
         'cf_Ohitomi_R' : 'cf_m_sirome_00.001',
@@ -121,6 +131,7 @@ def separate_body(json_smr_data):
     #Select the Body object and remove it's unused material slots
     bpy.ops.object.mode_set(mode = 'OBJECT')
     bpy.ops.object.select_all(action='DESELECT')
+    bpy.context.view_layer.objects.active = body
     body.select_set(True)
     bpy.ops.object.material_slot_remove_unused()
     
