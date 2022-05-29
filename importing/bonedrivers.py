@@ -12,7 +12,7 @@ Usage:
 - Run the script
 '''
 
-import bpy, math, traceback
+import bpy, math, time
 
 from .finalizepmx import kklog
 from .cleanarmature import set_armature_layer
@@ -791,9 +791,11 @@ class bone_drivers(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):
+        last_step = time.time()
 
-        scene = context.scene.placeholder
-        modify_armature = scene.armature_edit_bool
+        kklog('\nAdding bone drivers...')
+
+        modify_armature = context.scene.kkbp.armature_dropdown in ['A', 'B']
         armature_not_modified = bpy.data.objects['Armature'].data.bones.get('MasterFootIK.L') == None
         
         if modify_armature and armature_not_modified:
@@ -809,7 +811,7 @@ class bone_drivers(bpy.types.Operator):
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
         
         if modify_armature and armature_not_modified:
-            kklog('Creating eye controller and renaming bones...')
+            kklog('Creating eye controller and renaming bones...', 'timed')
             make_eye_controller()
             bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
             scale_final_bones()
@@ -832,6 +834,8 @@ class bone_drivers(bpy.types.Operator):
             for space in area.spaces:
                 if space.type == 'VIEW_3D':
                     space.shading.type = my_shading 
+        
+        kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
         
         return {'FINISHED'}
 

@@ -9,8 +9,9 @@ Usage:
 - Run the script
 '''
 
-import bpy, traceback
+import bpy, time
 from .finalizepmx import survey
+from .importbuttons import kklog
 
 #function that returns a type of bone list
 def get_bone_list(kind):
@@ -311,15 +312,17 @@ class clean_armature(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):
-        
-        scene = context.scene.placeholder
-        modify_armature = scene.armature_edit_bool
+        last_step = time.time()
+
+        kklog('\nCategorizing bones into armature layers...', 'timed')
 
         reorganize_armature_layers()
-        if modify_armature:
+        if context.scene.kkbp.categorize_dropdown in ['A', 'B']:
             visually_connect_bones()
         move_accessory_bones()
         
+        kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
+
         return {'FINISHED'}
 
 if __name__ == "__main__":

@@ -1110,7 +1110,7 @@ def main():
     createPalmVertexGroups(koikatsuCommons.leftWristDeformBoneName, koikatsuCommons.leftLittleFingerPalmDeformBoneName, leftPalmMinX, leftLittleFingerBone1.head.y, None, None)
     createPalmVertexGroups(koikatsuCommons.rightWristDeformBoneName, koikatsuCommons.rightLittleFingerPalmDeformBoneName, rightPalmMinX, rightLittleFingerBone1.head.y, None, None)
     
-    def finalizeFingerBones(leftSide, rig, wristBoneName, fingerPalmBoneName, fingerBone1Name, fingerBone2Name, fingerBone3Name, fingerDeformBone1Name, fingerDeformBone2Name, fingerDeformBone3Name, objectName, roll, middle = False, thumb = False):
+    def finalizeFingerBones(leftSide, rig, wristBoneName, fingerPalmBoneName, fingerBone1Name, fingerBone2Name, fingerBone3Name, fingerDeformBone1Name, fingerDeformBone2Name, fingerDeformBone3Name, objectName, palmBoneRoll, fingerBone1Roll, fingerBone2Roll, fingerBone3Roll, middle = False, thumb = False):
         fingerBone1 = rig.data.edit_bones[fingerBone1Name]
         fingerBone2 = rig.data.edit_bones[fingerBone2Name]
         fingerBone3 = rig.data.edit_bones[fingerBone3Name]
@@ -1140,7 +1140,7 @@ def main():
             else:
                 fingerPalmBone.head.x = wristBone.tail.x + math.dist([wristBone.tail.x], [wristBone.head.x]) * 0.6
             fingerPalmBone.head.y = fingerPalmBone.head.y + (fingerBone1.head.y - fingerBone1.tail.y)
-            fingerPalmBone.roll = roll
+            fingerPalmBone.roll = palmBoneRoll
         else:
             if leftSide:
                 fingerBone1.head.x = fingerDeformBone1Extremities.minX + math.dist([fingerDeformBone1Extremities.minX], [fingerDeformBone1Extremities.maxX]) * 0.2
@@ -1161,20 +1161,20 @@ def main():
             fingerBone3.tail.y = fingerDeformBone3Extremities.minY + math.dist([fingerDeformBone3Extremities.minY], [fingerDeformBone3Extremities.maxY]) * 0.1
             fingerBone3.tail.z = fingerDeformBone3Extremities.minZ + math.dist([fingerDeformBone3Extremities.minZ], [fingerDeformBone3Extremities.maxZ]) * 0.25
             fingerBone1.parent = rig.data.edit_bones[fingerPalmBoneName]
-        fingerBone1.roll = roll
-        fingerBone2.roll = roll
-        fingerBone3.roll = roll
+        fingerBone1.roll = fingerBone1Roll
+        fingerBone2.roll = fingerBone2Roll
+        fingerBone3.roll = fingerBone3Roll
         
-    finalizeFingerBones(True, metarig, koikatsuCommons.leftWristBoneName, koikatsuCommons.leftIndexFingerPalmBoneName, koikatsuCommons.leftIndexFingerBone1Name, koikatsuCommons.leftIndexFingerBone2Name, koikatsuCommons.leftIndexFingerBone3Name, koikatsuCommons.leftIndexFingerDeformBone1Name, koikatsuCommons.leftIndexFingerDeformBone2Name, koikatsuCommons.leftIndexFingerDeformBone3Name, koikatsuCommons.bodyName, radians(0))
-    finalizeFingerBones(False, metarig, koikatsuCommons.rightWristBoneName, koikatsuCommons.rightIndexFingerPalmBoneName, koikatsuCommons.rightIndexFingerBone1Name, koikatsuCommons.rightIndexFingerBone2Name, koikatsuCommons.rightIndexFingerBone3Name, koikatsuCommons.rightIndexFingerDeformBone1Name, koikatsuCommons.rightIndexFingerDeformBone2Name, koikatsuCommons.rightIndexFingerDeformBone3Name, koikatsuCommons.bodyName, radians(0))
-    finalizeFingerBones(True, metarig, koikatsuCommons.leftWristBoneName, koikatsuCommons.leftMiddleFingerPalmBoneName, koikatsuCommons.leftMiddleFingerBone1Name, koikatsuCommons.leftMiddleFingerBone2Name, koikatsuCommons.leftMiddleFingerBone3Name, koikatsuCommons.leftMiddleFingerDeformBone1Name, koikatsuCommons.leftMiddleFingerDeformBone2Name, koikatsuCommons.leftMiddleFingerDeformBone3Name, koikatsuCommons.bodyName, radians(0), True)
-    finalizeFingerBones(False, metarig, koikatsuCommons.rightWristBoneName, koikatsuCommons.rightMiddleFingerPalmBoneName, koikatsuCommons.rightMiddleFingerBone1Name, koikatsuCommons.rightMiddleFingerBone2Name, koikatsuCommons.rightMiddleFingerBone3Name, koikatsuCommons.rightMiddleFingerDeformBone1Name, koikatsuCommons.rightMiddleFingerDeformBone2Name, koikatsuCommons.rightMiddleFingerDeformBone3Name, koikatsuCommons.bodyName, radians(0), True)
-    finalizeFingerBones(True, metarig, koikatsuCommons.leftWristBoneName, koikatsuCommons.leftRingFingerPalmBoneName, koikatsuCommons.leftRingFingerBone1Name, koikatsuCommons.leftRingFingerBone2Name, koikatsuCommons.leftRingFingerBone3Name, koikatsuCommons.leftRingFingerDeformBone1Name, koikatsuCommons.leftRingFingerDeformBone2Name, koikatsuCommons.leftRingFingerDeformBone3Name, koikatsuCommons.bodyName, radians(0))
-    finalizeFingerBones(False, metarig, koikatsuCommons.rightWristBoneName, koikatsuCommons.rightRingFingerPalmBoneName, koikatsuCommons.rightRingFingerBone1Name, koikatsuCommons.rightRingFingerBone2Name, koikatsuCommons.rightRingFingerBone3Name, koikatsuCommons.rightRingFingerDeformBone1Name, koikatsuCommons.rightRingFingerDeformBone2Name, koikatsuCommons.rightRingFingerDeformBone3Name, koikatsuCommons.bodyName, radians(0))
-    finalizeFingerBones(True, metarig, koikatsuCommons.leftWristBoneName, koikatsuCommons.leftLittleFingerPalmBoneName, koikatsuCommons.leftLittleFingerBone1Name, koikatsuCommons.leftLittleFingerBone2Name, koikatsuCommons.leftLittleFingerBone3Name, koikatsuCommons.leftLittleFingerDeformBone1Name, koikatsuCommons.leftLittleFingerDeformBone2Name, koikatsuCommons.leftLittleFingerDeformBone3Name, koikatsuCommons.bodyName, radians(0))
-    finalizeFingerBones(False, metarig, koikatsuCommons.rightWristBoneName, koikatsuCommons.rightLittleFingerPalmBoneName, koikatsuCommons.rightLittleFingerBone1Name, koikatsuCommons.rightLittleFingerBone2Name, koikatsuCommons.rightLittleFingerBone3Name, koikatsuCommons.rightLittleFingerDeformBone1Name, koikatsuCommons.rightLittleFingerDeformBone2Name, koikatsuCommons.rightLittleFingerDeformBone3Name, koikatsuCommons.bodyName, radians(0))
-    finalizeFingerBones(True, metarig, koikatsuCommons.leftWristBoneName, koikatsuCommons.leftIndexFingerPalmBoneName, koikatsuCommons.leftThumbBone1Name, koikatsuCommons.leftThumbBone2Name, koikatsuCommons.leftThumbBone3Name, koikatsuCommons.leftThumbDeformBone1Name, koikatsuCommons.leftThumbDeformBone2Name, koikatsuCommons.leftThumbDeformBone3Name, koikatsuCommons.bodyName, radians(-270), False, True)
-    finalizeFingerBones(False, metarig, koikatsuCommons.rightWristBoneName, koikatsuCommons.rightIndexFingerPalmBoneName, koikatsuCommons.rightThumbBone1Name, koikatsuCommons.rightThumbBone2Name, koikatsuCommons.rightThumbBone3Name, koikatsuCommons.rightThumbDeformBone1Name, koikatsuCommons.rightThumbDeformBone2Name, koikatsuCommons.rightThumbDeformBone3Name, koikatsuCommons.bodyName, radians(-90), False, True)
+    finalizeFingerBones(True, metarig, koikatsuCommons.leftWristBoneName, koikatsuCommons.leftIndexFingerPalmBoneName, koikatsuCommons.leftIndexFingerBone1Name, koikatsuCommons.leftIndexFingerBone2Name, koikatsuCommons.leftIndexFingerBone3Name, koikatsuCommons.leftIndexFingerDeformBone1Name, koikatsuCommons.leftIndexFingerDeformBone2Name, koikatsuCommons.leftIndexFingerDeformBone3Name, koikatsuCommons.bodyName, radians(0), radians(0), radians(5), radians(10))
+    finalizeFingerBones(False, metarig, koikatsuCommons.rightWristBoneName, koikatsuCommons.rightIndexFingerPalmBoneName, koikatsuCommons.rightIndexFingerBone1Name, koikatsuCommons.rightIndexFingerBone2Name, koikatsuCommons.rightIndexFingerBone3Name, koikatsuCommons.rightIndexFingerDeformBone1Name, koikatsuCommons.rightIndexFingerDeformBone2Name, koikatsuCommons.rightIndexFingerDeformBone3Name, koikatsuCommons.bodyName, radians(0), radians(0), radians(-5), radians(-10))
+    finalizeFingerBones(True, metarig, koikatsuCommons.leftWristBoneName, koikatsuCommons.leftMiddleFingerPalmBoneName, koikatsuCommons.leftMiddleFingerBone1Name, koikatsuCommons.leftMiddleFingerBone2Name, koikatsuCommons.leftMiddleFingerBone3Name, koikatsuCommons.leftMiddleFingerDeformBone1Name, koikatsuCommons.leftMiddleFingerDeformBone2Name, koikatsuCommons.leftMiddleFingerDeformBone3Name, koikatsuCommons.bodyName, radians(0), radians(-10), radians(-2), radians(6), True)
+    finalizeFingerBones(False, metarig, koikatsuCommons.rightWristBoneName, koikatsuCommons.rightMiddleFingerPalmBoneName, koikatsuCommons.rightMiddleFingerBone1Name, koikatsuCommons.rightMiddleFingerBone2Name, koikatsuCommons.rightMiddleFingerBone3Name, koikatsuCommons.rightMiddleFingerDeformBone1Name, koikatsuCommons.rightMiddleFingerDeformBone2Name, koikatsuCommons.rightMiddleFingerDeformBone3Name, koikatsuCommons.bodyName, radians(0), radians(10), radians(2), radians(-6), True)
+    finalizeFingerBones(True, metarig, koikatsuCommons.leftWristBoneName, koikatsuCommons.leftRingFingerPalmBoneName, koikatsuCommons.leftRingFingerBone1Name, koikatsuCommons.leftRingFingerBone2Name, koikatsuCommons.leftRingFingerBone3Name, koikatsuCommons.leftRingFingerDeformBone1Name, koikatsuCommons.leftRingFingerDeformBone2Name, koikatsuCommons.leftRingFingerDeformBone3Name, koikatsuCommons.bodyName, radians(0), radians(-15), radians(-10), radians(-5))
+    finalizeFingerBones(False, metarig, koikatsuCommons.rightWristBoneName, koikatsuCommons.rightRingFingerPalmBoneName, koikatsuCommons.rightRingFingerBone1Name, koikatsuCommons.rightRingFingerBone2Name, koikatsuCommons.rightRingFingerBone3Name, koikatsuCommons.rightRingFingerDeformBone1Name, koikatsuCommons.rightRingFingerDeformBone2Name, koikatsuCommons.rightRingFingerDeformBone3Name, koikatsuCommons.bodyName, radians(0), radians(15), radians(10), radians(5))
+    finalizeFingerBones(True, metarig, koikatsuCommons.leftWristBoneName, koikatsuCommons.leftLittleFingerPalmBoneName, koikatsuCommons.leftLittleFingerBone1Name, koikatsuCommons.leftLittleFingerBone2Name, koikatsuCommons.leftLittleFingerBone3Name, koikatsuCommons.leftLittleFingerDeformBone1Name, koikatsuCommons.leftLittleFingerDeformBone2Name, koikatsuCommons.leftLittleFingerDeformBone3Name, koikatsuCommons.bodyName, radians(0), radians(-20), radians(-18), radians(-16))
+    finalizeFingerBones(False, metarig, koikatsuCommons.rightWristBoneName, koikatsuCommons.rightLittleFingerPalmBoneName, koikatsuCommons.rightLittleFingerBone1Name, koikatsuCommons.rightLittleFingerBone2Name, koikatsuCommons.rightLittleFingerBone3Name, koikatsuCommons.rightLittleFingerDeformBone1Name, koikatsuCommons.rightLittleFingerDeformBone2Name, koikatsuCommons.rightLittleFingerDeformBone3Name, koikatsuCommons.bodyName, radians(0), radians(20), radians(18), radians(16))
+    finalizeFingerBones(True, metarig, koikatsuCommons.leftWristBoneName, koikatsuCommons.leftIndexFingerPalmBoneName, koikatsuCommons.leftThumbBone1Name, koikatsuCommons.leftThumbBone2Name, koikatsuCommons.leftThumbBone3Name, koikatsuCommons.leftThumbDeformBone1Name, koikatsuCommons.leftThumbDeformBone2Name, koikatsuCommons.leftThumbDeformBone3Name, koikatsuCommons.bodyName, None, radians(-257), radians(-260), radians(-263), False, True)
+    finalizeFingerBones(False, metarig, koikatsuCommons.rightWristBoneName, koikatsuCommons.rightIndexFingerPalmBoneName, koikatsuCommons.rightThumbBone1Name, koikatsuCommons.rightThumbBone2Name, koikatsuCommons.rightThumbBone3Name, koikatsuCommons.rightThumbDeformBone1Name, koikatsuCommons.rightThumbDeformBone2Name, koikatsuCommons.rightThumbDeformBone3Name, koikatsuCommons.bodyName, None, radians(-103), radians(-106), radians(-109), False, True)
         
     if not metarig.data.edit_bones.get(koikatsuCommons.skirtParentBoneCopyName):
         koikatsuCommons.copyBone(metarig, koikatsuCommons.skirtParentBoneName, koikatsuCommons.skirtParentBoneCopyName)
@@ -1455,8 +1455,23 @@ def main():
     if isMale:
         koikatsuCommons.torsoLayerBoneNames.remove(koikatsuCommons.breastsHandleBoneName)
         koikatsuCommons.torsoLayerBoneNames.remove(koikatsuCommons.leftBreastHandleBoneName)
-        koikatsuCommons.torsoLayerBoneNames.remove(koikatsuCommons.rightBreastHandleBoneName)
-        
+        koikatsuCommons.torsoLayerBoneNames.remove(koikatsuCommons.rightBreastHandleBoneName) 
+               
+    if not metarig.pose.bones.get(koikatsuCommons.betterPenetrationRootCrotchBoneName):
+        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationRootCrotchBoneName)
+        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationFrontCrotchBoneName)
+        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationLeftCrotchBone1Name)
+        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationRightCrotchBone1Name)
+        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationLeftCrotchBone2Name)
+        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationRightCrotchBone2Name)
+        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationLeftCrotchBone3Name)
+        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationRightCrotchBone3Name)
+        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationLeftCrotchBone4Name)
+        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationRightCrotchBone4Name)
+        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationLeftCrotchBone5Name)
+        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationRightCrotchBone5Name)
+        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationBackCrotchBoneName)
+                
     ctrlBoneNames = []
     ctrlBoneNames.extend(koikatsuCommons.faceLayerBoneNames)
     ctrlBoneNames.extend(koikatsuCommons.faceMchLayerBoneNames)

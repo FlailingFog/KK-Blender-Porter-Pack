@@ -132,7 +132,7 @@ class switch_armature(bpy.types.Operator):
             modify_pmx_armature()
 
             armature.hide = False
-            scene = context.scene.placeholder
+            scene = context.scene.kkbp
             scene.armature_edit_bool = True
             bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT')
             bpy.ops.object.mode_set(mode='OBJECT')

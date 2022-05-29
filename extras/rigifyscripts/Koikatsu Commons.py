@@ -1008,11 +1008,10 @@ def setBoneManagerLayersFromRigifyLayers(rig):
     
 def assignSingleBoneLayer(rig, boneName, layerIndex):
     bone = rig.data.bones[boneName]
-    if bone:
-        bone.layers[layerIndex] = True
-        for index in range(32):
-            if index != layerIndex:
-                bone.layers[index] = False
+    bone.layers[layerIndex] = True
+    for index in range(32):
+        if index != layerIndex:
+            bone.layers[index] = False
             
 def assignSingleBoneLayerToList(rig, boneNamesList, layerIndex):
     for boneName in boneNamesList:

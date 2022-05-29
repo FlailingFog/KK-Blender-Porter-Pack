@@ -5,28 +5,26 @@ from bpy.props import (
     IntProperty,
     EnumProperty,
     BoolProperty,
-    StringProperty,
-    PointerProperty,
+    StringProperty
 )
 
 class PlaceholderProperties(PropertyGroup):
+    import_dir: StringProperty(
+        name="Import directory",
+        default='',
+        description="A property used by the plugin to keep track of the user's pmx directory during the import process. This string is cleared after the Import Colors script is run.")
+
     inc_dec_int: IntProperty(
         name="Incr-Decr",
         min=1, max = 6,
         default=1,
         description="Set this to 2 or 3 if the baked texture is blurry")
-    
-    armature_edit_bool : BoolProperty(
+
+    has_hair_bool : BoolProperty(
     name="Enable or Disable",
-    description="""Disable this to keep the stock Koikatsu armature structure.
-    Disabling this will...
-    --Leave you with a stock armature (no bone renames or rotated bones)
-    --Skip IK creation
-    --Skip Eye Controller creation
-    You can swap between the original structure and modified structure
-    at any time by using the button in the Extras panel""",
+    description="A property used to let the plugin know if the model has any hair",
     default = True)
-    
+
     delete_shapekey_bool : BoolProperty(
     name="Enable or Disable",
     description="""Enable to save the partial shapekeys that are used to generate the KK shapekeys. These are useless on their own""",
@@ -42,15 +40,25 @@ class PlaceholderProperties(PropertyGroup):
     description="""Enable to use one generic outline material as opposed to using several unique ones. Checking this may cause outline transparency issues""",
     default = False)
     
-    haircheck_bool : BoolProperty(
-    name="Enable or Disable",
-    description="Disable this if your character doesn't have any hair. You may need to disable this if your hair is recognized as an accessory (i.e. you don't have any _HGLS files in your export folder)",
-    default = True)
-    
     templates_bool : BoolProperty(
     name="Enable or Disable",
     description="""Keep enabled to set the KKBP material templates to fake user. This will keep them from being deleted when blender is closed. Useful if you want to apply them to other objects after your character is finished""",
     default = True)
+
+    armature_dropdown : EnumProperty(
+        items=(
+            ("A", "Use KKBP Armature", "Use the KKBP Armature, a slightly modified armature that has basic IKs."),
+            ("B", "Use Rigify Armature", "Makd"),
+            ("C", "Use Koikatsu Armature", "s"),
+            ("D", "Use PMX Armature", "  "),
+        ), name="", default="A", description=" ")
+
+    categorize_dropdown : EnumProperty(
+        items=(
+            ("A", "Don't pause to categorize", "Makes everything blue"),
+            ("B", "Pause to categorize", "Makes everything red"),
+            ("C", "Automatically categorize", "Keeps dark colors the same as the light ones"),
+        ), name="", default="A", description="Armature selection")
     
     colors_dropdown : EnumProperty(
         items=(
@@ -130,7 +138,7 @@ class PlaceholderProperties(PropertyGroup):
         ), name="", default="A", description="LUT Choice")
     
 
-class IMPORTING_PT_panel(bpy.types.Panel):
+class IMPORTINGHEADER_PT_panel(bpy.types.Panel):
     bl_label = 'Importing and Exporting'
     bl_category = "KKBP"
     bl_space_type = "VIEW_3D"
@@ -138,8 +146,8 @@ class IMPORTING_PT_panel(bpy.types.Panel):
     def draw(self,context):
         layout = self.layout
 
-class IMPORTING1_PT_panel(bpy.types.Panel):
-    bl_parent_id = "IMPORTING_PT_panel"
+class IMPORTING_PT_panel(bpy.types.Panel):
+    bl_parent_id = "IMPORTINGHEADER_PT_panel"
     bl_label = "Importing and Exporting"
     bl_category = "KKBP"
     bl_space_type = "VIEW_3D"
@@ -147,92 +155,45 @@ class IMPORTING1_PT_panel(bpy.types.Panel):
     bl_options = {'HIDE_HEADER'}
     
     def draw(self,context):
+        scene = context.scene.kkbp
         layout = self.layout
         splitfac = 0.6
-        col = layout.column(align=True)
-        row = col.row(align=True)
-        split = row.split(align=True, factor=1)#factor=0.5)
-        
-        box1 = split.box()
-        box1.label(text="")
-        split1 = box1.split(align=True, factor=splitfac)
-        split1.label(text="1) Finalize PMX file")
-        split1.operator('kkb.finalizepmx', text = '', icon='MODIFIER')
-
-class IMPORTOPTIONS_PT_Panel(bpy.types.Panel):
-    bl_parent_id = "IMPORTING_PT_panel"
-    bl_label = "Import options (Step 1)"
-    bl_category = "KKBP"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    #bl_options = {'DEFAULT_CLOSED'}
-
-    def draw(self, context):
-        layout = self.layout
-        
-        col = layout.column(align=True)
-        
-        row = col.row(align=True)
-        split = row.split(align = True, factor=.5)
-        split.prop(context.scene.placeholder, "armature_edit_bool", toggle=True, text = "Use modified armature")
-        split.prop(context.scene.placeholder, "delete_shapekey_bool", toggle=True, text = "Save partial shapekeys")
-        
-        row = col.row(align=True)
-        split = row.split(align = True, factor=.5)
-        split.prop(context.scene.placeholder, "fix_seams", toggle=True, text = "Fix body seams")
-        
-
-class IMPORTING2_PT_panel(bpy.types.Panel):
-    bl_parent_id = "IMPORTING_PT_panel"
-    bl_options = {'HIDE_HEADER'}
-    bl_label = "Import options2"
-    bl_category = "KKBP"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    
-    def draw(self,context):
-        layout = self.layout
-        splitfac = 0.6
-        
         box = layout.box()
-        split2 = box.split(align=True, factor=splitfac)
-        split2.label(text="2a) Import KK Shader and Textures")
-        split2.operator('kkb.importeverything', text = '', icon = 'BRUSHES_ALL')
-        
         col = box.column(align=True)
+        
+        row = col.row(align=True)
+        row.operator('kkb.quickimport', text = 'Import model', icon='MODIFIER')
+        
+        row = col.row(align=True)
+        row.label(text="")
+        
         row = col.row(align = True)
-        split2 = row.split(align=True, factor=splitfac)
-        split2.label(text="2b) Convert and Apply colors to Shaders")
-        split2.operator('kkb.importcolors', text = '', icon = 'IMAGE')
-
-        row = col.row(align=True)
-        split = row.split(align = True, factor=splitfac)
-        split.label(text="")
-        split.prop(context.scene.placeholder, "colors_dropdown")
-
+        box = row.box()
+        col = box.column(align=True)
         
-class APPLYOPTIONS_PT_Panel(bpy.types.Panel):
-    bl_parent_id = "IMPORTING_PT_panel"
-    bl_label = "Import options (Step 2a and 2b)"
-    bl_category = "KKBP"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    #bl_options = {'DEFAULT_CLOSED'}
-
-    def draw(self, context):
-        layout = self.layout
-        splitfac = 0.3
+        if scene.categorize_dropdown == 'B':
+            row = col.row(align=True)
+            row.operator('kkb.matimport', text = 'Finish categorization', icon='BRUSHES_ALL')
         
-        col = layout.column(align = True)
         row = col.row(align=True)
-        split = row.split(align=True, factor=splitfac)
-        split = row.split(align=True, factor=0.5)
-        split.prop(context.scene.placeholder, "texture_outline_bool", toggle=True, text = "Use generic outline")
-        split.prop(context.scene.placeholder, "templates_bool", toggle=True, text = "Keep material templates")
+        split = row.split(align = True, factor=.5)
+        split.prop(context.scene.kkbp, "armature_dropdown")
+        split.prop(context.scene.kkbp, "categorize_dropdown")
+        
+        row = col.row(align=True)
+        split = row.split(align = True, factor=.5)
+        split.prop(context.scene.kkbp, "colors_dropdown")
+        split.operator('kkb.importcolors', text = 'Recalculate dark colors', icon='IMAGE')
 
         row = col.row(align=True)
         split = row.split(align = True, factor=.5)
-        split.prop(context.scene.placeholder, "haircheck_bool", toggle=True, text = "Check for hair")
+        split.prop(context.scene.kkbp, "delete_shapekey_bool", toggle=True, text = "Save partial shapekeys")
+        split.prop(context.scene.kkbp, "fix_seams", toggle=True, text = "Fix body seams")
+        
+        row = col.row(align=True)
+        split = row.split(align = True, factor=.5)
+        split.prop(context.scene.kkbp, "texture_outline_bool", toggle=True, text = "Use generic outline")
+        split.prop(context.scene.kkbp, "templates_bool", toggle=True, text = "Keep material templates")
     
 class EXPORTING_PT_panel(bpy.types.Panel):
     bl_parent_id = "IMPORTING_PT_panel"
@@ -255,7 +216,7 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text="")
-        split.prop(context.scene.placeholder, "prep_dropdown")
+        split.prop(context.scene.kkbp, "prep_dropdown")
 
         col = box.column(align=True)
         row = col.row(align=True)
@@ -265,7 +226,7 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text="")
-        split.prop(context.scene.placeholder, "inc_dec_int", text = 'Bake multiplier:')
+        split.prop(context.scene.kkbp, "inc_dec_int", text = 'Bake multiplier:')
         
         col = box.column(align=True)
         row = col.row(align=True)
@@ -275,7 +236,7 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.label(text="")
-        split.prop(context.scene.placeholder, "atlas_dropdown")
+        split.prop(context.scene.kkbp, "atlas_dropdown")
 
 class EXTRAS_PT_panel(bpy.types.Panel):
     bl_label = 'KKBP Extras'
@@ -302,24 +263,10 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         split.label(text="")
         row = col.row(align=True)
         split = row.split(align=True)
-        split.prop(context.scene.placeholder, "dropdown_box")
-        split.prop(context.scene.placeholder, "shadows_dropdown")
-        split.prop(context.scene.placeholder, "blend_dropdown")
-        split.prop(context.scene.placeholder, "studio_lut_bool", toggle=True, text = "Convert texture?")
-        
-        box = layout.box()
-        col = box.column(align=True)
-        row = col.row(align=True)
-        split = row.split(align=True, factor=splitfac)
-        split.label(text="Separate and Link Eyebrow and Eye shapekeys")
-        split.operator('kkb.linkshapekeys', text = '', icon='SPHERECURVE')
-
-        box = layout.box()
-        col = box.column(align=True)
-        row = col.row(align=True)
-        split = row.split(align=True, factor=splitfac)
-        split.label(text="Convert for Rigify")
-        split.operator('kkb.rigifyconvert', text = '', icon='SOLO_OFF')
+        split.prop(context.scene.kkbp, "dropdown_box")
+        split.prop(context.scene.kkbp, "shadows_dropdown")
+        split.prop(context.scene.kkbp, "blend_dropdown")
+        split.prop(context.scene.kkbp, "studio_lut_bool", toggle=True, text = "Convert texture?")
 
         box = layout.box()
         col = box.column(align=True)
@@ -327,22 +274,28 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         split = row.split(align=True, factor=splitfac)
         split.label(text="Import ripped FBX animation")
         split.operator('kkb.importanimation', text = '', icon = 'ARMATURE_DATA')
-        row = col.row(align=True)
-        split = row.split(align=True, factor=splitfac)
-        split.label(text="")
-        split.prop(context.scene.placeholder, "rokoko_bool", toggle=True, text = "Use Rokoko plugin")
+        #row = col.row(align=True)
+        #split = row.split(align=True, factor=splitfac)
+        #split.label(text="")
+        #split.prop(context.scene.kkbp, "rokoko_bool", toggle=True, text = "Use Rokoko plugin")
         
-        col = box.column(align=True)
-        row = col.row(align=True)
-        split = row.split(align=True, factor=splitfac)
-        split.label(text="Swap armature type")
-        split.operator('kkb.switcharmature', text = '', icon = 'ARROW_LEFTRIGHT')
+        #col = box.column(align=True)
+        #row = col.row(align=True)
+        #split = row.split(align=True, factor=splitfac)
+        #split.label(text="Swap armature type")
+        #split.operator('kkb.switcharmature', text = '', icon = 'ARROW_LEFTRIGHT')
 
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text="Toggle hand IKs")
         split.operator('kkb.toggleik', text = '', icon = 'BONE_DATA')
+
+        col = box.column(align=True)
+        row = col.row(align=True)
+        split = row.split(align=True, factor=splitfac)
+        split.label(text="Convert for Rigify")
+        split.operator('kkb.rigifyconvert', text = '', icon='SOLO_OFF')
         
         box = layout.box()
         col = box.column(align=True)
@@ -357,6 +310,11 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         split.label(text="Export Seperate Meshes")
         split.operator('kkb.exportseparatemeshes', text = '', icon = 'EXPORT')
         
+        col = box.column(align=True)
+        row = col.row(align=True)
+        split = row.split(align=True, factor=splitfac)
+        split.label(text="Separate Eyes and Eyebrows")
+        split.operator('kkb.linkshapekeys', text = '', icon='SPHERECURVE')
 
         #put all icons available in blender at the end of the panel
 
@@ -384,15 +342,12 @@ class EDITOR_PT_panel(bpy.types.Panel):
         row.operator('kkb.imageconvert', text = 'Convert image with KKBP', icon = 'IMAGE')
 
         row = col.row(align=True)
-        row.prop(context.scene.placeholder, "image_dropdown")
+        row.prop(context.scene.kkbp, "image_dropdown")
 
 def register():
     bpy.utils.register_class(PlaceholderProperties)
+    bpy.utils.register_class(IMPORTINGHEADER_PT_panel)
     bpy.utils.register_class(IMPORTING_PT_panel)
-    bpy.utils.register_class(IMPORTING1_PT_panel)
-    bpy.utils.register_class(IMPORTOPTIONS_PT_Panel)
-    bpy.utils.register_class(IMPORTING2_PT_panel)
-    bpy.utils.register_class(APPLYOPTIONS_PT_Panel)
     bpy.utils.register_class(EXPORTING_PT_panel)
     bpy.utils.register_class(EXTRAS_PT_panel)
     bpy.utils.register_class(EDITOR_PT_panel)
@@ -401,11 +356,8 @@ def unregister():
     bpy.utils.unregister_class(EDITOR_PT_panel)
     bpy.utils.unregister_class(EXTRAS_PT_panel)
     bpy.utils.unregister_class(EXPORTING_PT_panel)
-    bpy.utils.unregister_class(APPLYOPTIONS_PT_Panel)
-    bpy.utils.unregister_class(IMPORTING2_PT_panel)
-    bpy.utils.unregister_class(IMPORTOPTIONS_PT_Panel)
-    bpy.utils.unregister_class(IMPORTING1_PT_panel)
     bpy.utils.unregister_class(IMPORTING_PT_panel)
+    bpy.utils.unregister_class(IMPORTINGHEADER_PT_panel)
     bpy.utils.unregister_class(PlaceholderProperties)
 
 if __name__ == "__main__":

@@ -36,7 +36,7 @@ Texture Postfix Legend:
 import bpy, os, traceback, json, time
 from pathlib import Path
 from bpy.props import StringProperty
-from .finalizepmx import kklog
+from .importbuttons import kklog
 from .cleanarmature import get_bone_list
 
 #Stop if this is the wrong folder
@@ -100,23 +100,26 @@ def get_templates_and_apply(directory, use_fake_user):
         filepath = str(template_path)
     
     innerpath = 'Material'
-    templateList = ['Template Body',
-    'Template Outline',
-    'Template Body Outline',
-    'Template Tears',
-    'Template Eye (hitomi)',
-    'Template Eyebrows (mayuge)',
-    'Template Eyeline down',
-    'Template Eyeline up',
-    'Template Eyewhites (sirome)',
-    'Template Face',
-    'Template General',
-    'Template Hair',
-    'Template Mixed Metal or Shiny',
-    'Template Nose',
-    'Template Shadowcast',
-    'Template Teeth (tooth)',
-    'Template Fangs (tooth.001)']
+    templateList = [
+        'Template Body',
+        'Template Outline',
+        'Template Body Outline',
+        'Template Tears',
+        'Template Eye (hitomi)',
+        'Template Eyebrows (mayuge)',
+        'Template Eyeline down',
+        'Template Eyeline Kage',
+        'Template Eyeline up',
+        'Template Eyewhites (sirome)',
+        'Template Face',
+        'Template General',
+        'Template Hair',
+        'Template Mixed Metal or Shiny',
+        'Template Nose',
+        'Template Shadowcast',
+        'Template Teeth (tooth)',
+        'Template Fangs (tooth.001)'
+    ]
 
     for template in templateList:
         bpy.ops.wm.append(
@@ -139,6 +142,7 @@ def get_templates_and_apply(directory, use_fake_user):
     swap_body_material('cf_m_noseline_00','Template Nose')
     swap_body_material('cf_m_eyeline_00_up','Template Eyeline up')
     swap_body_material('cf_m_eyeline_down','Template Eyeline down')
+    swap_body_material('cf_m_eyeline_kage','Template Eyeline Kage')
     swap_body_material('cf_m_sirome_00','Template Eyewhites (sirome)')
     swap_body_material('cf_m_sirome_00.001','Template Eyewhites (sirome)')
     swap_body_material('cf_m_hitomi_00','Template Eye (hitomi)')
@@ -190,9 +194,10 @@ def get_templates_and_apply(directory, use_fake_user):
                 original.material = bpy.data.materials[template.name]
     
     #give the shadowcast object a template as well
-    shadowcast = bpy.data.objects['Shadowcast']
-    template = bpy.data.materials['Template Shadowcast']
-    shadowcast.material_slots[0].material = bpy.data.materials[template.name]
+    if bpy.data.objects.get('Shadowcast'):
+        shadowcast = bpy.data.objects['Shadowcast']
+        template = bpy.data.materials['Template Shadowcast']
+        shadowcast.material_slots[0].material = bpy.data.materials[template.name]
 
     #give the tears a material template
     if bpy.data.objects.get('Tears'):
@@ -648,7 +653,8 @@ def add_outlines(single_outline_mode):
     mod = ob.modifiers.new(type='DATA_TRANSFER', name = 'Shadowcast shading proxy')
     mod.show_viewport = False
     mod.show_render = False
-    mod.object = bpy.data.objects['Shadowcast']
+    if bpy.data.objects.get('Shadowcast'):
+        mod.object = bpy.data.objects['Shadowcast']
     mod.use_loop_data = True
     mod.data_types_loops = {'CUSTOM_NORMAL'}
     mod.loop_mapping = 'POLYINTERP_LNORPROJ'
@@ -861,28 +867,21 @@ def clean_orphan_data():
     
 class import_everything(bpy.types.Operator):
     bl_idname = "kkb.importeverything"
-    bl_label = "Open Export folder"
-    bl_description = "Open the folder containing your model.pmx file"
+    bl_label = "Import textures from folder"
     bl_options = {'REGISTER', 'UNDO'}
-    
-    directory : StringProperty(maxlen=1024, default='', subtype='FILE_PATH', options={'HIDDEN'})
-    filter_glob : StringProperty(default='', options={'HIDDEN'})
-    data = None
-    mats_uv = None
-    structure = None
 
     def execute(self, context):
         try:
             last_step = time.time()
-            directory = self.directory
+            directory = context.scene.kkbp.import_dir[:-9]
             
             kklog('\nApplying material templates and textures...')
 
-            scene = context.scene.placeholder
+            scene = context.scene.kkbp
             use_fake_user = scene.templates_bool
             single_outline_mode = scene.texture_outline_bool
-            modify_armature = scene.armature_edit_bool
-            bald_alert = not scene.haircheck_bool
+            modify_armature = scene.armature_dropdown in ['A', 'B']
+            bald_alert = not scene.has_hair_bool
             
             #create a cube that will act as a fake hair object, then delete at the end
             if bald_alert:
@@ -933,7 +932,7 @@ class import_everything(bpy.types.Operator):
                 for space in area.spaces:
                     if space.type == 'VIEW_3D':
                         space.shading.type = my_shading 
-            #kklog(str(time.time() - last_step))
+            kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             return {'FINISHED'}
 
         except:
@@ -941,10 +940,6 @@ class import_everything(bpy.types.Operator):
             kklog(traceback.format_exc())
             self.report({'ERROR'}, traceback.format_exc())
             return {"CANCELLED"}
-
-    def invoke(self, context, event):
-        context.window_manager.fileselect_add(self)
-        return {'RUNNING_MODAL'}
     
 if __name__ == "__main__":
     bpy.utils.register_class(import_everything)

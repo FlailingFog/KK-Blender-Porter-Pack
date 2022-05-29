@@ -175,7 +175,7 @@ class finalize_grey(bpy.types.Operator):
 
     def execute(self, context): 
         
-        scene = context.scene.placeholder
+        scene = context.scene.kkbp
         modify_armature = scene.armature_edit_bool
 
         finalize()

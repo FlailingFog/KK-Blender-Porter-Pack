@@ -139,7 +139,7 @@ class apply_materials(bpy.types.Operator):
     
     def execute(self, context):
         try:
-            scene = context.scene.placeholder
+            scene = context.scene.kkbp
             apply_type = scene.atlas_dropdown
 
             #Stop if no object is currently selected

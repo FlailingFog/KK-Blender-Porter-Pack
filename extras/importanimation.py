@@ -81,7 +81,7 @@ class import_animation(bpy.types.Operator):
     filter_glob : StringProperty(default='*.fbx', options={'HIDDEN'})
     
     def execute(self, context):
-        scene = context.scene.placeholder
+        scene = context.scene.kkbp
         use_rokoko_plugin = scene.rokoko_bool
 
         #import the fbx animation from the file dialog

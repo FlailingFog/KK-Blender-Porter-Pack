@@ -32,7 +32,7 @@ class import_studio(bpy.types.Operator):
                 self.layout.label(text="You need to append the KK Shader from the KK Shader.blend file to use this shader.")
                 self.layout.label(text="Go to File > Append > choose the KK shader.blend > go into the materials folder > choose \"Template General\" ")
             
-            scene = context.scene.placeholder
+            scene = context.scene.kkbp
             shader_type = scene.dropdown_box 
             shadow_type = scene.shadows_dropdown 
             blend_type = scene.blend_dropdown 

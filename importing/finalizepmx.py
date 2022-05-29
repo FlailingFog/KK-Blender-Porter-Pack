@@ -8,26 +8,12 @@ FINALIZE PMX
 some code stolen from MediaMoots here https://github.com/FlailingFog/KK-Blender-Shader-Pack/issues/29
 '''
 
-import bpy, math, traceback, time
+import bpy, math, time
 from mathutils import Vector
-
-def kklog(log_text, type = 'standard'):
-    if not bpy.data.texts.get('KKBP Log'):
-        bpy.data.texts.new(name='KKBP Log')
-        if bpy.data.screens.get('Scripting'):
-            for area in bpy.data.screens['Scripting'].areas:
-                if area.type == 'TEXT_EDITOR':
-                    area.spaces[0].text = bpy.data.texts['KKBP Log']
-
-    if type == 'error':
-        log_text = '\nError:          ' + log_text
-    elif type == 'warn':
-        log_text = 'Warning:        ' + log_text
-    bpy.data.texts['KKBP Log'].write(log_text + '\n')
-    print(log_text)
+from .importbuttons import kklog
 
 # makes the pmx armature and bone names match the koikatsu armature structure and bone names
-def standardize_armature():
+def standardize_armature(modify_arm):
     bpy.ops.object.mode_set(mode='OBJECT')
     armature = bpy.data.objects['Model_arm']
     body = bpy.data.objects['Model_mesh']
@@ -45,17 +31,18 @@ def standardize_armature():
 
     bpy.data.objects.remove(empty)
 
-    #reparent foot to leg03
-    try:
-        bpy.ops.object.mode_set(mode='EDIT')
-    except:
-        armature.hide = False
-        bpy.ops.object.mode_set(mode='EDIT')
-    armature.data.edit_bones['cf_j_foot_R'].parent = armature.data.edit_bones['cf_j_leg03_R']
-    armature.data.edit_bones['cf_j_foot_L'].parent = armature.data.edit_bones['cf_j_leg03_L']
+    if modify_arm != 'D':
+        #reparent foot to leg03
+        try:
+            bpy.ops.object.mode_set(mode='EDIT')
+        except:
+            armature.hide = False
+            bpy.ops.object.mode_set(mode='EDIT')
+        armature.data.edit_bones['cf_j_foot_R'].parent = armature.data.edit_bones['cf_j_leg03_R']
+        armature.data.edit_bones['cf_j_foot_L'].parent = armature.data.edit_bones['cf_j_leg03_L']
 
-    #unparent body bone to match KK
-    armature.data.edit_bones['p_cf_body_bone'].parent = None
+        #unparent body bone to match KK
+        armature.data.edit_bones['p_cf_body_bone'].parent = None
 
     #remove all constraints from all bones
     bpy.ops.object.mode_set(mode='POSE')
@@ -103,13 +90,17 @@ def standardize_armature():
         except:
             #The script hit the last bone in the chain
             return
-    select_children(armature.data.edit_bones['cf_n_height'])
 
-    #make sure these bones aren't deleted
-    for preserve_bone in ['cf_j_root', 'p_cf_body_bone', 'cf_n_height']:
-        armature.data.edit_bones[preserve_bone].select = True
-        armature.data.edit_bones[preserve_bone].select_head = True
-        armature.data.edit_bones[preserve_bone].select_tail = True
+    if modify_arm == 'D':
+        select_children(armature.data.edit_bones['BodyTop'])
+    else:
+        select_children(armature.data.edit_bones['cf_n_height'])
+
+        #make sure these bones aren't deleted
+        for preserve_bone in ['cf_j_root', 'p_cf_body_bone', 'cf_n_height']:
+            armature.data.edit_bones[preserve_bone].select = True
+            armature.data.edit_bones[preserve_bone].select_head = True
+            armature.data.edit_bones[preserve_bone].select_tail = True
 
     bpy.ops.armature.select_all(action='INVERT')
     bpy.ops.armature.delete()
@@ -867,67 +858,25 @@ class finalize_pmx(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context): 
+        last_step = time.time()
 
-        try:
-            scene = context.scene.placeholder
-            modify_armature = scene.armature_edit_bool
+        scene = context.scene.kkbp
+        modify_armature = scene.armature_dropdown
 
-            #get rid of the text files mmd tools generates
-            if bpy.data.texts.get('Model'):
-                    bpy.data.texts.remove(bpy.data.texts['Model'])
-                    bpy.data.texts.remove(bpy.data.texts['Model_e'])
-            
-            kklog('====    KKBP Log    ====')
-            
-            last_step = time.time()
-            
-            standardize_armature()
-            reset_and_reroll_bones()
-            if modify_armature:
-                kklog('Modifying armature...')
-                modify_pmx_armature()
-            #if fix_accs:
-                #kklog('Fixing accessories...')
-                #fix_accessories()
-            rename_mmd_bones()
-            
-            #Set the view transform 
-            bpy.context.scene.view_settings.view_transform = 'Standard'
-            bpy.ops.object.select_all(action='DESELECT')
-            
-            #redraw the UI after each operation to let the user know the plugin is actually doing something
-            #kklog(str(time.time() - last_step))
-            last_step = time.time()
-            kklog('\nFixing shapekeys...')
-            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-            bpy.ops.kkb.shapekeys('INVOKE_DEFAULT')
+        kklog('\nFinalizing PMX file...')
+        standardize_armature(modify_armature)
+        reset_and_reroll_bones()
+        if modify_armature in ['A', 'B']:
+            kklog('Modifying armature...', type='timed')
+            modify_pmx_armature()
+        #if fix_accs:
+            #kklog('Fixing accessories...')
+            #fix_accessories()
+        rename_mmd_bones()
 
-            #kklog(str(time.time() - last_step))
-            last_step = time.time()
-            kklog('\nSeparating body, clothes and shadowcast, then removing duplicate materials...')
-            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-            bpy.ops.kkb.separatebody('INVOKE_DEFAULT')
-
-            #kklog(str(time.time() - last_step))
-            last_step = time.time()
-            kklog('\nCategorizing bones into armature layers...')
-            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-            bpy.ops.kkb.cleanarmature('INVOKE_DEFAULT')
-
-            #kklog(str(time.time() - last_step))
-            last_step = time.time()
-            kklog('\nAdding bone drivers...')
-            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-            bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT')
-            
-            #kklog(str(time.time() - last_step))
-            return {'FINISHED'}
-
-        except:
-            kklog('Unknown python error occurred', type = 'error')
-            kklog(traceback.format_exc())
-            self.report({'ERROR'}, traceback.format_exc())
-            return {"CANCELLED"}
+        kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
+        
+        return {'FINISHED'}
             
 if __name__ == "__main__":
     bpy.utils.register_class(finalize_pmx)

@@ -5,9 +5,9 @@ SHAPEKEYS SCRIPT
 - Deletes the partial shapekeys if keep_partial_shapekeys is not set to True
 '''
 
-import bpy, traceback
+import bpy, time
 import bmesh
-from .finalizepmx import kklog
+from .importbuttons import kklog
 
 ################################
 #Translate most of the shapekeys
@@ -439,14 +439,16 @@ class shape_keys(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):
-        scene = context.scene.placeholder
+        last_step = time.time()
+        scene = context.scene.kkbp
         keep_partial_shapekeys = scene.delete_shapekey_bool
 
+        kklog('\nTranslating and combining shapekeys...', type = 'timed')
         translate_shapekeys()
-        
-        kklog('Combining shapekeys...')
         combine_shapekeys(keep_partial_shapekeys)
         
+        kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
+
         return {'FINISHED'}
 
 if __name__ == "__main__":

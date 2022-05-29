@@ -12,7 +12,7 @@ class image_convert(bpy.types.Operator):
     def execute(self, context):
         kklog("Converting image: ".format(context.space_data.image))
         
-        scene = context.scene.placeholder
+        scene = context.scene.kkbp
         lut_selection = scene.image_dropdown
         
         if lut_selection == 'A':

@@ -1,11 +1,11 @@
 #The init file for the plugin
 bl_info = {
     "name" : "KK Blender Porter Pack",
-    "author" : "a blendlet",
-    "location" : "View 3D > Tool Shelf > KKBP, Image Editor > Tool Shelf > KKBP",
+    "author" : "a blendlet and some blenderchads",
+    "location" : "View 3D > Tool Shelf > KKBP and Image Editor > Tool Shelf > KKBP",
     "description" : "Scripts to automate cleanup of a Koikatsu export",
-    "version": (5, 1, 0),
-    "blender" : (3, 0, 0),
+    "version": (6, 0, 0),
+    "blender" : (3, 1, 0),
     "category" : "3D View",
     "tracker_url" : "https://github.com/FlailingFog/KK-Blender-Porter-Pack/"
 }
@@ -23,12 +23,13 @@ from .importing.finalizepmx import finalize_pmx
 from .importing.importeverything import import_everything
 from .importing.importcolors import import_colors
 from .importing.importgrey import import_grey
+from .importing.importbuttons import quick_import, mat_import
 from .importing.separatebody import separate_body
 from .importing.shapekeys import shape_keys
 
 from .exporting.bakematerials import bake_materials
 from .exporting.applymaterials import apply_materials
-from .exporting.selectbones import select_bones
+from .exporting.exportprep import export_prep
 
 from .extras.importstudio import import_studio
 from .extras.linkshapekeys import link_shapekeys
@@ -43,12 +44,18 @@ from .pillow.getpillow import InstallPIL
 
 
 from . KKPanel import PlaceholderProperties
-from . KKPanel import IMPORTING_PT_panel, IMPORTING1_PT_panel,IMPORTOPTIONS_PT_Panel, IMPORTING2_PT_panel, APPLYOPTIONS_PT_Panel, EXPORTING_PT_panel, EXTRAS_PT_panel, EDITOR_PT_panel
+from . KKPanel import (
+    IMPORTINGHEADER_PT_panel,
+    IMPORTING_PT_panel,
+    EXPORTING_PT_panel,
+    EXTRAS_PT_panel,
+    EDITOR_PT_panel
+)
 
 classes = (
     apply_materials,
     bake_materials, 
-    select_bones,
+    export_prep,
     image_convert, 
 
     import_animation, 
@@ -67,16 +74,15 @@ classes = (
     finalize_pmx, 
     import_everything, 
     import_colors, 
-    import_grey, 
+    import_grey,
+    quick_import,
+    mat_import,
     separate_body, 
     shape_keys,
 
     PlaceholderProperties, 
+    IMPORTINGHEADER_PT_panel,
     IMPORTING_PT_panel,
-    IMPORTING1_PT_panel,
-    IMPORTOPTIONS_PT_Panel,
-    IMPORTING2_PT_panel,
-    APPLYOPTIONS_PT_Panel,
     EXPORTING_PT_panel,
     EXTRAS_PT_panel,
     EDITOR_PT_panel)
@@ -86,14 +92,14 @@ def register():
     for cls in classes:
         register_class(cls)
 
-    Scene.placeholder = PointerProperty(type=PlaceholderProperties)
+    Scene.kkbp = PointerProperty(type=PlaceholderProperties)
 
 def unregister():
 
     for cls in reversed(classes):
         unregister_class(cls)
 
-    del Scene.placeholder
+    del Scene.kkbp
 
 if __name__ == "__main__":
     register()

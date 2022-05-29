@@ -5,8 +5,8 @@ SEPARATE BODY SCRIPT
 - Combines duplicated material slots
 '''
 
-import bpy, traceback
-from .finalizepmx import kklog
+import bpy, json, time
+from .importbuttons import kklog
 from ..extras.linkshapekeys import link_keys
 
 class separate_body(bpy.types.Operator):
@@ -16,9 +16,11 @@ class separate_body(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):
+        last_step = time.time()
 
-        scene = context.scene.placeholder
-        fix_seams = scene.fix_seams
+        kklog('\nSeparating body, clothes, hair, hitboxes and shadowcast, then removing duplicate materials...')
+
+        fix_seams = context.scene.kkbp.fix_seams
 
         #Select the body and make it active
         bpy.ops.object.mode_set(mode = 'OBJECT')
@@ -95,8 +97,7 @@ class separate_body(bpy.types.Operator):
             bpy.ops.mesh.separate(type='SELECTED')
         
         #Select all body related materials, then separate it from everything else
-        #This puts hair/clothes in position 1 and the body in position 2
-        bodyMatList = [
+        body_mat_list = [
             'cf_m_tang',
             'cf_m_eyeline_kage',
             'cf_m_namida_00',
@@ -116,66 +117,89 @@ class separate_body(bpy.types.Operator):
             'cf_m_face_00.001',
             'cm_m_body',
             'cf_m_body']
-        separate_material(bodyMatList, 'fuzzy')
+        separate_material(body_mat_list, 'fuzzy')
+        bpy.data.objects['Body'].name = 'Clothes'
+        bpy.data.objects['Body.001'].name = 'Body'
 
-        #Separate the shadowcast if any, placing it in position 3
+        #Select all materials that use the hair renderer
+        json_file = open(context.scene.kkbp.import_dir[:-9] + 'KK_MaterialData.json')
+        material_data = json.load(json_file)
+        hair_mat_list = []
+        for mat in material_data:
+            if mat['ShaderName'] in ["Shader Forge/main_hair_front", "Shader Forge/main_hair"]:
+                hair_mat_list.append(mat['MaterialName'])
+        if len(hair_mat_list):
+            separate_material(hair_mat_list)
+        else:
+            bpy.context.kkbp.has_hair_bool = False
+        bpy.data.objects['Clothes.001'].name = 'Hair'
+
+        #Separate hitbox materials, if any
+        hit_box_list = []
+        for mat in material_data:
+            if mat['MaterialName'][0:6] == 'o_hit_' or mat['MaterialName'] == 'cf_O_face_atari_M':
+                hit_box_list.append(mat['MaterialName'])
+        if len(hit_box_list):
+            separate_material(hit_box_list)
+            bpy.data.objects['Clothes.001'].name = 'Hitboxes'
+
+        #Separate the shadowcast if any
         try:
             bpy.ops.mesh.select_all(action = 'DESELECT')
-            shadMatList = ['c_m_shadowcast', 'Standard']
-            separate_material(shadMatList, 'fuzzy')
+            shad_mat_list = ['c_m_shadowcast', 'Standard']
+            separate_material(shad_mat_list, 'fuzzy')
+            bpy.data.objects['Clothes.001'].name = 'Shadowcast'
         except:
             pass
         
-        #Separate the bonelyfans mesh if any, placing it in position 4
+        #Separate the bonelyfans mesh if any
         try:
             bpy.ops.mesh.select_all(action = 'DESELECT')
-            boneMatList = ['Bonelyfans', 'Bonelyfans.001']
-            separate_material(boneMatList)
+            bone_mat_list = ['Bonelyfans', 'Bonelyfans.001']
+            separate_material(bone_mat_list)
+            bpy.data.objects['Clothes.001'].name = 'Bonelyfans'
         except:
             pass
         
-        #rename objects, remove unused material slots
-        rename = bpy.context.selected_objects
-        rename[0].name = 'Clothes'
-        rename[1].name = 'Body'
-        try:
-            rename[2].name = 'Shadowcast'
-            rename[3].name = 'Bonelyfans'
-        except:
-            pass
-        
+        #remove unused material slots
         bpy.ops.object.mode_set(mode = 'OBJECT')
         bpy.ops.object.material_slot_remove_unused()
         
-        #and move the shadowcast/bonelyfans to their own collection
-        #also remove shapekeys since they don't use them
-        bpy.ops.object.select_all(action='DESELECT')
-        try:
-            rename[2].select_set(True)
-            bpy.context.view_layer.objects.active=rename[2]
-            bpy.ops.object.shape_key_remove(all=True)
-        except:
-            pass
-        try:
-            rename[3].select_set(True)
-            bpy.context.view_layer.objects.active=rename[3]
-            bpy.ops.object.shape_key_remove(all=True)
-        except:
-            pass
-        bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name="Shadowcast Collection")
+        def select_and_remove_shapekeys(object):
+            if bpy.data.objects.get(object):
+                bpy.data.objects[object].select_set(True)
+                bpy.context.view_layer.objects.active=bpy.data.objects[object]
+                bpy.ops.object.shape_key_remove(all=True)
         
-        #hide the new collection
-        try:
-            bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children['Shadowcast Collection']
-            bpy.context.scene.view_layers[0].active_layer_collection.exclude = True
-        except:
+        def move_and_hide_collection (collection):
+            #move
+            bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name=collection)
+            
+            #hide the new collection
             try:
-                #maybe the collection is in the default Collection collection
-                bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children['Collection'].children['Shadowcast Collection']
+                bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children[collection]
                 bpy.context.scene.view_layers[0].active_layer_collection.exclude = True
             except:
-                #maybe the collection is already hidden
-                pass
+                try:
+                    #maybe the collection is in the default Collection collection
+                    bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children['Collection'].children[collection]
+                    bpy.context.scene.view_layers[0].active_layer_collection.exclude = True
+                except:
+                    #maybe the collection is already hidden, or doesn't exist
+                    pass
+
+        #move the shadowcast/bonelyfans to their own collection
+        bpy.ops.object.select_all(action='DESELECT')
+        select_and_remove_shapekeys('Shadowcast')
+        select_and_remove_shapekeys('Bonelyfans')
+        if bpy.context.selected_objects:
+            move_and_hide_collection("Shadowcast Collection")
+
+        #move the hitboxes to their own collection
+        bpy.ops.object.select_all(action='DESELECT')
+        select_and_remove_shapekeys('Hitboxes')
+        if bpy.context.selected_objects:
+            move_and_hide_collection("Hitbox Collection")
 
         #also, merge certain materials for the body object to prevent odd shading issues later on
         bpy.ops.object.select_all(action='DESELECT')
@@ -185,8 +209,6 @@ class separate_body(bpy.types.Operator):
         if fix_seams:
             bpy.ops.object.mode_set(mode = 'EDIT')
             seam_list = [
-                #'cm_m_body.001',
-                #'cf_m_body.001',
                 'cm_m_body',
                 'cf_m_body',
                 'cf_m_face_00',
@@ -326,6 +348,8 @@ class separate_body(bpy.types.Operator):
         for block in bpy.data.materials:
             if block.users == 0:
                 bpy.data.materials.remove(block)
+
+        kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
 
         return {'FINISHED'}
 

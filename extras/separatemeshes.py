@@ -103,6 +103,7 @@ def separate_clothes(json_smr_data):
         bpy.ops.object.mode_set(mode = 'OBJECT')
         bpy.ops.object.material_slot_remove_unused()
         bpy.context.selected_objects[0].name = row['SMRName']
+    bpy.ops.object.mode_set(mode = 'OBJECT')
     bpy.ops.object.select_all(action='DESELECT')
     
     #Pass 2: Clean up
@@ -187,7 +188,14 @@ class separate_meshes(bpy.types.Operator):
     filter_glob : StringProperty(default='', options={'HIDDEN'})
 
     def execute(self, context):
-        directory = self.directory
+        if self.directory == '':
+            directory = context.scene.kkbp.import_dir[:-9]
+            for obj in bpy.data.objects:
+                if obj.modifiers.get('Outline Modifier'):
+                    obj.modifiers['Outline Modifier'].show_render = False
+                    obj.modifiers['Outline Modifier'].show_viewport = False
+        else:
+            directory = self.directory
         error = checks(directory)
         
         if not error:

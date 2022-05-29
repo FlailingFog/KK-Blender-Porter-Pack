@@ -2,7 +2,7 @@ import bpy, os, traceback
 import bgl
 import gpu
 import json
-from .finalizepmx import kklog
+from .importbuttons import kklog
 import numpy as np
 from pathlib import Path
 from bpy.types import Operator
@@ -498,7 +498,6 @@ def convert_main_textures(lut_light):
             # image.save()
 
 def load_json_colors(directory, lut_light, lut_dark, lut_selection):
-    kklog('\nConverting Colors...')
 
     # "Borrowed" some logic from importeverything.py :P
     file_list = Path(directory).glob('*.*')
@@ -722,11 +721,17 @@ class import_colors(bpy.types.Operator):
     structure = None
 
     def execute(self, context):
+        kklog('\nConverting Colors...')
+        print(context.scene.kkbp.import_dir)
         try:
-            directory = self.directory
+            if self.directory == '':
+                directory = context.scene.kkbp.import_dir[:-9]
+            else:
+                directory = self.directory
+
             error = checks(directory)
 
-            scene = context.scene.placeholder
+            scene = context.scene.kkbp
             lut_selection = scene.colors_dropdown
             
             if lut_selection == 'A':
@@ -742,9 +747,12 @@ class import_colors(bpy.types.Operator):
                 convert_main_textures(lut_light)
                 load_json_colors(directory, lut_light, lut_dark, lut_selection)
 
+            context.scene.kkbp.import_dir = ''
+
             return {'FINISHED'}
         
         except:
+            print('waht the fuck excepted')
             kklog('Unknown python error occurred', type = 'error')
             kklog(traceback.format_exc())
             self.report({'ERROR'}, traceback.format_exc())

@@ -417,7 +417,7 @@ class bake_materials(bpy.types.Operator):
         try:
             print(self.directory)
             folderpath =  self.directory
-            scene = context.scene.placeholder
+            scene = context.scene.kkbp
             resolutionMultiplier = scene.inc_dec_int
             camera = setup_camera()
             if camera == None:
