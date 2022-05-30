@@ -47,17 +47,17 @@ class PlaceholderProperties(PropertyGroup):
 
     armature_dropdown : EnumProperty(
         items=(
-            ("A", "Use KKBP Armature", "Use the KKBP Armature, a slightly modified armature that has basic IKs."),
-            ("B", "Use Rigify Armature", "Makd"),
-            ("C", "Use Koikatsu Armature", "s"),
-            ("D", "Use PMX Armature", "  "),
+            ("A", "Use KKBP Armature", "Use the KKBP armature, a slightly modified armature that has basic IKs."),
+            ("B", "Use Rigify Armature", "Use the Rigify armature, an advanced armature for use in Blender only"),
+            ("C", "Use Koikatsu Armature", "Use the stock Koikatsu armature. This will match the naming and structure of the one in-game"),
+            ("D", "Use PMX Armature", "Use the stock PMX armature. This is the armature you get from the KKBP exporter"),
         ), name="", default="A", description=" ")
 
     categorize_dropdown : EnumProperty(
         items=(
-            ("A", "Don't pause to categorize", "Makes everything blue"),
-            ("B", "Pause to categorize", "Makes everything red"),
-            ("C", "Automatically categorize", "Keeps dark colors the same as the light ones"),
+            ("A", "Don't pause to categorize", "Import everything and get a single object containing all your model's clothes"),
+            ("B", "Pause to categorize", "Import everything, but pause to manually separate the clothes into groups of objects. When done separating, click the Finish categorization button to finish the import"),
+            ("C", "Automatically categorize", "Import everyting and automatically separate every piece of clothing into several objects. This option disables the outline modifier shown in blender"),
         ), name="", default="A", description="Armature selection")
     
     colors_dropdown : EnumProperty(
