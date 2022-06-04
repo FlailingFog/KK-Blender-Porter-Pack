@@ -502,7 +502,8 @@ def get_and_load_textures(directory):
     image_load('Template Face', 'Gentex', 'FaceMD', 'cf_m_face_00_DM.png')
     image_load('Template Face', 'Gentex', 'BlushMask', 'cf_m_face_00_T4.png')
     image_load('Template Face', 'Gentex', 'FaceTongue', 'cf_m_face_00_MT.png') #face main texture
-
+    
+    image_load('Template Face', 'Gentex', 'linemask', 'cf_m_face_00_LM.png')
     image_load('Template Face', 'Gentex', 'overlay1', 'cf_m_face_00_T5.png')
     image_load('Template Face', 'Gentex', 'overlay2', 'cf_m_face_00_T6.png')
     image_load('Template Face', 'Gentex', 'overlay3', 'cf_m_face_00_T7.png')
