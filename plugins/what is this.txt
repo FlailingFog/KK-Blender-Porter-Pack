@@ -1,2 +1,6 @@
 KKBP_Exporter v2.00 is a plugin to export characters from KK/KKS for use with KKBP
+
+The Plugin in "net3.5" is for KK
+The Plugin in "net4.6" is for KKS
+
 Requires KKAPI/KKSAPI > v1.32
