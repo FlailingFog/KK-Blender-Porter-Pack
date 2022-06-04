@@ -867,7 +867,7 @@ def clean_orphan_data():
     
 class import_everything(bpy.types.Operator):
     bl_idname = "kkb.importeverything"
-    bl_label = "Import textures from folder"
+    bl_label = "Finish separating objects"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):

@@ -10,7 +10,7 @@ Usage:
 '''
 
 import bpy, os, traceback
-from ..importing.finalizepmx import kklog
+from ..importing.importbuttons import kklog
 from pathlib import Path
 from.bakematerials import sanitizeMaterialName, showError
 

@@ -22,7 +22,7 @@ fillerplane driver + shader code taken from https://blenderartists.org/t/scripts
 
 import bpy, os, traceback
 from pathlib import Path
-from ..importing.finalizepmx import kklog
+from ..importing.importbuttons import kklog
 from bpy.props import StringProperty, BoolProperty
 from bpy_extras.io_utils import ImportHelper
 from bpy.types import Operator

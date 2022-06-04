@@ -554,6 +554,7 @@ def make_eye_controller():
             pass
         #then assign them to the Eyex_L group
         bpy.ops.object.vertex_group_assign()
+        bpy.ops.mesh.select_all(action = 'DESELECT')
 
     #Reselect the armature
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -570,7 +571,7 @@ def scale_final_bones():
     bpy.ops.armature.select_all(action='DESELECT')
     bpy.ops.object.mode_set(mode='POSE')
 
-    def resizeBone(bone, scale, type='MIDPOINT'):
+    def resize_bone(bone, scale, type='MIDPOINT'):
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.armature.select_all(action='DESELECT')
         bpy.context.object.data.edit_bones[bone].select_head = True
@@ -590,12 +591,18 @@ def scale_final_bones():
         bpy.context.object.data.edit_bones[bone].roll = previous_roll - 1
         bpy.ops.object.mode_set(mode='POSE')
     
+    def connect_bone(bone):
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.context.object.data.edit_bones[bone].use_connect = True
+
     skirtbones = [0,1,2,3,4,5,6,7]
     skirtlength = [0,1,2,3,4]
 
     for root in skirtbones:
         for chain in skirtlength:
-            resizeBone('cf_j_sk_0'+str(root)+'_0'+str(chain), 0.25)
+            bone = 'cf_j_sk_0'+str(root)+'_0'+str(chain)
+            resize_bone(bone, 0.25)
+            connect_bone(bone)
     
     #scale eye bones, mouth bones, eyebrow bones
     bpy.ops.object.mode_set(mode='POSE')
@@ -607,8 +614,8 @@ def scale_final_bones():
         left = 'cf_J_Eye0'+str(piece)+'_s_L'
         right = 'cf_J_Eye0'+str(piece)+'_s_R'
         
-        resizeBone(left, 0.1, 'face')
-        resizeBone(right, 0.1, 'face')
+        resize_bone(left, 0.1, 'face')
+        resize_bone(right, 0.1, 'face')
         
     restOfFace = [
     'cf_J_Mayu_R', 'cf_J_MayuMid_s_R', 'cf_J_MayuTip_s_R',
@@ -618,7 +625,7 @@ def scale_final_bones():
     
     for bone in restOfFace:
         bpy.ops.pose.select_all(action='DESELECT')
-        resizeBone(bone, 0.1, 'face')
+        resize_bone(bone, 0.1, 'face')
     
     #move eye bone location
     bpy.ops.object.mode_set(mode='EDIT')

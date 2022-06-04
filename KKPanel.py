@@ -47,9 +47,9 @@ class PlaceholderProperties(PropertyGroup):
 
     armature_dropdown : EnumProperty(
         items=(
-            ("A", "Use KKBP Armature", "Use the KKBP armature, a slightly modified armature that has basic IKs."),
-            ("B", "Use Rigify Armature", "Use the Rigify armature, an advanced armature for use in Blender only"),
-            ("C", "Use Koikatsu Armature", "Use the stock Koikatsu armature. This will match the naming and structure of the one in-game"),
+            ("A", "Use KKBP Armature", "Use the KKBP armature. This will slightly modify the armature and give it basic IKs"),
+            ("B", "Use Rigify Armature", "Use the Rigify armature. This is an advanced armature suitable for use in Blender"),
+            ("C", "Use Koikatsu Armature", "Use the stock Koikatsu armature. This will match the bone naming and structure of the one in-game"),
             ("D", "Use PMX Armature", "Use the stock PMX armature. This is the armature you get from the KKBP exporter"),
         ), name="", default="A", description=" ")
 

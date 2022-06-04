@@ -9,7 +9,7 @@ Usage:
 '''
 
 import bpy, traceback
-from ..importing.finalizepmx import kklog
+from ..importing.importbuttons import kklog
 
 def main(prep_type):
 

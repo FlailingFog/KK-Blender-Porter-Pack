@@ -106,8 +106,7 @@ class quick_import(bpy.types.Operator):
                 return {"CANCELLED"}
 
         if context.scene.kkbp.armature_dropdown == 'B' and context.scene.kkbp.categorize_dropdown in ['A', 'B']:
-            bpy.ops.kkb.rigifyconvert('INVOKE_DEFAULT')
-            bpy.ops.kkb.rigifyconvert('INVOKE_DEFAULT')
+            bpy.ops.kkb.rigifyconvert('EXEC_DEFAULT')
 
         return {'FINISHED'}
         
@@ -117,8 +116,8 @@ class quick_import(bpy.types.Operator):
 
 class mat_import(bpy.types.Operator):
     bl_idname = "kkb.matimport"
-    bl_label = "Open Export folder"
-    bl_description = "Open the folder containing your model.pmx file"
+    bl_label = "Load textures and colors"
+    bl_description = "Finish separating objects, apply the textures and colors"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
@@ -127,8 +126,10 @@ class mat_import(bpy.types.Operator):
         bpy.ops.kkb.importcolors('EXEC_DEFAULT')
 
         if context.scene.kkbp.armature_dropdown == 'B':
-            bpy.ops.kkb.rigifyconvert('INVOKE_DEFAULT')
-            bpy.ops.kkb.rigifyconvert('INVOKE_DEFAULT')
+            print({k:v for k, v in bpy.context.copy().items() if v is not None})
+            
+            
+            bpy.ops.kkb.rigifyconvert('EXEC_DEFAULT')
 
         return {'FINISHED'}
 
