@@ -30,6 +30,12 @@ def clean_body():
             bpy.ops.mesh.delete(type='VERT')
         delete_material(['cf_m_tang.001'])
 
+        #check if there's a face material. If there isn't then the model most likely has a face02 face. Rename to correct name
+        if body.data.materials.find('cf_m_face_00') == -1:
+            for mat in body.data.materials:
+                if 'cf_m_face_02 -' in mat.name:
+                    mat.name = 'cf_m_face_00'
+
 def add_freestyle_faces():
     body = bpy.data.objects['Body']
     #go into edit mode and deselect everything

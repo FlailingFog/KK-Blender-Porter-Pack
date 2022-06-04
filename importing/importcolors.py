@@ -748,6 +748,8 @@ class import_colors(bpy.types.Operator):
                 load_json_colors(directory, lut_light, lut_dark, lut_selection)
 
             context.scene.kkbp.import_dir = ''
+            bpy.data.objects['Armature'].select_set(True)
+            bpy.context.view_layer.objects.active = bpy.data.objects['Armature']
 
             return {'FINISHED'}
         

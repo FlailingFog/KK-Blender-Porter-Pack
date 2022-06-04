@@ -465,6 +465,8 @@ def get_and_load_textures(directory):
                 break
             
     image_load('Template Body', 'Gentex', 'BodyMain', 'cf_m_body_MT_CT.png')
+    if not current_obj.material_slots['Template Body'].material.node_tree.nodes['Gentex'].node_tree.nodes['BodyMain'].image:
+        current_obj.material_slots['Template Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].inputs['Use maintex instead?'].default_value = 0
     image_load('Template Body', 'Gentex', 'BodyMC', 'cf_m_body_CM.png')
     image_load('Template Body', 'Gentex', 'BodyMD', 'cf_m_body_DM.png') #cfm female
     image_load('Template Body', 'Gentex', 'BodyLine', 'cf_m_body_LM.png')
@@ -498,6 +500,9 @@ def get_and_load_textures(directory):
             current_obj.material_slots['Template Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].inputs['Built in transparency toggle'].default_value = 0
     
     image_load('Template Face', 'Gentex', 'FaceMain', 'cf_m_face_00_MT_CT.png')
+    #default to colors if there's no face maintex
+    if not current_obj.material_slots['Template Face'].material.node_tree.nodes['Gentex'].node_tree.nodes['FaceMain'].image:
+        current_obj.material_slots['Template Face'].material.node_tree.nodes['FaceShader'].node_tree.nodes['colorsLight'].inputs['Use maintex instead?'].default_value = 0
     image_load('Template Face', 'Gentex', 'FaceMC', 'cf_m_face_00_CM.png')
     image_load('Template Face', 'Gentex', 'FaceMD', 'cf_m_face_00_DM.png')
     image_load('Template Face', 'Gentex', 'BlushMask', 'cf_m_face_00_T4.png')
