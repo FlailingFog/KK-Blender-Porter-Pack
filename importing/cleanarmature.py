@@ -259,14 +259,14 @@ def visually_connect_bones():
         #this character isn't using the BP/toe control armature
         pass
     
-    #Make sure top skirt root bones are visually correct (flip them)
+    '''#Make sure top skirt root bones are visually correct (flip them)
     def flip(switchbone):
         chain = switchbone[5:10]
         armature.data.edit_bones[switchbone].tail = (armature.data.edit_bones[switchbone].head + armature.data.edit_bones['cf_j_'+chain+'_00'].tail)/2
     for skirtroot in skirt_list:
         if '_d_' in skirtroot:
             flip(skirtroot)
-    
+    '''
     bpy.ops.object.mode_set(mode='OBJECT')
 
 def move_accessory_bones():
