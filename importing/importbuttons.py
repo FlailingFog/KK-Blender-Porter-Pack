@@ -22,7 +22,7 @@ def import_pmx_model(directory):
     bpy.ops.mmd_tools.import_model('EXEC_DEFAULT',
         files=[{'name': directory}],
         directory=directory,
-        scale=0.08,
+        scale=1,
         types={'MESH', 'ARMATURE', 'MORPHS'},
         log_level='WARNING')
     
