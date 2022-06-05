@@ -388,6 +388,9 @@ def remove_duplicate_slots():
     bpy.ops.object.material_slot_remove_unused()
 
 def cleanup():
+    #make the body the active object
+    bpy.context.view_layer.objects.active = bpy.data.objects['Body']
+    
     #remove shapekeys on all objects except the body because only the body needs them
     for obj in bpy.data.objects:
         if obj.name not in 'Body' and obj.type == 'MESH':
@@ -436,7 +439,11 @@ class separate_body(bpy.types.Operator):
         separate_everything(context)
         if context.scene.kkbp.fix_seams:
             fix_body_seams()
-        make_tear_shapekeys()
+           
+        #make tear shapekeys only if they exist 
+        if context.scene.kkbp.shapekeys_dropdown != 'C':
+            make_tear_shapekeys()
+            
         cleanup()
 
         kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
