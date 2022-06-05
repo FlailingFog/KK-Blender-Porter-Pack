@@ -123,7 +123,7 @@ def separate_everything(context):
     material_data = json.load(json_file)
     hair_mat_list = []
     for mat in material_data:
-        if mat['ShaderName'] in ["Shader Forge/main_hair_front", "Shader Forge/main_hair", 'Koikano/hair_main_sun_front', 'Koikano/hair_main_sun']:
+        if mat['ShaderName'] in ["Shader Forge/main_hair_front", "Shader Forge/main_hair", 'Koikano/hair_main_sun_front', 'Koikano/hair_main_sun', 'xukmi/HairPlus', 'xukmi/HairFrontPlus']:
             hair_mat_list.append(mat['MaterialName'])
     if len(hair_mat_list):
         separate_material(clothes, hair_mat_list)
