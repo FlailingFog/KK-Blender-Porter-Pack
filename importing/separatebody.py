@@ -353,7 +353,10 @@ def remove_duplicate_slots():
     #remap duplicate materials to the base one
     material_list = body.data.materials
     for mat in material_list:
-        if '.' in mat.name[-4:] and 'cf_m_namida_00' not in mat.name:
+        #don't merge the eye materials if pause to categorize is chosen, this gives users a chance to separate the eye objects from the extras menu.
+        eye_flag = False if ('cf_m_hitomi_00' in mat.name or 'cf_m_sirome_00' in mat.name) and bpy.context.scene.kkbp.categorize_dropdown == 'B' else True
+        
+        if '.' in mat.name[-4:] and 'cf_m_namida_00' not in mat.name and eye_flag:
             base_name, dupe_number = mat.name.split('.',2)
             if material_list.get(base_name) and int(dupe_number):
                 mat.user_remap(material_list[base_name])
