@@ -53,7 +53,6 @@ class PlaceholderProperties(PropertyGroup):
             ("A", "Don't pause to categorize", "Import everything and get a single object containing all your model's clothes"),
             ("B", "Pause to categorize", "Import everything, but pause to manually separate the clothes into groups of objects. When done separating, click the Finish categorization button to finish the import"),
             ("C", "Automatically categorize", "Import everyting and automatically separate every piece of clothing into several objects. This option disables the outline modifier shown in blender"),
-            ("D", "Pause after Finalize Pmx", "The importer will stop once it finishes Finalizing the PMX"),
         ), name="", default="A", description="Armature selection")
     
     colors_dropdown : EnumProperty(
@@ -174,10 +173,9 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         box = row.box()
         col = box.column(align=True)
         
-        if scene.categorize_dropdown in ['B', 'D']:
+        if scene.categorize_dropdown in ['B']:
             row = col.row(align=True)
-            button_label = 'Finish categorization' if scene.categorize_dropdown == 'B' else 'Continue import'
-            row.operator('kkb.matimport', text = button_label, icon='BRUSHES_ALL')
+            row.operator('kkb.matimport', text = 'Finish categorization', icon='BRUSHES_ALL')
         
         row = col.row(align=True)
         split = row.split(align = True, factor=.5)
