@@ -441,13 +441,15 @@ class shape_keys(bpy.types.Operator):
     def execute(self, context):
         last_step = time.time()
         scene = context.scene.kkbp
-        keep_partial_shapekeys = scene.delete_shapekey_bool
-
-        kklog('\nTranslating and combining shapekeys...', type = 'timed')
-        translate_shapekeys()
-        combine_shapekeys(keep_partial_shapekeys)
         
-        kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
+        if scene.shapekeys_dropdown in ['A', 'B'] :
+            keep_partial_shapekeys = scene.shapekeys_dropdown == 'B'
+
+            kklog('\nTranslating and combining shapekeys...', type = 'timed')
+            translate_shapekeys()
+            combine_shapekeys(keep_partial_shapekeys)
+            
+            kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
 
         return {'FINISHED'}
 

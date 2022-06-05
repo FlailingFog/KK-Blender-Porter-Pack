@@ -25,11 +25,6 @@ class PlaceholderProperties(PropertyGroup):
     description="A property used to let the plugin know if the model has any hair",
     default = True)
 
-    delete_shapekey_bool : BoolProperty(
-    name="Enable or Disable",
-    description="""Enable to save the partial shapekeys that are used to generate the KK shapekeys. These are useless on their own""",
-    default = False)
-
     fix_seams : BoolProperty(
     name="Enable or Disable",
     description="""This performs a "remove doubles" operation on the body materials. Removing doubles also screws with the weights around certain areas. Disabling this will preserve the weights but may cause seams to appear around the neck and down the chest""",
@@ -58,6 +53,7 @@ class PlaceholderProperties(PropertyGroup):
             ("A", "Don't pause to categorize", "Import everything and get a single object containing all your model's clothes"),
             ("B", "Pause to categorize", "Import everything, but pause to manually separate the clothes into groups of objects. When done separating, click the Finish categorization button to finish the import"),
             ("C", "Automatically categorize", "Import everyting and automatically separate every piece of clothing into several objects. This option disables the outline modifier shown in blender"),
+            ("D", "Pause after Finalize Pmx", "The importer will stop once it finishes Finalizing the PMX"),
         ), name="", default="A", description="Armature selection")
     
     colors_dropdown : EnumProperty(
@@ -87,6 +83,13 @@ class PlaceholderProperties(PropertyGroup):
     Removes the outline,
     removes duplicate Eye and Eyewhite material slot"""),
         ), name="", default="A", description="Prep type")
+    
+    shapekeys_dropdown : EnumProperty(
+        items=(
+            ("A", "Use KKBP shapekeys", "Rename and delete the old shapekeys. This will merge the shapekeys that are part of the same expression and delete the rest"),
+            ("B", "Save partial shapekeys ", "Save the partial shapekeys that are used to generate the KK shapekeys. These are useless on their own"),
+            ("C", "Skip modifying shapekeys", "Use the stock Koikatsu shapekeys. This will not change the shapekeys in any way"),
+        ), name="", default="A", description=" ")
     
     atlas_dropdown : EnumProperty(
         items=(
@@ -171,9 +174,10 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         box = row.box()
         col = box.column(align=True)
         
-        if scene.categorize_dropdown == 'B':
+        if scene.categorize_dropdown in ['B', 'D']:
             row = col.row(align=True)
-            row.operator('kkb.matimport', text = 'Finish categorization', icon='BRUSHES_ALL')
+            button_label = 'Finish categorization' if scene.categorize_dropdown == 'B' else 'Continue import'
+            row.operator('kkb.matimport', text = button_label, icon='BRUSHES_ALL')
         
         row = col.row(align=True)
         split = row.split(align = True, factor=.5)
@@ -187,7 +191,7 @@ class IMPORTING_PT_panel(bpy.types.Panel):
 
         row = col.row(align=True)
         split = row.split(align = True, factor=.5)
-        split.prop(context.scene.kkbp, "delete_shapekey_bool", toggle=True, text = "Save partial shapekeys")
+        split.prop(context.scene.kkbp, "shapekeys_dropdown")
         split.prop(context.scene.kkbp, "fix_seams", toggle=True, text = "Fix body seams")
         
         row = col.row(align=True)
