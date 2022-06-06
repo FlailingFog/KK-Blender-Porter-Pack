@@ -86,9 +86,9 @@ class quick_import(bpy.types.Operator):
                 bpy.ops.kkb.finalizepmx('INVOKE_DEFAULT'),
                 bpy.ops.kkb.shapekeys('INVOKE_DEFAULT'),
                 bpy.ops.kkb.separatebody('INVOKE_DEFAULT'),
-                bpy.ops.kkb.separatemeshes('INVOKE_DEFAULT'),
                 bpy.ops.kkb.cleanarmature('INVOKE_DEFAULT'),
                 bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT'),
+                bpy.ops.kkb.separatemeshes('INVOKE_DEFAULT'),
             ]
         else:
             commands = [
