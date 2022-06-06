@@ -80,6 +80,16 @@ class quick_import(bpy.types.Operator):
                 bpy.ops.kkb.cleanarmature('INVOKE_DEFAULT'),
                 bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT'),
             ]
+        elif context.scene.kkbp.categorize_dropdown == 'D':
+            commands = [
+                import_pmx_model(context.scene.kkbp.import_dir),
+                bpy.ops.kkb.finalizepmx('INVOKE_DEFAULT'),
+                bpy.ops.kkb.shapekeys('INVOKE_DEFAULT'),
+                bpy.ops.kkb.separatebody('INVOKE_DEFAULT'),
+                bpy.ops.kkb.separatemeshes('INVOKE_DEFAULT'),
+                bpy.ops.kkb.cleanarmature('INVOKE_DEFAULT'),
+                bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT'),
+            ]
         else:
             commands = [
                 import_pmx_model(context.scene.kkbp.import_dir),

@@ -353,8 +353,8 @@ def remove_duplicate_slots():
     #remap duplicate materials to the base one
     material_list = body.data.materials
     for mat in material_list:
-        #don't merge the eye materials if pause to categorize is chosen, this gives users a chance to separate the eye objects from the extras menu.
-        eye_flag = False if ('cf_m_hitomi_00' in mat.name or 'cf_m_sirome_00' in mat.name) and bpy.context.scene.kkbp.categorize_dropdown == 'B' else True
+        #don't merge the eye materials if categorize by SMR is chosen.
+        eye_flag = False if ('cf_m_hitomi_00' in mat.name or 'cf_m_sirome_00' in mat.name) and bpy.context.scene.kkbp.categorize_dropdown == 'D' else True
         
         if '.' in mat.name[-4:] and 'cf_m_namida_00' not in mat.name and eye_flag:
             base_name, dupe_number = mat.name.split('.',2)
@@ -391,15 +391,15 @@ def remove_duplicate_slots():
     bpy.ops.object.material_slot_remove_unused()
 
 def cleanup():
-    #make the body the active object
-    bpy.context.view_layer.objects.active = bpy.data.objects['Body']
-    
     #remove shapekeys on all objects except the body because only the body needs them
     for obj in bpy.data.objects:
         if obj.name not in 'Body' and obj.type == 'MESH':
             for key in obj.data.shape_keys.key_blocks.keys():
                 obj.shape_key_remove(obj.data.shape_keys.key_blocks[key])
 
+    #make sure we are in object mode
+    bpy.ops.object.mode_set(mode='OBJECT')
+    
     #remove unused material slots for all visible objects
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.material_slot_remove_unused()

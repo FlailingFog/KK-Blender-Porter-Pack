@@ -53,6 +53,7 @@ class PlaceholderProperties(PropertyGroup):
             ("A", "Don't pause to categorize", "Import everything and get a single object containing all your model's clothes"),
             ("B", "Pause to categorize", "Import everything, but pause to manually separate the clothes into groups of objects. When done separating, click the Finish categorization button to finish the import"),
             ("C", "Automatically categorize", "Import everyting and automatically separate every piece of clothing into several objects. This option disables the outline modifier shown in blender"),
+            ("D", "Categorize by SMR Data", "Import everyting and automatically separate every object by it's Skinned Mesh Renderer. Note: This option is only for exporting meshes so it will not apply any material templates or colors"),
         ), name="", default="A", description="Armature selection")
     
     colors_dropdown : EnumProperty(
@@ -303,12 +304,7 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
-        split.label(text="Seperate Meshes by Renderers")
-        split.operator('kkb.separatemeshes', text = '', icon = 'MESH_DATA')
         
-        col = box.column(align=True)
-        row = col.row(align=True)
-        split = row.split(align=True, factor=splitfac)
         split.label(text="Export Seperate Meshes")
         split.operator('kkb.exportseparatemeshes', text = '', icon = 'EXPORT')
         

@@ -203,10 +203,11 @@ class separate_meshes(bpy.types.Operator):
 
         return {'FINISHED'}
     
-    def invoke(self, context, event):
-        context.window_manager.fileselect_add(self)
-        return {'RUNNING_MODAL'}
-   
+if __name__ == "__main__":
+    bpy.utils.register_class(separate_meshes)
+
+    # test call
+    print((bpy.ops.kkb.separatemeshes('INVOKE_DEFAULT')))
 
 
 ########## EXPORTER ##########
