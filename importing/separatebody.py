@@ -397,8 +397,14 @@ def cleanup():
             for key in obj.data.shape_keys.key_blocks.keys():
                 obj.shape_key_remove(obj.data.shape_keys.key_blocks[key])
 
-    #make sure we are in object mode
-    bpy.ops.object.mode_set(mode='OBJECT')
+    #try to make sure we are in object mode
+    try:
+        bpy.ops.object.mode_set(mode='OBJECT')
+    except:
+        pass
+    
+    #then make sure body is the active context
+    bpy.context.view_layer.objects.active = bpy.data.objects['Body']
     
     #remove unused material slots for all visible objects
     bpy.ops.object.select_all(action='SELECT')
