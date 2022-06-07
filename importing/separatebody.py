@@ -354,7 +354,7 @@ def remove_duplicate_slots():
     material_list = body.data.materials
     for mat in material_list:
         #don't merge the eye materials if categorize by SMR is chosen.
-        eye_flag = False if ('cf_m_hitomi_00' in mat.name or 'cf_m_sirome_00' in mat.name) and bpy.context.scene.kkbp.categorize_dropdown == 'D' else True
+        eye_flag = False if ('cf_m_hitomi_00' in mat.name or 'cf_m_sirome_00' in mat.name or 'cf_m_namida_00' in mat.name) and bpy.context.scene.kkbp.categorize_dropdown == 'D' else True
         
         if '.' in mat.name[-4:] and 'cf_m_namida_00' not in mat.name and eye_flag:
             base_name, dupe_number = mat.name.split('.',2)

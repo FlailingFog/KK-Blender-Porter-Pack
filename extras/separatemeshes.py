@@ -110,6 +110,11 @@ def separate_clothes(json_smr_data):
     #Select the Clothes object and remove it's unused material slots
     clothes.select_set(True)
     bpy.ops.object.material_slot_remove_unused()
+    
+    #delete the clothes object if it has no materials left
+    if len(clothes_data.materials) == 0:
+        bpy.ops.object.delete() 
+        
      
 def separate_body(json_smr_data):
     body = bpy.data.objects['Body']
@@ -126,11 +131,20 @@ def separate_body(json_smr_data):
         'cf_Ohitomi_R' : 'cf_m_sirome_00.001',
         'cf_Ohitomi_L02' : 'cf_m_hitomi_00',
         'cf_Ohitomi_R02' : 'cf_m_hitomi_00.001',
+        'cf_O_namida_L' : 'cf_m_namida_00',
+        'cf_O_namida_M' : 'cf_m_namida_00.001',
+        'cf_O_namida_S' : 'cf_m_namida_00.002',
     }
     
     #Pass 1: To make sure each material has a mesh
     #Select the Body object and remove it's unused material slots
-    bpy.ops.object.mode_set(mode = 'OBJECT')
+    
+    #try to make sure we are in object mode
+    try:
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+    except:
+        pass
+    
     bpy.ops.object.select_all(action='DESELECT')
     bpy.context.view_layer.objects.active = body
     body.select_set(True)
@@ -219,6 +233,9 @@ def export_meshes(directory):
         'cf_Ohitomi_R' : 'cf_m_sirome_00',
         'cf_Ohitomi_L02' : 'cf_m_hitomi_00',
         'cf_Ohitomi_R02' : 'cf_m_hitomi_00',
+        'cf_O_namida_L' : 'cf_m_namida_00',
+        'cf_O_namida_M' : 'cf_m_namida_00',
+        'cf_O_namida_S' : 'cf_m_namida_00',
     }
 
     armature = bpy.data.objects['Armature']
