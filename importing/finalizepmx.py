@@ -30,14 +30,18 @@ def standardize_armature(modify_arm):
     bpy.context.view_layer.objects.active = armature
 
     bpy.data.objects.remove(empty)
-
+    
+    #scale all bone sizes down by a factor of 12
+    try:
+        bpy.ops.object.mode_set(mode='EDIT')
+    except:
+        armature.hide = False
+        bpy.ops.object.mode_set(mode='EDIT')
+    for bone in armature.data.edit_bones:
+        bone.tail.z = bone.head.z + (bone.tail.z - bone.head.z)/12
+    
     if modify_arm != 'D':
         #reparent foot to leg03
-        try:
-            bpy.ops.object.mode_set(mode='EDIT')
-        except:
-            armature.hide = False
-            bpy.ops.object.mode_set(mode='EDIT')
         armature.data.edit_bones['cf_j_foot_R'].parent = armature.data.edit_bones['cf_j_leg03_R']
         armature.data.edit_bones['cf_j_foot_L'].parent = armature.data.edit_bones['cf_j_leg03_L']
 
