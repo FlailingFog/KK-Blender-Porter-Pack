@@ -335,7 +335,7 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
         for material_index in range(len(original_material_order)):
             object_to_bake.material_slots[material_index].material = bpy.data.materials[original_material_order[material_index]]
 
-def start_baking(folderpath, resolutionMultiplier):
+def start_baking(folderpath, resolutionMultiplier, light, dark, norm):
     #enable transparency
     bpy.context.scene.render.film_transparent = True
     bpy.context.scene.render.filter_size = 0.50
@@ -357,14 +357,17 @@ def start_baking(folderpath, resolutionMultiplier):
     #remove the outline materials because they won't be baked
     bpy.ops.object.material_slot_remove_unused()
 
-    #bake the light versions of each material to the selected folder at sun intensity 5
-    bake_pass(resolutionMultiplier, folderpath, 'light' , 5)
+    if light:
+        #bake the light versions of each material to the selected folder at sun intensity 5
+        bake_pass(resolutionMultiplier, folderpath, 'light' , 5)
     
-    #bake the dark versions of each material at sun intensity 0
-    bake_pass(resolutionMultiplier, folderpath, 'dark' , 0)
+    if dark:
+        #bake the dark versions of each material at sun intensity 0
+        bake_pass(resolutionMultiplier, folderpath, 'dark' , 0)
     
-    #bake the normal maps
-    bake_pass(resolutionMultiplier, folderpath, 'normal' , 0)
+    if norm:
+        #bake the normal maps
+        bake_pass(resolutionMultiplier, folderpath, 'normal' , 0)
 
     #Make the originally selected object active again
     bpy.ops.object.select_all(action='DESELECT')
@@ -424,7 +427,7 @@ class bake_materials(bpy.types.Operator):
                 return {'FINISHED'}
             setup_geometry_nodes_and_fillerplane(camera)
             bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-            start_baking(folderpath, resolutionMultiplier)
+            start_baking(folderpath, resolutionMultiplier, scene.bake_light_bool, scene.bake_dark_bool, scene.bake_norm_bool)
             cleanup()
             return {'FINISHED'}
         except:

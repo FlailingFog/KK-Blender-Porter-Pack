@@ -8,17 +8,22 @@ from bpy.props import (
     StringProperty
 )
 
+#load plugin language
+from bpy.app.translations import locale
+from .interface.dictionary_en import t
+
 class PlaceholderProperties(PropertyGroup):
     import_dir: StringProperty(
         name="Import directory",
         default='',
-        description="A property used by the plugin to keep track of the user's pmx directory during the import process. This string is cleared after the Import Colors script is run.")
+        description="""A property used by the plugin to keep track of the user's pmx directory during the import process.
+                       This string is automatically cleared after the Import Colors script is run.""")
 
     inc_dec_int: IntProperty(
         name="Incr-Decr",
         min=1, max = 6,
         default=1,
-        description="Set this to 2 or 3 if the baked texture is blurry")
+        description=t('bake_mult_tt'))
 
     has_hair_bool : BoolProperty(
     name="Enable or Disable",
@@ -84,6 +89,21 @@ class PlaceholderProperties(PropertyGroup):
     removes duplicate Eye and Eyewhite material slot"""),
         ), name="", default="A", description="Prep type")
     
+    bake_light_bool : BoolProperty(
+    name="Enable or Disable",
+    description="Bake light version of all textures",
+    default = True)
+
+    bake_dark_bool : BoolProperty(
+    name="Enable or Disable",
+    description="Bake dark version of all textures",
+    default = True)
+
+    bake_norm_bool : BoolProperty(
+    name="Enable or Disable",
+    description="Bake normal of all textures",
+    default = True)
+
     shapekeys_dropdown : EnumProperty(
         items=(
             ("A", "Use KKBP shapekeys", "Rename and delete the old shapekeys. This will merge the shapekeys that are part of the same expression and delete the rest"),
@@ -160,7 +180,7 @@ class IMPORTING_PT_panel(bpy.types.Panel):
     def draw(self,context):
         scene = context.scene.kkbp
         layout = self.layout
-        splitfac = 0.6
+        splitfac = 0.5
         box = layout.box()
         col = box.column(align=True)
         
@@ -179,22 +199,22 @@ class IMPORTING_PT_panel(bpy.types.Panel):
             row.operator('kkb.matimport', text = 'Finish categorization', icon='BRUSHES_ALL')
         
         row = col.row(align=True)
-        split = row.split(align = True, factor=.5)
+        split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "armature_dropdown")
         split.prop(context.scene.kkbp, "categorize_dropdown")
         
         row = col.row(align=True)
-        split = row.split(align = True, factor=.5)
+        split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "colors_dropdown")
         split.operator('kkb.importcolors', text = 'Recalculate dark colors', icon='IMAGE')
 
         row = col.row(align=True)
-        split = row.split(align = True, factor=.5)
+        split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "shapekeys_dropdown")
         split.prop(context.scene.kkbp, "fix_seams", toggle=True, text = "Fix body seams")
         
         row = col.row(align=True)
-        split = row.split(align = True, factor=.5)
+        split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "texture_outline_bool", toggle=True, text = "Use generic outline")
         split.prop(context.scene.kkbp, "templates_bool", toggle=True, text = "Keep material templates")
     
@@ -208,37 +228,36 @@ class EXPORTING_PT_panel(bpy.types.Panel):
     
     def draw(self,context):
         layout = self.layout
-        splitfac = 0.6
+        splitfac = 0.5
         
         box = layout.box()
         col = box.column(align=True)
         row = col.row(align=True)
-        split = row.split(align=True, factor=splitfac)
-        split.label(text="3) Prep for target application")
-        split.operator('kkb.selectbones', text = '', icon = 'GROUP')
+        row.operator('kkb.selectbones', text = 'Prep for target application', icon = 'GROUP')
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
-        split.label(text="")
+        split.label(text="Type:")
         split.prop(context.scene.kkbp, "prep_dropdown")
 
         col = box.column(align=True)
         row = col.row(align=True)
-        split = row.split(align=True, factor=splitfac)
-        split.label(text="4) Bake material templates")
-        split.operator('kkb.bakematerials', text = '', icon='VIEW_CAMERA')
+        row.operator('kkb.bakematerials', text = 'Bake material templates', icon='VIEW_CAMERA')
+        row = col.row(align=True)
+        split = row.split(align=True, factor=0.33)
+        split.prop(context.scene.kkbp, "bake_light_bool", toggle=True, text = "Light")
+        split.prop(context.scene.kkbp, "bake_dark_bool", toggle=True, text = "Dark")
+        split.prop(context.scene.kkbp, "bake_norm_bool", toggle=True, text = "Normal")
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
-        split.label(text="")
-        split.prop(context.scene.kkbp, "inc_dec_int", text = 'Bake multiplier:')
+        split.label(text=t('bake_mult'))
+        split.prop(context.scene.kkbp, "inc_dec_int", text = '')
         
         col = box.column(align=True)
         row = col.row(align=True)
-        split = row.split(align=True, factor=splitfac)
-        split.label(text="5) Apply baked templates")
-        split.operator('kkb.applymaterials', text = '', icon = 'FILE_REFRESH')
+        row.operator('kkb.applymaterials', text = 'Apply baked templates', icon = 'FILE_REFRESH')
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
-        split.label(text="")
+        split.label(text="Atlas type:")
         split.prop(context.scene.kkbp, "atlas_dropdown")
 
 class EXTRAS_PT_panel(bpy.types.Panel):

@@ -284,13 +284,13 @@ def make_tear_shapekeys():
         bpy.ops.object.shape_key_add(from_mix=False)
         last_shapekey = len(body.data.shape_keys.key_blocks)-1
         if '.002' in mat:
-            body.data.shape_keys.key_blocks["Key " + str(last_shapekey)].name = "Tear small"
+            body.data.shape_keys.key_blocks[-1].name = "Tear small"
             bpy.context.object.active_shape_key_index = last_shapekey
         elif '.001' in mat:
-            body.data.shape_keys.key_blocks["Key " + str(last_shapekey)].name = "Tear med"
+            body.data.shape_keys.key_blocks[-1].name = "Tear med"
             bpy.context.object.active_shape_key_index = last_shapekey
         else:
-            body.data.shape_keys.key_blocks["Key " + str(last_shapekey)].name = "Tear big"
+            body.data.shape_keys.key_blocks[-1].name = "Tear big"
             bpy.context.object.active_shape_key_index = last_shapekey
         
         bpy.ops.object.mode_set(mode = 'EDIT')
@@ -391,9 +391,9 @@ def remove_duplicate_slots():
     bpy.ops.object.material_slot_remove_unused()
 
 def cleanup():
-    #remove shapekeys on all objects except the body because only the body needs them
+    #remove shapekeys on all objects except the body/tears because only those need them
     for obj in bpy.data.objects:
-        if obj.name not in 'Body' and obj.type == 'MESH':
+        if obj.name not in ['Body','Tears'] and obj.type == 'MESH':
             for key in obj.data.shape_keys.key_blocks.keys():
                 obj.shape_key_remove(obj.data.shape_keys.key_blocks[key])
 
