@@ -87,7 +87,6 @@ class quick_import(bpy.types.Operator):
                 bpy.ops.kkb.shapekeys('INVOKE_DEFAULT'),
                 bpy.ops.kkb.separatebody('INVOKE_DEFAULT'),
                 bpy.ops.kkb.cleanarmature('INVOKE_DEFAULT'),
-                bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT'),
                 bpy.ops.kkb.separatemeshes('INVOKE_DEFAULT'),
             ]
         else:
@@ -131,6 +130,10 @@ class mat_import(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
+        
+        # run bone drivers after
+        if context.scene.kkbp.categorize_dropdown == 'D':
+            bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT')
         
         bpy.ops.kkb.importeverything('INVOKE_DEFAULT')
         bpy.ops.kkb.importcolors('EXEC_DEFAULT')
