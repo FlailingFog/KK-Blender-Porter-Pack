@@ -761,7 +761,6 @@ class import_colors(bpy.types.Operator):
             return {'FINISHED'}
         
         except:
-            print('waht the fuck excepted')
             kklog('Unknown python error occurred', type = 'error')
             kklog(traceback.format_exc())
             self.report({'ERROR'}, traceback.format_exc())

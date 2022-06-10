@@ -67,6 +67,7 @@ class quick_import(bpy.types.Operator):
         #save filepath for later
         context.scene.kkbp.import_dir = str(self.filepath)
 
+        #run commands based on selection
         if context.scene.kkbp.categorize_dropdown == 'A':
             commands = [
                 import_pmx_model(context.scene.kkbp.import_dir),
@@ -109,21 +110,13 @@ class quick_import(bpy.types.Operator):
                 bpy.ops.kkb.importcolors('EXEC_DEFAULT'),
             ]
 
+        #run commands based on selection
         for command in commands:
-            try:
-                #run the command
-                command
-
-            #if it fails then abort and print the error
-            except:
-                kklog('Unknown python error occurred', type = 'error')
-                kklog(traceback.format_exc())
-                self.report({'ERROR'}, traceback.format_exc())
-                return {"CANCELLED"}
+            command
 
         if context.scene.kkbp.armature_dropdown == 'B' and context.scene.kkbp.categorize_dropdown in ['A', 'B']:
             bpy.ops.kkb.rigifyconvert('EXEC_DEFAULT')
-
+        
         return {'FINISHED'}
         
     def invoke(self, context, event):
@@ -147,8 +140,7 @@ class mat_import(bpy.types.Operator):
 
         if context.scene.kkbp.armature_dropdown == 'B':
             print({k:v for k, v in bpy.context.copy().items() if v is not None})
-            
-            
+
             bpy.ops.kkb.rigifyconvert('EXEC_DEFAULT')
 
         return {'FINISHED'}

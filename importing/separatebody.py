@@ -1,4 +1,4 @@
-import bpy, json, time
+import bpy, json, time, traceback
 from .importbuttons import kklog
 from ..extras.linkshapekeys import link_keys
 
@@ -127,16 +127,17 @@ def separate_everything(context):
     texture_files = []
     for file in texture_data:
         texture_files.append(file['textureName'])
-    hair_mat_list = []
-    for mat in material_data:
-        if mat['ShaderName'] in ["Shader Forge/main_hair_front", "Shader Forge/main_hair", 'Koikano/hair_main_sun_front', 'Koikano/hair_main_sun', 'xukmi/HairPlus', 'xukmi/HairFrontPlus']:
-            if (mat['MaterialName'] + '_NMP.png') not in texture_files and (mat['MaterialName'] + '_MT_CT.png') not in texture_files and (mat['MaterialName'] + '_MT.png') not in texture_files:
-                hair_mat_list.append(mat['MaterialName'])
-    if len(hair_mat_list):
-        separate_material(clothes, hair_mat_list)
-    else:
-        context.scene.kkbp.has_hair_bool = False
-    bpy.data.objects['Clothes.001'].name = 'Hair'
+    if context.scene.kkbp.categorize_dropdown not in ['B']:
+        hair_mat_list = []
+        for mat in material_data:
+            if mat['ShaderName'] in ["Shader Forge/main_hair_front", "Shader Forge/main_hair", 'Koikano/hair_main_sun_front', 'Koikano/hair_main_sun', 'xukmi/HairPlus', 'xukmi/HairFrontPlus']:
+                if (mat['MaterialName'] + '_NMP.png') not in texture_files and (mat['MaterialName'] + '_MT_CT.png') not in texture_files and (mat['MaterialName'] + '_MT.png') not in texture_files:
+                    hair_mat_list.append(mat['MaterialName'])
+        if len(hair_mat_list):
+            separate_material(clothes, hair_mat_list)
+        else:
+            context.scene.kkbp.has_hair_bool = False
+        bpy.data.objects['Clothes.001'].name = 'Hair'
 
     if context.scene.kkbp.categorize_dropdown in ['A', 'B']:
         #Select any clothes pieces that are normally supposed to be hidden and hide them
@@ -446,25 +447,33 @@ class separate_body(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):
-        last_step = time.time()
-        kklog('\nSeparating body, clothes, hair, hitboxes and shadowcast, then removing duplicate materials...')
-        
-        clean_body()
-        add_freestyle_faces()
-        remove_duplicate_slots()
-        separate_everything(context)
-        if context.scene.kkbp.fix_seams:
-            fix_body_seams()
-           
-        #make tear shapekeys only if they exist 
-        if context.scene.kkbp.shapekeys_dropdown != 'C':
-            make_tear_shapekeys()
+        try:
+            last_step = time.time()
+            kklog('\nSeparating body, clothes, hair, hitboxes and shadowcast, then removing duplicate materials...')
             
-        cleanup()
+            clean_body()
+            add_freestyle_faces()
+            remove_duplicate_slots()
+            separate_everything(context)
+            if context.scene.kkbp.fix_seams:
+                fix_body_seams()
+            
+            #make tear shapekeys only if they exist 
+            if context.scene.kkbp.shapekeys_dropdown != 'C':
+                make_tear_shapekeys()
+                
+            cleanup()
 
-        kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
+            kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
+                    #if it fails then abort and print the error
+            
+            return{'FINISHED'}
 
-        return {'FINISHED'}
+        except:
+            kklog('Unknown python error occurred', type = 'error')
+            kklog(traceback.format_exc())
+            self.report({'ERROR'}, traceback.format_exc())
+            return {"CANCELLED"}
 
 if __name__ == "__main__":
     bpy.utils.register_class(separate_body)

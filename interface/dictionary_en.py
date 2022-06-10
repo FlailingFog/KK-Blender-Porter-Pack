@@ -25,7 +25,7 @@ translation_dictionary = {
     'cat_drop_A'    : "Don't pause to categorize",
     'cat_drop_A_tt' : "Import everything and get a single object containing all your model's clothes. Hides any alternate clothes by default",
     'cat_drop_B'    : "Pause to categorize",
-    'cat_drop_B_tt' : "Import everything, but pause to manually separate the clothes into groups of objects. When done separating, click the Finish categorization button to finish the import. Hides any alternate clothes by default",
+    'cat_drop_B_tt' : "Import everything, but pause to manually separate the clothes into groups of objects. The hair must be separated and named \"Hair\" or \"hair\". When done separating, click the Finish categorization button to finish the import. Hides any alternate clothes by default",
     'cat_drop_C'    : "Automatically categorize",
     'cat_drop_C_tt' : "Import everyting and automatically separate every piece of clothing into several objects. This option disables the outline modifier shown in blender",
     'cat_drop_D'    : "Categorize by SMR Data",

@@ -8,7 +8,7 @@ FINALIZE PMX
 some code stolen from MediaMoots here https://github.com/FlailingFog/KK-Blender-Shader-Pack/issues/29
 '''
 
-import bpy, math, time
+import bpy, math, time, traceback
 from mathutils import Vector
 from .importbuttons import kklog
 
@@ -861,27 +861,33 @@ class finalize_pmx(bpy.types.Operator):
     bl_description = "Finalize CATS .pmx file"
     bl_options = {'REGISTER', 'UNDO'}
 
-    def execute(self, context): 
-        last_step = time.time()
+    def execute(self, context):
+        try:
+            last_step = time.time()
 
-        scene = context.scene.kkbp
-        modify_armature = scene.armature_dropdown
+            scene = context.scene.kkbp
+            modify_armature = scene.armature_dropdown
 
-        kklog('\nFinalizing PMX file...')
-        standardize_armature(modify_armature)
-        reset_and_reroll_bones()
-        if modify_armature in ['A', 'B']:
-            kklog('Modifying armature...', type='timed')
-            modify_pmx_armature()
-        #if fix_accs:
-            #kklog('Fixing accessories...')
-            #fix_accessories()
-        rename_mmd_bones()
+            kklog('\nFinalizing PMX file...')
+            standardize_armature(modify_armature)
+            reset_and_reroll_bones()
+            if modify_armature in ['A', 'B']:
+                kklog('Modifying armature...', type='timed')
+                modify_pmx_armature()
+            #if fix_accs:
+                #kklog('Fixing accessories...')
+                #fix_accessories()
+            rename_mmd_bones()
 
-        kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
-        
-        return {'FINISHED'}
+            kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             
+            return {'FINISHED'}
+        except:
+            kklog('Unknown python error occurred', type = 'error')
+            kklog(traceback.format_exc())
+            self.report({'ERROR'}, traceback.format_exc())
+            return {"CANCELLED"}
+
 if __name__ == "__main__":
     bpy.utils.register_class(finalize_pmx)
     

@@ -47,19 +47,10 @@ def wrong_folder_error(self, context):
 def missing_texture_error(self, context):
     self.layout.label(text="The files cf_m_body_CM.png and cf_m_face_00_CM.png were not found in the folder.\nMake sure to open the exported folder. \nHit undo and try again")
 
-#stop if no hair object was found
-def hair_error(self, context):
-    self.layout.label(text="An object named \"Hair\" wasn't found. Separate this from the Clothes object and rename it. If your character doesn't have hair, disable the hair check option in the import options (Step 2a and 2b) section")
-
 def get_templates_and_apply(directory, use_fake_user):
     #if a single thing was separated but the user forgot to rename it, it's probably the hair object
     if bpy.data.objects.get('Clothes.001') and len(bpy.data.objects) == 6:
         bpy.data.objects['Clothes.001'].name = 'Hair'
-    
-    #Check if a hair object exists
-    if not (bpy.data.objects.get('Hair') or bpy.data.objects.get('hair')):
-        bpy.context.window_manager.popup_menu(hair_error, title="Error", icon='ERROR')
-        return True
     
     #Clean material list
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -888,7 +879,7 @@ class import_everything(bpy.types.Operator):
             use_fake_user = scene.templates_bool
             single_outline_mode = scene.texture_outline_bool
             modify_armature = scene.armature_dropdown in ['A', 'B']
-            bald_alert = not scene.has_hair_bool
+            bald_alert = not scene.has_hair_bool or (not bpy.data.objects.get('Hair') and not bpy.data.objects.get('hair'))
             
             #create a cube that will act as a fake hair object, then delete at the end
             if bald_alert:

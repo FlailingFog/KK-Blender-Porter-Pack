@@ -5,7 +5,7 @@ SHAPEKEYS SCRIPT
 - Deletes the partial shapekeys if keep_partial_shapekeys is not set to True
 '''
 
-import bpy, time
+import bpy, time,traceback
 import bmesh
 from .importbuttons import kklog
 
@@ -439,19 +439,25 @@ class shape_keys(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):
-        last_step = time.time()
-        scene = context.scene.kkbp
-        
-        if scene.shapekeys_dropdown in ['A', 'B'] :
-            keep_partial_shapekeys = scene.shapekeys_dropdown == 'B'
-
-            kklog('\nTranslating and combining shapekeys...', type = 'timed')
-            translate_shapekeys()
-            combine_shapekeys(keep_partial_shapekeys)
+        try:
+            last_step = time.time()
+            scene = context.scene.kkbp
             
-            kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
+            if scene.shapekeys_dropdown in ['A', 'B'] :
+                keep_partial_shapekeys = scene.shapekeys_dropdown == 'B'
 
-        return {'FINISHED'}
+                kklog('\nTranslating and combining shapekeys...', type = 'timed')
+                translate_shapekeys()
+                combine_shapekeys(keep_partial_shapekeys)
+                
+                kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
+
+            return {'FINISHED'}
+        except:
+            kklog('Unknown python error occurred', type = 'error')
+            kklog(traceback.format_exc())
+            self.report({'ERROR'}, traceback.format_exc())
+            return {"CANCELLED"}
 
 if __name__ == "__main__":
     bpy.utils.register_class(shape_keys)

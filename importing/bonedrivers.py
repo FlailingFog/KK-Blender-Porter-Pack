@@ -12,7 +12,7 @@ Usage:
 - Run the script
 '''
 
-import bpy, math, time
+import bpy, math, time, json, traceback
 
 from .finalizepmx import kklog
 from .cleanarmature import set_armature_layer
@@ -772,7 +772,7 @@ def rename_bones_for_clarity(action):
             if armature.data.bones.get(bone):
                 armature.data.bones[bone].name = unity_rename_dict[bone]
     
-#selects all materials that have "_hair" or "_ahoge" in their name to give the user a head start with separating the hair
+#selects all materials that are likely to be hair
 def begin_hair_selections():
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.ops.object.select_all(action='DESELECT')
@@ -782,12 +782,29 @@ def begin_hair_selections():
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_all(action='DESELECT')
 
-    for index in range(len(clothes.data.materials)):
-        mat_name = clothes.data.materials[index].name
-        if ('_hair' in mat_name or '_ahoge' in mat_name) and ('_ribon_' not in mat_name and '_hair_sakura_' not in mat_name):
-            clothes.active_material_index = index
-            bpy.ops.object.material_slot_select()
+    #Select all materials that use the hair renderer and don't have a normal map then separate
+    json_file = open(bpy.context.scene.kkbp.import_dir[:-9] + 'KK_MaterialData.json')
+    material_data = json.load(json_file)
+    json_file = open(bpy.context.scene.kkbp.import_dir[:-9] + 'KK_TextureData.json')
+    texture_data = json.load(json_file)
+    #get all texture files
+    texture_files = []
+    for file in texture_data:
+        texture_files.append(file['textureName'])
+    if bpy.context.scene.kkbp.categorize_dropdown in ['B']:
+        hair_mat_list = []
+        for mat in material_data:
+            if mat['ShaderName'] in ["Shader Forge/main_hair_front", "Shader Forge/main_hair", 'Koikano/hair_main_sun_front', 'Koikano/hair_main_sun', 'xukmi/HairPlus', 'xukmi/HairFrontPlus']:
+                if (mat['MaterialName'] + '_NMP.png') not in texture_files and (mat['MaterialName'] + '_MT_CT.png') not in texture_files and (mat['MaterialName'] + '_MT.png') not in texture_files:
+                    hair_mat_list.append(mat['MaterialName'])
+        if len(hair_mat_list):
+            for index in range(len(clothes.data.materials)):
+                mat_name = clothes.data.materials[index].name
+                if mat_name in hair_mat_list:
+                    clothes.active_material_index = index
+                    bpy.ops.object.material_slot_select()
     
+    #set to face select mode
     bpy.context.tool_settings.mesh_select_mode = (False, False, True)
     bpy.data.objects['Armature'].hide = True
 
@@ -798,53 +815,59 @@ class bone_drivers(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):
-        last_step = time.time()
+        try:
+            last_step = time.time()
 
-        kklog('\nAdding bone drivers...')
+            kklog('\nAdding bone drivers...')
 
-        modify_armature = context.scene.kkbp.armature_dropdown in ['A', 'B']
-        armature_not_modified = bpy.data.objects['Armature'].data.bones.get('MasterFootIK.L') == None
-        
-        if modify_armature and armature_not_modified:
-            kklog('Reparenting bones and setting up IKs...')
-            reparent_bones()
+            modify_armature = context.scene.kkbp.armature_dropdown in ['A', 'B']
+            armature_not_modified = bpy.data.objects['Armature'].data.bones.get('MasterFootIK.L') == None
+            
+            if modify_armature and armature_not_modified:
+                kklog('Reparenting bones and setting up IKs...')
+                reparent_bones()
+                bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+
+                setup_iks()
+                bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+
+            kklog('Setting up joint bones...')
+            setup_joints()
             bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+            
+            if modify_armature and armature_not_modified:
+                kklog('Creating eye controller and renaming bones...', 'timed')
+                make_eye_controller()
+                bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+                scale_final_bones()
+                categorize_bones()
+                rename_bones_for_clarity('modified')
 
-            setup_iks()
-            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+                #reset the eye vertex groups after renaming the bones
+                mod = bpy.data.objects['Body'].modifiers[1]
+                mod.vertex_group = 'Left Eye'
+                mod = bpy.data.objects['Body'].modifiers[2]
+                mod.vertex_group = 'Right Eye'
+            
+            begin_hair_selections()
 
-        kklog('Setting up joint bones...')
-        setup_joints()
-        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-        
-        if modify_armature and armature_not_modified:
-            kklog('Creating eye controller and renaming bones...', 'timed')
-            make_eye_controller()
-            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-            scale_final_bones()
-            categorize_bones()
-            rename_bones_for_clarity('modified')
+            #set the viewport shading
+            my_areas = bpy.context.workspace.screens[0].areas
+            my_shading = 'MATERIAL'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
 
-            #reset the eye vertex groups after renaming the bones
-            mod = bpy.data.objects['Body'].modifiers[1]
-            mod.vertex_group = 'Left Eye'
-            mod = bpy.data.objects['Body'].modifiers[2]
-            mod.vertex_group = 'Right Eye'
-        
-        begin_hair_selections()
-
-        #set the viewport shading
-        my_areas = bpy.context.workspace.screens[0].areas
-        my_shading = 'MATERIAL'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
-
-        for area in my_areas:
-            for space in area.spaces:
-                if space.type == 'VIEW_3D':
-                    space.shading.type = my_shading 
-        
-        kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
-        
-        return {'FINISHED'}
+            for area in my_areas:
+                for space in area.spaces:
+                    if space.type == 'VIEW_3D':
+                        space.shading.type = my_shading 
+            
+            kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
+            
+            return {'FINISHED'}
+        except:
+            kklog('Unknown python error occurred', type = 'error')
+            kklog(traceback.format_exc())
+            self.report({'ERROR'}, traceback.format_exc())
+            return {"CANCELLED"}
 
 if __name__ == "__main__":
     bpy.utils.register_class(bone_drivers)
