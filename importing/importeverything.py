@@ -723,6 +723,7 @@ def add_outlines(single_outline_mode):
                 if AlphaImage:
                     OutlineMat.material.node_tree.nodes['outlinealpha'].image = AlphaImage
                     OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs[0].default_value = 1.0
+                    OutlineMat.material.node_tree.nodes['maintexoralpha'].blend_type = 'MULTIPLY'
                 elif MainImage:
                     OutlineMat.material.node_tree.nodes['outlinealpha'].image = MainImage
                     OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs[0].default_value = 1.0

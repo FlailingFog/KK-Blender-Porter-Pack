@@ -118,13 +118,20 @@ def separate_everything(context):
     clothes = bpy.data.objects['Clothes']
     body = bpy.data.objects['Body']
 
-    #Select all materials that use the hair renderer
+    #Select all materials that use the hair renderer and don't have a normal map then separate
     json_file = open(context.scene.kkbp.import_dir[:-9] + 'KK_MaterialData.json')
     material_data = json.load(json_file)
+    json_file = open(context.scene.kkbp.import_dir[:-9] + 'KK_TextureData.json')
+    texture_data = json.load(json_file)
+    #get all texture files
+    texture_files = []
+    for file in texture_data:
+        texture_files.append(file['textureName'])
     hair_mat_list = []
     for mat in material_data:
         if mat['ShaderName'] in ["Shader Forge/main_hair_front", "Shader Forge/main_hair", 'Koikano/hair_main_sun_front', 'Koikano/hair_main_sun', 'xukmi/HairPlus', 'xukmi/HairFrontPlus']:
-            hair_mat_list.append(mat['MaterialName'])
+            if (mat['MaterialName'] + '_NMP.png') not in texture_files and (mat['MaterialName'] + '_MT_CT.png') not in texture_files and (mat['MaterialName'] + '_MT.png') not in texture_files:
+                hair_mat_list.append(mat['MaterialName'])
     if len(hair_mat_list):
         separate_material(clothes, hair_mat_list)
     else:
