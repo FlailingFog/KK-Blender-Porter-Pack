@@ -33,15 +33,15 @@ translation_dictionary = {
 
     'dark'      : "Dark colors",
     'dark_A'    : "LUT Night",
-    'dark_A_tt' : "Makes everything blue",
+    'dark_A_tt' : "Makes the dark colors blue-ish",
     'dark_B'    : "LUT Sunset",
-    'dark_B_tt' : "Makes everything red",
+    'dark_B_tt' : "Makes the dark colors red-ish",
     'dark_C'    : "LUT Day",
-    'dark_C_tt' : "Makes the dark colors the same as the light ones",
+    'dark_C_tt' : "Makes the dark colors the same as the light colors",
     'dark_D'    : "Saturation based",
-    'dark_D_tt' : "Makes everything saturated",
+    'dark_D_tt' : "Makes the dark colors more saturated than the light ones",
     'dark_E'    : 'Value reduction',
-    'dark_E_tt' : "Makes everything darker",
+    'dark_E_tt' : "Makes the dark colors darker than the light ones",
 
     'prep_drop'         : "Export type",
     'prep_drop_A'       : "Unity - VRM compatible",
@@ -89,7 +89,15 @@ translation_dictionary = {
     'rigify_convert': "Convert for Rigify",
     'sep_eye'       : "Separate Eyes and Eyebrows",
 
-    'convert_image' : 'Convert image with KKBP'
+    'convert_image' : 'Convert image with KKBP',
+
+    'quick_import_tt'   : "Imports a KK model (.pmx format) and applies fixes to it",
+    'mat_import_tt'     : "Finish separating objects, apply the textures and colors",
+    'export_prep_tt'    : "Check the dropdown for more info",
+    'bake_mats_tt'      : "Open the folder you want to bake the material templates to",
+    'apply_mats_tt'     : "Open the folder that contains the baked materials. Use the menu to load the Light / Dark / Normal passes",
+    'import_colors_tt'  : "Open the folder containing your model.pmx file to recalculate the dark colors",
+
     }
 
 def t(text_entry):

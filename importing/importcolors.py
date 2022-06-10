@@ -10,6 +10,13 @@ from bpy_extras.io_utils import ImportHelper
 from gpu_extras.batch import batch_for_shader
 from bpy.props import StringProperty, BoolProperty
 
+#load plugin language
+from bpy.app.translations import locale
+if locale == 'ja_JP':
+    from ..interface.dictionary_jp import t
+else:
+    from ..interface.dictionary_en import t
+
 ########## ERRORS ##########
 def kk_folder_error(self, context):
     self.layout.label(text="Please make sure to open the folder that was exported. (Hint: go into the folder before confirming)")
@@ -711,7 +718,7 @@ def set_color_management():
 class import_colors(bpy.types.Operator):
     bl_idname = "kkb.importcolors"
     bl_label = "Open Export folder"
-    bl_description = "Open the folder containing your model.pmx file to recalculate the dark colors"
+    bl_description = t('import_colors_tt')
     bl_options = {'REGISTER', 'UNDO'}
     
     directory : StringProperty(maxlen=1024, default='', subtype='FILE_PATH', options={'HIDDEN'})

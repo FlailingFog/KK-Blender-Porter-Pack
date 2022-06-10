@@ -27,6 +27,13 @@ from bpy.props import StringProperty, BoolProperty
 from bpy_extras.io_utils import ImportHelper
 from bpy.types import Operator
 
+#load plugin language
+from bpy.app.translations import locale
+if locale == 'ja_JP':
+    from ..interface.dictionary_jp import t
+else:
+    from ..interface.dictionary_en import t
+
 def showError(self, context):
     self.layout.label(text="No object selected (make sure the body object is selected)")
 
@@ -407,7 +414,7 @@ def cleanup():
 class bake_materials(bpy.types.Operator):
     bl_idname = "kkb.bakematerials"
     bl_label = "Store images here"
-    bl_description = "Open the folder you want to bake the material templates to"
+    bl_description = t('bake_mats_tt')
     bl_options = {'REGISTER', 'UNDO'}
     
     directory : StringProperty(maxlen=1024, default='', subtype='FILE_PATH', options={'HIDDEN'})

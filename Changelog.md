@@ -1,3 +1,55 @@
+### Changes for V6.0.0
+Huge feature updates by **MediaMoots**!
+* The KKBP exporter now works in Koikatsu Sunshine!
+* The KKBP Blender plugin now works in Blender 3.1!
+* Alternate clothing states (shift / hang state) can now be exported!
+    * Export these by checking the "Export Variations" box in Koikatsu
+    * These are available as hidden objects after the model is imported into Blender. They are parented to the armature
+* Hitboxes can now be exported!
+    * Export these by checking the "Export Hit Meshes" box in Koikatsu
+    * These are placed in their own collection when the model is imported into Blender
+* The tears object is now exported and available as a shapekey on the body object!
+    * The tears material also has settings to allow minor color edits
+* Shapekeys are more accurate than before!
+* Eyewhite shapekeys are fixed on the exporter-side now!
+    * This means Blender is less likely to crash when importing the model
+* Small fangs are now exported!
+* Accessories are now automatically linked to the correct limb bone!
+* Eye and overlay textures are now scaled automatically!
+* Hair shine, eyeshadow, nipple and underhair UVmaps are now exported!
+    * Thanks to that, these items no longer need to be set and scaled manually for each character
+* Converted Normal Maps for use in Unreal and Unity are now exported
+* Separated objects can now be exported with the "Export separated meshes" button
+* A lot of info linking materials, objects, renderers and bones is now exported to several files in the export folder
+* Exported character heights are 4% more accurate
+* Texture suffixes are shortened
+    * Image names over 64 characters long would cause blender to cufoff the filename, so this means long texture names are less likely to cause issues during import
+
+Plus some misc changes to the Blender plugin:
+* Added a one-click option for importing models!
+    * Hair is now separated from the model automatically, so the entire import process has been reduced to a single button
+    * The behaviour from V5.0 (where you can separate objects as you please) can still be accessed by changing the "Don't pause to categorize" option on the upper right to "Pause to categorize", then pressing the "Finish categorization" button when you're done.
+* The main plugin UI can now be fully translated!
+    * Current languages: English, Japanese (日本語)
+* Updated Rigify Scripts to latest version! (May 15th)
+    * Better Penetration bones will now be placed in the "Torso (Tweak)" layer when converting to the Rigify armature
+* Material baking is now done [through the use of Geometry Nodes!](https://blender.stackexchange.com/questions/231662/)
+    * This works with multiple UV maps, so you no longer need to create a new mesh for hair highlights or anything that uses a separate uv map
+    * You can also speed up the baking process by skipping the dark and normal bakes if you don't want them
+* Removed the vanilla armature type toggle in favor of a menu
+    * There's four options to choose from. Check the tooltip for a brief description of each option
+    * The ability to switch between armature types after import was removed
+* Shapekeys on clothes and hair objects are now deleted
+    * Shapekeys only affect the face, so these weren't needed anyway
+* The Eye, Eyebrow, Eyewhite, Eyeline and Nose materials are now marked as freestyle faces by default (for freestyle exclusion)
+* Python errors are now copied to the KK Log in the Scripting tab
+* The import directory string listed in the KK Log is now censored if it detects your Windows username
+* The plugin now uses an HDRI from polyhaven
+* All KKBP panel options are now visible by default
+
+Bugfixes:
+lkjfdlsnkklfd
+
 ### Changes for V5.1.0
 * Added per-character light linking to the KK shader
     * If you have multiple characters in a scene, this allows you to "link" a light to a character, so you can achieve ideal lighting for each character and not have to fiddle with a global lighting setup that affects all characters at once. This works for up to three characters / light sources. It's enabled by default and can be found inside of the Raw Shading group.

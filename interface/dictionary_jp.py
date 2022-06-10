@@ -1,17 +1,17 @@
-from .dictionary_en import translation_dictionary as fallback
+from .dictionary_en import translation_dictionary as english_fallback
 
 translation_dictionary = {
     'bake_mult'     : 'ベーク乗数:',
-    'bake_mult_tt'  : "不鮮明なテクスチャーがジェネレートされたら２，３にしてみて",
+    'bake_mult_tt'  : "ベークしたテクスチャーがぼやけている場合は２，３にしてみて",
     
-    'seams'     : "からだを縫合する",
-    'seams_tt'  : '距離でからだに近い頂点をマージ。 この設定はRemoving doubles also screws with the weights around certain areas. Disabling this will preserve the weights but may cause seams to appear around the neck and down the chest',
+    'seams'     : "体を縫合する",
+    'seams_tt'  : '体に近い頂点をマージ。 このマージには首のウエイトが台無しになる可能性がある。 このオプションを無効にしたらウエイトが保存されるけど体に縫い目が見えるかも',
     
-    'outline'     : 'Use generic outline',
-    'outline_tt'  : "Enable to use one generic outline material as opposed to using several unique ones. Checking this may cause outline transparency issues",
+    'outline'     : '一つのアウトラインモード',
+    'outline_tt'  : "このオプションにしたらシングルのアウトラインを使われる。 このオプションにしたらアウトライン透明の問題が起こるかも",
     
-    'keep_templates'        : "Keep material templates",
-    'keep_templates_tt'     : "Keep enabled to set the KKBP material templates to fake user. This will keep them from being deleted when blender is closed. Useful if you want to apply them to other objects after your character is finished",
+    'keep_templates'        : "マテリアルテンプレートを保存",
+    'keep_templates_tt'     : "KKBPマテリアルテンプレートをフェイクユーザーに設定する",
 
     'arm_drop'          :"アーマチュアのタイプ",
     'arm_drop_A'        : "KKBPアーマチュアにする",
@@ -25,13 +25,13 @@ translation_dictionary = {
 
     'cat_drop'      : '操作タイプ',
     'cat_drop_A'    : "カテゴライズのために休止しない",
-    'cat_drop_A_tt' : "Import everything and get a single object containing all your model's clothes. Hides any alternate clothes by default",
+    'cat_drop_A_tt' : "すべてをインポートして一つの服オブジェクトにする。別の服はひとりでに隠される",
     'cat_drop_B'    : "カテゴライズのために休止する",
-    'cat_drop_B_tt' : "Import everything, but pause to manually separate the clothes into groups of objects. When done separating, click the Finish categorization button to finish the import. Hides any alternate clothes by default",
+    'cat_drop_B_tt' : "すべてをインポートしてインポートをポーズ。ポーズ状態に手動で服を別々になれる。服を手動でカテゴライズしたら「カテゴライズしまって」ボタンをクリックして。別の服はひとりでに隠される",
     'cat_drop_C'    : "AUTOカテゴライズ",
-    'cat_drop_C_tt' : "Import everyting and automatically separate every piece of clothing into several objects. This option disables the outline modifier shown in blender",
+    'cat_drop_C_tt' : "すべてをインポートして個々の服オブジェクトにする。この設定にはアウトラインを削除される",
     'cat_drop_D'    : "SMRデータでカテゴライズ",
-    'cat_drop_D_tt' : "Import everyting and automatically separate every object by it's Skinned Mesh Renderer. Note: This option is only for exporting meshes so it will not apply any material templates or colors",
+    'cat_drop_D_tt' : "すべてをインポートしてSMR(Skinned Mesh Renderer)データで服を別々にする。この設定にはマテリアルテンプレートや色データや使われないからモデルはテクスチャーなしで見える",
 
     'dark'      : "ダークな色",
     'dark_A'    : "LUT 夜",
@@ -48,20 +48,20 @@ translation_dictionary = {
     'prep_drop'         : "エクスポートタイプ",
     'prep_drop_A'       : "Unity - VRMコンパチ",
     'prep_drop_A_tt'    : """すべてのオブジェクトを組み合わせて...
-    輪郭を削除して,
+    アウトラインを削除して,
     Eyeの複写、Eyewhiteの複写を削除して,
     瞳のボーンをアマチュアレイヤー１６に移って,
     アマチュアレイヤー 3 / 5 / 11 / 12 / 13 のボーンをシンプル化して,
-    Unityがボーンを独りでに見つけられるためにアマチュアを改造して""",
+    Unityがボーンをひとりでに見つけられるためにアマチュアを改造して""",
     'prep_drop_C'       : '汎用 - シンプル',
     'prep_drop_C_tt'    : """すべてのオブジェクトを組み合わせて...
-    輪郭を削除して,
+    アウトラインを削除して,
     Eyeの複写、Eyewhiteの複写を削除して,
     瞳のボーンをアマチュアレイヤー１６に移って,
     アマチュアレイヤー 11 のボーンをシンプル化して""",
     'prep_drop_D'       : "汎用 - 変更なし",
     'prep_drop_D_tt'    : """すべてのオブジェクトを組み合わせて...
-    輪郭を削除して,
+    アウトラインを削除して,
     Eyeの複写、Eyewhiteの複写を削除して""",
 
     'bake'          : 'マテリアルテンプレートをベーク',
@@ -72,12 +72,12 @@ translation_dictionary = {
     'bake_norm'     : "ノーマル",
     'bake_norm_tt'  : "ノーマルテクスチャーをベーク",
 
-    'shape_A'       : 'Use KKBP shapekeys',
-    'shape_A_tt'    : 'Rename and delete the old shapekeys. This will merge the shapekeys that are part of the same expression and delete the rest',
-    'shape_B'       : "Save partial shapekeys",
-    'shape_B_tt'    : "Save the partial shapekeys that are used to generate the KK shapekeys. These are useless on their own",
-    'shape_C'       : "Skip modifying shapekeys",
-    'shape_C_tt'    : "Use the stock Koikatsu shapekeys. This will not change the shapekeys in any way",
+    'shape_A'       : 'KKBPシェイプキーにする',
+    'shape_A_tt'    : 'シェイプキーを変更して部分的なシェイプキーを削除する',
+    'shape_B'       : "部分的なシェイプキーを保存",
+    'shape_B_tt'    : "シェイプキーを変更して部分的なシェイプキーを保存する",
+    'shape_C'       : "シェイプキー変更しない",
+    'shape_C_tt'    : "コイカツのシェイプキーにする。シェイプキーが変更されない",
 
     'atlas'         : 'アトラスタイプ',
 
@@ -89,14 +89,22 @@ translation_dictionary = {
     'apply_temp'    : 'ベークしたテンプレートをつけて',
 
     'rigify_convert': "Rigifyアーマチュアに変えて",
-    'sep_eye'       : "EyesとEyebrowsを別々になって",
+    'sep_eye'       : "EyesとEyebrowsと体から別々になって",
 
-    'convert_image' : 'KKBPのLUTでイマージをコンヴァート'
+    'convert_image' : 'KKBPのLUTでイマージをコンヴァート',
+
+    'quick_import_tt'   : "コイカツモデル(.PMXフォーマット)をインポートして改造して",
+    'mat_import_tt'     : "カテゴライズしまってテクスチャーや色データつけて",
+    'export_prep_tt'    : "メニューの情報をチェックして",
+    'bake_mats_tt'      : "フォルダにマテリアルテンプレートをベークして",
+    'apply_mats_tt'     : "ベークしたマテリアルテンプレートをフォルダから読み取る。メニューからライト・ダーク・ノーマルバージョンを選択できる",
+    'import_colors_tt'  : ".PMXフォルダを選択したらダークな色を再計算できる",
+
     }
 
 def t(text_entry):
     try:
         return translation_dictionary[text_entry]
     except:
-        return fallback[text_entry]
+        return english_fallback[text_entry]
 

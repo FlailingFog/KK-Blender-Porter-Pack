@@ -1,6 +1,13 @@
 import bpy, time, traceback
 from bpy.props import StringProperty
 
+#load plugin language
+from bpy.app.translations import locale
+if locale == 'ja_JP':
+    from ..interface.dictionary_jp import t
+else:
+    from ..interface.dictionary_en import t
+
 def kklog(log_text, type = 'standard'):
     if not bpy.data.texts.get('KKBP Log'):
         bpy.data.texts.new(name='KKBP Log')
@@ -34,7 +41,7 @@ def import_pmx_model(directory):
 class quick_import(bpy.types.Operator):
     bl_idname = "kkb.quickimport"
     bl_label = "Import .pmx file"
-    bl_description = "Imports a KK model (.pmx format) and applies fixes to it"
+    bl_description = t('quick_import_tt')
     bl_options = {'REGISTER', 'UNDO'}
 
     filepath : StringProperty(maxlen=1024, default='', options={'HIDDEN'})
@@ -126,7 +133,7 @@ class quick_import(bpy.types.Operator):
 class mat_import(bpy.types.Operator):
     bl_idname = "kkb.matimport"
     bl_label = "Load textures and colors"
-    bl_description = "Finish separating objects, apply the textures and colors"
+    bl_description = t('mat_import_tt')
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
