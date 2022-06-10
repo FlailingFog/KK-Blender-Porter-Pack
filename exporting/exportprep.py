@@ -11,6 +11,13 @@ Usage:
 import bpy, traceback
 from ..importing.importbuttons import kklog
 
+#load plugin language
+from bpy.app.translations import locale
+if locale == 'ja_JP':
+    from ..interface.dictionary_jp import t
+else:
+    from ..interface.dictionary_en import t
+
 def main(prep_type):
 
     armature = bpy.data.objects['Armature']
@@ -222,7 +229,7 @@ def main(prep_type):
 class export_prep(bpy.types.Operator):
     bl_idname = "kkb.selectbones"
     bl_label = "Prep for target application"
-    bl_description = "Check the dropdown for more info"
+    bl_description = t('export_prep_tt')
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):

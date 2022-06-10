@@ -18,6 +18,13 @@ from bpy.props import StringProperty, BoolProperty
 from bpy_extras.io_utils import ImportHelper
 from bpy.types import Operator
 
+#load plugin language
+from bpy.app.translations import locale
+if locale == 'ja_JP':
+    from ..interface.dictionary_jp import t
+else:
+    from ..interface.dictionary_en import t
+
 def create_atlas_helpers():
     object = bpy.context.active_object
     for matslot in object.material_slots:
@@ -127,8 +134,7 @@ def replace_images(folderpath, apply_type):
 class apply_materials(bpy.types.Operator):
     bl_idname = "kkb.applymaterials"
     bl_label = "Open baked materials folder"
-    bl_description = """Open the folder that contains the baked materials.
-    Use the menu to load the Light / Dark / Normal passes"""
+    bl_description = t('apply_mats_tt')
     bl_options = {'REGISTER', 'UNDO'}
     
     directory : StringProperty(maxlen=1024, default='', subtype='FILE_PATH', options={'HIDDEN'})

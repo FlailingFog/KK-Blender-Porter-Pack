@@ -19,9 +19,7 @@ from pathlib import Path
 class rigify_convert(bpy.types.Operator):
     bl_idname = "kkb.rigifyconvert"
     bl_label = "Convert for rigify"
-    bl_description = """Converts a KKBP armature to be Rigify compatible.
-    The first time you click the button, the armature will be converted to a metarig.
-    Every time after you click the button, a Rigify rig will be generated and a cleanup script will be run"""
+    bl_description = """Runs several scripts to convert a KKBP armature to be Rigify compatible"""
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):
