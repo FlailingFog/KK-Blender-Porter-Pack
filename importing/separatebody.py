@@ -172,13 +172,15 @@ def separate_everything(context):
         
         #Always separate indoor shoes
         indoor_shoes_name = clothes_data[7]['RendNormal01']
+        kklog(indoor_shoes_name)
         if indoor_shoes_name:
             for smr_index in smr_data:
-                if smr_index['SMRName'] == indoor_shoes_name:
+                kklog(smr_index['SMRName'])
+                if smr_index['SMRName'] == indoor_shoes_name[0]:
                     separate_material(clothes, smr_index['SMRMaterialNames'])
                     bpy.data.objects['Clothes.001'].name = clothes_labels[7]
-                    bpy.data.objects[clothes_labels[7]].hide_render = True
-                    bpy.data.objects[clothes_labels[7]].hide_viewport = True
+                    #bpy.data.objects[clothes_labels[7]].hide_render = True
+                    #bpy.data.objects[clothes_labels[7]].hide = True
         
         #If there's multiple pieces to the top, separate them into their own object, but make sure to group them correctly
         grouping = {'B':[], 'C':[]}
@@ -419,8 +421,9 @@ def cleanup():
     bpy.ops.object.material_slot_remove_unused()
     for obj in bpy.context.selected_objects:
         obj.select_set(False)
-        if ' alt ' in obj.name:
+        if ' alt ' in obj.name or 'Indoor shoes' in obj.name:
             obj.hide = True
+            obj.hide_render = True
     bpy.ops.object.select_all(action='DESELECT')
 
     #and clean up the oprhaned data

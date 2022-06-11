@@ -24,19 +24,19 @@ def main(prep_type):
 
     kklog('\nPrepping for export...')
     #Combine all objects
-    kklog('\nCombining all objects...')
+    kklog('Combining all objects...')
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.ops.object.select_all(action='SELECT')
     bpy.context.view_layer.objects.active=bpy.data.objects['Body']
     body = bpy.context.view_layer.objects.active
     bpy.ops.object.join()
     
-    kklog('\nRemoving object outline modifier...')
+    kklog('Removing object outline modifier...')
     body.modifiers['Outline Modifier'].show_render = False
     body.modifiers['Outline Modifier'].show_viewport = False
 
     #remove the second Template Eye slot if there are two of the same name in a row
-    kklog('\nRemoving duplicate Eye materials...')
+    kklog('Removing duplicate Eye materials...')
     eye_index = 0
     for mat_slot_index in range(len(body.material_slots)):
         if body.material_slots[mat_slot_index].name == 'Template Eye (hitomi)':

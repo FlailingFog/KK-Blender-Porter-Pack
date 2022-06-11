@@ -21,7 +21,7 @@ fillerplane driver + shader code taken from https://blenderartists.org/t/scripts
 '''
 
 import bpy, os, traceback
-from pathlib import Path
+from pathlib import Path, WindowsPath
 from ..importing.importbuttons import kklog
 from bpy.props import StringProperty, BoolProperty
 from bpy_extras.io_utils import ImportHelper
@@ -207,6 +207,10 @@ def sanitizeMaterialName(text):
     return text
 
 def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
+    #get list of already baked files
+    fileList = Path(directory).glob('*.*')
+    files = [file for file in fileList if file.is_file()]
+    print(files)
     exportType = 'PNG'
     exportColormode = 'RGBA'
     #get the most recently created light object
@@ -237,10 +241,12 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
         if 'Outline ' in currentmaterial.name or 'Template Outline' in currentmaterial.name or 'Template Body Outline' in currentmaterial.name:
             continue
 
-        #Don't bake this material if the material already has the atlas nodes loaded in and the mix shader is set to 1
+        #Don't bake this material if the material already has the atlas nodes loaded in and the mix shader is set to 1 and the image already exists
         if currentmaterial.node_tree.nodes.get('KK Mix'):
-            if currentmaterial.node_tree.nodes['KK Mix'].inputs[0].default_value > 0.5:
+            if currentmaterial.node_tree.nodes['KK Mix'].inputs[0].default_value > 0.5 and WindowsPath(folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + bake_type + '.png') in files:
                 continue
+            else:
+                currentmaterial.node_tree.nodes['KK Mix'].inputs[0].default_value = 0
         
         #Turn off the normals for the raw shading node group input if this isn't a normal pass
         if nodes.get('RawShade') and bake_type != 'normal':

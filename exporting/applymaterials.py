@@ -103,7 +103,12 @@ def replace_images(folderpath, apply_type):
         
         #Check if there's any images for this material
         #if there's no matching images, skip to the next material
-        currentImage = [file.name for file in files if (matname in file.name and 'light' in file.name)]
+        if apply_type == 'A':
+            currentImage = [file.name for file in files if (matname in file.name and 'light' in file.name)]
+        elif apply_type == 'B':
+            currentImage = [file.name for file in files if (matname in file.name and 'dark' in file.name)]
+        else:
+            currentImage = [file.name for file in files if (matname in file.name and 'normal' in file.name)]
         if not currentImage:
             continue
 
@@ -112,13 +117,6 @@ def replace_images(folderpath, apply_type):
 
         #load the image into the image node
         transpMix = nodes['KK export']
-        
-        if apply_type == 'A':
-            currentImage = [file.name for file in files if (matname in file.name and 'light' in file.name)]
-        elif apply_type == 'B':
-            currentImage = [file.name for file in files if (matname in file.name and 'dark' in file.name)]
-        else:
-            currentImage = [file.name for file in files if (matname in file.name and 'normal' in file.name)]
         imageName = currentImage[0]
         imagePath = folderpath + imageName
 

@@ -24,12 +24,12 @@ def kklog(log_text, type = 'standard'):
                     area.spaces[0].text = bpy.data.texts['KKBP Log']
 
     if type == 'error':
-        log_text = '\nError:          ' + log_text
+        log_text = '\nError:          ' + str(log_text)
     elif type == 'warn':
-        log_text = 'Warning:        ' + log_text
-    bpy.data.texts['KKBP Log'].write(log_text + '\n')
+        log_text = 'Warning:        ' + str(log_text)
+    bpy.data.texts['KKBP Log'].write(str(log_text) + '\n')
 
-    print(log_text)
+    print(str(log_text))
 
 def import_pmx_model(directory):
     #import the pmx file with mmd_tools
