@@ -121,7 +121,7 @@ class quick_import(bpy.types.Operator):
         for command in commands:
             command
 
-        if context.scene.kkbp.armature_dropdown == 'B' and context.scene.kkbp.categorize_dropdown in ['A', 'B']:
+        if context.scene.kkbp.armature_dropdown == 'B' and context.scene.kkbp.categorize_dropdown in ['A', 'B', 'C']:
             bpy.ops.kkb.rigifyconvert('INVOKE_DEFAULT')
         
         return {'FINISHED'}

@@ -1520,19 +1520,22 @@ def main():
         koikatsuCommons.torsoLayerBoneNames.remove(koikatsuCommons.rightBreastHandleBoneName) 
                
     if not metarig.pose.bones.get(koikatsuCommons.betterPenetrationRootCrotchBoneName):
-        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationRootCrotchBoneName)
-        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationFrontCrotchBoneName)
-        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationLeftCrotchBone1Name)
-        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationRightCrotchBone1Name)
-        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationLeftCrotchBone2Name)
-        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationRightCrotchBone2Name)
-        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationLeftCrotchBone3Name)
-        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationRightCrotchBone3Name)
-        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationLeftCrotchBone4Name)
-        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationRightCrotchBone4Name)
-        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationLeftCrotchBone5Name)
-        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationRightCrotchBone5Name)
-        koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationBackCrotchBoneName)
+        try:
+            koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationRootCrotchBoneName)
+            koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationFrontCrotchBoneName)
+            koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationLeftCrotchBone1Name)
+            koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationRightCrotchBone1Name)
+            koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationLeftCrotchBone2Name)
+            koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationRightCrotchBone2Name)
+            koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationLeftCrotchBone3Name)
+            koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationRightCrotchBone3Name)
+            koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationLeftCrotchBone4Name)
+            koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationRightCrotchBone4Name)
+            koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationLeftCrotchBone5Name)
+            koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationRightCrotchBone5Name)
+            koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationBackCrotchBoneName)
+        except:
+            pass
                 
     ctrlBoneNames = []
     ctrlBoneNames.extend(koikatsuCommons.faceLayerBoneNames)

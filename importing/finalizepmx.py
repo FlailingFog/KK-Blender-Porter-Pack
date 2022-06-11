@@ -854,7 +854,32 @@ def rename_mmd_bones():
     for bone in pmx_rename_dict:
         if armature.pose.bones.get(pmx_rename_dict[bone]):
             armature.pose.bones[pmx_rename_dict[bone]].mmd_bone.name_j = bone
-            
+
+def survey_vertexes(obj):
+    has_vertexes = {}
+    for i in obj.vertex_groups:
+        has_vertexes[i.name] = False
+    #preserve the indexes
+    keylist = list(has_vertexes)
+    #then fill in the real value using the indexes
+    for v in obj.data.vertices:
+        for g in v.groups:
+            gn = g.group
+            w = obj.vertex_groups[g.group].weight(v.index)
+            if (has_vertexes.get(keylist[gn]) is None or w>has_vertexes[keylist[gn]]):
+                has_vertexes[keylist[gn]] = True
+    return has_vertexes
+    
+def remove_empty_vertex_groups():
+    #check body for groups with no vertexes. Delete if the group is not a bone on the armature
+    body = bpy.data.objects['Body']
+    armature = bpy.data.objects['Armature']
+    vertexWeightMap = survey_vertexes(body)
+    bones_in_armature = [bone.name for bone in armature.data.bones]
+    for group in vertexWeightMap:
+        if group not in bones_in_armature and vertexWeightMap[group] == False and 'cf_J_Vagina' not in group:
+            body.vertex_groups.remove(body.vertex_groups[group])
+
 class finalize_pmx(bpy.types.Operator):
     bl_idname = "kkb.finalizepmx"
     bl_label = "Finalize .pmx file"
@@ -878,6 +903,7 @@ class finalize_pmx(bpy.types.Operator):
                 #kklog('Fixing accessories...')
                 #fix_accessories()
             rename_mmd_bones()
+            remove_empty_vertex_groups()
 
             kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             
