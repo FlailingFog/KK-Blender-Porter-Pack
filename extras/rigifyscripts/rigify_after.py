@@ -4,9 +4,11 @@
 import bpy
 import traceback
 import sys
-    
+
+from . import commons as koikatsuCommons
+
 def main():
-    koikatsuCommonsName = "Koikatsu Commons.py";
+    #koikatsuCommonsName = "Koikatsu Commons.py";
     """
     koikatsuCommonsPath = "C:\\Users\\UserName\\Desktop\\"
 
@@ -16,7 +18,7 @@ def main():
     text = bpy.data.texts.load(koikatsuCommonsPath + koikatsuCommonsName)
     koikatsuCommons = text.as_module()
     """
-    koikatsuCommons = bpy.data.texts[koikatsuCommonsName].as_module()
+    #koikatsuCommons = bpy.data.texts[koikatsuCommonsName].as_module()
 
     generatedRig = bpy.context.active_object
 
@@ -244,11 +246,13 @@ def main():
         
     #koikatsuCommons.setBoneManagerLayersFromRigifyLayers(generatedRig)
 
-try:
-    main()
-    print("\nSuccess\n")
-except Exception as ex:
-    return_value = "ERROR!"
-    print(traceback.format_exc(), file=sys.stderr)
-    print("Failure\n")
+class rigify_after(bpy.types.Operator):
+    bl_idname = "kkb.rigafter"
+    bl_label = "After Each Rigify Generate - Public"
+    bl_description = 'why is the context wrong'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        main()
+        return {'FINISHED'}
     

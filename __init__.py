@@ -40,6 +40,8 @@ from .extras.separatemeshes import export_separate_meshes
 from .extras.toggleik import toggle_ik
 from .extras.imageconvert import image_convert
 from .extras.rigifywrapper import rigify_convert
+from .extras.rigifyscripts.rigify_before import rigify_before
+from .extras.rigifyscripts.rigify_after import rigify_after
 
 from . KKPanel import PlaceholderProperties
 from . KKPanel import (
@@ -64,6 +66,8 @@ classes = (
     export_separate_meshes,
     toggle_ik,
     rigify_convert,
+    rigify_before,
+    rigify_after,
 
     bone_drivers, 
     clean_armature, 

@@ -1,5 +1,12 @@
-import bpy, time, traceback
+import bpy, time, traceback, statistics, bmesh, math, sys, mathutils
+from pathlib import Path
 from bpy.props import StringProperty
+
+from math import radians
+
+from mathutils import Matrix, Vector, Euler
+from typing import NamedTuple
+from pathlib import Path
 
 #load plugin language
 from bpy.app.translations import locale
@@ -115,7 +122,7 @@ class quick_import(bpy.types.Operator):
             command
 
         if context.scene.kkbp.armature_dropdown == 'B' and context.scene.kkbp.categorize_dropdown in ['A', 'B']:
-            bpy.ops.kkb.rigifyconvert('EXEC_DEFAULT')
+            bpy.ops.kkb.rigifyconvert('INVOKE_DEFAULT')
         
         return {'FINISHED'}
         
@@ -132,20 +139,14 @@ class mat_import(bpy.types.Operator):
     def execute(self, context):
         
         # run bone drivers after
-        if context.scene.kkbp.categorize_dropdown == 'D':
+        if bpy.context.scene.kkbp.categorize_dropdown == 'D':
             bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT')
         
         bpy.ops.kkb.importeverything('INVOKE_DEFAULT')
         bpy.ops.kkb.importcolors('EXEC_DEFAULT')
 
-        if context.scene.kkbp.armature_dropdown == 'B':
-            print({k:v for k, v in bpy.context.copy().items() if v is not None})
-
-            bpy.ops.kkb.rigifyconvert('EXEC_DEFAULT')
+        if context.scene.kkbp.armature_dropdown == 'B' and context.scene.kkbp.categorize_dropdown in ['A', 'B', 'C']:
+            bpy.ops.kkb.rigifyconvert('INVOKE_DEFAULT')
 
         return {'FINISHED'}
 
-if __name__ == "__main__":
-    bpy.utils.register_class(quick_import)
-    bpy.ops.kkb.quickimport('INVOKE_DEFAULT')
-    bpy.utils.register_class(mat_import)

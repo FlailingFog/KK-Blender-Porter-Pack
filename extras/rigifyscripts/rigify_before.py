@@ -1,7 +1,7 @@
 
 #Switch to Object Mode and select Metarig
 
-import bpy
+import bpy, bmesh, mathutils
 from typing import NamedTuple
 import math
 from math import radians
@@ -9,6 +9,8 @@ import statistics
 from mathutils import Matrix, Vector, Euler
 import traceback
 import sys
+
+from . import commons as koikatsuCommons
     
 def main():
     koikatsuCommonsName = "Koikatsu Commons.py";
@@ -21,7 +23,7 @@ def main():
     text = bpy.data.texts.load(koikatsuCommonsPath + koikatsuCommonsName)
     koikatsuCommons = text.as_module()
     """
-    koikatsuCommons = bpy.data.texts[koikatsuCommonsName].as_module()
+    #koikatsuCommons = bpy.data.texts[koikatsuCommonsName].as_module()
 	
     metarig = bpy.context.active_object
 
@@ -164,13 +166,34 @@ def main():
         print({k:v for k, v in bpy.context.copy().items() if v is not None})
         bpy.context.scene.tool_settings.transform_pivot_point = 'BOUNDING_BOX_CENTER'
         bpy.ops.mesh.select_all(action='SELECT')
+        bpy.context.tool_settings.mesh_select_mode = (True, True, True)
+
         if rotate:
+            bm = bmesh.from_edit_mesh(bpy.context.view_layer.objects.active.data)
+            selected_verts = [v for v in bm.verts if v.select]
+            center = sum((Vector(b) for b in bpy.context.view_layer.objects.active.bound_box), Vector())
+            center /= 8
             if rotateXRadians:
-                bpy.ops.transform.rotate(value=math.radians(rotateXRadians), orient_axis='X', orient_type='GLOBAL')
+                bmesh.ops.rotate(
+                bm,
+                verts=selected_verts,
+                cent=center,
+                matrix=mathutils.Matrix.Rotation(math.radians(rotateXRadians), 3, 'Z'))
+                #bmesh.update_edit_mesh(bpy.context.view_layer.objects.active.data)
             if rotateYRadians:
-                bpy.ops.transform.rotate(value=math.radians(rotateYRadians), orient_axis='Y', orient_type='GLOBAL')
+                bmesh.ops.rotate(
+                bm,
+                verts=selected_verts,
+                cent=center,
+                matrix=mathutils.Matrix.Rotation(math.radians(rotateYRadians), 3, 'Y'))
+                #bmesh.update_edit_mesh(bpy.context.view_layer.objects.active.data)
             if rotateZRadians:
-                bpy.ops.transform.rotate(value=math.radians(rotateZRadians), orient_axis='Z', orient_type='GLOBAL')
+                bmesh.ops.rotate(
+                bm,
+                verts=selected_verts,
+                cent=center,
+                matrix=mathutils.Matrix.Rotation(math.radians(rotateZRadians), 3, 'X'))
+                #bmesh.update_edit_mesh(bpy.context.view_layer.objects.active.data)
         leftVertexGroupExtremities = koikatsuCommons.findVertexGroupExtremities(leftVertexGroupName, vertexGroupObjectName)
         rightVertexGroupExtremities = koikatsuCommons.findVertexGroupExtremities(rightVertexGroupName, vertexGroupObjectName)
         leftVertexGroupMidZ = (leftVertexGroupExtremities.maxZ + leftVertexGroupExtremities.minZ) / 2
@@ -197,12 +220,31 @@ def main():
         bpy.context.scene.tool_settings.transform_pivot_point = 'BOUNDING_BOX_CENTER'
         bpy.ops.mesh.select_all(action='SELECT')
         if rotate:
+            bm = bmesh.from_edit_mesh(bpy.context.view_layer.objects.active.data)
+            selected_verts = [v for v in bm.verts if v.select]
+            center = sum((Vector(b) for b in bpy.context.view_layer.objects.active.bound_box), Vector())
+            center /= 8
             if rotateXRadians:
-                bpy.ops.transform.rotate(value=math.radians(rotateXRadians), orient_axis='X', orient_type='GLOBAL')
+                bmesh.ops.rotate(
+                bm,
+                verts=selected_verts,
+                cent=center,
+                matrix=mathutils.Matrix.Rotation(math.radians(rotateXRadians), 3, 'Z'))
+                #bmesh.update_edit_mesh(bpy.context.view_layer.objects.active.data)
             if rotateYRadians:
-                bpy.ops.transform.rotate(value=math.radians(rotateYRadians), orient_axis='Y', orient_type='GLOBAL')
+                bmesh.ops.rotate(
+                bm,
+                verts=selected_verts,
+                cent=center,
+                matrix=mathutils.Matrix.Rotation(math.radians(rotateYRadians), 3, 'Y'))
+                #bmesh.update_edit_mesh(bpy.context.view_layer.objects.active.data)
             if rotateZRadians:
-                bpy.ops.transform.rotate(value=math.radians(rotateZRadians), orient_axis='Z', orient_type='GLOBAL')
+                bmesh.ops.rotate(
+                bm,
+                verts=selected_verts,
+                cent=center,
+                matrix=mathutils.Matrix.Rotation(math.radians(rotateZRadians), 3, 'X'))
+                #bmesh.update_edit_mesh(bpy.context.view_layer.objects.active.data)
         if translate and not createHandleBones:
             bpy.ops.transform.translate(value=(leftVertexGroupMidX * vertexGroupMidXFactor, leftVertexGroupExtremities.minY * vertexGroupMinYFactor, -(leftChildWidget.location[2] - leftVertexGroupMidZ * parentWidgetTranslateZFactor)), orient_type='GLOBAL')
         #leftVertexGroupArea = (leftVertexGroupExtremities.maxX - leftVertexGroupExtremities.minX) * (leftVertexGroupExtremities.maxZ - leftVertexGroupExtremities.minZ) 
@@ -239,12 +281,31 @@ def main():
         bpy.context.scene.tool_settings.transform_pivot_point = 'BOUNDING_BOX_CENTER'
         bpy.ops.mesh.select_all(action='SELECT')
         if rotate:
+            bm = bmesh.from_edit_mesh(bpy.context.view_layer.objects.active.data)
+            selected_verts = [v for v in bm.verts if v.select]
+            center = sum((Vector(b) for b in bpy.context.view_layer.objects.active.bound_box), Vector())
+            center /= 8
             if rotateXRadians:
-                bpy.ops.transform.rotate(value=math.radians(rotateXRadians), orient_axis='X', orient_type='GLOBAL')
+                bmesh.ops.rotate(
+                bm,
+                verts=selected_verts,
+                cent=center,
+                matrix=mathutils.Matrix.Rotation(math.radians(rotateXRadians), 3, 'Z'))
+                #bmesh.update_edit_mesh(bpy.context.view_layer.objects.active.data)
             if rotateYRadians:
-                bpy.ops.transform.rotate(value=math.radians(rotateYRadians), orient_axis='Y', orient_type='GLOBAL')
+                bmesh.ops.rotate(
+                bm,
+                verts=selected_verts,
+                cent=center,
+                matrix=mathutils.Matrix.Rotation(math.radians(rotateYRadians), 3, 'Y'))
+                #bmesh.update_edit_mesh(bpy.context.view_layer.objects.active.data)
             if rotateZRadians:
-                bpy.ops.transform.rotate(value=math.radians(rotateZRadians), orient_axis='Z', orient_type='GLOBAL')
+                bmesh.ops.rotate(
+                bm,
+                verts=selected_verts,
+                cent=center,
+                matrix=mathutils.Matrix.Rotation(math.radians(rotateZRadians), 3, 'X'))
+                #bmesh.update_edit_mesh(bpy.context.view_layer.objects.active.data)
         if translate and not createHandleBones:
             bpy.ops.transform.translate(value=(rightVertexGroupMidX * vertexGroupMidXFactor, rightVertexGroupExtremities.minY * vertexGroupMinYFactor, -(rightChildWidget.location[2] - rightVertexGroupMidZ * parentWidgetTranslateZFactor)), orient_type='GLOBAL')
         #rightChildWidgetResizeXFactor = statistics.mean([parentWidgetResizeXFactor, parentWidgetResizeXFactor * (rightVertexGroupArea / averageVertexGroupArea)])
@@ -330,7 +391,7 @@ def main():
         
     arrangeTripleWidgetSet(koikatsuCommons.widgetCollectionName, widgetButtocks, widgetButtockLeft, widgetButtockRight, True, 
     koikatsuCommons.bodyName, koikatsuCommons.leftButtockDeformBoneName, koikatsuCommons.rightButtockDeformBoneName, 
-    False, None, None, None,
+    False, None, None, None, 
     True, 0, -3.6, 1, 
     True, 30, 1, 25, 
     True, metarig, koikatsuCommons.buttocksBoneName, koikatsuCommons.buttocksHandleBoneName, koikatsuCommons.leftButtockBoneName, koikatsuCommons.leftButtockHandleBoneName, koikatsuCommons.rightButtockBoneName, koikatsuCommons.rightButtockHandleBoneName)
@@ -1680,11 +1741,14 @@ def main():
             
     #bpy.ops.bone_layer_man.get_rigify_layers()
     #koikatsuCommons.setBoneManagerLayersFromRigifyLayers(metarig)
-    
-try:
-    main()
-    print("\nSuccess\n")
-except Exception as ex:
-    return_value = "ERROR!"
-    print(traceback.format_exc(), file=sys.stderr)
-    print("Failure\n")
+
+class rigify_before(bpy.types.Operator):
+    bl_idname = "kkb.rigbefore"
+    bl_label = "Before First Rigify Generate - Public"
+    bl_description = 'why is the context wrong'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        main()
+        return {'FINISHED'}
+

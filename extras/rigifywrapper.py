@@ -23,52 +23,46 @@ class rigify_convert(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):
-        kklog('Converting to Rigify...')
-        #my_context = 
-        print({k:v for k, v in bpy.context.copy().items() if v is not None})
-        #Make the armature active
-        bpy.ops.object.mode_set(mode='OBJECT')
-        bpy.ops.object.select_all(action='DESELECT')
-        armature = bpy.data.objects['Armature']
-        armature.hide_set(False)
-        armature.select_set(True)
-        bpy.context.view_layer.objects.active=armature
+        try:
+            kklog('Converting to Rigify...')
+            #Make the armature active
+            bpy.ops.object.mode_set(mode='OBJECT')
+            bpy.ops.object.select_all(action='DESELECT')
+            armature = bpy.data.objects['Armature']
+            armature.hide_set(False)
+            armature.select_set(True)
+            bpy.context.view_layer.objects.active=armature
 
-        common = Path( __file__ ).parent
-        common = common.joinpath('rigifyscripts', 'Koikatsu Commons.py')
-        text = bpy.data.texts.load(str(common))
+            bpy.ops.kkb.rigbefore('INVOKE_DEFAULT')
 
-        before = Path( __file__ ).parent
-        before = before.joinpath('rigifyscripts', 'Before First Rigify Generate - Public.py')
-        text = bpy.data.texts.load(str(before))
-        exec(text.as_string())
-
-        bpy.ops.pose.rigify_generate()
-        
-        after = Path( __file__ ).parent
-        after = after.joinpath('rigifyscripts', 'After Each Rigify Generate - Public.py')
-        text = bpy.data.texts.load(str(after))
-        exec(text.as_string())
-        
-        #make sure things are parented correctly and hide original armature
-        rig = bpy.context.active_object
-        if len(armature.children):
-            for child in armature.children:
-                if child.name != 'Bonelyfans' and child.name != 'Shadowcast' and child.name != 'Hitboxes':
-                    bpy.ops.object.select_all(action='DESELECT')
-                    child.parent = None
-                    child.select_set(True)
-                    rig.select_set(True)
-                    bpy.context.view_layer.objects.active=rig
-                    bpy.ops.object.parent_set(type='ARMATURE_NAME')
-        armature.hide_set(True)
-        bpy.ops.object.select_all(action='DESELECT')
-        rig.select_set(True)
-        bpy.context.view_layer.objects.active=rig
-        rig.show_in_front = True
-        bpy.context.scene.tool_settings.transform_pivot_point = 'INDIVIDUAL_ORIGINS'
-
-        return {'FINISHED'}
+            bpy.ops.pose.rigify_generate()
+            
+            bpy.ops.kkb.rigafter('INVOKE_DEFAULT')
+            
+            #make sure things are parented correctly and hide original armature
+            rig = bpy.context.active_object
+            if len(armature.children):
+                for child in armature.children:
+                    if child.name != 'Bonelyfans' and child.name != 'Shadowcast' and child.name != 'Hitboxes':
+                        bpy.ops.object.select_all(action='DESELECT')
+                        child.parent = None
+                        child.select_set(True)
+                        rig.select_set(True)
+                        bpy.context.view_layer.objects.active=rig
+                        bpy.ops.object.parent_set(type='ARMATURE_NAME')
+            armature.hide_set(True)
+            bpy.ops.object.select_all(action='DESELECT')
+            rig.select_set(True)
+            bpy.context.view_layer.objects.active=rig
+            rig.show_in_front = True
+            bpy.context.scene.tool_settings.transform_pivot_point = 'INDIVIDUAL_ORIGINS'
+            return {'FINISHED'}
+            
+        except:
+            kklog('Unknown python error occurred', type = 'error')
+            kklog(traceback.format_exc())
+            self.report({'ERROR'}, traceback.format_exc())
+            return {"CANCELLED"}
 
 if __name__ == "__main__":
     bpy.utils.register_class(rigify_convert)
