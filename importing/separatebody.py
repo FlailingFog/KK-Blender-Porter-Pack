@@ -65,7 +65,6 @@ def add_freestyle_faces():
     bpy.ops.mesh.select_all(action = 'DESELECT')
     bpy.ops.object.mode_set(mode = 'OBJECT')
 
-
 def separate_material(object, mat_list, search_type = 'exact'):
     for mat in mat_list:
         mat_found = -1
@@ -172,10 +171,10 @@ def separate_everything(context):
         
         #Always separate indoor shoes
         indoor_shoes_name = clothes_data[7]['RendNormal01']
-        kklog(indoor_shoes_name)
+        #kklog(indoor_shoes_name)
         if indoor_shoes_name:
             for smr_index in smr_data:
-                kklog(smr_index['SMRName'])
+                #kklog(smr_index['SMRName'])
                 if smr_index['SMRName'] == indoor_shoes_name[0]:
                     separate_material(clothes, smr_index['SMRMaterialNames'])
                     bpy.data.objects['Clothes.001'].name = clothes_labels[7]
@@ -185,7 +184,7 @@ def separate_everything(context):
         #If there's multiple pieces to the top, separate them into their own object, but make sure to group them correctly
         grouping = {'B':[], 'C':[]}
         for clothes_index in [0, 9, 10, 11]:
-            print(clothes_index)
+            #print(clothes_index)
             for cat in ['RendNormal01', 'RendEmblem01', 'RendEmblem02']:
                 if len(clothes_data[clothes_index][cat]) > 1 or (len(clothes_data[clothes_index][cat]) == 1 and cat not in 'RendNormal01'):
                     clothes_to_separate = clothes_data[clothes_index][cat]
@@ -196,17 +195,17 @@ def separate_everything(context):
                             for smr_index in smr_data:
                                 if smr_index['SMRName'] == subpart_object_name and '_b ' in subpart_object_name:
                                     for item in smr_index['SMRMaterialNames']:
-                                        print(item)
+                                        #print(item)
                                         grouping['B'].append(item)
                                 if smr_index['SMRName'] == subpart_object_name and '_c ' in subpart_object_name:
                                     for item in smr_index['SMRMaterialNames']:
                                         grouping['C'].append(item)
         if grouping['B']:
-            print(grouping['B'])
+            #print(grouping['B'])
             separate_material(clothes, grouping['B'])
             bpy.data.objects['Clothes.001'].name = 'Top alt B'
         if grouping['C']:
-            print(grouping['C'])
+            #print(grouping['C'])
             separate_material(clothes, grouping['C'])
             bpy.data.objects['Clothes.001'].name = 'Top alt C'
 
@@ -285,24 +284,38 @@ def fix_body_seams():
     bpy.ops.mesh.remove_doubles(threshold=0.00001)
 
 def make_tear_shapekeys():
-    body = bpy.data.objects['Body']
     #Create a reverse shapekey for each tear material
+    body = bpy.data.objects['Body']
     armature = bpy.data.objects['Armature']
+    
+    #Move tears back on the basis shapekey
     tear_mats = ['cf_m_namida_00.002', 'cf_m_namida_00.001', 'cf_m_namida_00']
+    bpy.ops.object.mode_set(mode = 'EDIT')
+    bpy.ops.mesh.select_all(action='DESELECT')
+    for mat in tear_mats:
+        bpy.context.object.active_material_index = body.data.materials.find(mat)
+        bpy.ops.object.material_slot_select()
+    #refresh selection, then move tears a random amount backwards
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    bpy.ops.object.mode_set(mode = 'EDIT')
+    selected_verts = [v for v in body.data.vertices if v.select]
+    amount_to_move_tears_back = selected_verts[0].co.y - armature.data.bones['cf_j_head'].head.y
+    bpy.ops.transform.translate(value=(0, abs(amount_to_move_tears_back), 0))
+
+    #move the tears forwards again the same amount in individual shapekeys
     for mat in tear_mats:
         bpy.ops.object.mode_set(mode = 'OBJECT')
         bpy.ops.object.shape_key_add(from_mix=False)
         last_shapekey = len(body.data.shape_keys.key_blocks)-1
         if '.002' in mat:
-            body.data.shape_keys.key_blocks[-1].name = "Tear small"
+            body.data.shape_keys.key_blocks[-1].name = "KK Tears small"
             bpy.context.object.active_shape_key_index = last_shapekey
         elif '.001' in mat:
-            body.data.shape_keys.key_blocks[-1].name = "Tear med"
+            body.data.shape_keys.key_blocks[-1].name = "KK Tears med"
             bpy.context.object.active_shape_key_index = last_shapekey
         else:
-            body.data.shape_keys.key_blocks[-1].name = "Tear big"
+            body.data.shape_keys.key_blocks[-1].name = "KK Tears big"
             bpy.context.object.active_shape_key_index = last_shapekey
-        
         bpy.ops.object.mode_set(mode = 'EDIT')
         bpy.ops.mesh.select_all(action='DESELECT')
         bpy.context.object.active_material_index = body.data.materials.find(mat)
@@ -311,14 +324,10 @@ def make_tear_shapekeys():
         bpy.ops.object.mode_set(mode = 'OBJECT')
         selected_verts = [v for v in body.data.vertices if v.select]
         bpy.ops.object.mode_set(mode = 'EDIT')
-        amount_to_move_tears_back = selected_verts[0].co.y - armature.data.bones['cf_j_head'].head.y
         #create a new shapekey for the tear
-        bpy.ops.transform.translate(value=(0, abs(amount_to_move_tears_back), 0))
+        bpy.ops.transform.translate(value=(0, -1 * abs(amount_to_move_tears_back), 0))
         bpy.ops.object.mode_set(mode = 'OBJECT')
-        bpy.ops.cats_shapekey.shape_key_to_basis()
-    body.data.shape_keys.key_blocks["Tear big - Reverted"].name = "KK Tears big"
-    body.data.shape_keys.key_blocks["Tear med - Reverted"].name = "KK Tears med"
-    body.data.shape_keys.key_blocks["Tear small - Reverted"].name = "KK Tears small"
+        bpy.ops.object.shape_key_move(type='TOP')
 
     #Merge the tear materials
     bpy.ops.object.mode_set(mode = 'EDIT')

@@ -210,7 +210,7 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
     #get list of already baked files
     fileList = Path(directory).glob('*.*')
     files = [file for file in fileList if file.is_file()]
-    print(files)
+    #print(files)
     exportType = 'PNG'
     exportColormode = 'RGBA'
     #get the most recently created light object
@@ -235,7 +235,7 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
         nodes = currentmaterial.node_tree.nodes
         links = currentmaterial.node_tree.links
 
-        print(currentmaterial)
+        #print(currentmaterial)
 
         #Don't bake this material if it's an outline material
         if 'Outline ' in currentmaterial.name or 'Template Outline' in currentmaterial.name or 'Template Body Outline' in currentmaterial.name:

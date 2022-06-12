@@ -42,6 +42,7 @@ from .extras.imageconvert import image_convert
 from .extras.rigifywrapper import rigify_convert
 from .extras.rigifyscripts.rigify_before import rigify_before
 from .extras.rigifyscripts.rigify_after import rigify_after
+from .extras.catsscripts.armature_manual import MergeWeights
 
 from . KKPanel import PlaceholderProperties
 from . KKPanel import (
@@ -68,6 +69,7 @@ classes = (
     rigify_convert,
     rigify_before,
     rigify_after,
+    MergeWeights,
 
     bone_drivers, 
     clean_armature, 

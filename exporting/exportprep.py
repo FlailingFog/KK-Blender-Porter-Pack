@@ -30,6 +30,32 @@ def main(prep_type):
     bpy.context.view_layer.objects.active=bpy.data.objects['Body']
     body = bpy.context.view_layer.objects.active
     bpy.ops.object.join()
+    bpy.ops.object.select_all(action='DESELECT')
+
+    kklog('Moving unused objects to their own collection...')
+    no_move_objects = ['Bonelyfans', 'Shadowcast', 'Hitboxes', 'Body', 'Armature']
+    for object in bpy.context.scene.objects:
+        move_this_one = object.name not in no_move_objects and 'Widget' not in object.name and object.hide
+        if move_this_one:
+            object.hide = False
+            object.select_set(True)
+            bpy.context.view_layer.objects.active=object
+    bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name='Unused clothing items')
+    #hide the new collection
+    try:
+        bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children['Unused clothing items']
+        bpy.context.scene.view_layers[0].active_layer_collection.exclude = True
+    except:
+        try:
+            #maybe the collection is in the default Collection collection
+            bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children['Collection'].children['Unused clothing items']
+            bpy.context.scene.view_layers[0].active_layer_collection.exclude = True
+        except:
+            #maybe the collection is already hidden, or doesn't exist
+            pass
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.context.view_layer.objects.active=bpy.data.objects['Body']
+    bpy.data.objects['Body'].select_set(True)
     
     kklog('Removing object outline modifier...')
     body.modifiers['Outline Modifier'].show_render = False
@@ -86,7 +112,7 @@ def main(prep_type):
         
         kklog('Using CATS to simplify bones...')
         bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.cats_manual.merge_weights()
+        bpy.ops.kkb.cats_merge_weights()
 
     #If exporting for VRM...
     if prep_type == 'A':
@@ -131,7 +157,7 @@ def main(prep_type):
         
         kklog('Using CATS to simplify more bones for VRM...')
         bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.cats_manual.merge_weights()
+        bpy.ops.kkb.cats_merge_weights()
 
     #If exporting for MMD...
     if prep_type == 'B':

@@ -1,12 +1,5 @@
-import bpy, time, traceback, statistics, bmesh, math, sys, mathutils
-from pathlib import Path
+import bpy, time, traceback
 from bpy.props import StringProperty
-
-from math import radians
-
-from mathutils import Matrix, Vector, Euler
-from typing import NamedTuple
-from pathlib import Path
 
 #load plugin language
 from bpy.app.translations import locale

@@ -163,7 +163,7 @@ def main():
         
         bpy.ops.object.mode_set(mode='EDIT')
 
-        print({k:v for k, v in bpy.context.copy().items() if v is not None})
+        #print({k:v for k, v in bpy.context.copy().items() if v is not None})
         bpy.context.scene.tool_settings.transform_pivot_point = 'BOUNDING_BOX_CENTER'
         bpy.ops.mesh.select_all(action='SELECT')
         bpy.context.tool_settings.mesh_select_mode = (True, True, True)
