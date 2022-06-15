@@ -25,14 +25,15 @@ Huge feature updates by **MediaMoots**!
 * Texture suffixes are shortened
     * Image names over 64 characters long would cause blender to cufoff the filename, so this means long texture names are less likely to cause issues during import
 
+Rigify armature updates by an anonymous contributor!
+* Better Penetration bones will now be placed in the "Torso (Tweak)" layer when converting to the Rigify armature
+
 Plus some misc changes to the Blender plugin:
 * Added a one-click option for importing models!
     * Hair is now separated from the model automatically, so the entire import process has been reduced to a single button
     * The behaviour from V5.0 (where you can separate objects as you please) can still be accessed by changing the "Don't pause to categorize" option on the upper right to "Pause to categorize", then pressing the "Finish categorization" button when you're done.
 * The main plugin UI can now be fully translated!
     * Current languages: English, Japanese (日本語)
-* Updated Rigify Scripts to latest version! (May 15th)
-    * Better Penetration bones will now be placed in the "Torso (Tweak)" layer when converting to the Rigify armature
 * Material baking is now done [through the use of Geometry Nodes!](https://blender.stackexchange.com/questions/231662/)
     * This works with multiple UV maps, so you no longer need to create a new mesh for hair highlights or anything that uses a separate uv map
     * You can also speed up the baking process by skipping the dark and normal bakes if you don't want them

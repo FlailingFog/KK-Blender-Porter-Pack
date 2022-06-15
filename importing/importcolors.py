@@ -607,7 +607,7 @@ def update_shaders(json, lut_selection, active_lut, light):
     shader_inputs['Skin detail color'].default_value = body_colors[1]
     shader_inputs['Skin detail intensity'].default_value = 0.5
     shader_inputs['Nail Color (multiplied)'].default_value = body_colors[2]
-    shader_inputs['Skin gloss intensity'].default_value = 1
+    shader_inputs['Skin gloss intensity'].default_value = 0.5
     shader_inputs['Underhair color'].default_value = body_colors[4]
 
     shader_inputs['Nipple base'].default_value = body_colors[3]

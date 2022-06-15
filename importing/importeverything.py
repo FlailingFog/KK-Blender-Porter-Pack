@@ -178,7 +178,7 @@ def get_templates_and_apply(directory, use_fake_user):
     
     #Replace all other materials with the general template and name accordingly
     for ob in bpy.context.view_layer.objects:
-        if ob.type == 'MESH' and ('Body' not in ob.name and 'Hair' not in ob.name):
+        if ob.type == 'MESH' and ('Body' != ob.name and 'Hair' != ob.name):
             for original in ob.material_slots:
                 template = bpy.data.materials['Template General'].copy()
                 template.name = 'Template ' + original.name
@@ -473,6 +473,9 @@ def get_and_load_textures(directory):
     image_load('Template Body', 'NippleTextures', 'NipL', 'cf_m_body_ot1.png')
     image_load('Template Body', 'NippleTextures', 'NipR', 'cm_m_body_ot1.png') #cmm male
     image_load('Template Body', 'NippleTextures', 'NipL', 'cm_m_body_ot1.png')
+
+    #image_load('Template Body', 'Gentex', 'overone', 'cf_m_body_T3.png') #body overlays
+    #image_load('Template Body', 'Gentex', 'overtwo', 'cf_m_body_T4.png')
     
     set_uv_type('Template Body', 'NSFWpos', 'nippleuv', 'uv_nipple_and_shine')
     set_uv_type('Template Body', 'NSFWpos', 'underuv', 'uv_underhair')
