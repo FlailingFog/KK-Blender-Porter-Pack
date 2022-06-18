@@ -162,6 +162,15 @@ def setup_geometry_nodes_and_fillerplane(camera):
     #give the object a geometry node modifier
     geonodes = object_to_bake.modifiers.new('Flattener', 'NODES')
 
+    #create the node group from scratch in 3.2.0
+    geonodename = 'Flat geo group'
+    bpy.data.node_groups.new(geonodename, type = 'GeometryNodeTree')
+    object_to_bake.modifiers['Flattener'].node_group = bpy.data.node_groups[geonodename]
+    nodes = bpy.data.node_groups[geonodename].nodes
+    links = bpy.data.node_groups[geonodename].links
+    input = nodes.new('NodeGroupInput')
+    output = nodes.new('NodeGroupOutput')
+
     #import the premade flattener node to unwrap the mesh into the UV structure
     script_dir=Path(__file__).parent
     template_path=(script_dir / '../KK Shader V5.0.blend').resolve()
@@ -174,19 +183,19 @@ def setup_geometry_nodes_and_fillerplane(camera):
             filename=node
             )
     
-    #place group
-    nodes = bpy.data.node_groups['Geometry Nodes'].nodes
+    #place UV group
+    nodes = bpy.data.node_groups[geonodename].nodes
     group = nodes.new('GeometryNodeGroup')
     group.node_tree = bpy.data.node_groups['Flatten to UV map']
 
     #connect group and make new input
-    links = bpy.data.node_groups['Geometry Nodes'].links
-    links.new(group.outputs[0], nodes['Group Output'].inputs[0])
-    links.new(nodes['Group Input'].outputs[0], group.inputs[0])
+    links = bpy.data.node_groups[geonodename].links
+    links.new(group.outputs[0], output.inputs[0])
+    links.new(input.outputs[0], group.inputs[0])
 
     #connect new input to group
-    bpy.data.node_groups['Geometry Nodes'].inputs.new('NodeSocketVector', 'UVMap input')
-    links.new(nodes['Group Input'].outputs[1], group.inputs[1])
+    bpy.data.node_groups[geonodename].inputs.new('NodeSocketVector', 'UVMap input')
+    links.new(input.outputs[1], group.inputs[1])
     identifier = geonodes.node_group.inputs[1].identifier
     geonodes[identifier+'_attribute_name'] = 'uv_main'
     geonodes[identifier+'_use_attribute'] = True
@@ -404,7 +413,7 @@ def cleanup():
     bpy.ops.object.delete()
     #delete the geometry modifier
     object_to_bake.modifiers.remove(object_to_bake.modifiers['Flattener'])
-    bpy.data.node_groups.remove(bpy.data.node_groups['Geometry Nodes'])
+    bpy.data.node_groups.remove(bpy.data.node_groups['Flat geo group'])
     #delete the two scale drivers
     object_to_bake.animation_data.drivers.remove(object_to_bake.animation_data.drivers[0])
     object_to_bake.animation_data.drivers.remove(object_to_bake.animation_data.drivers[0])
@@ -431,6 +440,8 @@ class bake_materials(bpy.types.Operator):
     
     def execute(self, context):
         try:
+            kklog('Switching to EEVEE for material baking...')
+            bpy.context.scene.render.engine = 'BLENDER_EEVEE'
             print(self.directory)
             folderpath =  self.directory
             scene = context.scene.kkbp

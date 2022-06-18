@@ -80,7 +80,7 @@ def get_templates_and_apply(directory, use_fake_user):
 
     blend_file_missing = True
     for file in files:
-        if '.blend' in str(file) and '.blend1' not in str(file):
+        if '.blend' in str(file) and '.blend1' not in str(file) and 'Shader' in str(file):
             filepath = str(file)
             blend_file_missing = False
     
@@ -461,7 +461,8 @@ def get_and_load_textures(directory):
     image_load('Template Body', 'Gentex', 'BodyMC', 'cf_m_body_CM.png')
     image_load('Template Body', 'Gentex', 'BodyMD', 'cf_m_body_DM.png') #cfm female
     image_load('Template Body', 'Gentex', 'BodyLine', 'cf_m_body_LM.png')
-    image_load('Template Body', 'Gentex', 'BodyNorm', 'cf_m_body_NMP.png')
+    image_load('Template Body', 'Gentex', 'BodyNorm', 'cf_m_body_NMP_CNV.png')
+    image_load('Template Body', 'Gentex', 'BodyNormDetail', 'cf_m_body_NMPD_CNV.png')
 
     image_load('Template Body', 'Gentex', 'BodyMD', 'cm_m_body_DM.png') #cmm male
     image_load('Template Body', 'Gentex', 'BodyLine', 'cm_m_body_LM.png')
@@ -474,8 +475,8 @@ def get_and_load_textures(directory):
     image_load('Template Body', 'NippleTextures', 'NipR', 'cm_m_body_ot1.png') #cmm male
     image_load('Template Body', 'NippleTextures', 'NipL', 'cm_m_body_ot1.png')
 
-    #image_load('Template Body', 'Gentex', 'overone', 'cf_m_body_T3.png') #body overlays
-    #image_load('Template Body', 'Gentex', 'overtwo', 'cf_m_body_T4.png')
+    image_load('Template Body', 'Gentex', 'overone', 'cf_m_body_T3.png') #body overlays
+    image_load('Template Body', 'Gentex', 'overtwo', 'cf_m_body_T4.png')
     
     set_uv_type('Template Body', 'NSFWpos', 'nippleuv', 'uv_nipple_and_shine')
     set_uv_type('Template Body', 'NSFWpos', 'underuv', 'uv_underhair')
@@ -528,7 +529,9 @@ def get_and_load_textures(directory):
     image_load('Template Tongue', 'Gentex', 'Maintex', 'cf_m_tang_CM.png') #done on purpose
     image_load('Template Tongue', 'Gentex', 'MainCol', 'cf_m_tang_CM.png')
     image_load('Template Tongue', 'Gentex', 'MainDet', 'cf_m_tang_DM.png')
-    image_load('Template Tongue', 'Gentex', 'MainNorm', 'cf_m_tang_NMP.png', raw = True)
+    image_load('Template Tongue', 'Gentex', 'MainNorm', 'cf_m_tang_NMP.png')
+    image_load('Template Tongue', 'Gentex', 'MainNormDetail', 'cf_m_tang_NMP_CNV.png') #load regular map by default
+    image_load('Template Tongue', 'Gentex', 'MainNormDetail', 'cf_m_tang_NMPD_CNV.png') #then the detail map if it's there
 
     #load the tears texture in
     if bpy.data.objects.get('Tears'):
@@ -585,7 +588,9 @@ def get_and_load_textures(directory):
                 image_load(genMat.name, 'Gentex', 'Maintex', genType+'_MT_CT.png')
                 image_load(genMat.name, 'Gentex', 'MainCol', genType+'_CM.png')
                 image_load(genMat.name, 'Gentex', 'MainDet', genType+'_DM.png')
-                image_load(genMat.name, 'Gentex', 'MainNorm', genType+'_NMP.png', True)
+                image_load(genMat.name, 'Gentex', 'MainNorm', genType+'_NMP.png')
+                image_load(genMat.name, 'Gentex', 'MainNormDetail', genType+'_NMP_CNV.png') #load regular map by default
+                image_load(genMat.name, 'Gentex', 'MainNormDetail', genType+'_NMPD_CNV.png') #then the detail map if it's there
                 image_load(genMat.name, 'Gentex', 'Alphamask', genType+'_AM.png')
 
                 # image_load(genMat.name, 'Gentex', 'PatBase', genType+'_PM1.png')
