@@ -1,4 +1,5 @@
 import bpy, time, traceback
+import os
 from bpy.props import StringProperty
 
 #load plugin language
@@ -24,19 +25,27 @@ def kklog(log_text, type = 'standard'):
 
     print(str(log_text))
 
-def import_pmx_model(directory):
-    #import the pmx file with mmd_tools
-    bpy.ops.mmd_tools.import_model('EXEC_DEFAULT',
-        files=[{'name': directory}],
-        directory=directory,
-        scale=1,
-        types={'MESH', 'ARMATURE', 'MORPHS'},
-        log_level='WARNING')
+def import_pmx_models(directory):
+
+    root_directory = directory[:-9]
+    for subdir, dirs, files in os.walk(root_directory):
+        for file in files:
+            if (file == 'model.pmx'):
+                pmx_path = os.path.join(subdir, file)
+                outfit = 'Outfit' in subdir
+                
+                #import the pmx file with mmd_tools
+                bpy.ops.mmd_tools.import_model('EXEC_DEFAULT',
+                    files=[{'name': pmx_path}],
+                    directory=pmx_path,
+                    scale=1,
+                    types={'MESH', 'ARMATURE', 'MORPHS'} if not outfit else {'MESH'} ,
+                    log_level='WARNING')
     
-    #get rid of the text files mmd tools generates
-    if bpy.data.texts.get('Model'):
-            bpy.data.texts.remove(bpy.data.texts['Model'])
-            bpy.data.texts.remove(bpy.data.texts['Model_e'])
+                #get rid of the text files mmd tools generates
+                if bpy.data.texts.get('Model'):
+                        bpy.data.texts.remove(bpy.data.texts['Model'])
+                        bpy.data.texts.remove(bpy.data.texts['Model_e'])
 
 class quick_import(bpy.types.Operator):
     bl_idname = "kkb.quickimport"
@@ -70,7 +79,7 @@ class quick_import(bpy.types.Operator):
         #run commands based on selection
         if context.scene.kkbp.categorize_dropdown == 'A':
             commands = [
-                import_pmx_model(context.scene.kkbp.import_dir),
+                import_pmx_models(context.scene.kkbp.import_dir),
                 bpy.ops.kkb.finalizepmx('INVOKE_DEFAULT'),
                 bpy.ops.kkb.shapekeys('INVOKE_DEFAULT'),
                 bpy.ops.kkb.separatebody('INVOKE_DEFAULT'),
@@ -81,7 +90,7 @@ class quick_import(bpy.types.Operator):
             ]
         elif context.scene.kkbp.categorize_dropdown == 'B':
             commands = [
-                import_pmx_model(context.scene.kkbp.import_dir),
+                import_pmx_models(context.scene.kkbp.import_dir),
                 bpy.ops.kkb.finalizepmx('INVOKE_DEFAULT'),
                 bpy.ops.kkb.shapekeys('INVOKE_DEFAULT'),
                 bpy.ops.kkb.separatebody('INVOKE_DEFAULT'),
@@ -90,7 +99,7 @@ class quick_import(bpy.types.Operator):
             ]
         elif context.scene.kkbp.categorize_dropdown == 'D':
             commands = [
-                import_pmx_model(context.scene.kkbp.import_dir),
+                import_pmx_models(context.scene.kkbp.import_dir),
                 bpy.ops.kkb.finalizepmx('INVOKE_DEFAULT'),
                 bpy.ops.kkb.shapekeys('INVOKE_DEFAULT'),
                 bpy.ops.kkb.separatebody('INVOKE_DEFAULT'),
@@ -99,7 +108,7 @@ class quick_import(bpy.types.Operator):
             ]
         else:
             commands = [
-                import_pmx_model(context.scene.kkbp.import_dir),
+                import_pmx_models(context.scene.kkbp.import_dir),
                 bpy.ops.kkb.finalizepmx('INVOKE_DEFAULT'),
                 bpy.ops.kkb.shapekeys('INVOKE_DEFAULT'),
                 bpy.ops.kkb.separatebody('INVOKE_DEFAULT'),

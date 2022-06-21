@@ -12,24 +12,51 @@ import bpy, math, time, traceback
 from mathutils import Vector
 from .importbuttons import kklog
 
-# makes the pmx armature and bone names match the koikatsu armature structure and bone names
-def standardize_armature(modify_arm):
+def rename_and_merge_outfits():
     bpy.ops.object.mode_set(mode='OBJECT')
+    
+    #get objects
     armature = bpy.data.objects['Model_arm']
     body = bpy.data.objects['Model_mesh']
     empty = bpy.data.objects['Model']
+    
+    #rename
     armature.parent = None
     armature.name = 'Armature'
     body.name = 'Body'
-
+    
     #Deselect all objects
     bpy.ops.object.select_all(action='DESELECT')
+
+    bpy.data.objects.remove(empty)
+    
+    idx = 1
+    for obj in bpy.data.objects:
+        if "Model_arm" in obj.name and obj.type == 'ARMATURE':
+            #get objects
+            empty = bpy.data.objects['Model.' + str(idx).zfill(3)]
+            outfit_arm = bpy.data.objects['Model_arm.' + str(idx).zfill(3)]
+            outfit = bpy.data.objects[empty.name  + '_mesh']
+            
+            bpy.data.objects.remove(empty)
+            bpy.data.objects.remove(outfit_arm)
+            #rename
+            outfit.name = 'Outfit ' + str(idx).zfill(2)
+            outfit.parent = armature
+            outfit.modifiers[0].object = armature
+            
+            idx += 1
+        
     #Select the Body object
     body.select_set(True)
     #and make it active
-    bpy.context.view_layer.objects.active = armature
+    bpy.context.view_layer.objects.active = armature   
 
-    bpy.data.objects.remove(empty)
+# makes the pmx armature and bone names match the koikatsu armature structure and bone names
+def standardize_armature(modify_arm):
+    rename_and_merge_outfits()
+    
+    armature = bpy.data.objects['Armature']
     
     #scale all bone sizes down by a factor of 12
     try:
