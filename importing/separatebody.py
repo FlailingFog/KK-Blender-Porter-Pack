@@ -88,6 +88,7 @@ def separate_material(object, mat_list, search_type = 'exact'):
 
 def separate_everything(context):
     body = bpy.data.objects['Body']
+    bpy.context.view_layer.objects.active = body
     bpy.ops.object.mode_set(mode = 'EDIT')
     bpy.ops.mesh.select_all(action = 'DESELECT')
     #Select all body related materials, then separate it from everything else
@@ -126,7 +127,7 @@ def separate_everything(context):
     texture_files = []
     for file in texture_data:
         texture_files.append(file['textureName'])
-    if context.scene.kkbp.categorize_dropdown not in ['B']:
+    if context.scene.kkbp.categorize_dropdown not in ['B', 'D']:
         hair_mat_list = []
         for mat in material_data:
             if mat['ShaderName'] in ["Shader Forge/main_hair_front", "Shader Forge/main_hair", 'Koikano/hair_main_sun_front', 'Koikano/hair_main_sun', 'xukmi/HairPlus', 'xukmi/HairFrontPlus']:
@@ -362,58 +363,64 @@ def make_tear_shapekeys():
     link_keys(body, [tears])
 
 def remove_duplicate_slots():
-    #combine duplicated material slots
-    bpy.ops.object.material_slot_remove_unused()
-    body = bpy.data.objects['Body']
-    bpy.ops.object.select_all(action='DESELECT')
-    body.select_set(True)
-    bpy.context.view_layer.objects.active=body
-    bpy.ops.object.mode_set(mode='EDIT')
+    for obj in bpy.data.objects:
+        if 'Body' == obj.name or 'Outfit' in obj.name:
+            #combine duplicated material slots
+            bpy.ops.object.material_slot_remove_unused()
+            mesh = obj
+            bpy.ops.object.select_all(action='DESELECT')
+            mesh.select_set(True)
+            bpy.context.view_layer.objects.active=mesh
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.mesh.select_all(action='DESELECT')
+            
+            #remap duplicate materials to the base one
+            material_list = mesh.data.materials
+            for mat in material_list:
+                #don't merge the eye materials if categorize by SMR is chosen.
+                eye_flag = False if ('cf_m_hitomi_00' in mat.name or 'cf_m_sirome_00' in mat.name or 'cf_m_namida_00' in mat.name) and bpy.context.scene.kkbp.categorize_dropdown == 'D' else True
+                
+                if '.' in mat.name[-4:] and 'cf_m_namida_00' not in mat.name and eye_flag:
+                    base_name, dupe_number = mat.name.split('.',2)
+                    if material_list.get(base_name) and int(dupe_number):
+                        mat.user_remap(material_list[base_name])
+                        bpy.data.materials.remove(mat)
+                    else:
+                        kklog("Somehow found a false duplicate material but didn't merge: " + mat.name, 'warn')
+            
+            #then clean material slots by going through each slot and reassigning the slots that are repeated
+            repeats = {}
+            for index, mat in enumerate(material_list):
+                if mat.name not in repeats:
+                    repeats[mat.name] = [index]
+                    # print("First entry of {} in slot {}".format(mat.name, index))
+                else:
+                    repeats[mat.name].append(index)
+                    # print("Additional entry of {} in slot {}".format(mat.name, index))
+            
+            for material_name in list(repeats.keys()):
+                if len(repeats[material_name]) > 1:
+                    for repeated_slot in repeats[material_name]:
+                        #don't touch the first slot
+                        if repeated_slot == repeats[material_name][0]:
+                            continue
+                        kklog("Moving duplicate material {} in slot {} to the original slot {}".format(material_name, repeated_slot, repeats[material_name][0]))
+                        mesh.active_material_index = repeated_slot
+                        bpy.ops.object.material_slot_select()
+                        mesh.active_material_index = repeats[material_name][0]
+                        bpy.ops.object.material_slot_assign()
+                        bpy.ops.mesh.select_all(action='DESELECT')
 
-    #remap duplicate materials to the base one
-    material_list = body.data.materials
-    for mat in material_list:
-        #don't merge the eye materials if categorize by SMR is chosen.
-        eye_flag = False if ('cf_m_hitomi_00' in mat.name or 'cf_m_sirome_00' in mat.name or 'cf_m_namida_00' in mat.name) and bpy.context.scene.kkbp.categorize_dropdown == 'D' else True
-        
-        if '.' in mat.name[-4:] and 'cf_m_namida_00' not in mat.name and eye_flag:
-            base_name, dupe_number = mat.name.split('.',2)
-            if material_list.get(base_name) and int(dupe_number):
-                mat.user_remap(material_list[base_name])
-                bpy.data.materials.remove(mat)
-            else:
-                kklog("Somehow found a false duplicate material but didn't merge: " + mat.name, 'warn')
-    
-    #then clean material slots by going through each slot and reassigning the slots that are repeated
-    repeats = {}
-    for index, mat in enumerate(material_list):
-        if mat.name not in repeats:
-            repeats[mat.name] = [index]
-            #print("First entry of {} in slot {}".format(mat.name, index))
-        else:
-            repeats[mat.name].append(index)
-            #print("Additional entry of {} in slot {}".format(mat.name, index))
-    
-    for material_name in list(repeats.keys()):
-        if len(repeats[material_name]) > 1:
-            for repeated_slot in repeats[material_name]:
-                #don't touch the first slot
-                if repeated_slot == repeats[material_name][0]:
-                    continue
-                kklog("Moving duplicate material {} in slot {} to the original slot {}".format(material_name, repeated_slot, repeats[material_name][0]))
-                body.active_material_index = repeated_slot
-                bpy.ops.object.material_slot_select()
-                body.active_material_index = repeats[material_name][0]
-                bpy.ops.object.material_slot_assign()
-                bpy.ops.mesh.select_all(action='DESELECT')
-
-    bpy.ops.object.mode_set(mode='OBJECT')
-    bpy.ops.object.material_slot_remove_unused()
+            bpy.ops.object.mode_set(mode='OBJECT')
+            bpy.ops.object.material_slot_remove_unused()
 
 def cleanup():
     #remove shapekeys on all objects except the body/tears because only those need them
     for obj in bpy.data.objects:
         if obj.name not in ['Body','Tears'] and obj.type == 'MESH':
+            if not obj.data.shape_keys:
+                continue
+            
             for key in obj.data.shape_keys.key_blocks.keys():
                 obj.shape_key_remove(obj.data.shape_keys.key_blocks[key])
 

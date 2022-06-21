@@ -54,66 +54,77 @@ def load_smr_data(directory):
     separate_body(json_smr_data)
             
 def separate_clothes(json_smr_data): 
-    #Get Clothes and it's object data
-    clothes = bpy.data.objects['Clothes']
-    clothes_data = clothes.data
-    
-    materialname = clothes_data.materials[0].name
-    use_template_name = "Template " in materialname
-    
-    #Pass 1: To make sure each material has a mesh
-    #Select the Clothes object and remove it's unused material slots
-    bpy.ops.object.mode_set(mode = 'OBJECT')
-    bpy.ops.object.select_all(action='DESELECT')
-    bpy.context.view_layer.objects.active = clothes
-    clothes.select_set(True)
-    bpy.ops.object.material_slot_remove_unused()
-    
-    #To keep track if a mesh has been separated already
-    separated_meshes = []
-    
-    #Loop over each renderer in KK_SMRData.json
-    for row in json_smr_data:
-        #Deselect everything
-        bpy.ops.object.mode_set(mode = 'OBJECT')
-        bpy.ops.object.select_all(action='DESELECT')
-        bpy.context.view_layer.objects.active = clothes
-        bpy.ops.object.mode_set(mode = 'EDIT')
-        bpy.ops.mesh.select_all(action = 'DESELECT')
-        
-        #Loop over each renderer material and select it
-        found_a_material = False
-        for mat_name in row['SMRMaterialNames']:
-            found_mat_idx = clothes_data.materials.find(("Template " if use_template_name else "") + mat_name)
+    #loop over each outfit
+    for obj in bpy.data.objects:
+        if "Outfit" in obj.name:
+            #Get Outfit and it's object data
+            outfit = obj
+            outfit_data = outfit.data
             
-            if found_mat_idx > -1 and mat_name not in separated_meshes:
-                separated_meshes.append(mat_name)
+            materialname = outfit_data.materials[0].name
+            use_template_name = "Template " in materialname
+            
+            #Pass 1: To make sure each material has a mesh
+            #Select the Outfit object and remove it's unused material slots
+            #try to make sure we are in object mode
+            try:
+                bpy.ops.object.mode_set(mode = 'OBJECT')
+            except:
+                pass
+            bpy.ops.object.select_all(action='DESELECT')
+            bpy.context.view_layer.objects.active = outfit
+            outfit.select_set(True)
+            bpy.ops.object.material_slot_remove_unused()
+            
+            #To keep track if a mesh has been separated already
+            separated_meshes = []
+            
+            #Loop over each renderer in KK_SMRData.json
+            for row in json_smr_data:
+                #Deselect everything
+                #try to make sure we are in object mode
+                try:
+                    bpy.ops.object.mode_set(mode = 'OBJECT')
+                except:
+                    pass
+                bpy.ops.object.select_all(action='DESELECT')
+                bpy.context.view_layer.objects.active = outfit
+                bpy.ops.object.mode_set(mode = 'EDIT')
+                bpy.ops.mesh.select_all(action = 'DESELECT')
                 
-                bpy.context.object.active_material_index = found_mat_idx
-                bpy.ops.object.material_slot_select()
-                found_a_material = True
+                #Loop over each renderer material and select it
+                found_a_material = False
+                for mat_name in row['SMRMaterialNames']:
+                    found_mat_idx = outfit_data.materials.find(("Template " if use_template_name else "") + mat_name)
+                    
+                    if found_mat_idx > -1 and mat_name not in separated_meshes:
+                        separated_meshes.append(mat_name)
+                        
+                        bpy.context.object.active_material_index = found_mat_idx
+                        bpy.ops.object.material_slot_select()
+                        found_a_material = True
+                    
+                if not found_a_material:
+                    continue
+                
+                #Seperate to a new mesh
+                bpy.ops.mesh.separate(type='SELECTED')
+                
+                #Remove unused materials from the new object and rename it to it's corresponding Renderer name
+                bpy.ops.object.mode_set(mode = 'OBJECT')
+                bpy.ops.object.material_slot_remove_unused()
+                bpy.context.selected_objects[0].name = row['SMRName']
+            bpy.ops.object.mode_set(mode = 'OBJECT')
+            bpy.ops.object.select_all(action='DESELECT')
             
-        if not found_a_material:
-            continue
-        
-        #Seperate to a new mesh
-        bpy.ops.mesh.separate(type='SELECTED')
-        
-        #Remove unused materials from the new object and rename it to it's corresponding Renderer name
-        bpy.ops.object.mode_set(mode = 'OBJECT')
-        bpy.ops.object.material_slot_remove_unused()
-        bpy.context.selected_objects[0].name = row['SMRName']
-    bpy.ops.object.mode_set(mode = 'OBJECT')
-    bpy.ops.object.select_all(action='DESELECT')
-    
-    #Pass 2: Clean up
-    #Select the Clothes object and remove it's unused material slots
-    clothes.select_set(True)
-    bpy.ops.object.material_slot_remove_unused()
-    
-    #delete the clothes object if it has no materials left
-    if len(clothes_data.materials) == 0:
-        bpy.ops.object.delete() 
+            #Pass 2: Clean up
+            #Select the Outfit object and remove it's unused material slots
+            outfit.select_set(True)
+            bpy.ops.object.material_slot_remove_unused()
+            
+            #delete the Outfit object if it has no materials left
+            if len(outfit_data.materials) == 0:
+                bpy.ops.object.delete() 
         
      
 def separate_body(json_smr_data):
