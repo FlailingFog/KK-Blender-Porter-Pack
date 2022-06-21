@@ -56,7 +56,7 @@ def load_smr_data(directory):
 def separate_clothes(json_smr_data): 
     #loop over each outfit
     for obj in bpy.data.objects:
-        if "Outfit" in obj.name:
+        if "Outfit" in obj.name and "Hair" not in obj.name:
             #Get Outfit and it's object data
             outfit = obj
             outfit_data = outfit.data

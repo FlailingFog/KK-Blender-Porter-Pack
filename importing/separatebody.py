@@ -127,18 +127,29 @@ def separate_everything(context):
     texture_files = []
     for file in texture_data:
         texture_files.append(file['textureName'])
-    if context.scene.kkbp.categorize_dropdown not in ['B', 'D']:
-        hair_mat_list = []
-        for mat in material_data:
-            if mat['ShaderName'] in ["Shader Forge/main_hair_front", "Shader Forge/main_hair", 'Koikano/hair_main_sun_front', 'Koikano/hair_main_sun', 'xukmi/HairPlus', 'xukmi/HairFrontPlus']:
-                if (mat['MaterialName'] + '_HGLS.png') in texture_files or ((mat['MaterialName'] + '_NMP.png') not in texture_files and (mat['MaterialName'] + '_MT_CT.png') not in texture_files and (mat['MaterialName'] + '_MT.png') not in texture_files):
-                    hair_mat_list.append(mat['MaterialName'])
-        if len(hair_mat_list):
-            separate_material(clothes, hair_mat_list)
-        else:
-            context.scene.kkbp.has_hair_bool = False
-        bpy.data.objects['Clothes.001'].name = 'Hair'
-
+    if context.scene.kkbp.categorize_dropdown not in ['B']:
+        for obj in bpy.data.objects:
+            if "Outfit" in obj.name and "Hair" not in obj.name:
+                #selection stuff
+                bpy.ops.object.mode_set(mode = 'OBJECT')
+                bpy.ops.object.select_all(action = 'DESELECT')
+                bpy.context.view_layer.objects.active = obj
+                bpy.ops.object.mode_set(mode = 'EDIT')
+                bpy.ops.mesh.select_all(action = 'DESELECT')
+                
+                outfit = obj
+                hair_mat_list = []
+                for mat in material_data:
+                    if mat['ShaderName'] in ["Shader Forge/main_hair_front", "Shader Forge/main_hair", 'Koikano/hair_main_sun_front', 'Koikano/hair_main_sun', 'xukmi/HairPlus', 'xukmi/HairFrontPlus']:
+                        if (mat['MaterialName'] + '_HGLS.png') in texture_files or ((mat['MaterialName'] + '_NMP.png') not in texture_files and (mat['MaterialName'] + '_MT_CT.png') not in texture_files and (mat['MaterialName'] + '_MT.png') not in texture_files):
+                            hair_mat_list.append(mat['MaterialName'])
+                if len(hair_mat_list):
+                    separate_material(outfit, hair_mat_list)
+                else:
+                    context.scene.kkbp.has_hair_bool = False
+                bpy.data.objects[outfit.name + '.001'].name = 'Hair_' + outfit.name
+        bpy.context.view_layer.objects.active = body
+    
     if context.scene.kkbp.categorize_dropdown in ['A', 'B']:
         #Select any clothes pieces that are normally supposed to be hidden and hide them
         json_file = open(context.scene.kkbp.import_dir[:-9] + 'KK_ClothesData.json')
