@@ -50,12 +50,15 @@ class rigify_convert(bpy.types.Operator):
                         rig.select_set(True)
                         bpy.context.view_layer.objects.active=rig
                         bpy.ops.object.parent_set(type='ARMATURE_NAME')
+            if bpy.data.objects.get('Tears'):
+                bpy.data.objects['Tears'].modifiers['mmd_bone_order_override'].object = rig
             armature.hide_set(True)
             bpy.ops.object.select_all(action='DESELECT')
             rig.select_set(True)
             bpy.context.view_layer.objects.active=rig
             rig.show_in_front = True
             bpy.context.scene.tool_settings.transform_pivot_point = 'INDIVIDUAL_ORIGINS'
+            bpy.context.tool_settings.mesh_select_mode = (False, False, True)
             return {'FINISHED'}
             
         except:

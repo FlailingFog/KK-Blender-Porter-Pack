@@ -130,7 +130,7 @@ def separate_everything(context):
         hair_mat_list = []
         for mat in material_data:
             if mat['ShaderName'] in ["Shader Forge/main_hair_front", "Shader Forge/main_hair", 'Koikano/hair_main_sun_front', 'Koikano/hair_main_sun', 'xukmi/HairPlus', 'xukmi/HairFrontPlus']:
-                if (mat['MaterialName'] + '_NMP.png') not in texture_files and (mat['MaterialName'] + '_MT_CT.png') not in texture_files and (mat['MaterialName'] + '_MT.png') not in texture_files:
+                if (mat['MaterialName'] + '_HGLS.png') in texture_files or ((mat['MaterialName'] + '_NMP.png') not in texture_files and (mat['MaterialName'] + '_MT_CT.png') not in texture_files and (mat['MaterialName'] + '_MT.png') not in texture_files):
                     hair_mat_list.append(mat['MaterialName'])
         if len(hair_mat_list):
             separate_material(clothes, hair_mat_list)
@@ -163,7 +163,8 @@ def separate_everything(context):
         for clothes_index in [1, 2, 3, 4, 5, 6, 8]:
             if len(clothes_data[clothes_index]['RendNormal01']) > 1:
                 for subpart_object_name in clothes_data[clothes_index]['RendNormal01']:
-                    if '_a' not in subpart_object_name:
+                    subpart_bool = subpart_object_name[:subpart_object_name.find(' -')][-2:] == '_b' or subpart_object_name[:subpart_object_name.find(' -')][-2:] == '_c'
+                    if subpart_bool:
                         for smr_index in smr_data:
                             if smr_index['SMRName'] == subpart_object_name:
                                 separate_material(clothes, smr_index['SMRMaterialNames'])
