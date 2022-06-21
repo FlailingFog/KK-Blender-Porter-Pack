@@ -640,6 +640,7 @@ def update_shaders(json, lut_selection, active_lut, light):
     shader_inputs = tongue_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
     #shader_inputs['Use Color mask instead? (1 = yes)'].default_value = 1
     shader_inputs['Manually set detail color? (1 = yes)'].default_value = 0
+    shader_inputs['Maintex Saturation'].default_value = 0.6
     shader_inputs['Detail intensity (green)'].default_value = 0.01
     shader_inputs['Color mask color (base)'].default_value = [1, 1, 1, 1]
     shader_inputs['Color mask color (red)'].default_value = tongue_color

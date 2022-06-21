@@ -255,4 +255,9 @@ class rigify_after(bpy.types.Operator):
     def execute(self, context):
         main()
         return {'FINISHED'}
-    
+
+if __name__ == "__main__":
+    bpy.utils.register_class(rigify_after)
+
+    # test call
+    print((bpy.ops.kkb.rigafter('INVOKE_DEFAULT')))

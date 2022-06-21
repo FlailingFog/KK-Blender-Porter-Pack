@@ -1755,3 +1755,8 @@ class rigify_before(bpy.types.Operator):
         main()
         return {'FINISHED'}
 
+if __name__ == "__main__":
+    bpy.utils.register_class(rigify_before)
+
+    # test call
+    print((bpy.ops.kkb.rigbefore('INVOKE_DEFAULT')))

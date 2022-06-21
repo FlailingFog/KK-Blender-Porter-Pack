@@ -402,7 +402,7 @@ def get_and_load_textures(directory):
     body_missing = True
     face_missing = True
     for image in files:
-        bpy.ops.image.open(filepath=str(image))
+        bpy.ops.image.open(filepath=str(image), use_udim_detecting=False)
         bpy.data.images[image.name].pack()
         if 'cf_m_body_CM.png' in str(image):
             body_missing = False
@@ -440,6 +440,7 @@ def get_and_load_textures(directory):
 
     #Added node2 for the alpha masks
     def apply_texture_data_to_image(image, mat, group, node, node2 = ''):
+        #kklog('Im in the texture function')
         for item in json_tex_data:
             if item["textureName"] == str(image):
                 #Apply Offset and Scale
@@ -453,6 +454,7 @@ def get_and_load_textures(directory):
                     current_obj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].node_tree.nodes[node2].texture_mapping.translation[1] = item["offset"]["y"]
                     current_obj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].node_tree.nodes[node2].texture_mapping.scale[0] = item["scale"]["x"]
                     current_obj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].node_tree.nodes[node2].texture_mapping.scale[1] = item["scale"]["y"]
+                #kklog('I finished the texture function')
                 break
             
     image_load('Template Body', 'Gentex', 'BodyMain', 'cf_m_body_MT_CT.png')
@@ -607,19 +609,48 @@ def get_and_load_textures(directory):
                 genMat.material.node_tree.nodes['KKShader'].node_tree = newNode
                 newNode.name = genType + ' Shader'
                 
-                #If no main image was loaded in, there's no alpha channel being fed into the KK Shader.
-                #Unlink the input node and make the alpha channel pure white
-                #Also, change a slider to make sure the colormask doesn't screw up later
-                if  MainImage == None:
-                    getOut = genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['alphatoggle'].inputs['maintex alpha'].links[0]
-                    genMat.material.node_tree.nodes['KKShader'].node_tree.links.remove(getOut)
-                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['alphatoggle'].inputs['maintex alpha'].default_value = (1,1,1,1)
-                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 0
-                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 0
-                    
                 #If an alpha mask was loaded in, enable the alpha mask toggle in the KK shader
                 if  AlphaImage != None:
                     toggle = genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['alphatoggle'].inputs['Transparency toggle'].default_value = 1
+
+                #If no main image was loaded in, there's no alpha channel being fed into the KK Shader.
+                #Unlink the input node and make the alpha channel pure white
+                if  not MainImage:
+                    getOut = genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['alphatoggle'].inputs['maintex alpha'].links[0]
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.links.remove(getOut)
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['alphatoggle'].inputs['maintex alpha'].default_value = (1,1,1,1)
+                
+                #check maintex config
+                plainMain = not genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Maintexplain'].image .name == 'Template: Maintex plain placeholder'
+                if not MainImage and not plainMain:
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 0
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Ignore colormask?'].default_value = 0
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 0
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 0
+
+                elif not MainImage and plainMain:
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 1
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Use colored maintex?'].default_value = 0
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Ignore colormask?'].default_value = 0
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Use colored maintex?'].default_value = 0
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 0
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 1
+
+                elif MainImage and not plainMain:
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 1
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Use colored maintex?'].default_value = 1
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Ignore colormask?'].default_value = 1
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Use colored maintex?'].default_value = 1
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 1
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 1
+
+                else: #MainImage and plainMain
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 1
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Use colored maintex?'].default_value = 1
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Ignore colormask?'].default_value = 1
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Use colored maintex?'].default_value = 1
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 1
+                    genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 1
 
 def add_outlines(single_outline_mode):
     #Add face and body outlines, then load in the clothes transparency mask to body outline
