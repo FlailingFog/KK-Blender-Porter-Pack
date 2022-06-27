@@ -41,7 +41,7 @@ def rename_and_merge_outfits():
             bpy.data.objects.remove(empty)
             bpy.data.objects.remove(outfit_arm)
             #rename
-            outfit.name = 'Outfit ' + str(idx).zfill(2)
+            outfit.name = 'Outfit ' + str(idx - 1).zfill(2)
             outfit.parent = armature
             outfit.modifiers[0].object = armature
             
