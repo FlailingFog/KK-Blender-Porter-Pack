@@ -66,6 +66,10 @@ def add_freestyle_faces():
     bpy.ops.object.mode_set(mode = 'OBJECT')
 
 def separate_material(object, mat_list, search_type = 'exact'):
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    bpy.context.view_layer.objects.active = object
+    bpy.ops.object.mode_set(mode = 'EDIT')
+    bpy.ops.mesh.select_all(action = 'DESELECT')
     for mat in mat_list:
         mat_found = -1
         if search_type == 'fuzzy' and ('cm_m_' in mat or 'c_m_' in mat):
@@ -85,37 +89,9 @@ def separate_material(object, mat_list, search_type = 'exact'):
         else:
             kklog('Material wasn\'t found when separating body materials: ' + mat, 'warn')
     bpy.ops.mesh.separate(type='SELECTED')
+    bpy.ops.object.mode_set(mode = 'OBJECT')
 
 def separate_everything(context):
-    body = bpy.data.objects['Body']
-    bpy.context.view_layer.objects.active = body
-    bpy.ops.object.mode_set(mode = 'EDIT')
-    bpy.ops.mesh.select_all(action = 'DESELECT')
-    #Select all body related materials, then separate it from everything else
-    body_mat_list = [
-        'cf_m_tang',
-        'cf_m_eyeline_kage',
-        'cf_m_namida_00',
-        'cf_m_namida_00.001',
-        'cf_m_namida_00.002',
-        'cf_m_hitomi_00.001',
-        'cf_m_hitomi_00',
-        'cf_m_sirome_00.001',
-        'cf_m_sirome_00',
-        'cf_m_eyeline_down',
-        'cf_m_eyeline_00_up',
-        'cf_m_tooth',
-        'cf_m_tooth.001',
-        'cf_m_noseline_00',
-        'cf_m_mayuge_00',
-        'cf_m_face_00',
-        'cf_m_face_00.001',
-        'cm_m_body',
-        'cf_m_body']
-    separate_material(body, body_mat_list, 'fuzzy')
-    bpy.data.objects['Body'].name = 'Clothes'
-    bpy.data.objects['Body.001'].name = 'Body'
-    clothes = bpy.data.objects['Clothes']
     body = bpy.data.objects['Body']
 
     #Select all materials that use the hair renderer and don't have a normal map then separate
@@ -147,7 +123,8 @@ def separate_everything(context):
                     separate_material(outfit, hair_mat_list)
                 else:
                     context.scene.kkbp.has_hair_bool = False
-                bpy.data.objects[outfit.name + '.001'].name = 'Hair_' + outfit.name
+                bpy.data.objects[outfit.name + '.001'].name = 'Hair ' + outfit.name
+                bpy.data.objects['Hair ' + outfit.name].parent = outfit
         bpy.context.view_layer.objects.active = body
     
     if context.scene.kkbp.categorize_dropdown in ['A', 'B']:
@@ -170,57 +147,84 @@ def separate_everything(context):
             'Top part A',
             'Top part B',
             'Top part C']
+        
+        #If there's multiple pieces to any clothing types other than the top, separate them into their own object using the smr data
+        for outfit in [outfit for outfit in bpy.data.objects if 'Outfit ' in outfit.name and 'Hair' not in outfit.name]:
+            #kklog(outfit)
+            outfit_index = int(outfit.name[-3:])
+            #kklog(outfit_index)
+            clothes_indexes = [1, 2, 3, 4, 5, 6, 8]
+            clothes_indexes = [element + (12 * outfit_index) for element in clothes_indexes] #shift based on outfit number
 
-        #If there's multiple pieces to any clothing types, separate them into their own object using the smr data
-        for clothes_index in [1, 2, 3, 4, 5, 6, 8]:
-            if len(clothes_data[clothes_index]['RendNormal01']) > 1:
-                for subpart_object_name in clothes_data[clothes_index]['RendNormal01']:
-                    subpart_bool = subpart_object_name[:subpart_object_name.find(' -')][-2:] == '_b' or subpart_object_name[:subpart_object_name.find(' -')][-2:] == '_c'
-                    if subpart_bool:
+            for clothes_index in clothes_indexes:
+                variations = len(clothes_data[clothes_index]['RendNormal01'])
+                if variations > 1:
+                    for index in range(1, variations):
+                        subpart_object_name = clothes_data[clothes_index]['RendNormal01'][index]
                         for smr_index in smr_data:
-                            if smr_index['SMRName'] == subpart_object_name:
-                                separate_material(clothes, smr_index['SMRMaterialNames'])
-                                bpy.data.objects['Clothes.001'].name = clothes_labels[clothes_index] + ' alt ' + ('B' if '_b ' in subpart_object_name else 'C')
-        
-        #Always separate indoor shoes
-        indoor_shoes_name = clothes_data[7]['RendNormal01']
-        #kklog(indoor_shoes_name)
-        if indoor_shoes_name:
-            for smr_index in smr_data:
-                #kklog(smr_index['SMRName'])
-                if smr_index['SMRName'] == indoor_shoes_name[0]:
-                    separate_material(clothes, smr_index['SMRMaterialNames'])
-                    bpy.data.objects['Clothes.001'].name = clothes_labels[7]
-                    #bpy.data.objects[clothes_labels[7]].hide_render = True
-                    #bpy.data.objects[clothes_labels[7]].hide = True
-        
+                            if smr_index['SMRName'] == subpart_object_name and smr_index['CoordinateType'] == outfit_index:
+                                separate_material(outfit, smr_index['SMRMaterialNames'])
+                                bpy.data.objects[outfit.name + '.001'].parent = outfit
+                                bpy.data.objects[outfit.name + '.001'].name = clothes_labels[clothes_index - 12 * outfit_index] + ' alt ' + ('B' if '_b ' in subpart_object_name else 'C') + ' ' + outfit.name
+
+        #separate loop to prevent crashing
+        for outfit in [outfit for outfit in bpy.data.objects if 'Outfit ' in outfit.name and 'Hair' not in outfit.name and 'alt ' not in outfit.name and 'Indoor' not in outfit.name]:
+            #kklog(outfit)
+            outfit_index = int(outfit.name[-3:])
+            clothes_index = 7 + (12 * outfit_index)
+            #Always separate indoor shoes
+            indoor_shoes_name = clothes_data[clothes_index]['RendNormal01']
+            if indoor_shoes_name:
+                #kklog(indoor_shoes_name)
+                for smr_index in smr_data:
+                    #kklog(smr_index['SMRName'])
+                    if smr_index['SMRName'] == indoor_shoes_name[0] and smr_index['CoordinateType'] == outfit_index:
+                        #kklog(smr_index['SMRName'])
+                        #kklog(smr_index['SMRMaterialNames'])
+                        separate_material(outfit, smr_index['SMRMaterialNames'])
+                        bpy.data.objects[outfit.name + '.001'].name = clothes_labels[7] + ' ' + outfit.name
+                        bpy.data.objects[clothes_labels[7] + ' ' + outfit.name].parent = outfit
+                        #bpy.data.objects[clothes_labels[clothes_index]].hide_render = True
+                        #bpy.data.objects[clothes_labels[clothes_index]].hide = True
+
+        #separate loop to prevent crashing
         #If there's multiple pieces to the top, separate them into their own object, but make sure to group them correctly
-        grouping = {'B':[], 'C':[]}
-        for clothes_index in [0, 9, 10, 11]:
-            #print(clothes_index)
-            for cat in ['RendNormal01', 'RendEmblem01', 'RendEmblem02']:
-                if len(clothes_data[clothes_index][cat]) > 1 or (len(clothes_data[clothes_index][cat]) == 1 and cat not in 'RendNormal01'):
-                    clothes_to_separate = clothes_data[clothes_index][cat]
-                    if cat not in 'RendNormal01':
-                        clothes_to_separate = [clothes_to_separate]
-                    for subpart_object_name in clothes_to_separate:
-                        if '_a ' not in subpart_object_name:
-                            for smr_index in smr_data:
-                                if smr_index['SMRName'] == subpart_object_name and '_b ' in subpart_object_name:
-                                    for item in smr_index['SMRMaterialNames']:
-                                        #print(item)
-                                        grouping['B'].append(item)
-                                if smr_index['SMRName'] == subpart_object_name and '_c ' in subpart_object_name:
-                                    for item in smr_index['SMRMaterialNames']:
-                                        grouping['C'].append(item)
-        if grouping['B']:
-            #print(grouping['B'])
-            separate_material(clothes, grouping['B'])
-            bpy.data.objects['Clothes.001'].name = 'Top alt B'
-        if grouping['C']:
-            #print(grouping['C'])
-            separate_material(clothes, grouping['C'])
-            bpy.data.objects['Clothes.001'].name = 'Top alt C'
+        for outfit in [outfit for outfit in bpy.data.objects if 'Outfit ' in outfit.name and 'Hair' not in outfit.name and 'alt ' not in outfit.name and 'Indoor' not in outfit.name]:
+            grouping = {}
+            outfit_index = int(outfit.name[-3:])
+            clothes_indexes = [0, 9, 10, 11]
+            clothes_indexes = [element + (12 * outfit_index) for element in clothes_indexes] #shift based on outfit number
+            #kklog(outfit_index)
+            #kklog(clothes_indexes)
+
+            for clothes_index in clothes_indexes:
+                print(clothes_index)
+                for cat in ['RendNormal01', 'RendEmblem01', 'RendEmblem02']:
+                    variations = len(clothes_data[clothes_index][cat])
+                    if variations > 1 or (variations == 1 and cat not in 'RendNormal01'):
+                        clothes_to_separate = clothes_data[clothes_index][cat]
+                        #kklog(clothes_to_separate)
+                        if cat not in 'RendNormal01' and variations == 1:
+                            clothes_to_separate = [clothes_to_separate]
+                        if len(clothes_to_separate) > 1:
+                            for index in range(1,len(clothes_to_separate)):
+                                subpart_object_name = clothes_to_separate[index]
+                                #kklog(subpart_object_name)
+                                for smr_index in smr_data:
+                                    if smr_index['SMRName'] == subpart_object_name and smr_index['CoordinateType'] == outfit_index:
+                                        for item in smr_index['SMRMaterialNames']:
+                                            #kklog(item)
+                                            try:
+                                                grouping[index].append(item)
+                                            except:
+                                                grouping[index] = [item]
+            if grouping != {}:
+                for index in grouping:
+                    #print(grouping[index])
+                    separate_material(outfit, grouping[index])
+                    new_name = ' Top alt ' + chr(ord('A') + index) + ' ' + outfit.name 
+                    bpy.data.objects[outfit.name + '.001'].name = new_name 
+                    bpy.data.objects[new_name].parent = outfit
 
     #Separate hitbox materials, if any
     hit_box_list = []
@@ -228,15 +232,16 @@ def separate_everything(context):
         if mat['MaterialName'][0:6] == 'o_hit_' or mat['MaterialName'] == 'cf_O_face_atari_M':
             hit_box_list.append(mat['MaterialName'])
     if len(hit_box_list):
-        separate_material(clothes, hit_box_list)
-        bpy.data.objects['Clothes.001'].name = 'Hitboxes'
+
+        separate_material(body, hit_box_list)
+        bpy.data.objects[body.name + '.001'].name = 'Hitboxes'
 
     #Separate the shadowcast if any
     try:
         bpy.ops.mesh.select_all(action = 'DESELECT')
         shad_mat_list = ['c_m_shadowcast', 'Standard']
-        separate_material(clothes, shad_mat_list, 'fuzzy')
-        bpy.data.objects['Clothes.001'].name = 'Shadowcast'
+        separate_material(body, shad_mat_list, 'fuzzy')
+        bpy.data.objects[body.name + '.001'].name = 'Shadowcast'
     except:
         pass
     
@@ -244,8 +249,8 @@ def separate_everything(context):
     try:
         bpy.ops.mesh.select_all(action = 'DESELECT')
         bone_mat_list = ['Bonelyfans', 'Bonelyfans.001']
-        separate_material(clothes, bone_mat_list)
-        bpy.data.objects['Clothes.001'].name = 'Bonelyfans'
+        separate_material(body, bone_mat_list)
+        bpy.data.objects[body.name + '.001'].name = 'Bonelyfans'
     except:
         pass
 
@@ -363,8 +368,7 @@ def make_tear_shapekeys():
 
     #Separate tears from body object, parent it to the body so it's hidden in the outliner
     #link shapekeys of tears to body
-    tearMats = [
-        'cf_m_namida_00']
+    tearMats = ['cf_m_namida_00']
     bpy.ops.mesh.select_all(action='DESELECT')
     separate_material(body, tearMats)
     tears = bpy.data.objects['Body.001']
@@ -375,7 +379,7 @@ def make_tear_shapekeys():
 
 def remove_duplicate_slots():
     for obj in bpy.data.objects:
-        if 'Body' == obj.name or 'Outfit' in obj.name:
+        if 'Body' == obj.name or 'Indoor shoes Outfit ' in obj.name or 'Outfit ' in obj.name or 'Hair' in obj.name:
             #combine duplicated material slots
             bpy.ops.object.material_slot_remove_unused()
             mesh = obj
@@ -392,7 +396,13 @@ def remove_duplicate_slots():
                 eye_flag = False if ('cf_m_hitomi_00' in mat.name or 'cf_m_sirome_00' in mat.name or 'cf_m_namida_00' in mat.name) and bpy.context.scene.kkbp.categorize_dropdown == 'D' else True
                 
                 if '.' in mat.name[-4:] and 'cf_m_namida_00' not in mat.name and eye_flag:
-                    base_name, dupe_number = mat.name.split('.',2)
+                    try:
+                        #the material name is normal
+                        base_name, dupe_number = mat.name.split('.',2)
+                    except:
+                        #someone (not naming names) left a .### in the material name
+                        base_name, rest_of_base_name, dupe_number = mat.name.split('.',2)
+                        base_name = base_name + rest_of_base_name
                     if material_list.get(base_name) and int(dupe_number):
                         mat.user_remap(material_list[base_name])
                         bpy.data.materials.remove(mat)
@@ -497,7 +507,6 @@ class separate_body(bpy.types.Operator):
 
             kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
                     #if it fails then abort and print the error
-            
             return{'FINISHED'}
 
         except:

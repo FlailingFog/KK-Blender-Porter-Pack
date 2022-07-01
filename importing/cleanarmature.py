@@ -10,7 +10,7 @@ Usage:
 '''
 
 import bpy, time, traceback
-from .finalizepmx import survey
+from .finalizepmx import survey_vertexes
 from .importbuttons import kklog
 
 #function that returns a type of bone list
@@ -274,7 +274,7 @@ def move_accessory_bones():
     clothes = bpy.data.objects['Clothes']
 
     # Find empty vertex groups
-    vertexWeightMap = survey(clothes)
+    vertexWeightMap = survey_vertexes(clothes)
     
     dont_move_these = [
         'cf_pv', 'Eyesx',
@@ -293,7 +293,6 @@ def move_accessory_bones():
             for this_prefix in dont_move_these:
                 if this_prefix in bone.name:
                     no_move_bone = True
-            
             #check if it has any vertexes attached to it, and show it if it does
             #move it to armature layer 10 as well
             if not no_move_bone and vertexWeightMap.get(bone.name):

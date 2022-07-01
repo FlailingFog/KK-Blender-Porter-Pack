@@ -28,6 +28,9 @@ Huge feature updates by **MediaMoots**!
 Rigify armature updates by an anonymous contributor!
 * Better Penetration bones will now be placed in the "Torso (Tweak)" layer when converting to the Rigify armature
 
+Unity normal blending by **poisenbery**!
+* This is an alternative normal map detail blending method that can be accessed in the "Raw shading" group
+
 Plus some misc changes to the Blender plugin:
 * Added a one-click option for importing models!
     * Hair is now separated from the model automatically, so the entire import process has been reduced to a single button

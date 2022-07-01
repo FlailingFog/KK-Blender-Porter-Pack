@@ -931,7 +931,6 @@ class finalize_pmx(bpy.types.Operator):
                 #fix_accessories()
             rename_mmd_bones()
             remove_empty_vertex_groups()
-
             kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             
             return {'FINISHED'}
