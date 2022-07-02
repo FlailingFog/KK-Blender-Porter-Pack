@@ -41,6 +41,10 @@ def import_pmx_models(directory):
                     scale=1,
                     types={'MESH', 'ARMATURE', 'MORPHS'} if not outfit else {'MESH'} ,
                     log_level='WARNING')
+                
+                if outfit:
+                    #keep track of outfit ID after pmx import. The active object is the empty after import, so that's where its going
+                    bpy.context.view_layer.objects.active['KKBP outfit ID'] = str(subdir[-2:])
     
                 #get rid of the text files mmd tools generates
                 if bpy.data.texts.get('Model'):
@@ -85,8 +89,8 @@ class quick_import(bpy.types.Operator):
                 bpy.ops.kkb.separatebody('INVOKE_DEFAULT'),
                 bpy.ops.kkb.cleanarmature('INVOKE_DEFAULT'),
                 bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT'),
-                bpy.ops.kkb.importeverything('INVOKE_DEFAULT'),
-                bpy.ops.kkb.importcolors('EXEC_DEFAULT'),
+                #bpy.ops.kkb.importeverything('INVOKE_DEFAULT'),
+                #bpy.ops.kkb.importcolors('EXEC_DEFAULT'),
             ]
         elif context.scene.kkbp.categorize_dropdown == 'B':
             commands = [

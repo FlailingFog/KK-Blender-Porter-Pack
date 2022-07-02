@@ -213,7 +213,7 @@ def separate_everything(context):
                                 for smr_index in smr_data:
                                     if smr_index['SMRName'] == subpart_object_name and smr_index['CoordinateType'] == outfit_index:
                                         for item in smr_index['SMRMaterialNames']:
-                                            #kklog(item)
+                                            #print(item)
                                             try:
                                                 grouping[index].append(item)
                                             except:
@@ -229,16 +229,20 @@ def separate_everything(context):
     #Separate hitbox materials, if any
     hit_box_list = []
     for mat in material_data:
-        if mat['MaterialName'][0:6] == 'o_hit_' or mat['MaterialName'] == 'cf_O_face_atari_M':
+        if mat['MaterialName'][0:6] == 'o_hit_' or mat['MaterialName'] == 'cf_O_face_atari_M' or mat['MaterialName'] == 'cf_O_face_atari_M.001':
             hit_box_list.append(mat['MaterialName'])
     if len(hit_box_list):
-
         separate_material(body, hit_box_list)
         bpy.data.objects[body.name + '.001'].name = 'Hitboxes'
+        try:
+            separate_material(bpy.data.objects['Outfit 00'], hit_box_list)
+            bpy.data.objects['Outfit 00.001'].name = 'Hitboxes again'
+        except:
+            #nope
+            pass
 
     #Separate the shadowcast if any
     try:
-        bpy.ops.mesh.select_all(action = 'DESELECT')
         shad_mat_list = ['c_m_shadowcast', 'Standard']
         separate_material(body, shad_mat_list, 'fuzzy')
         bpy.data.objects[body.name + '.001'].name = 'Shadowcast'
@@ -247,7 +251,6 @@ def separate_everything(context):
     
     #Separate the bonelyfans mesh if any
     try:
-        bpy.ops.mesh.select_all(action = 'DESELECT')
         bone_mat_list = ['Bonelyfans', 'Bonelyfans.001']
         separate_material(body, bone_mat_list)
         bpy.data.objects[body.name + '.001'].name = 'Bonelyfans'
@@ -256,6 +259,7 @@ def separate_everything(context):
 
         #remove unused material slots on all objects
         bpy.ops.object.mode_set(mode = 'OBJECT')
+        bpy.ops.object.select_all(action='SELECT')
         bpy.ops.object.material_slot_remove_unused()
         
     def move_and_hide_collection (objects, new_collection):

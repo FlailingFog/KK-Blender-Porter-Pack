@@ -1,4 +1,5 @@
 ### redo toe bone connections
+#       when did i put this note here
 
 '''
 AFTER CATS (CLEAN ARMATURE) SCRIPT
@@ -269,25 +270,23 @@ def visually_connect_bones():
     '''
     bpy.ops.object.mode_set(mode='OBJECT')
 
-def move_accessory_bones():
+def move_accessory_bones(context):
     armature = bpy.data.objects['Armature']
-    clothes = bpy.data.objects['Clothes']
+    #go through each outfit and move ALL accessory bones to layer 10
+    for outfit_or_hair in [obj for obj in bpy.data.objects if 'Outfit ' in obj.name]:
+        # Find empty vertex groups
+        vertexWeightMap = survey_vertexes(outfit_or_hair)
+        
+        dont_move_these = [
+            'cf_pv', 'Eyesx',
+            'cf_J_hitomi_tx_', 'cf_J_FaceRoot', 'cf_J_FaceUp_t',
+            'n_cam', 'EyesLookTar', 'N_move', 'a_n_', 'cf_hit',
+            'cf_j_bnip02', 'cf_j_kokan', 'cf_j_ana']
+        
+        bpy.ops.object.mode_set(mode='POSE')
+        bpy.ops.pose.select_all(action='DESELECT')
 
-    # Find empty vertex groups
-    vertexWeightMap = survey_vertexes(clothes)
-    
-    dont_move_these = [
-        'cf_pv', 'Eyesx',
-        'cf_J_hitomi_tx_', 'cf_J_FaceRoot', 'cf_J_FaceUp_t',
-        'n_cam', 'EyesLookTar', 'N_move', 'a_n_', 'cf_hit',
-        'cf_j_bnip02', 'cf_j_kokan', 'cf_j_ana']
-    
-    bpy.ops.object.mode_set(mode='POSE')
-    bpy.ops.pose.select_all(action='DESELECT')
-
-    for bone in armature.data.bones:
-        #check only hidden bones
-        if bone.hide == True:
+        for bone in [bone for bone in armature.data.bones if bone.layers[10]]:
             #if the bone isn't a "utility" bone...
             no_move_bone = False
             for this_prefix in dont_move_these:
@@ -295,14 +294,25 @@ def move_accessory_bones():
                     no_move_bone = True
             #check if it has any vertexes attached to it, and show it if it does
             #move it to armature layer 10 as well
+            #and keep track of the outfit ID the bone was detected from
             if not no_move_bone and vertexWeightMap.get(bone.name):
+                #print(bone.name)
                 bone.hide = False
+                bone['KKBP outfit ID'] = outfit_or_hair.name[-1:]
                 set_armature_layer(bone.name, show_layer = 9)
             else:
                 #else, keep on layer 11
                 bone.hide = False
                 #set_armature_layer(bone.name, show_layer = 10)
 
+    #only keep first outfit's accessory bones if the rigify armature was selected
+    print(context.scene.kkbp.armature_dropdown)
+    if context.scene.kkbp.armature_dropdown in ['B']:
+        bpy.ops.object.mode_set(mode='EDIT')
+        for bone in [bone for bone in armature.data.bones if bone.get('KKBP outfit ID')]:
+            if bone['KKBP outfit ID'] != '0':
+                armature.data.edit_bones.remove(armature.data.edit_bones[bone.name])
+        bpy.ops.object.mode_set(mode='POSE')
 
 class clean_armature(bpy.types.Operator):
     bl_idname = "kkb.cleanarmature"
@@ -319,7 +329,7 @@ class clean_armature(bpy.types.Operator):
             reorganize_armature_layers()
             if context.scene.kkbp.categorize_dropdown in ['A', 'B']:
                 visually_connect_bones()
-            move_accessory_bones()
+            move_accessory_bones(context)
             
             kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
 

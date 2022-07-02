@@ -35,13 +35,14 @@ def rename_and_merge_outfits():
         if "Model_arm" in obj.name and obj.type == 'ARMATURE':
             #get objects
             empty = bpy.data.objects['Model.' + str(idx).zfill(3)]
+            id = empty['KKBP outfit ID']
             outfit_arm = bpy.data.objects['Model_arm.' + str(idx).zfill(3)]
             outfit = bpy.data.objects[empty.name  + '_mesh']
             
             bpy.data.objects.remove(empty)
             bpy.data.objects.remove(outfit_arm)
-            #rename
-            outfit.name = 'Outfit ' + str(idx - 1).zfill(2)
+            #rename outfit to match ID
+            outfit.name = 'Outfit ' + id
             outfit.parent = armature
             outfit.modifiers[0].object = armature
             
