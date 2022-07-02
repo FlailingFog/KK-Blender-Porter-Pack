@@ -213,7 +213,7 @@ class separate_meshes(bpy.types.Operator):
     filter_glob : StringProperty(default='', options={'HIDDEN'})
 
     def execute(self, context):
-        if self.directory == '':
+        if self.directory == 'cleared':
             directory = context.scene.kkbp.import_dir
             for obj in bpy.data.objects:
                 if obj.modifiers.get('Outline Modifier'):

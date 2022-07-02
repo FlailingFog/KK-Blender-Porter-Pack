@@ -129,6 +129,16 @@ class quick_import(bpy.types.Operator):
         if context.scene.kkbp.armature_dropdown == 'B' and context.scene.kkbp.categorize_dropdown in ['A', 'B', 'C']:
             bpy.ops.kkb.rigifyconvert('INVOKE_DEFAULT')
         
+        if context.scene.kkbp.categorize_dropdown in ['A', 'B', 'C']:
+            #set the viewport shading
+            my_areas = bpy.context.workspace.screens[0].areas
+            my_shading = 'MATERIAL'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
+
+            for area in my_areas:
+                for space in area.spaces:
+                    if space.type == 'VIEW_3D':
+                        space.shading.type = my_shading 
+
         return {'FINISHED'}
         
     def invoke(self, context, event):

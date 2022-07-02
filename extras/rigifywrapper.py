@@ -41,17 +41,39 @@ class rigify_convert(bpy.types.Operator):
             
             #make sure things are parented correctly and hide original armature
             rig = bpy.context.active_object
-            if len(armature.children):
-                for child in armature.children:
-                    if child.name != 'Bonelyfans' and child.name != 'Shadowcast' and child.name != 'Hitboxes':
-                        bpy.ops.object.select_all(action='DESELECT')
-                        child.parent = None
-                        child.select_set(True)
-                        rig.select_set(True)
-                        bpy.context.view_layer.objects.active=rig
-                        bpy.ops.object.parent_set(type='ARMATURE_NAME')
-            if bpy.data.objects.get('Tears'):
-                bpy.data.objects['Tears'].modifiers['mmd_bone_order_override'].object = rig
+            armature = bpy.data.objects['Armature']
+            for child in armature.children:
+                if child.name in ['Body'] or 'Outfit ' in child.name:
+                    print(child.name)
+                    #do for children first
+                    for ob in child.children:
+                        if ob.name in ['Tears'] or 'Outfit ' in ob.name:
+                            print(ob.name)
+                            hidden = ob.hide
+                            parent = ob.parent
+                            ob.hide = False 
+                            bpy.ops.object.select_all(action='DESELECT')
+                            ob.parent = None
+                            ob.select_set(True)
+                            rig.select_set(True)
+                            bpy.context.view_layer.objects.active=rig
+                            bpy.ops.object.parent_set(type='ARMATURE_NAME')
+                            ob.hide = hidden
+                            ob.parent = parent
+                    hidden = child.hide
+                    child.hide = False 
+                    bpy.ops.object.select_all(action='DESELECT')
+                    child.parent = None
+                    child.select_set(True)
+                    rig.select_set(True)
+                    bpy.context.view_layer.objects.active=rig
+                    bpy.ops.object.parent_set(type='ARMATURE_NAME')
+                    child.hide = hidden
+
+                    #find the last created armature modifier, replace it with the existing one
+                    child.modifiers[0].object = child.modifiers[-1].object
+                    child.modifiers.remove(child.modifiers[-1])
+                    child.modifiers[0].name = 'Rigify Armature'
             armature.hide_set(True)
             bpy.ops.object.select_all(action='DESELECT')
             rig.select_set(True)

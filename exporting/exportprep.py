@@ -264,6 +264,7 @@ class export_prep(bpy.types.Operator):
 
         try:
             main(prep_type)
+            scene.is_prepped = True
             return {'FINISHED'}
         except:
             kklog('Unknown python error occurred', type = 'error')

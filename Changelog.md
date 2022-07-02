@@ -56,6 +56,7 @@ Plus some misc changes to the Blender plugin:
 * The import directory string listed in the KK Log is now censored if it detects your Windows username
 * The plugin now uses an HDRI from polyhaven
 * All KKBP panel options are now visible by default
+* The KKBP panel will now gray out some buttons after a model is imported  
 
 Bugfixes:
 lkjfdlsnkklfd

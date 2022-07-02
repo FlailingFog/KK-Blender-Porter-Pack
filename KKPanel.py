@@ -30,6 +30,10 @@ class PlaceholderProperties(PropertyGroup):
     has_hair_bool : BoolProperty(
     default = True)
 
+    #A property used to let the plugin know if the model has been prepped for export or not
+    is_prepped : BoolProperty(
+    default = False)
+
     fix_seams : BoolProperty(
     description=t('seams_tt'),
     default = True)
@@ -169,6 +173,7 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         
         row = col.row(align=True)
         row.operator('kkb.quickimport', text = t('import_model'), icon='MODIFIER')
+        row.enabled = False if scene.import_dir == 'cleared' else True
         
         row = col.row(align=True)
         row.label(text="")
@@ -180,26 +185,31 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         if scene.categorize_dropdown in ['B']:
             row = col.row(align=True)
             row.operator('kkb.matimport', text = t('finish_cat'), icon='BRUSHES_ALL')
+            row.enabled = False if scene.import_dir == 'cleared' else True
         
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "armature_dropdown")
         split.prop(context.scene.kkbp, "categorize_dropdown")
+        row.enabled = False if scene.import_dir == 'cleared' else True
         
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "colors_dropdown")
         split.operator('kkb.importcolors', text = t('recalc_dark'), icon='IMAGE')
+        row.enabled = True
 
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "shapekeys_dropdown")
         split.prop(context.scene.kkbp, "fix_seams", toggle=True, text = t('seams'))
+        row.enabled = False if scene.import_dir == 'cleared' else True
         
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "texture_outline_bool", toggle=True, text = t('outline'))
         split.prop(context.scene.kkbp, "templates_bool", toggle=True, text = t('keep_templates'))
+        row.enabled = False if scene.import_dir == 'cleared' else True
     
 class EXPORTING_PT_panel(bpy.types.Panel):
     bl_parent_id = "IMPORTING_PT_panel"
@@ -217,10 +227,12 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         col = box.column(align=True)
         row = col.row(align=True)
         row.operator('kkb.selectbones', text = t('prep'), icon = 'GROUP')
+        row.enabled = True if context.scene.kkbp.is_prepped == False else False
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text="Type:")
         split.prop(context.scene.kkbp, "prep_dropdown")
+        row.enabled = True if context.scene.kkbp.is_prepped == False else False
 
         col = box.column(align=True)
         row = col.row(align=True)

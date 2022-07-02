@@ -67,10 +67,10 @@ def add_freestyle_faces():
 
 def separate_material(object, mat_list, search_type = 'exact'):
     bpy.ops.object.mode_set(mode = 'OBJECT')
-    print(object)
+    #print(object)
     bpy.context.view_layer.objects.active = object
     bpy.ops.object.mode_set(mode = 'EDIT')
-    print(object)
+    #print(object)
     bpy.ops.mesh.select_all(action = 'DESELECT')
     for mat in mat_list:
         mat_found = -1

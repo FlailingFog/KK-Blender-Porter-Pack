@@ -660,6 +660,7 @@ def add_outlines(single_outline_mode):
     #mod.vertex_group = 'Body without Tears'
     #mod.invert_vertex_group = True
     mod.name = 'Outline Modifier'
+    mod.show_expanded = False
     
     #body
     ob.data.materials.append(bpy.data.materials['KK Body Outline'])
@@ -680,6 +681,7 @@ def add_outlines(single_outline_mode):
 
     #And give the body an inactive data transfer modifier for the shading proxy
     mod = ob.modifiers.new(type='DATA_TRANSFER', name = 'Shadowcast shading proxy')
+    mod.show_expanded = False
     mod.show_viewport = False
     mod.show_render = False
     if bpy.data.objects.get('Shadowcast'):
@@ -766,9 +768,15 @@ def add_outlines(single_outline_mode):
         mod.use_flip_normals = True
         mod.use_rim = False
         mod.name = 'Outline Modifier'
+        mod.show_expanded = False
         hairOutlineMat = bpy.data.materials['KK Outline'].copy()
         hairOutlineMat.name = 'KK Hair Outline'
         ob.data.materials.append(hairOutlineMat)
+
+        #hide alts
+        if ob.name[:12] == 'Hair Outfit ' and ob.name != 'Hair Outfit 00':
+            ob.hide = True
+            ob.hide_render = True
 
     #Add a standard outline to all other objects
     outfit_objects = [obj for obj in bpy.data.objects if 'Outfit ' in obj.name and 'Hair Outfit ' not in obj.name and obj.type == 'MESH']
@@ -862,10 +870,11 @@ def add_outlines(single_outline_mode):
         mod.material_offset = outlineStart[ob.name]
         mod.use_flip_normals = True
         mod.use_rim = False
+        mod.show_expanded = False
         ob.data.materials.append(bpy.data.materials['KK Outline'])
 
         #hide alts
-        if 'Indoor shoes Outfit ' in ob.name or ' alt ' in ob.name or ob.name[:7] == 'Outfit ' and ob.name != 'Outfit 00':
+        if 'Indoor shoes Outfit ' in ob.name or ' alt ' in ob.name or (ob.name[:7] == 'Outfit ' and ob.name != 'Outfit 00') or (ob.name[:12] == 'Hair Outfit ' and ob.name != 'Hair Outfit 00'):
             ob.hide = True
             ob.hide_render = True
 
@@ -942,14 +951,6 @@ class import_everything(bpy.types.Operator):
             #clean data
             clean_orphan_data()
 
-            #set the viewport shading
-            my_areas = bpy.context.workspace.screens[0].areas
-            my_shading = 'MATERIAL'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
-
-            for area in my_areas:
-                for space in area.spaces:
-                    if space.type == 'VIEW_3D':
-                        space.shading.type = my_shading 
             kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             return {'FINISHED'}
 
