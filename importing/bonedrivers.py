@@ -772,37 +772,38 @@ def rename_bones_for_clarity(action):
             if armature.data.bones.get(bone):
                 armature.data.bones[bone].name = unity_rename_dict[bone]
     
-#selects all materials that are likely to be hair
+#selects all materials that are likely to be hair on each outfit object
 def begin_hair_selections():
-    bpy.ops.object.mode_set(mode='OBJECT')
-    bpy.ops.object.select_all(action='DESELECT')
-    clothes = bpy.data.objects['Clothes']
-    clothes.select_set(True)
-    bpy.context.view_layer.objects.active=clothes
-    bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.mesh.select_all(action='DESELECT')
-
-    #Select all materials that use the hair renderer and don't have a normal map then separate
-    json_file = open(bpy.context.scene.kkbp.import_dir[:-9] + 'KK_MaterialData.json')
+    json_file = open(bpy.context.scene.kkbp.import_dir + 'KK_MaterialData.json')
     material_data = json.load(json_file)
-    json_file = open(bpy.context.scene.kkbp.import_dir[:-9] + 'KK_TextureData.json')
+    json_file = open(bpy.context.scene.kkbp.import_dir + 'KK_TextureData.json')
     texture_data = json.load(json_file)
     #get all texture files
     texture_files = []
     for file in texture_data:
         texture_files.append(file['textureName'])
-    if bpy.context.scene.kkbp.categorize_dropdown in ['B']:
-        hair_mat_list = []
-        for mat in material_data:
-            if mat['ShaderName'] in ["Shader Forge/main_hair_front", "Shader Forge/main_hair", 'Koikano/hair_main_sun_front', 'Koikano/hair_main_sun', 'xukmi/HairPlus', 'xukmi/HairFrontPlus']:
-                if (mat['MaterialName'] + '_NMP.png') not in texture_files and (mat['MaterialName'] + '_MT_CT.png') not in texture_files and (mat['MaterialName'] + '_MT.png') not in texture_files:
-                    hair_mat_list.append(mat['MaterialName'])
-        if len(hair_mat_list):
-            for index in range(len(clothes.data.materials)):
-                mat_name = clothes.data.materials[index].name
-                if mat_name in hair_mat_list:
-                    clothes.active_material_index = index
-                    bpy.ops.object.material_slot_select()
+
+    for outfit in [obj for obj in bpy.data.objects if obj.name[:7] == 'Outfit ']:
+        if bpy.context.scene.kkbp.categorize_dropdown in ['B']:
+            bpy.ops.object.mode_set(mode='OBJECT')
+            bpy.ops.object.select_all(action='DESELECT')
+            outfit.select_set(True)
+            bpy.context.view_layer.objects.active=outfit
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.mesh.select_all(action='DESELECT')
+
+            #Select all materials that use the hair renderer and don't have a normal map then separate
+            hair_mat_list = []
+            for mat in material_data:
+                if mat['ShaderName'] in ["Shader Forge/main_hair_front", "Shader Forge/main_hair", 'Koikano/hair_main_sun_front', 'Koikano/hair_main_sun', 'xukmi/HairPlus', 'xukmi/HairFrontPlus']:
+                    if (mat['MaterialName'] + '_NMP.png') not in texture_files and (mat['MaterialName'] + '_MT_CT.png') not in texture_files and (mat['MaterialName'] + '_MT.png') not in texture_files:
+                        hair_mat_list.append(mat['MaterialName'])
+            if len(hair_mat_list):
+                for index in range(len(outfit.data.materials)):
+                    mat_name = outfit.data.materials[index].name
+                    if mat_name in hair_mat_list:
+                        outfit.active_material_index = index
+                        bpy.ops.object.material_slot_select()
     
     #set to face select mode
     bpy.context.tool_settings.mesh_select_mode = (False, False, True)
@@ -821,9 +822,8 @@ class bone_drivers(bpy.types.Operator):
             kklog('\nAdding bone drivers...')
 
             modify_armature = context.scene.kkbp.armature_dropdown in ['A', 'B']
-            armature_not_modified = bpy.data.objects['Armature'].data.bones.get('MasterFootIK.L') == None
             
-            if modify_armature and armature_not_modified:
+            if modify_armature:
                 kklog('Reparenting bones and setting up IKs...')
                 reparent_bones()
                 bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
@@ -835,7 +835,7 @@ class bone_drivers(bpy.types.Operator):
             setup_joints()
             bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
             
-            if modify_armature and armature_not_modified:
+            if modify_armature:
                 kklog('Creating eye controller and renaming bones...', 'timed')
                 make_eye_controller()
                 bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
@@ -849,7 +849,8 @@ class bone_drivers(bpy.types.Operator):
                 mod = bpy.data.objects['Body'].modifiers[2]
                 mod.vertex_group = 'Right Eye'
             
-            begin_hair_selections()
+            if context.scene.kkbp.categorize_dropdown in ['B']:
+                begin_hair_selections()
 
             #set the viewport shading
             my_areas = bpy.context.workspace.screens[0].areas

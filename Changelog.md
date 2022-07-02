@@ -1,10 +1,14 @@
 ### Changes for V6.0.0
 Huge feature updates by **MediaMoots**!
 * The KKBP exporter now works in Koikatsu Sunshine!
-* The KKBP Blender plugin now works in Blender 3.1!
+* The KKBP Blender plugin now works in Blender 3.1+!
+* All outfits are now exported!
+    * These are automatically exported from Koikatsu
+    * These are available as hidden objects after the model is imported into Blender. They are parented to the armature
+    * If you don't want to use these, you can shorten your import time by deleting the "Outfit ##" folder from the export folder 
 * Alternate clothing states (shift / hang state) can now be exported!
     * Export these by checking the "Export Variations" box in Koikatsu
-    * These are available as hidden objects after the model is imported into Blender. They are parented to the armature
+    * These are available as hidden objects after the model is imported into Blender. They are parented to the outfit object
 * Hitboxes can now be exported!
     * Export these by checking the "Export Hit Meshes" box in Koikatsu
     * These are placed in their own collection when the model is imported into Blender
@@ -20,7 +24,8 @@ Huge feature updates by **MediaMoots**!
     * Thanks to that, these items no longer need to be set and scaled manually for each character
 * Converted Normal Maps for use in Unreal and Unity are now exported
 * Separated objects can now be exported with the "Export separated meshes" button
-* A lot of info linking materials, objects, renderers and bones is now exported to several files in the export folder
+* A lot of character info is now exported
+    * Check the .json files in the export folder for info on materials, accessories, objects, renderers and bones
 * Exported character heights are 4% more accurate
 * Texture suffixes are shortened
     * Image names over 64 characters long would cause blender to cufoff the filename, so this means long texture names are less likely to cause issues during import
@@ -28,8 +33,9 @@ Huge feature updates by **MediaMoots**!
 Rigify armature updates by an anonymous contributor!
 * Better Penetration bones will now be placed in the "Torso (Tweak)" layer when converting to the Rigify armature
 
-Unity normal blending by **poisenbery**!
-* This is an alternative normal map detail blending method that can be accessed in the "Raw shading" group
+Unity normal blending and mirrored blush scaling by **poisenbery**!
+* Unity normal blending is an alternative normal map detail blending method that can be accessed in the "Raw shading" group
+* Blush scaling is an alternative way to scale the blush and eyeshadow. This can be accessed in the "Blush positioning" group on the Face material
 
 Plus some misc changes to the Blender plugin:
 * Added a one-click option for importing models!

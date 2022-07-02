@@ -306,7 +306,7 @@ def move_accessory_bones(context):
                 #set_armature_layer(bone.name, show_layer = 10)
 
     #only keep first outfit's accessory bones if the rigify armature was selected
-    print(context.scene.kkbp.armature_dropdown)
+    #print(context.scene.kkbp.armature_dropdown)
     if context.scene.kkbp.armature_dropdown in ['B']:
         bpy.ops.object.mode_set(mode='EDIT')
         for bone in [bone for bone in armature.data.bones if bone.get('KKBP outfit ID')]:

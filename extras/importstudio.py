@@ -229,7 +229,7 @@ class import_studio(bpy.types.Operator):
                                     template = bpy.data.materials['Template General'].copy()
                                 except:
                                     script_dir=Path(__file__).parent
-                                    template_path=(script_dir / '../KK Shader V5.0.blend').resolve()
+                                    template_path=(script_dir / '../KK Shader V6.0.blend').resolve()
                                     filepath = str(template_path)
 
                                     innerpath = 'Material'

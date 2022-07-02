@@ -24,6 +24,8 @@ def rename_and_merge_outfits():
     armature.parent = None
     armature.name = 'Armature'
     body.name = 'Body'
+    body.modifiers[0].show_in_editmode = True
+    body.modifiers[0].show_on_cage = True
     
     #Deselect all objects
     bpy.ops.object.select_all(action='DESELECT')
@@ -45,6 +47,8 @@ def rename_and_merge_outfits():
             outfit.name = 'Outfit ' + id
             outfit.parent = armature
             outfit.modifiers[0].object = armature
+            outfit.modifiers[0].show_in_editmode = True
+            outfit.modifiers[0].show_on_cage = True
             
             idx += 1
         

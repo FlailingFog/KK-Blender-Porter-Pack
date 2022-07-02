@@ -733,7 +733,7 @@ class import_colors(bpy.types.Operator):
         print(context.scene.kkbp.import_dir)
         try:
             if self.directory == '':
-                directory = context.scene.kkbp.import_dir[:-9]
+                directory = context.scene.kkbp.import_dir
             else:
                 directory = self.directory
 

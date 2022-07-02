@@ -214,7 +214,7 @@ class separate_meshes(bpy.types.Operator):
 
     def execute(self, context):
         if self.directory == '':
-            directory = context.scene.kkbp.import_dir[:-9]
+            directory = context.scene.kkbp.import_dir
             for obj in bpy.data.objects:
                 if obj.modifiers.get('Outline Modifier'):
                     obj.modifiers['Outline Modifier'].show_render = False

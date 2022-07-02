@@ -173,7 +173,7 @@ def setup_geometry_nodes_and_fillerplane(camera):
 
     #import the premade flattener node to unwrap the mesh into the UV structure
     script_dir=Path(__file__).parent
-    template_path=(script_dir / '../KK Shader V5.0.blend').resolve()
+    template_path=(script_dir / '../KK Shader V6.0.blend').resolve()
     filepath = str(template_path)
     innerpath = 'NodeTree'
     node = 'Flatten to UV map'

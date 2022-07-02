@@ -280,6 +280,10 @@ def fix_eyewhite_shapekeys():
                 keyblock.vertex_group = 'EyewhitesL'
             elif 'EyeWhitesR_' in keyblock.name:
                 keyblock.vertex_group = 'EyewhitesR'
+    
+    bpy.ops.object.mode_set(mode = 'EDIT')
+    bpy.ops.mesh.select_all(action='DESELECT')
+    bpy.ops.object.mode_set(mode = 'OBJECT')
 
 ######################
 #Combine the shapekeys

@@ -27,8 +27,7 @@ def kklog(log_text, type = 'standard'):
 
 def import_pmx_models(directory):
 
-    root_directory = directory[:-9]
-    for subdir, dirs, files in os.walk(root_directory):
+    for subdir, dirs, files in os.walk(directory):
         for file in files:
             if (file == 'model.pmx'):
                 pmx_path = os.path.join(subdir, file)
@@ -78,7 +77,7 @@ class quick_import(bpy.types.Operator):
         kklog('====    KKBP Log    ====')
 
         #save filepath for later
-        context.scene.kkbp.import_dir = str(self.filepath)
+        context.scene.kkbp.import_dir = str(self.filepath)[:-9]
 
         #run commands based on selection
         if context.scene.kkbp.categorize_dropdown == 'A':
@@ -89,8 +88,8 @@ class quick_import(bpy.types.Operator):
                 bpy.ops.kkb.separatebody('INVOKE_DEFAULT'),
                 bpy.ops.kkb.cleanarmature('INVOKE_DEFAULT'),
                 bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT'),
-                #bpy.ops.kkb.importeverything('INVOKE_DEFAULT'),
-                #bpy.ops.kkb.importcolors('EXEC_DEFAULT'),
+                bpy.ops.kkb.importeverything('INVOKE_DEFAULT'),
+                bpy.ops.kkb.importcolors('EXEC_DEFAULT'),
             ]
         elif context.scene.kkbp.categorize_dropdown == 'B':
             commands = [

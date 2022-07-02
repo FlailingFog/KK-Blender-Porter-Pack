@@ -26,7 +26,7 @@ def clean_body():
                     bpy.context.object.active_material_index = mat_found
                     bpy.ops.object.material_slot_select()
                 else:
-                    kklog('Material wasn\'t found when separating body materials: ' + mat, 'warn')
+                    kklog('Material wasn\'t found when deleting body materials: ' + mat, 'warn')
             bpy.ops.mesh.delete(type='VERT')
         delete_material(['cf_m_tang.001'])
 
@@ -67,12 +67,15 @@ def add_freestyle_faces():
 
 def separate_material(object, mat_list, search_type = 'exact'):
     bpy.ops.object.mode_set(mode = 'OBJECT')
+    print(object)
     bpy.context.view_layer.objects.active = object
     bpy.ops.object.mode_set(mode = 'EDIT')
+    print(object)
     bpy.ops.mesh.select_all(action = 'DESELECT')
     for mat in mat_list:
         mat_found = -1
-        if search_type == 'fuzzy' and ('cm_m_' in mat or 'c_m_' in mat):
+        #print(mat)
+        if search_type == 'fuzzy' and ('cm_m_' in mat or 'c_m_' in mat or 'o_hit_' in mat or mat == 'cf_O_face_atari_M'):
             for matindex in range(0, len(object.data.materials), 1):
                 if mat in object.data.materials[matindex].name:
                     mat_found = matindex
@@ -95,9 +98,9 @@ def separate_everything(context):
     body = bpy.data.objects['Body']
 
     #Select all materials that use the hair renderer and don't have a normal map then separate
-    json_file = open(context.scene.kkbp.import_dir[:-9] + 'KK_MaterialData.json')
+    json_file = open(context.scene.kkbp.import_dir + 'KK_MaterialData.json')
     material_data = json.load(json_file)
-    json_file = open(context.scene.kkbp.import_dir[:-9] + 'KK_TextureData.json')
+    json_file = open(context.scene.kkbp.import_dir + 'KK_TextureData.json')
     texture_data = json.load(json_file)
     #get all texture files
     texture_files = []
@@ -129,9 +132,9 @@ def separate_everything(context):
     
     if context.scene.kkbp.categorize_dropdown in ['A', 'B']:
         #Select any clothes pieces that are normally supposed to be hidden and hide them
-        json_file = open(context.scene.kkbp.import_dir[:-9] + 'KK_ClothesData.json')
+        json_file = open(context.scene.kkbp.import_dir + 'KK_ClothesData.json')
         clothes_data = json.load(json_file)
-        json_file = open(context.scene.kkbp.import_dir[:-9] + 'KK_SMRData.json')
+        json_file = open(context.scene.kkbp.import_dir + 'KK_SMRData.json')
         smr_data = json.load(json_file)
 
         clothes_labels = [
@@ -198,7 +201,7 @@ def separate_everything(context):
             #kklog(clothes_indexes)
 
             for clothes_index in clothes_indexes:
-                print(clothes_index)
+                #print(clothes_index)
                 for cat in ['RendNormal01', 'RendEmblem01', 'RendEmblem02']:
                     variations = len(clothes_data[clothes_index][cat])
                     if variations > 1 or (variations == 1 and cat not in 'RendNormal01'):
@@ -222,7 +225,7 @@ def separate_everything(context):
                 for index in grouping:
                     #print(grouping[index])
                     separate_material(outfit, grouping[index])
-                    new_name = ' Top alt ' + chr(ord('A') + index) + ' ' + outfit.name 
+                    new_name = 'Top alt ' + chr(ord('A') + index) + ' ' + outfit.name 
                     bpy.data.objects[outfit.name + '.001'].name = new_name 
                     bpy.data.objects[new_name].parent = outfit
 
@@ -235,7 +238,8 @@ def separate_everything(context):
         separate_material(body, hit_box_list)
         bpy.data.objects[body.name + '.001'].name = 'Hitboxes'
         try:
-            separate_material(bpy.data.objects['Outfit 00'], hit_box_list)
+            #print('attempting to get the hitboxes off outfit 00')
+            separate_material(bpy.data.objects['Outfit 00'], hit_box_list, search_type='fuzzy')
             bpy.data.objects['Outfit 00.001'].name = 'Hitboxes again'
         except:
             #nope
@@ -286,7 +290,7 @@ def separate_everything(context):
     bpy.ops.object.mode_set(mode = 'OBJECT')
     bpy.ops.object.select_all(action='DESELECT')
     move_and_hide_collection(['Shadowcast', 'Bonelyfans'], "Shadowcast Collection")
-    move_and_hide_collection(['Hitboxes'], "Hitbox Collection")
+    move_and_hide_collection(['Hitboxes', 'Hitboxes again'], "Hitbox Collection")
 
 #merge certain materials for the body object to prevent odd shading issues later on
 def fix_body_seams():
@@ -463,9 +467,9 @@ def cleanup():
     bpy.ops.object.material_slot_remove_unused()
     for obj in bpy.context.selected_objects:
         obj.select_set(False)
-        if ' alt ' in obj.name or 'Indoor shoes' in obj.name:
-            obj.hide = True
-            obj.hide_render = True
+        #if ' alt ' in obj.name or 'Indoor shoes' in obj.name:
+            #obj.hide = True
+            #obj.hide_render = True
     bpy.ops.object.select_all(action='DESELECT')
 
     #and clean up the oprhaned data
