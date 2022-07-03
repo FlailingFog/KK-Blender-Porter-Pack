@@ -24,7 +24,7 @@ class rigify_convert(bpy.types.Operator):
     
     def execute(self, context):
         try:
-            kklog('Converting to Rigify...')
+            kklog('\nConverting to Rigify...')
             #Make the armature active
             bpy.ops.object.mode_set(mode='OBJECT')
             bpy.ops.object.select_all(action='DESELECT')

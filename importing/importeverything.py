@@ -858,7 +858,7 @@ def add_outlines(single_outline_mode):
 
                     OutlineMat.material.node_tree.nodes['outlinetransparency'].inputs[0].default_value = 1.0
         else:
-            outlineStart = 200
+            outlineStart[ob.name] = 200
         
         #Add a general outline that covers the rest of the materials on the object that don't need transparency
         bpy.context.view_layer.objects.active = ob
