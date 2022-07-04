@@ -127,7 +127,10 @@ def separate_everything(context):
                 else:
                     context.scene.kkbp.has_hair_bool = False
                 bpy.data.objects[outfit.name + '.001'].name = 'Hair ' + outfit.name
-                bpy.data.objects['Hair ' + outfit.name].parent = outfit
+                
+                #don't reparent hair if Categorize by SMR
+                if context.scene.kkbp.categorize_dropdown not in ['D']:
+                    bpy.data.objects['Hair ' + outfit.name].parent = outfit
         bpy.context.view_layer.objects.active = body
     
     if context.scene.kkbp.categorize_dropdown in ['A', 'B']:
