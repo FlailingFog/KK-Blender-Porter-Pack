@@ -145,6 +145,7 @@ def separate_body(json_smr_data):
         'cf_O_namida_L' : 'cf_m_namida_00',
         'cf_O_namida_M' : 'cf_m_namida_00.001',
         'cf_O_namida_S' : 'cf_m_namida_00.002',
+        'o_tang' : 'cf_m_tang',
     }
     
     #Pass 1: To make sure each material has a mesh
@@ -175,17 +176,17 @@ def separate_body(json_smr_data):
         bpy.ops.mesh.select_all(action = 'DESELECT')
         
         #Loop over each renderer material and select it
-        found_a_material = False
-        for mat_name in row['SMRMaterialNames']:
-            found_mat_idx = body_data.materials.find(body_obj_material_map[row['SMRName']])
+        mat_name = body_obj_material_map[row['SMRName']]
+        if (row['SMRName'] == 'o_tang' and len(row['SMRBoneNames']) > 1):
+            mat_name = 'cf_m_tang.001'
             
-            if found_mat_idx > -1:               
-                bpy.context.object.active_material_index = found_mat_idx
-                bpy.ops.object.material_slot_select()
-                found_a_material = True
-            
-        if not found_a_material:
+        found_mat_idx = body_data.materials.find(mat_name)
+        
+        if found_mat_idx == -1:
             continue
+                     
+        bpy.context.object.active_material_index = found_mat_idx
+        bpy.ops.object.material_slot_select() 
         
         #Seperate to a new mesh
         bpy.ops.mesh.separate(type='SELECTED')
@@ -247,6 +248,8 @@ def export_meshes(directory):
         'cf_O_namida_L' : 'cf_m_namida_00',
         'cf_O_namida_M' : 'cf_m_namida_00',
         'cf_O_namida_S' : 'cf_m_namida_00',
+        'o_tang' : 'cf_m_tang',
+        'o_tang.001' : 'cf_m_tang',
     }
 
     armature = bpy.data.objects['Armature']

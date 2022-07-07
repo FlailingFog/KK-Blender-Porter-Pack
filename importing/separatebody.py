@@ -28,7 +28,8 @@ def clean_body():
                 else:
                     kklog('Material wasn\'t found when deleting body materials: ' + mat, 'warn')
             bpy.ops.mesh.delete(type='VERT')
-        delete_material(['cf_m_tang.001'])
+        #the exporter (V3.73 >) now exports the animated tongue as well so this might not be needed anymore? - Media Moots 
+        # delete_material(['cf_m_tang.001'])
 
         #check if there's a face material. If there isn't then the model most likely has a face02 face. Rename to correct name
         if body.data.materials.find('cf_m_face_00') == -1:
@@ -403,8 +404,8 @@ def remove_duplicate_slots():
             #remap duplicate materials to the base one
             material_list = mesh.data.materials
             for mat in material_list:
-                #don't merge the eye materials if categorize by SMR is chosen.
-                eye_flag = False if ('cf_m_hitomi_00' in mat.name or 'cf_m_sirome_00' in mat.name or 'cf_m_namida_00' in mat.name) and bpy.context.scene.kkbp.categorize_dropdown == 'D' else True
+                #don't merge the eye materials/tang if categorize by SMR is chosen.
+                eye_flag = False if ('cf_m_hitomi_00' in mat.name or 'cf_m_sirome_00' in mat.name or 'cf_m_namida_00' in mat.name or 'cf_m_tang' in mat.name) and bpy.context.scene.kkbp.categorize_dropdown == 'D' else True
                 
                 if '.' in mat.name[-4:] and 'cf_m_namida_00' not in mat.name and eye_flag:
                     try:
