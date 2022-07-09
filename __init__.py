@@ -38,6 +38,7 @@ from .extras.switcharmature import switch_armature
 from .extras.separatemeshes import separate_meshes
 from .extras.separatemeshes import export_separate_meshes
 from .extras.toggleik import toggle_ik
+from .extras.updatebones import update_bones
 from .extras.imageconvert import image_convert
 from .extras.rigifywrapper import rigify_convert
 from .extras.rigifyscripts.rigify_before import rigify_before
@@ -66,6 +67,7 @@ classes = (
     separate_meshes,
     export_separate_meshes,
     toggle_ik,
+    update_bones,
     rigify_convert,
     rigify_before,
     rigify_after,

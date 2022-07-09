@@ -11,6 +11,9 @@ translation_dictionary = {
     'keep_templates'        : "Keep material templates",
     'keep_templates_tt'     : "Keep enabled to set the KKBP material templates to fake user. This will keep them from being deleted when blender is closed. Useful if you want to apply them to other objects after your character is finished",
 
+    'sfw_mode'          : 'SFW mode',
+    'sfw_mode_tt'       : 'Attempts to cover up some NSFW things',
+
     'arm_drop'          : "Armature type",
     'arm_drop_A'        : "Use KKBP Armature",
     'arm_drop_A_tt'     : "Use the KKBP armature. This will slightly modify the armature and give it basic IKs",

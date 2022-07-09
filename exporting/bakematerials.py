@@ -247,7 +247,7 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
         #print(currentmaterial)
 
         #Don't bake this material if it's an outline material
-        if 'Outline ' in currentmaterial.name or 'Template Outline' in currentmaterial.name or 'Template Body Outline' in currentmaterial.name:
+        if 'Outline ' in currentmaterial.name or 'KK Outline' in currentmaterial.name or 'KK Body Outline' in currentmaterial.name:
             continue
 
         #Don't bake this material if the material already has the atlas nodes loaded in and the mix shader is set to 1 and the image already exists
@@ -289,7 +289,7 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
                 #set every material slot except the current material to be transparent
                 for matslot in object_to_bake.material_slots:
                     if matslot.material != currentmaterial:
-                        matslot.material = bpy.data.materials['Template Eyeline down']
+                        matslot.material = bpy.data.materials['KK Eyeline down']
                 
                 #set the filler plane to the current material
                 fillerplane.material_slots[0].material = currentmaterial
@@ -322,7 +322,7 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
             for matslot in object_to_bake.material_slots:
                 if matslot.material != currentmaterial:
                     #print("changed {} to {}".format(matslot.material, currentmaterial))
-                    matslot.material = bpy.data.materials['Template Eyeline down']
+                    matslot.material = bpy.data.materials['KK Eyeline down']
 
             #set the filler plane to the current material
             fillerplane.material_slots[0].material = currentmaterial

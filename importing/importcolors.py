@@ -608,13 +608,13 @@ def update_shaders(json, lut_selection, active_lut, light):
     shader_inputs['Skin detail intensity'].default_value = 0.5
     shader_inputs['Nail Color (multiplied)'].default_value = body_colors[2]
     shader_inputs['Skin gloss intensity'].default_value = 0.5
-    shader_inputs['Underhair color'].default_value = body_colors[4]
 
-    shader_inputs['Nipple base'].default_value = body_colors[3]
-    shader_inputs['Nipple base 2'].default_value = [1, 0, 0, 1] # Red
-    shader_inputs['Nipple shine'].default_value = np.array(body_colors[3]) * 1.5
-    shader_inputs['Nipple rim'].default_value = np.array(body_colors[3]) * 0.5
-
+    if not bpy.context.scene.kkbp.sfw_mode:
+        shader_inputs['Underhair color'].default_value = body_colors[4]
+        shader_inputs['Nipple base'].default_value = body_colors[3]
+        shader_inputs['Nipple base 2'].default_value = [1, 0, 0, 1] # Red
+        shader_inputs['Nipple shine'].default_value = np.array(body_colors[3]) * 1.5
+        shader_inputs['Nipple rim'].default_value = np.array(body_colors[3]) * 0.5
 
     ## Face Shader
     shader_inputs = face_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs

@@ -30,7 +30,7 @@ class import_studio(bpy.types.Operator):
             #Stop if the KK shader was not detected
             def kkError(self, context):
                 self.layout.label(text="You need to append the KK Shader from the KK Shader.blend file to use this shader.")
-                self.layout.label(text="Go to File > Append > choose the KK shader.blend > go into the materials folder > choose \"Template General\" ")
+                self.layout.label(text="Go to File > Append > choose the KK shader.blend > go into the materials folder > choose \"KK General\" ")
             
             scene = context.scene.kkbp
             shader_type = scene.dropdown_box 
@@ -226,14 +226,14 @@ class import_studio(bpy.types.Operator):
                                     normal = 'nonormal'
                                 
                                 try:
-                                    template = bpy.data.materials['Template General'].copy()
+                                    template = bpy.data.materials['KK General'].copy()
                                 except:
                                     script_dir=Path(__file__).parent
                                     template_path=(script_dir / '../KK Shader V6.0.blend').resolve()
                                     filepath = str(template_path)
 
                                     innerpath = 'Material'
-                                    templateList = ['Template General']
+                                    templateList = ['KK General']
 
                                     for template in templateList:
                                         bpy.ops.wm.append(
@@ -242,9 +242,9 @@ class import_studio(bpy.types.Operator):
                                             filename=template,
                                             set_fake=False
                                             )
-                                    template = bpy.data.materials['Template General'].copy()
+                                    template = bpy.data.materials['KK General'].copy()
                                 
-                                template.name = 'Template ' + material.name
+                                template.name = 'KK ' + material.name
                                 material_slot.material = bpy.data.materials[template.name]
                                 material = material_slot.material
                                 nodes = material.node_tree.nodes
@@ -257,7 +257,7 @@ class import_studio(bpy.types.Operator):
                                     except:
                                         print('Image not found, skipping: ' + str(image))
 
-                                gen_type = material_slot.name.replace('Template ','')
+                                gen_type = material_slot.name.replace('KK ','')
 
                                 #make a copy of the node group, use it to replace the current node group and rename it so each mat has a unique texture group
                                 new_node = material_slot.material.node_tree.nodes['Gentex'].node_tree.copy()

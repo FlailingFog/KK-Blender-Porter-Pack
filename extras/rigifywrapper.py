@@ -74,6 +74,16 @@ class rigify_convert(bpy.types.Operator):
                     child.modifiers[0].object = child.modifiers[-1].object
                     child.modifiers.remove(child.modifiers[-1])
                     child.modifiers[0].name = 'Rigify Armature'
+
+            #make sure the new bones on the generated rig retain the KKBP outfit id entry
+            for bone in rig.data.bones:
+                if bone.layers[0] == True or bone.layers[2] == True:
+                    if rig.data.bones.get('ORG-' + bone.name):
+                        if rig.data.bones['ORG-' + bone.name].get('KKBP outfit ID'):
+                            bone['KKBP outfit ID'] = rig.data.bones['ORG-' + bone.name]['KKBP outfit ID']
+                            if rig.data.bones.get('DEF-' + bone.name):
+                                rig.data.bones['DEF-' + bone.name]['KKBP outfit ID'] = rig.data.bones['ORG-' + bone.name]['KKBP outfit ID']
+
             armature.hide_set(True)
             bpy.ops.object.select_all(action='DESELECT')
             rig.select_set(True)

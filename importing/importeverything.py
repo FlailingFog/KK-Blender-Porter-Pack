@@ -197,6 +197,11 @@ def get_templates_and_apply(directory, use_fake_user):
         template = bpy.data.materials['KK Tears']
         tears.material_slots[0].material = bpy.data.materials[template.name]
 
+    #give the rigged tongue the existing material template
+    if bpy.data.objects.get('Tongue (rigged)'):
+        tongue = bpy.data.objects['Tongue (rigged)']
+        tongue.material_slots[0].material = bpy.data.materials['KK Tongue']
+
     # Get rid of the duplicate node groups cause there's a lot
     #stolen from somewhere
     def eliminate(node):
@@ -616,7 +621,7 @@ def get_and_load_textures(directory):
                 genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['alphatoggle'].inputs['maintex alpha'].default_value = (1,1,1,1)
             
             #check maintex config
-            plainMain = not genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Maintexplain'].image .name == 'Template: Maintex plain placeholder'
+            plainMain = not genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Maintexplain'].image.name == 'Template: Maintex plain placeholder'
             if not MainImage and not plainMain:
                 genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 0
                 genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Ignore colormask?'].default_value = 0
@@ -662,7 +667,13 @@ def add_outlines(single_outline_mode):
     mod.name = 'Outline Modifier'
     mod.show_expanded = False
     
-    #body
+    #face first
+    faceOutlineMat = bpy.data.materials['KK Outline'].copy()
+    faceOutlineMat.name = 'KK Face Outline'
+    ob.data.materials.append(faceOutlineMat)
+    faceOutlineMat.blend_method = 'CLIP'
+
+    #body second
     ob.data.materials.append(bpy.data.materials['KK Body Outline'])
     try:
         bpy.data.materials['KK Body Outline'].node_tree.nodes['BodyMask'].image = bpy.data.images['cf_m_body_AM.png'] #female
@@ -672,12 +683,6 @@ def add_outlines(single_outline_mode):
         except:
             #An alpha mask for the clothing wasn't present in the Textures folder
             bpy.data.materials['KK Body Outline'].node_tree.nodes['Clipping prevention toggle'].inputs[0].default_value = 0            
-    
-    #face
-    faceOutlineMat = bpy.data.materials['KK Outline'].copy()
-    faceOutlineMat.name = 'KK Face Outline'
-    ob.data.materials.append(faceOutlineMat)
-    faceOutlineMat.blend_method = 'CLIP'
 
     #And give the body an inactive data transfer modifier for the shading proxy
     mod = ob.modifiers.new(type='DATA_TRANSFER', name = 'Shadowcast shading proxy')
@@ -906,7 +911,53 @@ def clean_orphan_data():
     for block in bpy.data.images:
         if block.users == 0 and not block.use_fake_user:
             bpy.data.images.remove(block)
-    
+
+def apply_cycles():
+    #replace rim group with a principled bsdf with roughness = 0 and attach alpha too
+    #turn off overlays on face material
+    #put face's color out in a mix shader with the cycles face mask
+    #separate eyeline up, eyeline down, eyebrows and turn off shadows in Object properties > Visibility > Ray visibility
+    #put colorramp for eyeline alpha, black slider goes to 0.935
+    #nipples already work in cycles without any changes?
+    #mute shader to rgb nodes for clothing items 
+    pass
+
+def apply_sfw():
+    #reload the sfw alpha mask
+    body_material = bpy.data.objects['Body'].material_slots['KK Body'].material
+    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].node_tree.nodes['AlphaBodyCustom'].image = bpy.data.images['Template: SFW alpha mask.png']
+    bpy.data.node_groups["Body Shader"].nodes["BodyTransp"].inputs[0].default_value = 1 #why do i have to do it this way
+    bpy.data.node_groups["Body Shader"].nodes["BodyTransp"].inputs[1].default_value = 1
+    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].node_tree.inputs[0].hide_value = True
+    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].node_tree.inputs[1].hide_value = True
+
+    #get rid of the nsfw groups on the body
+    body_material.node_tree.nodes.remove(body_material.node_tree.nodes['NSFWTextures'])
+    body_material.node_tree.nodes.remove(body_material.node_tree.nodes['NSFWpos'])
+
+    body_material.node_tree.nodes['BodyShader'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.inputs['Nipple mask'])
+    body_material.node_tree.nodes['BodyShader'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.inputs['Nipple alpha'])
+    body_material.node_tree.nodes['BodyShader'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.inputs['Genital mask'])
+    body_material.node_tree.nodes['BodyShader'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.inputs['Underhair mask'])
+
+    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Genital intensity'])
+    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Genital saturation'])
+    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Genital hue'])
+    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Underhair color'])
+    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Underhair intensity'])
+    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Nipple base'])
+    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Nipple base 2'])
+    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Nipple shine'])
+    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Nipple rim'])
+    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Nipple alpha'])
+    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Nipple texture'])
+    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Genital mask'])
+    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Underhair mask'])
+
+    bpy.data.materials['KK Body Outline'].node_tree.nodes['BodyMaskCustom'].image = bpy.data.images['Template: SFW alpha mask.png']
+    bpy.data.materials['KK Body Outline'].node_tree.nodes['customToggle'].inputs[0].default_value = 1
+    bpy.data.materials['KK Body Outline'].node_tree.nodes['customToggle'].inputs[0].hide = True
+
 class import_everything(bpy.types.Operator):
     bl_idname = "kkb.importeverything"
     bl_label = "Finish separating objects"
@@ -945,9 +996,12 @@ class import_everything(bpy.types.Operator):
                 apply_bone_widgets()
             hide_widgets()
 
+            if bpy.context.scene.kkbp.sfw_mode:
+                apply_sfw()
+
             bpy.data.objects['Armature'].hide = False
             bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-
+            
             #clean data
             clean_orphan_data()
 

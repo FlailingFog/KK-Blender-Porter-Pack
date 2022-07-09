@@ -16,7 +16,7 @@ def clean_body():
         body.data.uv_layers[2].name = 'uv_underhair'
         body.data.uv_layers[3].name = 'uv_eyeshadow'
 
-        #delete the extra tongue material if there is one
+        #rename the extra tongue material
         bpy.ops.object.mode_set(mode = 'EDIT')
         bpy.ops.mesh.select_all(action='DESELECT')
         def delete_material(mat_list):
@@ -50,7 +50,7 @@ def add_freestyle_faces():
                 bpy.context.object.active_material_index = mat_found
                 bpy.ops.object.material_slot_select()
             else:
-                kklog('Material wasn\'t found when separating body materials: ' + mat, 'warn')
+                kklog('Material wasn\'t found when freestyling body materials: ' + mat, 'warn')
         bpy.ops.mesh.mark_freestyle_face(clear=False)
     freestyle_list = [
         'cf_m_hitomi_00.001',
@@ -64,6 +64,37 @@ def add_freestyle_faces():
         'cf_m_mayuge_00',]
     mark_as_freestyle(freestyle_list)
     bpy.ops.mesh.select_all(action = 'DESELECT')
+
+    if bpy.context.scene.kkbp.sfw_mode:
+        def mark_group_as_freestyle(group_list, search_type = 'exact'):
+            for group in group_list:
+                group_found = body.vertex_groups.find(group)      
+                if group_found > -1:
+                    bpy.context.object.active_material_index = group_found
+                    bpy.ops.object.vertex_group_select()
+                else:
+                    kklog('Group wasn\'t found when freestyling vertex groups: ' + group, 'warn')
+            bpy.ops.mesh.mark_freestyle_face(clear=False)
+        freestyle_list = [
+            'cf_j_bnip02_L', 'cf_j_bnip02_R'
+            'cf_s_bust03_L', 'cf_s_bust03_R']
+        mark_group_as_freestyle(freestyle_list)
+        bpy.ops.mesh.select_all(action = 'DESELECT')
+
+        def delete_group(group_list, search_type = 'exact'):
+            for group in group_list:
+                group_found = body.vertex_groups.find(group)      
+                if group_found > -1:
+                    bpy.context.object.active_material_index = group_found
+                    bpy.ops.object.vertex_group_select()
+                else:
+                    kklog('Group wasn\'t found when deleting vertex groups: ' + group, 'warn')
+            bpy.ops.mesh.delete(type='VERT')
+        delete_list = [
+            'cf_j_kokan', 'cf_j_ana'
+            'cf_s_bnip025_L', 'cf_s_bnip025_R']
+        delete_group(delete_list)
+        bpy.ops.mesh.select_all(action = 'DESELECT')
     bpy.ops.object.mode_set(mode = 'OBJECT')
 
 def separate_material(object, mat_list, search_type = 'exact'):
@@ -108,16 +139,17 @@ def separate_everything(context):
     for file in texture_data:
         texture_files.append(file['textureName'])
     if context.scene.kkbp.categorize_dropdown not in ['B']:
-        for obj in bpy.data.objects:
-            if "Outfit" in obj.name and "Hair" not in obj.name:
+        for outfit in bpy.data.objects:
+            if "Outfit" in outfit.name and "Hair" not in outfit.name:
                 #selection stuff
                 bpy.ops.object.mode_set(mode = 'OBJECT')
                 bpy.ops.object.select_all(action = 'DESELECT')
-                bpy.context.view_layer.objects.active = obj
+                bpy.context.view_layer.objects.active = outfit
                 bpy.ops.object.mode_set(mode = 'EDIT')
                 bpy.ops.mesh.select_all(action = 'DESELECT')
+
+                outfit['KKBP outfit ID'] = int(outfit.name[-1:])
                 
-                outfit = obj
                 hair_mat_list = []
                 for mat in material_data:
                     if mat['ShaderName'] in ["Shader Forge/main_hair_front", "Shader Forge/main_hair", 'Koikano/hair_main_sun_front', 'Koikano/hair_main_sun', 'xukmi/HairPlus', 'xukmi/HairFrontPlus']:
@@ -125,9 +157,7 @@ def separate_everything(context):
                             hair_mat_list.append(mat['MaterialName'])
                 if len(hair_mat_list):
                     separate_material(outfit, hair_mat_list)
-                else:
-                    context.scene.kkbp.has_hair_bool = False
-                bpy.data.objects[outfit.name + '.001'].name = 'Hair ' + outfit.name
+                    bpy.data.objects[outfit.name + '.001'].name = 'Hair ' + outfit.name
                 
                 #don't reparent hair if Categorize by SMR
                 if context.scene.kkbp.categorize_dropdown not in ['D']:
@@ -381,13 +411,24 @@ def make_tear_shapekeys():
     #Separate tears from body object, parent it to the body so it's hidden in the outliner
     #link shapekeys of tears to body
     tearMats = ['cf_m_namida_00']
-    bpy.ops.mesh.select_all(action='DESELECT')
     separate_material(body, tearMats)
     tears = bpy.data.objects['Body.001']
     tears.name = 'Tears'
     tears.parent = bpy.data.objects['Body']
     bpy.ops.object.mode_set(mode = 'OBJECT')
     link_keys(body, [tears])
+
+    if bpy.context.scene.kkbp.categorize_dropdown != 'D':
+        #Separate rigged tongue from body object, parent it to the body so it's hidden in the outliner
+        #link shapekeys of tongue to body even though it doesn't have them
+        tongueMats = ['cf_m_tang.001']
+        separate_material(body, tongueMats)
+        tongue = bpy.data.objects['Body.001']
+        tongue.name = 'Tongue (rigged)'
+        tongue.parent = bpy.data.objects['Body']
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+        link_keys(body, [tongue])
+        tongue.hide = True
 
 def remove_duplicate_slots():
     for obj in bpy.data.objects:
@@ -407,7 +448,7 @@ def remove_duplicate_slots():
                 #don't merge the eye materials/tang if categorize by SMR is chosen.
                 eye_flag = False if ('cf_m_hitomi_00' in mat.name or 'cf_m_sirome_00' in mat.name or 'cf_m_namida_00' in mat.name or 'cf_m_tang' in mat.name) and bpy.context.scene.kkbp.categorize_dropdown == 'D' else True
                 
-                if '.' in mat.name[-4:] and 'cf_m_namida_00' not in mat.name and eye_flag:
+                if '.' in mat.name[-4:] and 'cf_m_namida_00' not in mat.name and 'cf_m_tang' not in mat.name and eye_flag:
                     try:
                         #the material name is normal
                         base_name, dupe_number = mat.name.split('.',2)

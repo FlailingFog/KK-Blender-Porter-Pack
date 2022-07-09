@@ -26,12 +26,12 @@ class PlaceholderProperties(PropertyGroup):
         default=1,
         description=t('bake_mult_tt'))
 
-    #A property used to let the plugin know if the model has any hair
-    has_hair_bool : BoolProperty(
-    default = True)
-
     #A property used to let the plugin know if the model has been prepped for export or not
     is_prepped : BoolProperty(
+    default = False)
+
+    sfw_mode : BoolProperty(
+    description=t('sfw_mode_tt'),
     default = False)
 
     fix_seams : BoolProperty(
@@ -89,7 +89,7 @@ class PlaceholderProperties(PropertyGroup):
 
     bake_norm_bool : BoolProperty(
     description=t('bake_norm_tt'),
-    default = True)
+    default = False)
 
     shapekeys_dropdown : EnumProperty(
         items=(
@@ -210,6 +210,12 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         split.prop(context.scene.kkbp, "texture_outline_bool", toggle=True, text = t('outline'))
         split.prop(context.scene.kkbp, "templates_bool", toggle=True, text = t('keep_templates'))
         row.enabled = False if scene.import_dir == 'cleared' else True
+
+        row = col.row(align=True)
+        split = row.split(align = True, factor=splitfac)
+        split.prop(context.scene.kkbp, "sfw_mode", toggle=True, text = t('sfw_mode'))
+        #split.prop(context.scene.kkbp, "templates_bool", toggle=True, text = t('keep_templates'))
+        row.enabled = False if scene.import_dir == 'cleared' else True
     
 class EXPORTING_PT_panel(bpy.types.Panel):
     bl_parent_id = "IMPORTING_PT_panel"
@@ -289,6 +295,18 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
+        split.label(text="Update bone visibility")
+        split.operator('kkb.updatebones', text = '', icon = 'HIDE_OFF')
+
+        col = box.column(align=True)
+        row = col.row(align=True)
+        split = row.split(align=True, factor=splitfac)
+        split.label(text=t('rigify_convert'))
+        split.operator('kkb.rigifyconvert', text = '', icon='SOLO_OFF')
+
+        col = box.column(align=True)
+        row = col.row(align=True)
+        split = row.split(align=True, factor=splitfac)
         split.label(text="Import ripped FBX animation")
         split.operator('kkb.importanimation', text = '', icon = 'ARMATURE_DATA')
         #row = col.row(align=True)
@@ -307,12 +325,6 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         split = row.split(align=True, factor=splitfac)
         split.label(text="Toggle hand IKs")
         split.operator('kkb.toggleik', text = '', icon = 'BONE_DATA')
-
-        col = box.column(align=True)
-        row = col.row(align=True)
-        split = row.split(align=True, factor=splitfac)
-        split.label(text=t('rigify_convert'))
-        split.operator('kkb.rigifyconvert', text = '', icon='SOLO_OFF')
         
         box = layout.box()
         col = box.column(align=True)

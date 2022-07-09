@@ -13,6 +13,9 @@ translation_dictionary = {
     'keep_templates'        : "マテリアルテンプレートを保存",
     'keep_templates_tt'     : "KKBPマテリアルテンプレートをフェイクユーザーに設定する",
 
+    'sfw_mode'          : 'エロ無しモード',
+    'sfw_mode_tt'       : 'プラグインがエロの部分を隠してみる',
+
     'arm_drop'          :"アーマチュアのタイプ",
     'arm_drop_A'        : "KKBPアーマチュアにする",
     'arm_drop_A_tt'     : "KKBPアーマチュアにする。この設定にはアーマチュアは改造されて、ベーシックなIKがジェネレートされる",

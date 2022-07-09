@@ -121,6 +121,13 @@ def get_bone_list(kind):
         'cf_j_sk_05_00', 'cf_j_sk_05_01', 'cf_j_sk_05_02', 'cf_j_sk_05_03', 'cf_j_sk_05_04',
         'cf_j_sk_06_00', 'cf_j_sk_06_01', 'cf_j_sk_06_02', 'cf_j_sk_06_03', 'cf_j_sk_06_04',
         'cf_j_sk_07_00', 'cf_j_sk_07_01', 'cf_j_sk_07_02', 'cf_j_sk_07_03', 'cf_j_sk_07_04']
+    
+    elif kind == 'tongue_list':
+        return [
+            'cf_j_tang_01', 'cf_j_tang_02', 'cf_j_tang_03', 'cf_j_tang_04', 'cf_j_tang_05', 
+            'cf_j_tang_L_03', 'cf_j_tang_L_04', 'cf_j_tang_L_05', 
+            'cf_j_tang_R_03', 'cf_j_tang_R_04', 'cf_j_tang_R_05', 
+            ]
 
 def set_armature_layer(bone_name, show_layer, hidden = False):
     bpy.data.armatures[0].bones[bone_name].layers = (
@@ -150,13 +157,14 @@ def reorganize_armature_layers():
     eye_list = get_bone_list('eye_list')
     mouth_list = get_bone_list('mouth_list')
     skirt_list = get_bone_list('skirt_list')
+    tongue_list = get_bone_list('tongue_list')
     
     armature = bpy.data.objects['Armature']
     bpy.ops.pose.select_all(action='DESELECT')
 
-    #first, hide all bones and put them on armature layer 11
+    #throw all bones to armature layer 11
     for bone in bpy.data.armatures[0].bones:
-        set_armature_layer(bone.name, 10, hidden=True)
+        set_armature_layer(bone.name, 10)
 
     #reshow cf_hit_ bones on layer 12
     for bone in [bones for bones in bpy.data.armatures[0].bones if 'cf_hit_' in bones.name]:
@@ -187,7 +195,7 @@ def reorganize_armature_layers():
         for bone in bp_list:
             set_armature_layer(bone, show_layer = 4)
 
-            #Also, rename the bones so you can mirror them over the x axis in pose mode
+            #rename the bones so you can mirror them over the x axis in pose mode
             if 'Vagina_L_' in bone or 'Vagina_R_' in bone:
                 bpy.data.armatures[0].bones[bone].name = 'Vagina' + bone[8:] + '_' + bone[7]
 
@@ -198,13 +206,17 @@ def reorganize_armature_layers():
         #this armature isn't a BP armature
         pass
 
-    #Put the upper eye bones on layer 16
+    #Put the upper eye bones on layer 17
     for bone in eye_list:
         set_armature_layer(bone, show_layer = 16)
     
-    #Put the lower mouth bones on layer 17
+    #Put the lower mouth bones on layer 18
     for bone in mouth_list:
         set_armature_layer(bone, show_layer = 17)
+
+    #Put the tongue rig bones on layer 19
+    for bone in tongue_list:
+        set_armature_layer(bone, show_layer = 18)
 
     #Put the skirt bones on layer 9
     for bone in skirt_list:
@@ -273,46 +285,36 @@ def visually_connect_bones():
 def move_accessory_bones(context):
     armature = bpy.data.objects['Armature']
     #go through each outfit and move ALL accessory bones to layer 10
-    for outfit_or_hair in [obj for obj in bpy.data.objects if 'Outfit ' in obj.name]:
-        # Find empty vertex groups
-        vertexWeightMap = survey_vertexes(outfit_or_hair)
-        
-        dont_move_these = [
+    dont_move_these = [
             'cf_pv', 'Eyesx',
             'cf_J_hitomi_tx_', 'cf_J_FaceRoot', 'cf_J_FaceUp_t',
             'n_cam', 'EyesLookTar', 'N_move', 'a_n_', 'cf_hit',
             'cf_j_bnip02', 'cf_j_kokan', 'cf_j_ana']
-        
-        bpy.ops.object.mode_set(mode='POSE')
-        bpy.ops.pose.select_all(action='DESELECT')
 
+    for outfit_or_hair in [obj for obj in bpy.data.objects if 'Outfit ' in obj.name]:
+        # Find empty vertex groups
+        vertexWeightMap = survey_vertexes(outfit_or_hair)
+        #add outfit id to all accessory bones in an array that represents if the bone is used in each outfit slot ([True, False, True] means the bone is used in outfits 0 and 2)
+        number_of_outfits = len([outfit for outfit in bpy.data.objects if 'Outfit ' in outfit.name and 'Hair' not in outfit.name and 'alt ' not in outfit.name and 'Indoor' not in outfit.name])
         for bone in [bone for bone in armature.data.bones if bone.layers[10]]:
-            #if the bone isn't a "utility" bone...
             no_move_bone = False
             for this_prefix in dont_move_these:
                 if this_prefix in bone.name:
                     no_move_bone = True
-            #check if it has any vertexes attached to it, and show it if it does
-            #move it to armature layer 10 as well
-            #and keep track of the outfit ID the bone was detected from
             if not no_move_bone and vertexWeightMap.get(bone.name):
-                #print(bone.name)
-                bone.hide = False
-                bone['KKBP outfit ID'] = outfit_or_hair.name[-1:]
-                set_armature_layer(bone.name, show_layer = 9)
-            else:
-                #else, keep on layer 11
-                bone.hide = False
-                #set_armature_layer(bone.name, show_layer = 10)
+                try:
+                    outfit_id_array = bone['KKBP outfit ID'].to_list()
+                    outfit_id_array.append(outfit_or_hair['KKBP outfit ID'])
+                    bone['KKBP outfit ID'] = outfit_id_array
+                except:
+                    bone['KKBP outfit ID'] = [outfit_or_hair['KKBP outfit ID']]
 
-    #only keep first outfit's accessory bones if the rigify armature was selected
-    #print(context.scene.kkbp.armature_dropdown)
-    if context.scene.kkbp.armature_dropdown in ['B']:
-        bpy.ops.object.mode_set(mode='EDIT')
-        for bone in [bone for bone in armature.data.bones if bone.get('KKBP outfit ID')]:
-            if bone['KKBP outfit ID'] != '0':
-                armature.data.edit_bones.remove(armature.data.edit_bones[bone.name])
-        bpy.ops.object.mode_set(mode='POSE')
+    #move accessory bones to armature layer 10
+    for bone in [bone for bone in armature.data.bones if bone.get('KKBP outfit ID')]:
+        set_armature_layer(bone.name, show_layer = 9)
+
+    bpy.ops.object.mode_set(mode='POSE')
+    bpy.ops.pose.select_all(action='DESELECT')
 
 class clean_armature(bpy.types.Operator):
     bl_idname = "kkb.cleanarmature"
