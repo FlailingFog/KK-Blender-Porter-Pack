@@ -651,7 +651,54 @@ def get_and_load_textures(directory):
                 genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Use colored maintex?'].default_value = 1
                 genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 1
                 genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 1
-
+    
+    #setup face normals
+    try:
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.select_all(action='DESELECT')
+        armature = bpy.data.objects['Armature']
+        armature.hide = False
+        bpy.context.view_layer.objects.active = armature
+        armature.select_set(True)
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.armature.select_all(action='DESELECT')
+        head_location = (armature.data.edit_bones['Head'].tail.x+1, armature.data.edit_bones['Head'].tail.y+1, armature.data.edit_bones['Head'].tail.z+1)
+        kklog(head_location)
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.empty_add(type='CUBE', align='WORLD', location=head_location)
+        empty = bpy.context.view_layer.objects.active
+        empty.location.x -= 1
+        empty.location.y -= 1
+        empty.location.z -= 1
+        empty.scale = (0.15, 0.15, 0.15)
+        empty.name = 'GFN Empty'
+        #mod = empty.constraints.new(type='CHILD_OF')
+        #mod.name = 'GFN Empty'
+        #mod.target = armature
+        #mod.subtarget = "Head"
+        #bpy.ops.constraint.childof_set_inverse(constraint='GFN Empty', owner='OBJECT')
+        bpy.ops.object.select_all(action='DESELECT')
+        bpy.context.view_layer.objects.active = armature
+        empty.select_set(True)
+        bpy.ops.object.mode_set(mode='POSE')
+        bpy.ops.pose.select_all(action='DESELECT')
+        armature.data.bones['Head'].select = True
+        armature.data.bones.active = armature.data.bones['Head']
+        bpy.ops.object.parent_set(type='BONE')
+        bpy.ops.pose.select_all(action='DESELECT')
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.select_all(action='DESELECT')
+        bpy.data.node_groups['Generated Face Normals'].nodes['GFNEmpty'].object = empty
+        bpy.context.view_layer.objects.active = empty
+        empty.select_set(True)
+        bpy.ops.object.move_to_collection(collection_index=1)
+        empty.hide = True
+        empty.hide_render = True
+    except:
+        #i don't feel like dealing with any errors related to this
+        kklog('The GFN empty wasnt setup correctly')
+        pass
+    
 def add_outlines(single_outline_mode):
     #Add face and body outlines, then load in the clothes transparency mask to body outline
     ob = bpy.context.view_layer.objects['Body']

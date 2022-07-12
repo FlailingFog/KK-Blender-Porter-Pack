@@ -82,10 +82,11 @@ def add_freestyle_faces():
         bpy.ops.mesh.select_all(action = 'DESELECT')
 
         def delete_group(group_list, search_type = 'exact'):
+            bpy.ops.mesh.select_all(action = 'DESELECT')
             for group in group_list:
                 group_found = body.vertex_groups.find(group)      
                 if group_found > -1:
-                    bpy.context.object.active_material_index = group_found
+                    bpy.context.object.vertex_groups.active_index = group_found
                     bpy.ops.object.vertex_group_select()
                 else:
                     kklog('Group wasn\'t found when deleting vertex groups: ' + group, 'warn')
@@ -99,6 +100,7 @@ def add_freestyle_faces():
 
 def separate_material(object, mat_list, search_type = 'exact'):
     bpy.ops.object.mode_set(mode = 'OBJECT')
+    bpy.ops.object.select_all(action='DESELECT')
     #print(object)
     bpy.context.view_layer.objects.active = object
     bpy.ops.object.mode_set(mode = 'EDIT')
@@ -268,16 +270,14 @@ def separate_everything(context):
     for mat in material_data:
         if mat['MaterialName'][0:6] == 'o_hit_' or mat['MaterialName'] == 'cf_O_face_atari_M' or mat['MaterialName'] == 'cf_O_face_atari_M.001':
             hit_box_list.append(mat['MaterialName'])
+    #kklog(hit_box_list)
     if len(hit_box_list):
         separate_material(body, hit_box_list)
         bpy.data.objects[body.name + '.001'].name = 'Hitboxes'
-        try:
+        if bpy.data.objects['Outfit 00'].material_slots.get('cf_O_face_atari_M.001'):
             #print('attempting to get the hitboxes off outfit 00')
             separate_material(bpy.data.objects['Outfit 00'], hit_box_list, search_type='fuzzy')
             bpy.data.objects['Outfit 00.001'].name = 'Hitboxes again'
-        except:
-            #nope
-            pass
 
     #Separate the shadowcast if any
     try:
@@ -347,6 +347,7 @@ def make_tear_shapekeys():
     #Create a reverse shapekey for each tear material
     body = bpy.data.objects['Body']
     armature = bpy.data.objects['Armature']
+    bpy.context.view_layer.objects.active = body
     
     #Move tears back on the basis shapekey
     tear_mats = ['cf_m_namida_00.002', 'cf_m_namida_00.001', 'cf_m_namida_00']

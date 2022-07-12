@@ -14,6 +14,8 @@ Huge feature updates by **MediaMoots**!
     * These are placed in their own collection when the model is imported into Blender
 * The tears object is now exported and available as a shapekey on the body object!
     * The tears material also has settings to allow minor color edits
+* The animated tongue is now exported!
+    * This is a rigged tongue hidden by default. It doesn't use shapekeys like the rest of the face does. It's parented to the body object.
 * Shapekeys are more accurate than before!
 * Eyewhite shapekeys are fixed on the exporter-side now!
     * This means Blender is less likely to crash when importing the model
@@ -35,7 +37,7 @@ Rigify armature updates by an anonymous contributor!
 
 Unity normal blending and mirrored blush scaling by **poisenbery**!
 * Unity normal blending is an alternative normal map detail blending method that can be accessed in the "Raw shading" group
-* Blush scaling is an alternative way to scale the blush and eyeshadow. This can be accessed in the "Blush positioning" group on the Face material
+* Mirrored blush scaling is an easier way to scale the blush and eyeshadow if the texture is symmetrical. This can be accessed in the "Blush positioning" group on the Face material
 
 Plus some misc changes to the Blender plugin:
 * Added a one-click option for importing models!
@@ -52,7 +54,8 @@ Plus some misc changes to the Blender plugin:
 * Shapekeys on clothes and hair objects are now deleted
     * Shapekeys only affect the face, so these weren't needed anyway
 * The Eye, Eyebrow, Eyewhite, Eyeline and Nose materials are now marked as freestyle faces by default (for freestyle exclusion)
-* Python errors are now copied to the KK Log in the Scripting tab
+* Added a safe for work mode toggle that probably works
+* Python errors are now copied to the KK Log in the Scripting tab on the top
 * The import directory string listed in the KK Log is now censored if it detects your Windows username
 * The plugin now uses an HDRI from polyhaven
 * All KKBP panel options are now visible by default
@@ -117,6 +120,7 @@ lkjfdlsnkklfd
     * This allows you to make the Eyes and Eyebrows show through the hair using Cryptomatte and other compositor features
 * Shader-to-RGB nodes added to clothing color inputs!
     * This allows you to plug metal and other types of materials into clothing colormask inputs
+
 ### Changes for V4.3.1:
 * Renamed the spine bones during the "1) Run right after importing" script
     * CATS was not detecting the Spine, Chest and Upper Chest bones correctly. This resulted in the spine and chest bones being merged into one bone with awkward spine bends. Renaming the bones lets CATS detect the three bones correctly.

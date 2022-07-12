@@ -84,6 +84,27 @@ class rigify_convert(bpy.types.Operator):
                             if rig.data.bones.get('DEF-' + bone.name):
                                 rig.data.bones['DEF-' + bone.name]['KKBP outfit ID'] = rig.data.bones['ORG-' + bone.name]['KKBP outfit ID']
 
+            #make sure the gfn empty is reparented to the head bone
+            bpy.ops.object.select_all(action='DESELECT')
+            bpy.context.view_layer.objects.active = rig
+            empty = bpy.data.objects['GFN Empty']
+            empty.hide = False
+            empty.select_set(True)
+            bpy.ops.object.mode_set(mode='POSE')
+            bpy.ops.pose.select_all(action='DESELECT')
+            rig.data.bones['head'].select = True
+            rig.data.bones.active = rig.data.bones['head']
+            bpy.ops.object.parent_set(type='BONE')
+            bpy.ops.pose.select_all(action='DESELECT')
+            bpy.ops.object.mode_set(mode='OBJECT')
+            bpy.ops.object.select_all(action='DESELECT')
+            bpy.data.node_groups['Generated Face Normals'].nodes['GFNEmpty'].object = empty
+            bpy.context.view_layer.objects.active = empty
+            empty.select_set(True)
+            bpy.ops.object.move_to_collection(collection_index=1)
+            empty.hide = True
+            empty.hide_render = True
+
             armature.hide_set(True)
             bpy.ops.object.select_all(action='DESELECT')
             rig.select_set(True)
