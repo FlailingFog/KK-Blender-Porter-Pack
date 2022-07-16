@@ -12,11 +12,10 @@ class update_bones(bpy.types.Operator):
         arm = rigify_armature[0] if len(rigify_armature) else bpy.data.objects['Armature']
         arm = bpy.data.armatures[arm.data.name]
 
-        #check if the outfit linked to a specific bone on layer 10 of the KKBP armature is visible or not
+        #check if the outfit linked to accessory bones on the armature is visible or not, then update the bone visibility
         for bone in arm.bones:
             if bone.get('KKBP outfit ID'):
                 outfit_detected = False
-                #check each outfit for visibility and show the bone if at least one outfit that uses it is visible
                 print("{} for {}".format(bone.name, bone['KKBP outfit ID']))
                 for outfit_number in bone['KKBP outfit ID']:
                     matching_outfit = bpy.data.objects.get('Outfit 0' + str(outfit_number))

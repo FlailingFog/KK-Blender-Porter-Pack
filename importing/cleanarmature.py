@@ -294,7 +294,7 @@ def move_accessory_bones(context):
     for outfit_or_hair in [obj for obj in bpy.data.objects if 'Outfit ' in obj.name]:
         # Find empty vertex groups
         vertexWeightMap = survey_vertexes(outfit_or_hair)
-        #add outfit id to all accessory bones in an array that represents if the bone is used in each outfit slot ([True, False, True] means the bone is used in outfits 0 and 2)
+        #add outfit id to all accessory bones used by that outfit in an array
         number_of_outfits = len([outfit for outfit in bpy.data.objects if 'Outfit ' in outfit.name and 'Hair' not in outfit.name and 'alt ' not in outfit.name and 'Indoor' not in outfit.name])
         for bone in [bone for bone in armature.data.bones if bone.layers[10]]:
             no_move_bone = False

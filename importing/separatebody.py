@@ -151,6 +151,12 @@ def separate_everything(context):
                 bpy.ops.mesh.select_all(action = 'DESELECT')
 
                 outfit['KKBP outfit ID'] = int(outfit.name[-1:])
+
+                #make uv names match body's names
+                outfit.data.uv_layers[0].name = 'uv_main'
+                outfit.data.uv_layers[1].name = 'uv_nipple_and_shine'
+                outfit.data.uv_layers[2].name = 'uv_underhair'
+                outfit.data.uv_layers[3].name = 'uv_eyeshadow'
                 
                 hair_mat_list = []
                 for mat in material_data:
