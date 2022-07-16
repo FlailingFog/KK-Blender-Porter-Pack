@@ -160,10 +160,10 @@ def separate_everything(context):
                 if len(hair_mat_list):
                     separate_material(outfit, hair_mat_list)
                     bpy.data.objects[outfit.name + '.001'].name = 'Hair ' + outfit.name
-                
-                #don't reparent hair if Categorize by SMR
-                if context.scene.kkbp.categorize_dropdown not in ['D']:
-                    bpy.data.objects['Hair ' + outfit.name].parent = outfit
+
+                    #don't reparent hair if Categorize by SMR
+                    if context.scene.kkbp.categorize_dropdown not in ['D']:
+                        bpy.data.objects['Hair ' + outfit.name].parent = outfit
         bpy.context.view_layer.objects.active = body
     
     if context.scene.kkbp.categorize_dropdown in ['A', 'B']:
@@ -202,9 +202,13 @@ def separate_everything(context):
                         subpart_object_name = clothes_data[clothes_index]['RendNormal01'][index]
                         for smr_index in smr_data:
                             if smr_index['SMRName'] == subpart_object_name and smr_index['CoordinateType'] == outfit_index:
-                                separate_material(outfit, smr_index['SMRMaterialNames'])
-                                bpy.data.objects[outfit.name + '.001'].parent = outfit
-                                bpy.data.objects[outfit.name + '.001'].name = clothes_labels[clothes_index - 12 * outfit_index] + ' alt ' + ('B' if '_b ' in subpart_object_name else 'C') + ' ' + outfit.name
+                                try:
+                                    separate_material(outfit, smr_index['SMRMaterialNames'])
+                                    bpy.data.objects[outfit.name + '.001'].parent = outfit
+                                    bpy.data.objects[outfit.name + '.001'].name = clothes_labels[clothes_index - 12 * outfit_index] + ' alt ' + ('B' if '_b ' in subpart_object_name else 'C') + ' ' + outfit.name
+                                except:
+                                    #the material was already separated
+                                    pass
 
         #separate loop to prevent crashing
         for outfit in [outfit for outfit in bpy.data.objects if 'Outfit ' in outfit.name and 'Hair' not in outfit.name and 'alt ' not in outfit.name and 'Indoor' not in outfit.name]:
@@ -259,11 +263,15 @@ def separate_everything(context):
                                                 grouping[index] = [item]
             if grouping != {}:
                 for index in grouping:
-                    #print(grouping[index])
-                    separate_material(outfit, grouping[index])
-                    new_name = 'Top alt ' + chr(ord('A') + index) + ' ' + outfit.name 
-                    bpy.data.objects[outfit.name + '.001'].name = new_name 
-                    bpy.data.objects[new_name].parent = outfit
+                    try:
+                        #print(grouping[index])
+                        separate_material(outfit, grouping[index])
+                        new_name = 'Top alt ' + chr(ord('A') + index) + ' ' + outfit.name 
+                        bpy.data.objects[outfit.name + '.001'].name = new_name 
+                        bpy.data.objects[new_name].parent = outfit
+                    except:
+                        #the material was already separated
+                        pass
 
     #Separate hitbox materials, if any
     hit_box_list = []
@@ -419,7 +427,7 @@ def make_tear_shapekeys():
     bpy.ops.object.mode_set(mode = 'OBJECT')
     link_keys(body, [tears])
 
-    if bpy.context.scene.kkbp.categorize_dropdown != 'D':
+    if bpy.context.scene.kkbp.categorize_dropdown != 'D' and bpy.data.materials.get('cf_m_tang.001'):
         #Separate rigged tongue from body object, parent it to the body so it's hidden in the outliner
         #link shapekeys of tongue to body even though it doesn't have them
         tongueMats = ['cf_m_tang.001']
