@@ -12,11 +12,18 @@ Huge feature updates by **MediaMoots**!
 * Hitboxes can now be exported!
     * Export these by checking the "Export Hit Meshes" box in Koikatsu
     * These are placed in their own collection when the model is imported into Blender
-* The tears object is now exported and available as a shapekey on the body object!
+* The tears object is now exported and available as new shapekeys on the body object!
+    * These are parented to the body
     * The tears material also has settings to allow minor color edits
+* The eye gag object for heart eyes, firey eyes, etc is now exported and available as new shapekeys on the body object!
+    * These are parented to the body
+    * The shapekeys will automatically hide the eyes and eyeline materials when active
+    * The swirly rotation speed, heart pulse speed and cry/fire animation speed can be changed in the Eye Gag materials 
 * The animated tongue is now exported!
-    * This is a rigged tongue hidden by default. It doesn't use shapekeys like the rest of the face does. It's parented to the body object.
+    * This is parented to the body object and hidden by default
+    * The rigged tongue doesn't use shapekeys like the rest of the face does
 * Shapekeys are more accurate than before!
+* The heart and sparkle Eye overlays are now exported
 * Eyewhite shapekeys are fixed on the exporter-side now!
     * This means Blender is less likely to crash when importing the model
 * Small fangs are now exported!
@@ -38,6 +45,13 @@ Rigify armature updates by an anonymous contributor!
 Unity normal blending and mirrored blush scaling by **poisenbery**!
 * Unity normal blending is an alternative normal map detail blending method that can be accessed in the "Raw shading" group
 * Mirrored blush scaling is an easier way to scale the blush and eyeshadow if the texture is symmetrical. This can be accessed in the "Blush positioning" group on the Face material
+
+Better face normals using shader nodes!
+* The face now uses a bastardized version of the Generated Face Normals setup [described in this post by **aVersionOfReality**](https://www.aversionofreality.com/blog/2021/9/5/clean-toon-shading)
+* This setup is disabled by default for performance reasons. Enable it by going to the face material > swap the "Raw Shading" node group to "Raw Shading (face)"
+* This setup only works in Blender
+* The GFN Empty position and scale can be edited by unhiding it. It's parented to the armature
+* The GFN options can be edited in the node group called "Generated Face Normals" inside of the the "Raw shading (face)" group
 
 Plus some misc changes to the Blender plugin:
 * Added a one-click option for importing models!

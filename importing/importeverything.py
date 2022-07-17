@@ -96,6 +96,9 @@ def get_templates_and_apply(directory, use_fake_user):
         'KK Outline',
         'KK Body Outline',
         'KK Tears',
+        'KK Gag00',
+        'KK Gag01',
+        'KK Gag02',
         'KK Eye (hitomi)',
         'KK Eyebrows (mayuge)',
         'KK Eyeline down',
@@ -117,6 +120,14 @@ def get_templates_and_apply(directory, use_fake_user):
             filepath=os.path.join(filepath, innerpath, template),
             directory=os.path.join(filepath, innerpath),
             filename=template,
+            set_fake=use_fake_user
+            )
+    
+    #import gfn face node group as well
+    bpy.ops.wm.append(
+            filepath=os.path.join(filepath, 'NodeTree', 'Raw Shading (face)'),
+            directory=os.path.join(filepath, 'NodeTree'),
+            filename='Raw Shading (face)',
             set_fake=use_fake_user
             )
     
@@ -201,6 +212,13 @@ def get_templates_and_apply(directory, use_fake_user):
     if bpy.data.objects.get('Tongue (rigged)'):
         tongue = bpy.data.objects['Tongue (rigged)']
         tongue.material_slots[0].material = bpy.data.materials['KK Tongue']
+
+    #give the gag eyes a material template
+    if bpy.data.objects.get('Gag Eyes'):
+        gag = bpy.data.objects['Gag Eyes']
+        gag.material_slots['cf_m_gageye_00'].material = bpy.data.materials['KK Gag00']
+        gag.material_slots['cf_m_gageye_01'].material = bpy.data.materials['KK Gag01']
+        gag.material_slots['cf_m_gageye_02'].material = bpy.data.materials['KK Gag02']
 
     # Get rid of the duplicate node groups cause there's a lot
     #stolen from somewhere
@@ -527,6 +545,8 @@ def get_and_load_textures(directory):
     image_load('KK Eye (hitomi)', 'Gentex', 'eyeAlpha', 'cf_m_hitomi_00_MT_CT.png')
     image_load('KK Eye (hitomi)', 'Gentex', 'EyeHU', 'cf_m_hitomi_00_ot1.png')
     image_load('KK Eye (hitomi)', 'Gentex', 'EyeHD', 'cf_m_hitomi_00_ot2.png')
+    image_load('KK Eye (hitomi)', 'Gentex', 'expression0', 'cf_m_hitomi_00_cf_t_expression_00_EXPR.png')
+    image_load('KK Eye (hitomi)', 'Gentex', 'expression1', 'cf_m_hitomi_00_cf_t_expression_01_EXPR.png')
 
     image_load('KK Face', 'Gentex', 'EyeshadowMask', 'cf_m_face_00_ot3.png')
     set_uv_type('KK Face', 'Facepos', 'eyeshadowuv', 'uv_eyeshadow')
@@ -537,6 +557,21 @@ def get_and_load_textures(directory):
     image_load('KK Tongue', 'Gentex', 'MainNorm', 'cf_m_tang_NMP.png')
     image_load('KK Tongue', 'Gentex', 'MainNormDetail', 'cf_m_tang_NMP_CNV.png') #load regular map by default
     image_load('KK Tongue', 'Gentex', 'MainNormDetail', 'cf_m_tang_NMPD_CNV.png') #then the detail map if it's there
+
+    #load all gag eyes in
+    current_obj = bpy.data.objects['Gag Eyes']
+    image_load('KK Gag00', 'Gentex', '00gag00', 'cf_m_gageye_00_cf_t_gageye_00_MT_CT.png')
+    image_load('KK Gag00', 'Gentex', '00gag02', 'cf_m_gageye_00_cf_t_gageye_02_MT_CT.png')
+    image_load('KK Gag00', 'Gentex', '00gag04', 'cf_m_gageye_00_cf_t_gageye_04_MT_CT.png')
+    image_load('KK Gag00', 'Gentex', '00gag05', 'cf_m_gageye_00_cf_t_gageye_05_MT_CT.png')
+    image_load('KK Gag00', 'Gentex', '00gag06', 'cf_m_gageye_00_cf_t_gageye_06_MT_CT.png')
+
+    image_load('KK Gag01', 'Gentex', '01gag03', 'cf_m_gageye_01_cf_t_gageye_03_MT_CT.png')
+    image_load('KK Gag01', 'Gentex', '01gag01', 'cf_m_gageye_01_cf_t_gageye_01_MT_CT.png')
+
+    image_load('KK Gag02', 'Gentex', '02gag07', 'cf_m_gageye_02_cf_t_gageye_07_MT_CT.png')
+    image_load('KK Gag02', 'Gentex', '02gag08', 'cf_m_gageye_02_cf_t_gageye_08_MT_CT.png')
+    image_load('KK Gag02', 'Gentex', '02gag09', 'cf_m_gageye_02_cf_t_gageye_09_MT_CT.png')
 
     #load the tears texture in
     if bpy.data.objects.get('Tears'):
@@ -591,8 +626,7 @@ def get_and_load_textures(directory):
             image_load(genMat.name, 'Gentex', 'MainCol', genType+'_CM.png')
             image_load(genMat.name, 'Gentex', 'MainDet', genType+'_DM.png')
             image_load(genMat.name, 'Gentex', 'MainNorm', genType+'_NMP.png')
-            image_load(genMat.name, 'Gentex', 'MainNormDetail', genType+'_NMP_CNV.png') #load regular map by default
-            image_load(genMat.name, 'Gentex', 'MainNormDetail', genType+'_NMPD_CNV.png') #then the detail map if it's there
+            image_load(genMat.name, 'Gentex', 'MainNormDetail', genType+'_NMPD_CNV.png') #load detail map if it's there
             image_load(genMat.name, 'Gentex', 'Alphamask', genType+'_AM.png')
 
             # image_load(genMat.name, 'Gentex', 'PatBase', genType+'_PM1.png')
@@ -699,6 +733,82 @@ def get_and_load_textures(directory):
         kklog('The GFN empty wasnt setup correctly')
         pass
     
+    #setup gag eye drivers
+    gag_keys = [
+        'Circle Eyes 1',
+        'Circle Eyes 2',
+        'Spiral Eyes',
+        'Heart Eyes',
+        'Fiery Eyes',
+        'Cartoony Wink',
+        'Vertical Line',
+        'Cartoony Closed',
+        'Horizontal Line',
+        'Cartoony Crying' 
+    ]
+
+    body = bpy.data.objects['Body']
+    skey_driver = bpy.data.materials['KK Gag00'].node_tree.nodes['Parser'].inputs[0].driver_add('default_value')
+    skey_driver.driver.type = 'SCRIPTED'
+    for key in gag_keys:
+        newVar = skey_driver.driver.variables.new()
+        newVar.name = key.replace(' ','')
+        newVar.type = 'SINGLE_PROP'
+        newVar.targets[0].id_type = 'KEY'
+        newVar.targets[0].id = body.data.shape_keys
+        newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
+    skey_driver.driver.expression = '0 if CircleEyes1 else 1 if CircleEyes2 else 2 if CartoonyClosed else 3 if VerticalLine else 4'
+
+    skey_driver = bpy.data.materials['KK Gag01'].node_tree.nodes['Parser'].inputs[0].driver_add('default_value')
+    skey_driver.driver.type = 'SCRIPTED'
+    for key in gag_keys:
+        newVar = skey_driver.driver.variables.new()
+        newVar.name = key.replace(' ','')
+        newVar.type = 'SINGLE_PROP'
+        newVar.targets[0].id_type = 'KEY'
+        newVar.targets[0].id = body.data.shape_keys
+        newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
+    skey_driver.driver.expression = '0 if HeartEyes else 1'
+
+    skey_driver = bpy.data.materials['KK Gag02'].node_tree.nodes['Parser'].inputs[0].driver_add('default_value')
+    skey_driver.driver.type = 'SCRIPTED'
+    for key in gag_keys:
+        newVar = skey_driver.driver.variables.new()
+        newVar.name = key.replace(' ','')
+        newVar.type = 'SINGLE_PROP'
+        newVar.targets[0].id_type = 'KEY'
+        newVar.targets[0].id = body.data.shape_keys
+        newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
+    skey_driver.driver.expression = '0 if CartoonyCrying else 1 if CartoonyWink else 2'
+
+    #make the eyes and eyeline transparent when the gag shapekey is activated
+    skey_driver = bpy.data.materials['KK Eye (hitomi)'].node_tree.nodes['EyeShader'].node_tree.nodes['Gagtoggle'].inputs[0].driver_add('default_value')
+    newVar = skey_driver.driver.variables.new()
+    newVar.name = 'gag'
+    newVar.type = 'SINGLE_PROP'
+    newVar.targets[0].id_type = 'KEY'
+    newVar.targets[0].id = body.data.shape_keys
+    newVar.targets[0].data_path = 'key_blocks["KK Eyes_gageye"].value' 
+    skey_driver.driver.expression = 'gag'
+
+    skey_driver = bpy.data.materials['KK Eyewhites (sirome)'].node_tree.nodes['EyewhiteShader'].node_tree.nodes['Gagtoggle'].inputs[0].driver_add('default_value')
+    newVar = skey_driver.driver.variables.new()
+    newVar.name = 'gag'
+    newVar.type = 'SINGLE_PROP'
+    newVar.targets[0].id_type = 'KEY'
+    newVar.targets[0].id = body.data.shape_keys
+    newVar.targets[0].data_path = 'key_blocks["KK Eyes_gageye"].value' 
+    skey_driver.driver.expression = 'gag'
+
+    skey_driver = bpy.data.materials['KK Eyeline up'].node_tree.nodes['EyelineShader'].node_tree.nodes['Gagtoggle'].inputs[0].driver_add('default_value')
+    newVar = skey_driver.driver.variables.new()
+    newVar.name = 'gag'
+    newVar.type = 'SINGLE_PROP'
+    newVar.targets[0].id_type = 'KEY'
+    newVar.targets[0].id = body.data.shape_keys
+    newVar.targets[0].data_path = 'key_blocks["KK Eyes_gageye"].value' 
+    skey_driver.driver.expression = 'gag'
+
 def add_outlines(single_outline_mode):
     #Add face and body outlines, then load in the clothes transparency mask to body outline
     ob = bpy.context.view_layer.objects['Body']
@@ -958,6 +1068,10 @@ def clean_orphan_data():
     for block in bpy.data.images:
         if block.users == 0 and not block.use_fake_user:
             bpy.data.images.remove(block)
+    
+    for block in bpy.data.node_groups:
+        if block.users == 0 and not block.use_fake_user:
+            bpy.data.node_groups.remove(block)
 
 def apply_cycles():
     #replace rim group with a principled bsdf with roughness = 0 and attach alpha too
@@ -967,6 +1081,15 @@ def apply_cycles():
     #put colorramp for eyeline alpha, black slider goes to 0.935
     #nipples already work in cycles without any changes?
     #mute shader to rgb nodes for clothing items 
+    pass
+
+def apply_lbs():
+    #Import lbs node group and replace rim group with the lbs group
+    #Attach normal to that
+    #turn on ambient occlusion in render settings
+    #turn on bloom in render settings
+    #layer 1 of lbs is dark color, layer 2 is light going through key light, layer 3 is dark going to ambient occlusion, layer 4 is rim with color fed through rgb curves
+    #face has special setup to work with gfn
     pass
 
 def apply_sfw():
@@ -1051,6 +1174,9 @@ class import_everything(bpy.types.Operator):
             
             #clean data
             clean_orphan_data()
+
+            #set to face select mode for easy material switching
+            bpy.context.tool_settings.mesh_select_mode = (False, False, True)
 
             kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             return {'FINISHED'}

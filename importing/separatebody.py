@@ -357,14 +357,21 @@ def fix_body_seams():
         bpy.ops.object.material_slot_select()
     bpy.ops.mesh.remove_doubles(threshold=0.00001)
 
-def make_tear_shapekeys():
-    #Create a reverse shapekey for each tear material
+def make_tear_and_gag_shapekeys():
+    #Create a reverse shapekey for each tear and gag material
     body = bpy.data.objects['Body']
     armature = bpy.data.objects['Armature']
     bpy.context.view_layer.objects.active = body
     
-    #Move tears back on the basis shapekey
-    tear_mats = ['cf_m_namida_00.002', 'cf_m_namida_00.001', 'cf_m_namida_00']
+    #Move tears and gag backwards on the basis shapekey
+    tear_mats = {
+        'cf_m_namida_00.002':   'Tears small',
+        'cf_m_namida_00.001':   "Tears med",
+        'cf_m_namida_00':       "Tears big",
+        'cf_m_gageye_00':       "Gag eye 00",
+        'cf_m_gageye_01':       "Gag eye 01",
+        'cf_m_gageye_02':       "Gag eye 02"
+    }
     bpy.ops.object.mode_set(mode = 'EDIT')
     bpy.ops.mesh.select_all(action='DESELECT')
     for mat in tear_mats:
@@ -382,27 +389,19 @@ def make_tear_shapekeys():
         bpy.ops.object.mode_set(mode = 'OBJECT')
         bpy.ops.object.shape_key_add(from_mix=False)
         last_shapekey = len(body.data.shape_keys.key_blocks)-1
-        if '.002' in mat:
-            body.data.shape_keys.key_blocks[-1].name = "KK Tears small"
-            bpy.context.object.active_shape_key_index = last_shapekey
-        elif '.001' in mat:
-            body.data.shape_keys.key_blocks[-1].name = "KK Tears med"
-            bpy.context.object.active_shape_key_index = last_shapekey
-        else:
-            body.data.shape_keys.key_blocks[-1].name = "KK Tears big"
-            bpy.context.object.active_shape_key_index = last_shapekey
+        body.data.shape_keys.key_blocks[-1].name = tear_mats[mat]
+        bpy.context.object.active_shape_key_index = last_shapekey
         bpy.ops.object.mode_set(mode = 'EDIT')
         bpy.ops.mesh.select_all(action='DESELECT')
         bpy.context.object.active_material_index = body.data.materials.find(mat)
         bpy.ops.object.material_slot_select()
-        #find a random vertex location of the tear
+        #find a random vertex location of the tear and move it forwards
         bpy.ops.object.mode_set(mode = 'OBJECT')
         selected_verts = [v for v in body.data.vertices if v.select]
         bpy.ops.object.mode_set(mode = 'EDIT')
-        #create a new shapekey for the tear
         bpy.ops.transform.translate(value=(0, -1 * abs(amount_to_move_tears_back), 0))
         bpy.ops.object.mode_set(mode = 'OBJECT')
-        bpy.ops.object.shape_key_move(type='TOP')
+        bpy.ops.object.shape_key_move(type='TOP' if 'cf_m_namida_00' in mat else 'BOTTOM')
 
     #Merge the tear materials
     bpy.ops.object.mode_set(mode = 'EDIT')
@@ -432,6 +431,97 @@ def make_tear_shapekeys():
     tears.parent = bpy.data.objects['Body']
     bpy.ops.object.mode_set(mode = 'OBJECT')
     link_keys(body, [tears])
+
+    #create real gag eye shapekeys
+    bpy.context.view_layer.objects.active=body
+    gag_keys = [
+        'Circle Eyes 1',
+        'Circle Eyes 2',
+        'Spiral Eyes',
+        'Heart Eyes',
+        'Fiery Eyes',
+        'Cartoony Wink',
+        'Vertical Line',
+        'Cartoony Closed',
+        'Horizontal Line',
+        'Cartoony Crying' 
+    ]
+    for key in gag_keys:
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+        bpy.ops.object.shape_key_add(from_mix=False)
+        last_shapekey = len(body.data.shape_keys.key_blocks)-1
+        body.data.shape_keys.key_blocks[-1].name = key
+        bpy.context.object.active_shape_key_index = last_shapekey
+        bpy.ops.object.shape_key_move(type='TOP')
+
+    #make most gag eye shapekeys activate the body's gag key
+    skey_driver = bpy.data.shape_keys[0].key_blocks['KK Eyes_gageye'].driver_add('value')
+    skey_driver.driver.type = 'SCRIPTED'
+    for key in gag_keys:
+        newVar = skey_driver.driver.variables.new()
+        newVar.name = key.replace(' ','')
+        newVar.type = 'SINGLE_PROP'
+        newVar.targets[0].id_type = 'KEY'
+        newVar.targets[0].id = body.data.shape_keys
+        newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
+    condition = [key.replace(' ', '') for key in gag_keys if 'Fiery' not in key]
+    skey_driver.driver.expression = '1 if ' + ' or '.join(condition) + ' else 0'
+
+    #make certain gag eye shapekeys activate the correct gag show key
+    skey_driver = bpy.data.shape_keys[0].key_blocks['Gag eye 00'].driver_add('value')
+    skey_driver.driver.type = 'SCRIPTED'
+    for key in gag_keys:
+        newVar = skey_driver.driver.variables.new()
+        newVar.name = key.replace(' ','')
+        newVar.type = 'SINGLE_PROP'
+        newVar.targets[0].id_type = 'KEY'
+        newVar.targets[0].id = body.data.shape_keys
+        newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
+    skey_driver.driver.expression = '1 if CircleEyes1 or CircleEyes2 or VerticalLine or CartoonyClosed or HorizontalLine else 0'
+
+    #make certain gag eye shapekeys activate the correct gag show key
+    skey_driver = bpy.data.shape_keys[0].key_blocks['Gag eye 01'].driver_add('value')
+    skey_driver.driver.type = 'SCRIPTED'
+    for key in gag_keys:
+        newVar = skey_driver.driver.variables.new()
+        newVar.name = key.replace(' ','')
+        newVar.type = 'SINGLE_PROP'
+        newVar.targets[0].id_type = 'KEY'
+        newVar.targets[0].id = body.data.shape_keys
+        newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
+    skey_driver.driver.expression = '1 if HeartEyes or SpiralEyes else 0'
+
+    #make certain gag eye shapekeys activate the correct gag show key
+    skey_driver = bpy.data.shape_keys[0].key_blocks['Gag eye 02'].driver_add('value')
+    skey_driver.driver.type = 'SCRIPTED'
+    for key in gag_keys:
+        newVar = skey_driver.driver.variables.new()
+        newVar.name = key.replace(' ','')
+        newVar.type = 'SINGLE_PROP'
+        newVar.targets[0].id_type = 'KEY'
+        newVar.targets[0].id = body.data.shape_keys
+        newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
+    skey_driver.driver.expression = '1 if FieryEyes or CartoonyWink or CartoonyCrying else 0'
+
+    #make a vertex group that does not contain the gag_eyes
+    bpy.ops.object.vertex_group_add()
+    bpy.ops.object.mode_set(mode = 'EDIT')
+    bpy.ops.mesh.select_all(action='SELECT')
+    body.vertex_groups.active.name = "Body without Gag eyes"
+    for gag_mat in ['cf_m_gageye_00', 'cf_m_gageye_01', 'cf_m_gageye_02']:
+        bpy.context.object.active_material_index = body.data.materials.find(gag_mat)
+        bpy.ops.object.material_slot_deselect()
+    bpy.ops.object.vertex_group_assign()
+
+    #Separate gag from body object, parent it to the body so it's hidden in the outliner
+    #link shapekeys of gag to body
+    gag_mat = ['cf_m_gageye_00', 'cf_m_gageye_01', 'cf_m_gageye_02']
+    separate_material(body, gag_mat)
+    gag = bpy.data.objects['Body.001']
+    gag.name = 'Gag Eyes'
+    gag.parent = bpy.data.objects['Body']
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    link_keys(body, [gag])
 
     if bpy.context.scene.kkbp.categorize_dropdown != 'D' and bpy.data.materials.get('cf_m_tang.001'):
         #Separate rigged tongue from body object, parent it to the body so it's hidden in the outliner
@@ -520,7 +610,7 @@ def remove_duplicate_slots():
 def cleanup():
     #remove shapekeys on all objects except the body/tears because only those need them
     for obj in bpy.data.objects:
-        if obj.name not in ['Body','Tears'] and obj.type == 'MESH':
+        if obj.name not in ['Body','Tears','Gag Eyes'] and obj.type == 'MESH':
             if not obj.data.shape_keys:
                 continue
             
@@ -581,9 +671,9 @@ class separate_body(bpy.types.Operator):
             if context.scene.kkbp.fix_seams:
                 fix_body_seams()
             
-            #make tear shapekeys only if they exist 
+            #make tear and gageye shapekeys if shapekey modifications are enabled
             if context.scene.kkbp.shapekeys_dropdown != 'C':
-                make_tear_shapekeys()
+                make_tear_and_gag_shapekeys()
                 
             cleanup()
 

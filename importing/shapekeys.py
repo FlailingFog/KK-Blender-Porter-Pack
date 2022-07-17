@@ -144,6 +144,7 @@ def translate_shapekeys():
                 pass
     
 
+'''
 ########################################################
 #Fix the right eyewhites/sirome shapekeys for pmx imports only
 def fix_eyewhite_shapekeys():
@@ -284,6 +285,7 @@ def fix_eyewhite_shapekeys():
     bpy.ops.object.mode_set(mode = 'EDIT')
     bpy.ops.mesh.select_all(action='DESELECT')
     bpy.ops.object.mode_set(mode = 'OBJECT')
+'''
 
 ######################
 #Combine the shapekeys
