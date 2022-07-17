@@ -460,10 +460,24 @@ def remove_duplicate_slots():
             #remap duplicate materials to the base one
             material_list = mesh.data.materials
             for mat in material_list:
+                mat_name_list = [
+                    'cf_m_hitomi_00',
+                    'cf_m_hitomi_00.001',
+                    'cf_m_sirome_00',
+                    'cf_m_sirome_00.001',
+                    'cf_m_namida_00',
+                    'cf_m_namida_00.001',
+                    'cf_m_namida_00.002',
+                    'cf_m_tang',
+                    'cf_m_tang.001',
+                    'cf_m_gageye_00',
+                    'cf_m_gageye_01',
+                    'cf_m_gageye_02',
+                ]
                 #don't merge the eye materials/tang if categorize by SMR is chosen.
-                eye_flag = False if ('cf_m_hitomi_00' in mat.name or 'cf_m_sirome_00' in mat.name or 'cf_m_namida_00' in mat.name or 'cf_m_tang' in mat.name) and bpy.context.scene.kkbp.categorize_dropdown == 'D' else True
+                eye_flag = mat.name not in mat_name_list and bpy.context.scene.kkbp.categorize_dropdown != 'D'
                 
-                if '.' in mat.name[-4:] and 'cf_m_namida_00' not in mat.name and 'cf_m_tang' not in mat.name and eye_flag:
+                if '.' in mat.name[-4:] and eye_flag:
                     try:
                         #the material name is normal
                         base_name, dupe_number = mat.name.split('.',2)

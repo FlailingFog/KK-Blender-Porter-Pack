@@ -145,6 +145,9 @@ def separate_body(json_smr_data):
         'cf_O_namida_L' : 'cf_m_namida_00',
         'cf_O_namida_M' : 'cf_m_namida_00.001',
         'cf_O_namida_S' : 'cf_m_namida_00.002',
+        'cf_O_gag_eye_00' : 'cf_m_gageye_00',
+        'cf_O_gag_eye_01' : 'cf_m_gageye_01',
+        'cf_O_gag_eye_02' : 'cf_m_gageye_02',
         'o_tang' : 'cf_m_tang',
     }
     
@@ -248,6 +251,9 @@ def export_meshes(directory):
         'cf_O_namida_L' : 'cf_m_namida_00',
         'cf_O_namida_M' : 'cf_m_namida_00',
         'cf_O_namida_S' : 'cf_m_namida_00',
+        'cf_O_gag_eye_00' : 'cf_m_gageye_00',
+        'cf_O_gag_eye_01' : 'cf_m_gageye_01',
+        'cf_O_gag_eye_02' : 'cf_m_gageye_02',
         'o_tang' : 'cf_m_tang',
         'o_tang.001' : 'cf_m_tang',
     }
