@@ -138,17 +138,19 @@ def separate_body(json_smr_data):
         return
     
     body_obj_material_map = {
-        'cf_Ohitomi_L' : 'cf_m_sirome_00',
-        'cf_Ohitomi_R' : 'cf_m_sirome_00.001',
-        'cf_Ohitomi_L02' : 'cf_m_hitomi_00',
-        'cf_Ohitomi_R02' : 'cf_m_hitomi_00.001',
-        'cf_O_namida_L' : 'cf_m_namida_00',
-        'cf_O_namida_M' : 'cf_m_namida_00.001',
-        'cf_O_namida_S' : 'cf_m_namida_00.002',
-        'cf_O_gag_eye_00' : 'cf_m_gageye_00',
-        'cf_O_gag_eye_01' : 'cf_m_gageye_01',
-        'cf_O_gag_eye_02' : 'cf_m_gageye_02',
-        'o_tang' : 'cf_m_tang',
+        'cf_Ohitomi_L' : {'cf_m_sirome_00'},
+        'cf_Ohitomi_R' : {'cf_m_sirome_00.001'},
+        'cf_Ohitomi_L02' : {'cf_m_hitomi_00'},
+        'cf_Ohitomi_R02' : {'cf_m_hitomi_00.001'},
+        'cf_O_namida_L' : {'cf_m_namida_00'},
+        'cf_O_namida_M' : {'cf_m_namida_00.001'},
+        'cf_O_namida_S' : {'cf_m_namida_00.002'},
+        'cf_O_gag_eye_00' : {'cf_m_gageye_00'},
+        'cf_O_gag_eye_01' : {'cf_m_gageye_01'},
+        'cf_O_gag_eye_02' : {'cf_m_gageye_02'},
+        'cf_O_eyeline' : {'cf_m_eyeline_00_up','cf_m_eyeline_kage'},
+        'cf_O_eyeline_low' : {'cf_m_eyeline_down'},
+        'o_tang' : {'cf_m_tang'},
     }
     
     #Pass 1: To make sure each material has a mesh
@@ -178,18 +180,29 @@ def separate_body(json_smr_data):
         bpy.ops.object.mode_set(mode = 'EDIT')
         bpy.ops.mesh.select_all(action = 'DESELECT')
         
-        #Loop over each renderer material and select it
-        mat_name = body_obj_material_map[row['SMRName']]
+        #deal with tang
         if (row['SMRName'] == 'o_tang' and len(row['SMRBoneNames']) > 1):
             mat_name = 'cf_m_tang.001'
+            found_mat_idx = body_data.materials.find(mat_name)
             
-        found_mat_idx = body_data.materials.find(mat_name)
-        
-        if found_mat_idx == -1:
-            continue
-                     
-        bpy.context.object.active_material_index = found_mat_idx
-        bpy.ops.object.material_slot_select() 
+            if found_mat_idx == -1:
+                continue
+            
+            bpy.context.object.active_material_index = found_mat_idx
+            bpy.ops.object.material_slot_select() 
+        else:
+            #Loop over each renderer material and select it
+            found_a_material = False
+            for mat_name in body_obj_material_map[row['SMRName']]:
+                found_mat_idx = body_data.materials.find(("Template " if use_template_name else "") + mat_name)
+                
+                if found_mat_idx > -1:
+                    bpy.context.object.active_material_index = found_mat_idx
+                    bpy.ops.object.material_slot_select()
+                    found_a_material = True
+                
+            if not found_a_material:
+                continue
         
         #Seperate to a new mesh
         bpy.ops.mesh.separate(type='SELECTED')
@@ -251,9 +264,6 @@ def export_meshes(directory):
         'cf_O_namida_L' : 'cf_m_namida_00',
         'cf_O_namida_M' : 'cf_m_namida_00',
         'cf_O_namida_S' : 'cf_m_namida_00',
-        'cf_O_gag_eye_00' : 'cf_m_gageye_00',
-        'cf_O_gag_eye_01' : 'cf_m_gageye_01',
-        'cf_O_gag_eye_02' : 'cf_m_gageye_02',
         'o_tang' : 'cf_m_tang',
         'o_tang.001' : 'cf_m_tang',
     }

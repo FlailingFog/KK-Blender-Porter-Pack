@@ -560,9 +560,6 @@ def remove_duplicate_slots():
                     'cf_m_namida_00.002',
                     'cf_m_tang',
                     'cf_m_tang.001',
-                    'cf_m_gageye_00',
-                    'cf_m_gageye_01',
-                    'cf_m_gageye_02',
                 ]
                 #don't merge the eye materials/tang if categorize by SMR is chosen.
                 eye_flag = mat.name not in mat_name_list and bpy.context.scene.kkbp.categorize_dropdown != 'D'
