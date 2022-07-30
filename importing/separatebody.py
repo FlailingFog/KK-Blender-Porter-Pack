@@ -561,7 +561,7 @@ def remove_duplicate_slots():
                     'cf_m_tang',
                     'cf_m_tang.001',
                 ]
-                #don't merge the eye materials/tang if categorize by SMR is chosen.
+                #don't merge the above materials if categorize by SMR is chosen.
                 eye_flag = mat.name not in mat_name_list and bpy.context.scene.kkbp.categorize_dropdown != 'D'
                 
                 if '.' in mat.name[-4:] and eye_flag:
@@ -572,7 +572,8 @@ def remove_duplicate_slots():
                         #someone (not naming names) left a .### in the material name
                         base_name, rest_of_base_name, dupe_number = mat.name.split('.',2)
                         base_name = base_name + rest_of_base_name
-                    if material_list.get(base_name) and int(dupe_number):
+                    #remap material if it's a dupe, but don't touch the eye dupe
+                    if material_list.get(base_name) and int(dupe_number) and 'cf_m_hitomi_00' not in base_name:
                         mat.user_remap(material_list[base_name])
                         bpy.data.materials.remove(mat)
                     else:
