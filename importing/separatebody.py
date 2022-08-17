@@ -128,6 +128,13 @@ def separate_material(object, mat_list, search_type = 'exact'):
     bpy.ops.mesh.separate(type='SELECTED')
     bpy.ops.object.mode_set(mode = 'OBJECT')
 
+
+def index_exists(list, index):
+    if 0 <= index < len(list):
+        return True
+    else:
+        return False
+
 def separate_everything(context):
     body = bpy.data.objects['Body']
 
@@ -200,7 +207,15 @@ def separate_everything(context):
             #kklog(outfit_index)
             clothes_indexes = [1, 2, 3, 4, 5, 6, 8]
             clothes_indexes = [element + (12 * outfit_index) for element in clothes_indexes] #shift based on outfit number
-
+            
+            # dirty workaround for single outfits 
+            for clothes_index in clothes_indexes:
+                if not index_exists(clothes_data, clothes_index):
+                    outfit_index = 0
+                    clothes_indexes = [1, 2, 3, 4, 5, 6, 8]
+                    clothes_indexes = [element + (12 * outfit_index) for element in clothes_indexes] #shift based on outfit number
+                break
+            
             for clothes_index in clothes_indexes:
                 variations = len(clothes_data[clothes_index]['RendNormal01'])
                 if variations > 1:
@@ -221,6 +236,12 @@ def separate_everything(context):
             #kklog(outfit)
             outfit_index = int(outfit.name[-3:])
             clothes_index = 7 + (12 * outfit_index)
+            
+            # dirty workaround for single outfits 
+            if not index_exists(clothes_data, clothes_index):
+                outfit_index = 0
+                clothes_index = 7 + (12 * outfit_index)
+            
             #Always separate indoor shoes
             indoor_shoes_name = clothes_data[clothes_index]['RendNormal01']
             if indoor_shoes_name:
@@ -245,6 +266,14 @@ def separate_everything(context):
             clothes_indexes = [element + (12 * outfit_index) for element in clothes_indexes] #shift based on outfit number
             #kklog(outfit_index)
             #kklog(clothes_indexes)
+            
+            # dirty workaround for single outfits 
+            for clothes_index in clothes_indexes:
+                if not index_exists(clothes_data, clothes_index):
+                    outfit_index = 0
+                    clothes_indexes = [1, 2, 3, 4, 5, 6, 8]
+                    clothes_indexes = [element + (12 * outfit_index) for element in clothes_indexes] #shift based on outfit number
+                break
 
             for clothes_index in clothes_indexes:
                 #print(clothes_index)
