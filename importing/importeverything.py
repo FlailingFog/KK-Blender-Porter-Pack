@@ -148,8 +148,8 @@ def get_templates_and_apply(directory, use_fake_user):
     swap_body_material('cf_m_eyeline_kage','KK Eyeline Kage')
     swap_body_material('cf_m_sirome_00','KK Eyewhites (sirome)')
     swap_body_material('cf_m_sirome_00.001','KK Eyewhites (sirome)')
-    swap_body_material('cf_m_hitomi_00','KK EyeL (hitomi)')
-    swap_body_material('cf_m_hitomi_00.001','KK EyeR (hitomi)')
+    swap_body_material('cf_m_hitomi_00_cf_Ohitomi_L02','KK EyeL (hitomi)')
+    swap_body_material('cf_m_hitomi_00_cf_Ohitomi_R02','KK EyeR (hitomi)')
     swap_body_material('cf_m_body','KK Body') #female
     swap_body_material('cm_m_body','KK Body') #male
     swap_body_material('cf_m_tooth','KK Teeth (tooth)')
@@ -543,15 +543,15 @@ def get_and_load_textures(directory):
     image_load('KK Eyeline up', 'Gentex', 'EyelineDown.001', 'cf_m_eyeline_down_MT_CT.png')
     image_load('KK Eyeline up', 'Gentex', 'EyelineKage', 'cf_m_eyeline_kage_MT.png')
     
-    image_load('KK EyeR (hitomi)', 'Gentex', 'eyeAlpha', 'cf_m_hitomi_00_MT_CT.png')
-    image_load('KK EyeR (hitomi)', 'Gentex', 'EyeHU', 'cf_m_hitomi_00_ot1.png')
-    image_load('KK EyeR (hitomi)', 'Gentex', 'EyeHD', 'cf_m_hitomi_00_ot2.png')
+    image_load('KK EyeR (hitomi)', 'Gentex', 'eyeAlpha', 'cf_m_hitomi_00_cf_Ohitomi_R02_MT_CT.png')
+    image_load('KK EyeR (hitomi)', 'Gentex', 'EyeHU', 'cf_m_hitomi_00_cf_Ohitomi_R02_ot1.png')
+    image_load('KK EyeR (hitomi)', 'Gentex', 'EyeHD', 'cf_m_hitomi_00_cf_Ohitomi_R02_ot2.png')
     image_load('KK EyeR (hitomi)', 'Gentex', 'expression0', 'cf_m_hitomi_00_cf_t_expression_00_EXPR.png')
     image_load('KK EyeR (hitomi)', 'Gentex', 'expression1', 'cf_m_hitomi_00_cf_t_expression_01_EXPR.png')
 
-    image_load('KK EyeL (hitomi)', 'Gentex', 'eyeAlpha', 'cf_m_hitomi_00_MT_CT.png')
-    image_load('KK EyeL (hitomi)', 'Gentex', 'EyeHU', 'cf_m_hitomi_00_ot1.png')
-    image_load('KK EyeL (hitomi)', 'Gentex', 'EyeHD', 'cf_m_hitomi_00_ot2.png')
+    image_load('KK EyeL (hitomi)', 'Gentex', 'eyeAlpha', 'cf_m_hitomi_00_cf_Ohitomi_L02_MT_CT.png')
+    image_load('KK EyeL (hitomi)', 'Gentex', 'EyeHU', 'cf_m_hitomi_00_cf_Ohitomi_L02_ot1.png')
+    image_load('KK EyeL (hitomi)', 'Gentex', 'EyeHD', 'cf_m_hitomi_00_cf_Ohitomi_L02_ot2.png')
     image_load('KK EyeL (hitomi)', 'Gentex', 'expression0', 'cf_m_hitomi_00_cf_t_expression_00_EXPR.png')
     image_load('KK EyeL (hitomi)', 'Gentex', 'expression1', 'cf_m_hitomi_00_cf_t_expression_01_EXPR.png')
 

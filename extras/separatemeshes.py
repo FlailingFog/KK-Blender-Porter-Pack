@@ -140,8 +140,8 @@ def separate_body(json_smr_data):
     body_obj_material_map = {
         'cf_Ohitomi_L' : {'cf_m_sirome_00'},
         'cf_Ohitomi_R' : {'cf_m_sirome_00.001'},
-        'cf_Ohitomi_L02' : {'cf_m_hitomi_00'},
-        'cf_Ohitomi_R02' : {'cf_m_hitomi_00.001'},
+        'cf_Ohitomi_L02' : {'cf_m_hitomi_00_cf_Ohitomi_L02'},
+        'cf_Ohitomi_R02' : {'cf_m_hitomi_00_cf_Ohitomi_R02'},
         'cf_O_namida_L' : {'cf_m_namida_00'},
         'cf_O_namida_M' : {'cf_m_namida_00.001'},
         'cf_O_namida_S' : {'cf_m_namida_00.002'},
@@ -259,8 +259,8 @@ def export_meshes(directory):
     obj_material_map = {
         'cf_Ohitomi_L' : 'cf_m_sirome_00',
         'cf_Ohitomi_R' : 'cf_m_sirome_00',
-        'cf_Ohitomi_L02' : 'cf_m_hitomi_00',
-        'cf_Ohitomi_R02' : 'cf_m_hitomi_00',
+        'cf_Ohitomi_L02' : 'cf_m_hitomi_00_cf_Ohitomi_L02',
+        'cf_Ohitomi_R02' : 'cf_m_hitomi_00_cf_Ohitomi_R02',
         'cf_O_namida_L' : 'cf_m_namida_00',
         'cf_O_namida_M' : 'cf_m_namida_00',
         'cf_O_namida_S' : 'cf_m_namida_00',

@@ -53,8 +53,8 @@ def add_freestyle_faces():
                 kklog('Material wasn\'t found when freestyling body materials: ' + mat, 'warn')
         bpy.ops.mesh.mark_freestyle_face(clear=False)
     freestyle_list = [
-        'cf_m_hitomi_00.001',
-        'cf_m_hitomi_00',
+        'cf_m_hitomi_00_cf_Ohitomi_R02',
+        'cf_m_hitomi_00_cf_Ohitomi_L02',
         'cf_m_sirome_00.001',
         'cf_m_sirome_00',
         'cf_m_eyeline_kage',
@@ -551,8 +551,8 @@ def remove_duplicate_slots():
             material_list = mesh.data.materials
             for mat in material_list:
                 mat_name_list = [
-                    'cf_m_hitomi_00',
-                    'cf_m_hitomi_00.001',
+                    'cf_m_hitomi_00_cf_Ohitomi_L02',
+                    'cf_m_hitomi_00_cf_Ohitomi_R02',
                     'cf_m_sirome_00',
                     'cf_m_sirome_00.001',
                     'cf_m_namida_00',
