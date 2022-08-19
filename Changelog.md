@@ -38,9 +38,12 @@ Huge feature updates by **MediaMoots**!
 * Exported character heights are 4% more accurate
 * Texture suffixes are shortened
     * Image names over 64 characters long would cause blender to cufoff the filename, so this means long texture names are less likely to cause issues during import
+* The Koikatsu / BepInEx console will now be print out each mesh being exported. If the exporter is not working for a specific character, accessory or clothing item, you can use this to track down what is causing the exporter to fail.
+    * These are prefixed with [Info   :   Console]
 
-Rigify armature updates by an anonymous contributor!
+Rigify armature updates by **an anonymous contributor**!
 * Better Penetration bones will now be placed in the "Torso (Tweak)" layer when converting to the Rigify armature
+    * You need to use the Better Penetration armature type in Koikatsu for these bones to appear
 
 Unity normal blending and mirrored blush scaling by **poisenbery**!
 * Unity normal blending is an alternative normal map detail blending method that can be accessed in the "Raw shading" group

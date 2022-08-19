@@ -48,22 +48,20 @@ translation_dictionary = {
 
     'prep_drop'         : "Export type",
     'prep_drop_A'       : "Unity - VRM compatible",
-    'prep_drop_A_tt'    : """Combines all objects and...
-    removes the outline,
-    removes duplicate Eye and Eyewhite material slot,
-    moves pupil bones to layer 16,
-    simplifies bones on armature layer 3 / 5 / 11 / 12 / 13,
-    edits bone hierarchy to allow Unity to automatically detect bones""",
-    'prep_drop_C'       : 'Generic - Simplified',
-    'prep_drop_C_tt'    : """Combines all objects and...
-    Removes the outline,
-    removes duplicate Eye and Eyewhite material slot,
-    moves pupil bones to layer 16,
-    simplifies bones on armature layer 11""",
-    'prep_drop_D'       : "Generic - No changes",
-    'prep_drop_D_tt'    : """Combines all objects and...
-    Removes the outline,
-    removes duplicate Eye and Eyewhite material slot""",
+    'prep_drop_A_tt'    : """Removes the outline and...
+    removes duplicate Eyewhite material slot if present,
+    edits bone hierarchy to allow Unity to automatically detect the right bones""",
+    'prep_drop_B'       : "Generic FBX - No changes",
+    'prep_drop_B_tt'    : """Removes the outline and...
+    removes duplicate Eyewhite material slot if present""",
+
+    'simp_drop'     : 'Armature simplification type',
+    'simp_drop_A'   : 'Very simple (SLOW)',
+    'simp_drop_A_tt': 'Use this option if you want a very low bone count. Moves the pupil bones to layer 1 and simplifies bones on armature layers 3-5, 11-12, and 17-19 (Leaves you with ~110 bones not counting the skirt bones)',
+    'simp_drop_B'   : 'Simple',
+    'simp_drop_B_tt': 'Moves the pupil bones to layer 1 and simplifies the useless bones on armature layer 11 (Leaves you with ~1000 bones)',
+    'simp_drop_C'   : 'No changes (FAST)',
+    'simp_drop_C_tt': 'Does not simplify anything',
 
     'bake'          : 'Bake material templates',
     'bake_light'    : "Light",

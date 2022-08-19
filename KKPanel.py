@@ -75,9 +75,15 @@ class PlaceholderProperties(PropertyGroup):
         items=(
             ("A", t('prep_drop_A'), t('prep_drop_A_tt')),
             #("B", "MikuMikuDance - PMX compatible", " "),
-            ("C", t('prep_drop_C'), t('prep_drop_C_tt')),
-            ("D", t('prep_drop_D'), t('prep_drop_D_tt')),
+            ("B", t('prep_drop_B'), t('prep_drop_B_tt')),
         ), name="", default="A", description=t('prep_drop'))
+
+    simp_dropdown : EnumProperty(
+        items=(
+            ("A", t('simp_drop_A'), t('simp_drop_A_tt')),
+            ("B", t('simp_drop_B'), t('simp_drop_B_tt')),
+            ("C", t('simp_drop_C'), t('simp_drop_C_tt')),
+        ), name="", default="A", description=t('simp_drop'))
     
     bake_light_bool : BoolProperty(
     description=t('bake_light_tt'),
@@ -173,7 +179,7 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         
         row = col.row(align=True)
         row.operator('kkb.quickimport', text = t('import_model'), icon='MODIFIER')
-        row.enabled = False if scene.import_dir == 'cleared' else True
+        row.enabled = not scene.import_dir == 'cleared'
         
         row = col.row(align=True)
         row.label(text="")
@@ -185,13 +191,13 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         if scene.categorize_dropdown in ['B']:
             row = col.row(align=True)
             row.operator('kkb.matimport', text = t('finish_cat'), icon='BRUSHES_ALL')
-            row.enabled = False if scene.import_dir == 'cleared' else True
+            row.enabled = not scene.import_dir == 'cleared'
         
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "armature_dropdown")
         split.prop(context.scene.kkbp, "categorize_dropdown")
-        row.enabled = False if scene.import_dir == 'cleared' else True
+        row.enabled = not scene.import_dir == 'cleared'
         
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
@@ -203,19 +209,19 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "shapekeys_dropdown")
         split.prop(context.scene.kkbp, "fix_seams", toggle=True, text = t('seams'))
-        row.enabled = False if scene.import_dir == 'cleared' else True
+        row.enabled = not scene.import_dir == 'cleared'
         
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "texture_outline_bool", toggle=True, text = t('outline'))
         split.prop(context.scene.kkbp, "templates_bool", toggle=True, text = t('keep_templates'))
-        row.enabled = False if scene.import_dir == 'cleared' else True
+        row.enabled = not scene.import_dir == 'cleared'
 
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "sfw_mode", toggle=True, text = t('sfw_mode'))
         #split.prop(context.scene.kkbp, "templates_bool", toggle=True, text = t('keep_templates'))
-        row.enabled = False if scene.import_dir == 'cleared' else True
+        row.enabled = not scene.import_dir == 'cleared'
     
 class EXPORTING_PT_panel(bpy.types.Panel):
     bl_parent_id = "IMPORTING_PT_panel"
@@ -233,12 +239,12 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         col = box.column(align=True)
         row = col.row(align=True)
         row.operator('kkb.selectbones', text = t('prep'), icon = 'GROUP')
-        row.enabled = True if context.scene.kkbp.is_prepped == False else False
+        row.enabled = not context.scene.kkbp.is_prepped
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
-        split.label(text="Type:")
+        split.prop(context.scene.kkbp, "simp_dropdown")
         split.prop(context.scene.kkbp, "prep_dropdown")
-        row.enabled = True if context.scene.kkbp.is_prepped == False else False
+        row.enabled = not context.scene.kkbp.is_prepped
 
         col = box.column(align=True)
         row = col.row(align=True)

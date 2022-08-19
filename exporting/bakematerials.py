@@ -42,25 +42,6 @@ def typeError(self, context):
 
 #returns None if an error is encountered
 def setup_camera():
-    #Stop if no object is selected
-    try:
-        #An object was set as the active object but is not selected
-        if not bpy.context.active_object.select_get():
-            bpy.context.window_manager.popup_menu(showError, title="Error", icon='ERROR')
-            return None
-    except:
-        #No object is set as the active object
-        bpy.context.window_manager.popup_menu(showError, title="Error", icon='ERROR')
-        return None
-
-    #Stop if the object is not a mesh object
-    if bpy.context.active_object.type != 'MESH':
-        bpy.context.window_manager.popup_menu(typeError, title="Error", icon='ERROR')
-        return None
-
-    #######################
-    object_to_bake = bpy.context.active_object
-
     #Select all camera and light objects
     for obj in bpy.context.scene.objects:
         if obj.type == 'CAMERA' or obj.type == 'LIGHT':
@@ -92,10 +73,6 @@ def setup_camera():
     bpy.data.cameras[camera.name].ortho_scale=6
     bpy.context.scene.render.pixel_aspect_y=1
     bpy.context.scene.render.pixel_aspect_x=1
-
-    #reset currently selected object
-    bpy.context.view_layer.objects.active = object_to_bake
-    object_to_bake.select_set(True)
 
     return camera
 
@@ -282,9 +259,13 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
             
             #Render an image using the highest dimensions
             if highest_resolution != [0,0]:
-                dimension = str(highest_resolution[0])+'x'+str(highest_resolution[1])
                 bpy.context.scene.render.resolution_x=highest_resolution[0] * resolutionMultiplier
                 bpy.context.scene.render.resolution_y=highest_resolution[1] * resolutionMultiplier
+
+                #manually set gag02 resolution
+                if 'KK Gag02' in currentmaterial.name:
+                    bpy.context.scene.render.resolution_x = 512 * resolutionMultiplier
+                    bpy.context.scene.render.resolution_y = 512 * resolutionMultiplier
 
                 #set every material slot except the current material to be transparent
                 for matslot in object_to_bake.material_slots:
@@ -300,7 +281,7 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
                 bpy.context.scene.render.image_settings.color_mode=exportColormode
                 #bpy.context.scene.render.image_settings.color_depth='16'
                 
-                bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+                #bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
                 print('rendering this file:' + bpy.context.scene.render.filepath)
                 bpy.ops.render.render(write_still = True)
                 
@@ -310,7 +291,7 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
                 rendered_something = True
 
                 #redraw the UI to let the user know the plugin is doing something
-                bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+                #bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
         #If no images were detected in a Gentex group, render a very small (64px) failsafe image
         #this will let the script catch fully transparent materials or materials that are solid colors without textures
@@ -333,8 +314,8 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
             bpy.context.scene.render.image_settings.color_mode=exportColormode
             #bpy.context.scene.render.image_settings.color_depth='16'
             
-            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-            print('rendering this file:' + bpy.context.scene.render.filepath)
+            #bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+            print('rendering failsafe for this file:' + bpy.context.scene.render.filepath)
             bpy.ops.render.render(write_still = True)
             #print(fillerplane.data.materials[0])
             
@@ -397,33 +378,40 @@ def start_baking(folderpath, resolutionMultiplier, light, dark, norm):
     bpy.context.view_layer.objects.active=object_to_bake
 
 def cleanup():
-    #save the originally selected object
-    object_to_bake = bpy.context.active_object
     # Deselect all objects
     bpy.ops.object.select_all(action='DESELECT')
     #Select the sun
-    sun = [o for o in bpy.data.objects if o.type == 'LIGHT'][0]
-    sun.select_set(True)
+    for sun in [o for o in bpy.data.objects if o.type == 'LIGHT']:
+        sun.select_set(True)
     #Select the camera
-    camera = [o for o in bpy.data.objects if o.type == 'CAMERA'][0]
-    camera.select_set(True)
+    for camera in [o for o in bpy.data.objects if o.type == 'CAMERA']:
+        camera.select_set(True)
     #Select fillerplane
-    bpy.data.objects['fillerplane'].select_set(True)
+    for fillerplane in [o for o in bpy.data.objects if 'fillerplane' in o.name]:
+        fillerplane.select_set(True)
     #delete them
     bpy.ops.object.delete()
-    #delete the geometry modifier
-    object_to_bake.modifiers.remove(object_to_bake.modifiers['Flattener'])
+    #delete orphan data
+    for block in bpy.data.meshes:
+        if block.users == 0:
+            bpy.data.meshes.remove(block)
+    for block in bpy.data.cameras:
+        if block.users == 0:
+            bpy.data.cameras.remove(block)
+    for block in bpy.data.lights:
+        if block.users == 0:
+            bpy.data.lights.remove(block)
+    for ob in [obj for obj in bpy.context.view_layer.objects if obj.type == 'MESH']:
+        #delete the geometry modifier
+        if ob.modifiers.get('Flattener'):
+            ob.modifiers.remove(ob.modifiers['Flattener'])
+            #delete the two scale drivers
+            ob.animation_data.drivers.remove(ob.animation_data.drivers[0])
+            ob.animation_data.drivers.remove(ob.animation_data.drivers[0])
+            ob.scale = (1,1,1)
     bpy.data.node_groups.remove(bpy.data.node_groups['Flat geo group'])
-    #delete the two scale drivers
-    object_to_bake.animation_data.drivers.remove(object_to_bake.animation_data.drivers[0])
-    object_to_bake.animation_data.drivers.remove(object_to_bake.animation_data.drivers[0])
-    object_to_bake.scale = (1,1,1)
     #disable alpha on the output
     bpy.context.scene.render.film_transparent = False
-    #Make the originally selected object active again
-    bpy.ops.object.select_all(action='DESELECT')
-    object_to_bake.select_set(True)
-    bpy.context.view_layer.objects.active=object_to_bake
     bpy.context.scene.render.filter_size = 1.5
 
 class bake_materials(bpy.types.Operator):
@@ -446,13 +434,24 @@ class bake_materials(bpy.types.Operator):
             folderpath =  self.directory
             scene = context.scene.kkbp
             resolutionMultiplier = scene.bake_mult
-            camera = setup_camera()
-            if camera == None:
-                return {'FINISHED'}
-            setup_geometry_nodes_and_fillerplane(camera)
-            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-            start_baking(folderpath, resolutionMultiplier, scene.bake_light_bool, scene.bake_dark_bool, scene.bake_norm_bool)
-            cleanup()
+            for ob in [obj for obj in bpy.context.view_layer.objects if obj.type == 'MESH']:
+                camera = setup_camera()
+                if camera == None:
+                    return {'FINISHED'}
+                for obj in [obj for obj in bpy.context.view_layer.objects if obj != ob]:
+                    obj.hide_render = True
+                bpy.ops.object.select_all(action='DESELECT')
+                bpy.context.view_layer.objects.active = ob
+                ob.select_set(True)
+                setup_geometry_nodes_and_fillerplane(camera)
+                bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+                start_baking(folderpath, resolutionMultiplier, scene.bake_light_bool, scene.bake_dark_bool, scene.bake_norm_bool)
+                for obj in bpy.context.view_layer.objects:
+                    obj.hide_render = False
+                cleanup()
+            #run the apply materials script right after baking
+            scene.import_dir = folderpath #use import dir as a temp directory holder
+            bpy.ops.kkb.applymaterials('EXEC_DEFAULT')
             return {'FINISHED'}
         except:
             kklog('Unknown python error occurred', type = 'error')

@@ -1,14 +1,6 @@
-'''
-SELECT BONES SCRIPT
-- Selects bones that aren't needed. This is useful for reducing the bone count with the "Merge Weights" option in CATS
+#simplfies bone count using the merge weights function in CATS
 
-Usage:
-- Make sure all the hair / accessory bones you want to keep are visible in pose mode
-- Run the script
-- Use the "Merge Weights to Parent" option in CATS (under Model Options)
-'''
-
-import bpy, traceback
+import bpy, traceback, time
 from ..importing.importbuttons import kklog
 
 #load plugin language
@@ -18,20 +10,15 @@ if locale == 'ja_JP':
 else:
     from ..interface.dictionary_en import t
 
-def main(prep_type):
+def main(prep_type, simp_type):
 
     armature = bpy.data.objects['Armature']
 
     kklog('\nPrepping for export...')
-    #Combine all objects
-    kklog('Combining all objects...')
     bpy.ops.object.mode_set(mode='OBJECT')
-    bpy.ops.object.select_all(action='SELECT')
-    bpy.context.view_layer.objects.active=bpy.data.objects['Body']
-    body = bpy.context.view_layer.objects.active
-    bpy.ops.object.join()
     bpy.ops.object.select_all(action='DESELECT')
 
+    #Assume hidden items are unused and move them to their own collection
     kklog('Moving unused objects to their own collection...')
     no_move_objects = ['Bonelyfans', 'Shadowcast', 'Hitboxes', 'Body', 'Armature']
     for object in bpy.context.scene.objects:
@@ -40,7 +27,8 @@ def main(prep_type):
             object.hide = False
             object.select_set(True)
             bpy.context.view_layer.objects.active=object
-    bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name='Unused clothing items')
+    if bpy.context.selected_objects:
+        bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name='Unused clothing items')
     #hide the new collection
     try:
         bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children['Unused clothing items']
@@ -54,22 +42,15 @@ def main(prep_type):
             #maybe the collection is already hidden, or doesn't exist
             pass
     bpy.ops.object.select_all(action='DESELECT')
-    bpy.context.view_layer.objects.active=bpy.data.objects['Body']
-    bpy.data.objects['Body'].select_set(True)
+    body = bpy.data.objects['Body']
+    bpy.context.view_layer.objects.active=body
+    body.select_set(True)
     
     kklog('Removing object outline modifier...')
-    body.modifiers['Outline Modifier'].show_render = False
-    body.modifiers['Outline Modifier'].show_viewport = False
-
-    '''    #remove the second Template Eye slot if there are two of the same name in a row
-    kklog('Removing duplicate Eye materials...')
-    eye_index = 0
-    for mat_slot_index in range(len(body.material_slots)):
-        if body.material_slots[mat_slot_index].name == 'KK Eye (hitomi)':
-            index = mat_slot_index
-    if body.material_slots[index].name == body.material_slots[index-1].name:
-        body.active_material_index = index
-        bpy.ops.object.material_slot_remove()'''
+    for ob in bpy.data.objects:
+        if ob.modifiers.get('Outline Modifier'):
+            ob.modifiers['Outline Modifier'].show_render = False
+            ob.modifiers['Outline Modifier'].show_viewport = False
 
     #remove the second Template Eyewhite slot if there are two of the same name in a row
     eye_index = 0
@@ -89,7 +70,7 @@ def main(prep_type):
     bpy.ops.object.mode_set(mode='POSE')
 
     #If simplifying the bones...
-    if prep_type in ['A', 'B', 'C']:
+    if simp_type in ['A', 'B']:
         #show all bones on the armature
         allLayers = [True, True, True, True, True, True, True, True,
                     True, True, True, True, True, True, True, True,
@@ -98,11 +79,11 @@ def main(prep_type):
         bpy.data.objects['Armature'].data.layers = allLayers
         bpy.ops.pose.select_all(action='DESELECT')
 
-        #Select bones on layer 11
+        #Move pupil bones to layer 1
         armature = bpy.data.objects['Armature']
-        armature.data.bones['Left Eye'].layers[16] = True
+        armature.data.bones['Left Eye'].layers[0] = True
         armature.data.bones['Left Eye'].layers[10] = False
-        armature.data.bones['Right Eye'].layers[16] = True
+        armature.data.bones['Right Eye'].layers[0] = True
         armature.data.bones['Right Eye'].layers[10] = False
 
         #Select bones on layer 11
@@ -110,24 +91,20 @@ def main(prep_type):
             if bone.layers[10]==True:
                 bone.select = True
         
-        kklog('Using CATS to simplify bones...')
+        #if very simple selected, also get 3-5,12,17-19
+        if simp_type in ['A']:
+            for bone in armature.data.bones:
+                select_bool = bone.layers[2] or bone.layers[3] or bone.layers[4] or bone.layers[11] or bone.layers[12] or bone.layers[16] or bone.layers[17] or bone.layers[18]
+                if select_bool:
+                    bone.select = True
+        
+        kklog('Using the merge weights function in CATS to simplify bones...')
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.kkb.cats_merge_weights()
 
     #If exporting for VRM...
     if prep_type == 'A':
-        
-        '''
-        #remove materials and shapekeys
-        bpy.ops.object.mode_set(mode='OBJECT')
-        bpy.context.view_layer.objects.active=body
-        for x in body.material_slots:
-            body.active_material_index = 0
-            bpy.ops.object.material_slot_remove()
-        
-        bpy.ops.object.shape_key_remove(all=True)
-        '''
-
+        kklog('Editing armature for VRM...')
         bpy.context.view_layer.objects.active=armature
         bpy.ops.object.mode_set(mode='EDIT')
 
@@ -142,25 +119,23 @@ def main(prep_type):
         armature.data.edit_bones['Right ankle'].parent = armature.data.edit_bones['Right knee']
         armature.data.edit_bones['Left shoulder'].parent = armature.data.edit_bones['Upper Chest']
         armature.data.edit_bones['Right shoulder'].parent = armature.data.edit_bones['Upper Chest']
+        armature.data.edit_bones.remove(armature.data.edit_bones['dont need lol'])
 
         bpy.ops.object.mode_set(mode='POSE')
         bpy.ops.pose.select_all(action='DESELECT')
 
-        #Select bones on layer 3/5/12/13
+        #Merge specific bones for unity rig autodetect
         armature = bpy.data.objects['Armature']
         merge_these = ['cf_j_waist02', 'cf_s_waist01', 'cf_s_hand_L', 'cf_s_hand_R']
         for bone in armature.data.bones:
-            if bone.layers[11]==True or bone.layers[12] == True or bone.layers[2] == True or bone.layers[4] == True:
-                bone.select = True
             if bone.name in merge_these:
                 bone.select = True
-        
-        kklog('Using CATS to simplify more bones for VRM...')
+
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.kkb.cats_merge_weights()
 
     #If exporting for MMD...
-    if prep_type == 'B':
+    if prep_type == 'C':
         #Create the empty
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.empty_add(type='PLAIN_AXES', align='WORLD', location=(0, 0, 0))
@@ -261,9 +236,11 @@ class export_prep(bpy.types.Operator):
     def execute(self, context):
         scene = context.scene.kkbp
         prep_type = scene.prep_dropdown
-
+        simp_type = scene.simp_dropdown
+        last_step = time.time()
+        kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
         try:
-            main(prep_type)
+            main(prep_type, simp_type)
             scene.is_prepped = True
             return {'FINISHED'}
         except:

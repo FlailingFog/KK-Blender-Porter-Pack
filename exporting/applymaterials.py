@@ -89,7 +89,6 @@ def create_atlas_helpers():
             #set the mix shader's factor to 1 so the baked image is showing instead of the material
             mainMix.inputs[0].default_value=1
 
-
 def replace_images(folderpath, apply_type):
     fileList = Path(folderpath).glob('*.*')
     files = [file for file in fileList if file.is_file()]
@@ -110,6 +109,7 @@ def replace_images(folderpath, apply_type):
         else:
             currentImage = [file.name for file in files if (matname in file.name and 'normal' in file.name)]
         if not currentImage:
+            kklog("No {} baked image found for {}".fomrat('light' if apply_type == 'A' else 'dark' if apply_type == 'B' else 'normal', matname))
             continue
 
         imageName = currentImage[0]
@@ -127,7 +127,6 @@ def replace_images(folderpath, apply_type):
         imageNode.image = bpy.data.images[imageName]
 
         nodes['KK Mix'].inputs[0].default_value = 1
-        
 
 class apply_materials(bpy.types.Operator):
     bl_idname = "kkb.applymaterials"
@@ -146,24 +145,17 @@ class apply_materials(bpy.types.Operator):
             scene = context.scene.kkbp
             apply_type = scene.atlas_dropdown
 
-            #Stop if no object is currently selected
-            object = bpy.context.active_object
-            try:
-                #object is active but not selected
-                if not object.select_get():
-                    bpy.context.window_manager.popup_menu(showError, title="Error", icon='ERROR')
-                    return {'FINISHED'}
-            except:
-                #active object is Nonetype
-                bpy.context.window_manager.popup_menu(showError, title="Error", icon='ERROR')
-                return {'FINISHED'}
-
             #Get all files from the exported texture folder
-            folderpath = self.directory
+            folderpath = scene.import_dir if scene.import_dir != 'cleared' else self.directory #if applymaterials is run right after bake, use import dir as a temp directory holder
+            scene.import_dir == 'cleared'
 
-            create_atlas_helpers()
-            replace_images(folderpath, apply_type)
-
+            for ob in [obj for obj in bpy.context.view_layer.objects if obj.type == 'MESH']:
+                bpy.ops.object.select_all(action='DESELECT')
+                bpy.context.view_layer.objects.active = ob
+                ob.select_set(True)
+                create_atlas_helpers()
+                replace_images(folderpath, apply_type)
+            
             return {'FINISHED'}
         
         except:
