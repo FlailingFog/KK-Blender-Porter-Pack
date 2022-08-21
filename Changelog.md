@@ -18,7 +18,7 @@ Huge feature updates by **MediaMoots**!
 * The eye gag object for heart eyes, firey eyes, etc is now exported and available as new shapekeys on the body object!
     * These are parented to the body
     * The shapekeys will automatically hide the eyes and eyeline materials when active
-    * The swirly rotation speed, heart pulse speed and cry/fire animation speed can be changed in the Eye Gag materials 
+    * The swirly eye rotation speed, heart eye pulse speed and cry/fire eye animation speed can be changed in the Eye Gag materials 
 * The animated tongue is now exported!
     * This is parented to the body object and hidden by default
     * The rigged tongue doesn't use shapekeys like the rest of the face does
@@ -39,7 +39,7 @@ Huge feature updates by **MediaMoots**!
 * Texture suffixes are shortened
     * Image names over 64 characters long would cause blender to cufoff the filename, so this means long texture names are less likely to cause issues during import
 * The Koikatsu / BepInEx console will now be print out each mesh being exported. If the exporter is not working for a specific character, accessory or clothing item, you can use this to track down what is causing the exporter to fail.
-    * These are prefixed with [Info   :   Console]
+    * These messages are prefixed with [Info   :   Console]
 
 Rigify armature updates by **an anonymous contributor**!
 * Better Penetration bones will now be placed in the "Torso (Tweak)" layer when converting to the Rigify armature

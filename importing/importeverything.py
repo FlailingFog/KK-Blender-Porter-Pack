@@ -433,7 +433,10 @@ def get_and_load_textures(directory):
 
     for image in files:
         bpy.ops.image.open(filepath=str(image), use_udim_detecting=False)
-        bpy.data.images[image.name].pack()
+        try:
+            bpy.data.images[image.name].pack()
+        except:
+            kklog('This image was not automatically loaded in because its name exceeds 64 characters: ' + image.name, type = 'warn')
     
     #Get texture data for offset and scale
     for file in files:
@@ -461,7 +464,6 @@ def get_and_load_textures(directory):
 
     #Added node2 for the alpha masks
     def apply_texture_data_to_image(image, mat, group, node, node2 = ''):
-        #kklog('Im in the texture function')
         for item in json_tex_data:
             if item["textureName"] == str(image):
                 #Apply Offset and Scale
@@ -475,7 +477,6 @@ def get_and_load_textures(directory):
                     current_obj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].node_tree.nodes[node2].texture_mapping.translation[1] = item["offset"]["y"]
                     current_obj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].node_tree.nodes[node2].texture_mapping.scale[0] = item["scale"]["x"]
                     current_obj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].node_tree.nodes[node2].texture_mapping.scale[1] = item["scale"]["y"]
-                #kklog('I finished the texture function')
                 break
     
     current_obj = bpy.data.objects['Body']

@@ -598,11 +598,14 @@ def scale_final_bones():
     skirtbones = [0,1,2,3,4,5,6,7]
     skirtlength = [0,1,2,3,4]
 
-    for root in skirtbones:
-        for chain in skirtlength:
-            bone = 'cf_j_sk_0'+str(root)+'_0'+str(chain)
-            resize_bone(bone, 0.25)
-            connect_bone(bone)
+    try:
+        for root in skirtbones:
+            for chain in skirtlength:
+                bone = 'cf_j_sk_0'+str(root)+'_0'+str(chain)
+                resize_bone(bone, 0.25)
+                connect_bone(bone)
+    except:
+        kklog('No skirt bones detected. Skipping', type = 'warn')
     
     #scale eye bones, mouth bones, eyebrow bones
     bpy.ops.object.mode_set(mode='POSE')

@@ -205,14 +205,14 @@ def separate_everything(context):
             #kklog(outfit)
             outfit_index = int(outfit.name[-3:])
             #kklog(outfit_index)
-            clothes_indexes = [1, 2, 3, 4, 5, 6, 8]
+            clothes_indexes = [1, 2, 3, 4, 5, 6, 8] #skip 7 because that's indoor shoes
             clothes_indexes = [element + (12 * outfit_index) for element in clothes_indexes] #shift based on outfit number
             
             # dirty workaround for single outfits 
             for clothes_index in clothes_indexes:
                 if not index_exists(clothes_data, clothes_index):
                     outfit_index = 0
-                    clothes_indexes = [1, 2, 3, 4, 5, 6, 8]
+                    clothes_indexes = [1, 2, 3, 4, 5, 6, 8] #skip 7 because that's indoor shoes
                     clothes_indexes = [element + (12 * outfit_index) for element in clothes_indexes] #shift based on outfit number
                 break
             
