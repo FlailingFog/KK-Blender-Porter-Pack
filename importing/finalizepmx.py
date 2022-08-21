@@ -622,7 +622,7 @@ def modify_pmx_armature():
 
 #100% repurposed from https://github.com/FlailingFog/KK-Blender-Shader-Pack/issues/29
 ### Function to check for empty vertex groups
-#returns a dictionary in the form {vertex_group1: weight1, vertex_group2: weight2, etc}
+#returns a dictionary in the form {vertex_group1: maxweight1, vertex_group2: maxweight2, etc}
 def survey(obj):
     maxWeight = {}
     #prefill vertex group list with zeroes

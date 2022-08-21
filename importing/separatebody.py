@@ -28,8 +28,6 @@ def clean_body():
                 else:
                     kklog('Material wasn\'t found when deleting body materials: ' + mat, 'warn')
             bpy.ops.mesh.delete(type='VERT')
-        #the exporter (V3.73 >) now exports the animated tongue as well so this might not be needed anymore? - Media Moots 
-        # delete_material(['cf_m_tang.001'])
 
         #check if there's a face material. If there isn't then the model most likely has a face02 face. Rename to correct name
         if body.data.materials.find('cf_m_face_00') == -1:
@@ -181,8 +179,10 @@ def separate_everything(context):
     
     if context.scene.kkbp.categorize_dropdown in ['A', 'B']:
         #Select any clothes pieces that are normally supposed to be hidden and hide them
+        #the clothes json contains the clothing objects in a [base object, variation object, base object, variation object] format
         json_file = open(context.scene.kkbp.import_dir + 'KK_ClothesData.json')
         clothes_data = json.load(json_file)
+        #the smr json contains the link between the clothing object and the clothing material. The material is used for separation
         json_file = open(context.scene.kkbp.import_dir + 'KK_SMRData.json')
         smr_data = json.load(json_file)
 
@@ -200,80 +200,72 @@ def separate_everything(context):
             'Top part B',
             'Top part C']
         
-        #If there's multiple pieces to any clothing types other than the top, separate them into their own object using the smr data
-        for outfit in [outfit for outfit in bpy.data.objects if 'Outfit ' in outfit.name and 'Hair' not in outfit.name]:
-            #kklog(outfit)
-            outfit_index = int(outfit.name[-3:])
-            #kklog(outfit_index)
-            clothes_indexes = [1, 2, 3, 4, 5, 6, 8] #skip 7 because that's indoor shoes
+        def separate_pieces(piece, name_prefix = None):
+            try:
+                separate_material(piece, smr_index['SMRMaterialNames'])
+                bpy.data.objects[piece.name + '.001'].parent = piece
+                bpy.data.objects[piece.name + '.001'].name = name_prefix if name_prefix else (clothes_labels[clothes_index - 12 * outfit_index]) + ' alt ' + chr(ord('A') + label_index) + ' ' + piece.name
+            except:
+                #this piece was already separated
+                pass
+        
+        def get_base_name(mat):
+            return mat[:mat.rfind(' ')]
+        
+        #If there's multiple pieces to any clothing type, separate them into their own object using the smr data
+        #skip indoor shoes and the Top, Top part A-C categories for now
+        outfits = [outfit for outfit in bpy.data.objects if 'Outfit ' in outfit.name and 'Hair' not in outfit.name]
+        for outfit in outfits:
+            outfit_index = int(outfit.name[-3:]) if len(outfits) > 1 else 0 #change to 0 for single outfit exports
+            clothes_indexes = [1, 2, 3, 4, 5, 6, 8] 
             clothes_indexes = [element + (12 * outfit_index) for element in clothes_indexes] #shift based on outfit number
-            
-            # dirty workaround for single outfits 
-            for clothes_index in clothes_indexes:
-                if not index_exists(clothes_data, clothes_index):
-                    outfit_index = 0
-                    clothes_indexes = [1, 2, 3, 4, 5, 6, 8] #skip 7 because that's indoor shoes
-                    clothes_indexes = [element + (12 * outfit_index) for element in clothes_indexes] #shift based on outfit number
-                break
             
             for clothes_index in clothes_indexes:
                 variations = len(clothes_data[clothes_index]['RendNormal01'])
                 if variations > 1:
+                    label_index = 0
                     for index in range(1, variations):
-                        subpart_object_name = clothes_data[clothes_index]['RendNormal01'][index]
+                        previous_subpart_material_name = None
+                        previous_subpart_object_name = clothes_data[clothes_index]['RendNormal01'][index-1]
                         for smr_index in smr_data:
-                            if smr_index['SMRName'] == subpart_object_name and smr_index['CoordinateType'] == outfit_index:
-                                try:
-                                    separate_material(outfit, smr_index['SMRMaterialNames'])
-                                    bpy.data.objects[outfit.name + '.001'].parent = outfit
-                                    bpy.data.objects[outfit.name + '.001'].name = clothes_labels[clothes_index - 12 * outfit_index] + ' alt ' + ('B' if '_b ' in subpart_object_name else 'C') + ' ' + outfit.name
-                                except:
-                                    #the material was already separated
-                                    pass
+                            if (smr_index['SMRName'] == previous_subpart_object_name and
+                                smr_index['CoordinateType'] == int(outfit.name[-3:])):
+                                previous_subpart_material_name = get_base_name(smr_index['SMRMaterialNames'][0])
+                                break
 
-        #separate loop to prevent crashing
-        for outfit in [outfit for outfit in bpy.data.objects if 'Outfit ' in outfit.name and 'Hair' not in outfit.name and 'alt ' not in outfit.name and 'Indoor' not in outfit.name]:
-            #kklog(outfit)
-            outfit_index = int(outfit.name[-3:])
+                        current_subpart_object_name = clothes_data[clothes_index]['RendNormal01'][index]
+                        for smr_index in smr_data:
+                            if (smr_index['SMRName'] == current_subpart_object_name and
+                                smr_index['CoordinateType'] == int(outfit.name[-3:]) and
+                                previous_subpart_material_name == get_base_name(smr_index['SMRMaterialNames'][0])):
+                                separate_pieces(outfit)
+                                label_index+=1
+                                break
+        
+        #separate indoor shoes
+        #in a separate loop to prevent crashing
+        outfits = [outfit for outfit in bpy.data.objects if 'Outfit ' in outfit.name and 'Hair' not in outfit.name and 'alt ' not in outfit.name and 'Indoor' not in outfit.name]
+        for outfit in outfits:
+            outfit_index = int(outfit.name[-3:]) if len(outfits) > 1 else 0 #change to 0 for single outfit exports
             clothes_index = 7 + (12 * outfit_index)
-            
-            # dirty workaround for single outfits 
-            if not index_exists(clothes_data, clothes_index):
-                outfit_index = 0
-                clothes_index = 7 + (12 * outfit_index)
             
             #Always separate indoor shoes
             indoor_shoes_name = clothes_data[clothes_index]['RendNormal01']
             if indoor_shoes_name:
-                #kklog(indoor_shoes_name)
                 for smr_index in smr_data:
-                    #kklog(smr_index['SMRName'])
                     if smr_index['SMRName'] == indoor_shoes_name[0] and smr_index['CoordinateType'] == outfit_index:
-                        #kklog(smr_index['SMRName'])
-                        #kklog(smr_index['SMRMaterialNames'])
                         separate_material(outfit, smr_index['SMRMaterialNames'])
                         bpy.data.objects[outfit.name + '.001'].name = clothes_labels[7] + ' ' + outfit.name
                         bpy.data.objects[clothes_labels[7] + ' ' + outfit.name].parent = outfit
-                        #bpy.data.objects[clothes_labels[clothes_index]].hide_render = True
-                        #bpy.data.objects[clothes_labels[clothes_index]].hide = True
 
-        #separate loop to prevent crashing
-        #If there's multiple pieces to the top, separate them into their own object, but make sure to group them correctly
-        for outfit in [outfit for outfit in bpy.data.objects if 'Outfit ' in outfit.name and 'Hair' not in outfit.name and 'alt ' not in outfit.name and 'Indoor' not in outfit.name]:
+        #separate Top pieces and make sure to group them correctly
+        #in a separate loop to prevent crashing
+        outfits = [outfit for outfit in bpy.data.objects if 'Outfit ' in outfit.name and 'Hair' not in outfit.name and 'alt ' not in outfit.name and 'Indoor' not in outfit.name]
+        for outfit in outfits:
             grouping = {}
-            outfit_index = int(outfit.name[-3:])
+            outfit_index = int(outfit.name[-3:]) if len(outfits) > 1 else 0 #change to 0 for single outfit exports
             clothes_indexes = [0, 9, 10, 11]
             clothes_indexes = [element + (12 * outfit_index) for element in clothes_indexes] #shift based on outfit number
-            #kklog(outfit_index)
-            #kklog(clothes_indexes)
-            
-            # dirty workaround for single outfits 
-            for clothes_index in clothes_indexes:
-                if not index_exists(clothes_data, clothes_index):
-                    outfit_index = 0
-                    clothes_indexes = [1, 2, 3, 4, 5, 6, 8]
-                    clothes_indexes = [element + (12 * outfit_index) for element in clothes_indexes] #shift based on outfit number
-                break
 
             for clothes_index in clothes_indexes:
                 #print(clothes_index)
@@ -286,27 +278,32 @@ def separate_everything(context):
                             clothes_to_separate = [clothes_to_separate]
                         if len(clothes_to_separate) > 1:
                             for index in range(1,len(clothes_to_separate)):
-                                subpart_object_name = clothes_to_separate[index]
-                                #kklog(subpart_object_name)
+                                previous_subpart_material_name = None
+                                previous_subpart_object_name = clothes_data[clothes_index][cat][index-1]
                                 for smr_index in smr_data:
-                                    if smr_index['SMRName'] == subpart_object_name and smr_index['CoordinateType'] == outfit_index:
+                                    if (smr_index['SMRName'] == previous_subpart_object_name and
+                                        smr_index['CoordinateType'] == int(outfit.name[-3:])):
+                                        previous_subpart_material_name = get_base_name(smr_index['SMRMaterialNames'][0])
+                                        break
+
+                                current_subpart_object_name = clothes_data[clothes_index][cat][index]
+                                for smr_index in smr_data:
+                                    if (smr_index['SMRName'] == current_subpart_object_name and
+                                        smr_index['CoordinateType'] == int(outfit.name[-3:]) and
+                                        previous_subpart_material_name == get_base_name(smr_index['SMRMaterialNames'][0])):
                                         for item in smr_index['SMRMaterialNames']:
-                                            #print(item)
                                             try:
                                                 grouping[index].append(item)
                                             except:
                                                 grouping[index] = [item]
+                                        break
             if grouping != {}:
+                label_index = 0
                 for index in grouping:
-                    try:
-                        #print(grouping[index])
-                        separate_material(outfit, grouping[index])
-                        new_name = 'Top alt ' + chr(ord('A') + index) + ' ' + outfit.name 
-                        bpy.data.objects[outfit.name + '.001'].name = new_name 
-                        bpy.data.objects[new_name].parent = outfit
-                    except:
-                        #the material was already separated
-                        pass
+                    separate_material(outfit, grouping[index])
+                    bpy.data.objects[outfit.name + '.001'].parent = outfit
+                    bpy.data.objects[outfit.name + '.001'].name = clothes_labels[0] + ' alt ' + chr(ord('A') + label_index) + ' ' + outfit.name
+                    label_index+=1
 
     #Separate hitbox materials, if any
     hit_box_list = []
