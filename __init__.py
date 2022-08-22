@@ -30,6 +30,7 @@ from .importing.shapekeys import shape_keys
 from .exporting.bakematerials import bake_materials
 from .exporting.applymaterials import apply_materials
 from .exporting.exportprep import export_prep
+from .exporting.exportfbx import export_fbx
 
 from .extras.importstudio import import_studio
 from .extras.linkshapekeys import link_shapekeys
@@ -58,6 +59,7 @@ classes = (
     apply_materials,
     bake_materials, 
     export_prep,
+    export_fbx,
     image_convert, 
 
     import_animation, 

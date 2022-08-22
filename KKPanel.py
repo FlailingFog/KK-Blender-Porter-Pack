@@ -258,7 +258,7 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         split = row.split(align=True, factor=splitfac)
         split.label(text=t('bake_mult'))
         split.prop(context.scene.kkbp, "bake_mult", text = '')
-        
+
         col = box.column(align=True)
         row = col.row(align=True)
         row.operator('kkb.applymaterials', text = t('apply_temp'), icon = 'FILE_REFRESH')
@@ -266,6 +266,10 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         split = row.split(align = True, factor=splitfac)
         split.label(text=t('atlas'))
         split.prop(context.scene.kkbp, "atlas_dropdown")
+    
+        col = box.column(align=True)
+        row = col.row(align=True)
+        row.operator('kkb.exportfbx', text = t('export_fbx'), icon = 'FILEBROWSER')
 
 class EXTRAS_PT_panel(bpy.types.Panel):
     bl_label = 'KKBP Extras'

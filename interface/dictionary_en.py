@@ -80,6 +80,9 @@ translation_dictionary = {
 
     'atlas'         : 'Atlas type',
 
+    'export_fbx'    : 'Export FBX',
+    'export_fbx_tt' : 'Exports all visible objects as an fbx file. This is the same as the FBX export function in the File menu',
+
     'import_export' : 'Importing and Exporting',
     'import_model'  : 'Import model',
     'finish_cat'    : 'Finish categorization',

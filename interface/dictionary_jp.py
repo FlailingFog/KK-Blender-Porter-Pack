@@ -82,6 +82,9 @@ translation_dictionary = {
 
     'atlas'         : 'アトラスタイプ',
 
+    'export_fbx'    : 'FBXでエクスポート',
+    'export_fbx_tt' : 'モデルをエクスポートする。機能性はBlenderのFBXエクスポートと同じ',
+
     'import_export' : 'インポート ・ エクスポート',
     'import_model'  : 'モデルをインポート',
     'finish_cat'    : 'カテゴライズしまって',
