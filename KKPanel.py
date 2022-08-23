@@ -179,7 +179,7 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         
         row = col.row(align=True)
         row.operator('kkb.quickimport', text = t('import_model'), icon='MODIFIER')
-        row.enabled = not scene.import_dir == 'cleared'
+        row.enabled = not scene.import_dir == 'cleared' and not scene.is_prepped
         
         row = col.row(align=True)
         row.label(text="")
@@ -191,13 +191,13 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         if scene.categorize_dropdown in ['B']:
             row = col.row(align=True)
             row.operator('kkb.matimport', text = t('finish_cat'), icon='BRUSHES_ALL')
-            row.enabled = not scene.import_dir == 'cleared'
+            row.enabled = not scene.import_dir == 'cleared' and not scene.is_prepped
         
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "armature_dropdown")
         split.prop(context.scene.kkbp, "categorize_dropdown")
-        row.enabled = not scene.import_dir == 'cleared'
+        row.enabled = not scene.import_dir == 'cleared' and not scene.is_prepped
         
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
@@ -209,19 +209,19 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "shapekeys_dropdown")
         split.prop(context.scene.kkbp, "fix_seams", toggle=True, text = t('seams'))
-        row.enabled = not scene.import_dir == 'cleared'
+        row.enabled = not scene.import_dir == 'cleared' and not scene.is_prepped
         
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "texture_outline_bool", toggle=True, text = t('outline'))
         split.prop(context.scene.kkbp, "templates_bool", toggle=True, text = t('keep_templates'))
-        row.enabled = not scene.import_dir == 'cleared'
+        row.enabled = not scene.import_dir == 'cleared' and not scene.is_prepped
 
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "sfw_mode", toggle=True, text = t('sfw_mode'))
         #split.prop(context.scene.kkbp, "templates_bool", toggle=True, text = t('keep_templates'))
-        row.enabled = not scene.import_dir == 'cleared'
+        row.enabled = not scene.import_dir == 'cleared' and not scene.is_prepped
     
 class EXPORTING_PT_panel(bpy.types.Panel):
     bl_parent_id = "IMPORTING_PT_panel"
