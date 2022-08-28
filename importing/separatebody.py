@@ -74,12 +74,12 @@ def add_freestyle_faces():
                     kklog('Group wasn\'t found when freestyling vertex groups: ' + group, 'warn')
             bpy.ops.mesh.mark_freestyle_face(clear=False)
         freestyle_list = [
-            'cf_j_bnip02_L', 'cf_j_bnip02_R'
+            'cf_j_bnip02_L', 'cf_j_bnip02_R',
             'cf_s_bust03_L', 'cf_s_bust03_R']
         mark_group_as_freestyle(freestyle_list)
         bpy.ops.mesh.select_all(action = 'DESELECT')
 
-        def delete_group(group_list, search_type = 'exact'):
+        def delete_group(group_list):
             bpy.ops.mesh.select_all(action = 'DESELECT')
             for group in group_list:
                 group_found = body.vertex_groups.find(group)      
@@ -90,7 +90,7 @@ def add_freestyle_faces():
                     kklog('Group wasn\'t found when deleting vertex groups: ' + group, 'warn')
             bpy.ops.mesh.delete(type='VERT')
         delete_list = [
-            'cf_j_kokan', 'cf_j_ana'
+            'cf_j_kokan', 'cf_j_ana',
             'cf_s_bnip025_L', 'cf_s_bnip025_R']
         delete_group(delete_list)
         bpy.ops.mesh.select_all(action = 'DESELECT')
@@ -145,37 +145,39 @@ def separate_everything(context):
     texture_files = []
     for file in texture_data:
         texture_files.append(file['textureName'])
-    if context.scene.kkbp.categorize_dropdown not in ['B']:
-        for outfit in bpy.data.objects:
-            if "Outfit" in outfit.name and "Hair" not in outfit.name:
-                #selection stuff
-                bpy.ops.object.mode_set(mode = 'OBJECT')
-                bpy.ops.object.select_all(action = 'DESELECT')
-                bpy.context.view_layer.objects.active = outfit
-                bpy.ops.object.mode_set(mode = 'EDIT')
-                bpy.ops.mesh.select_all(action = 'DESELECT')
 
-                outfit['KKBP outfit ID'] = int(outfit.name[-1:])
+    for outfit in bpy.data.objects:
+        if "Outfit" in outfit.name and "Hair" not in outfit.name:
+            #selection stuff
+            bpy.ops.object.mode_set(mode = 'OBJECT')
+            bpy.ops.object.select_all(action = 'DESELECT')
+            bpy.context.view_layer.objects.active = outfit
+            bpy.ops.object.mode_set(mode = 'EDIT')
+            bpy.ops.mesh.select_all(action = 'DESELECT')
 
-                #make uv names match body's names
-                outfit.data.uv_layers[0].name = 'uv_main'
-                outfit.data.uv_layers[1].name = 'uv_nipple_and_shine'
-                outfit.data.uv_layers[2].name = 'uv_underhair'
-                outfit.data.uv_layers[3].name = 'uv_eyeshadow'
-                
-                hair_mat_list = []
-                for mat in material_data:
-                    if mat['ShaderName'] in ["Shader Forge/main_hair_front", "Shader Forge/main_hair", 'Koikano/hair_main_sun_front', 'Koikano/hair_main_sun', 'xukmi/HairPlus', 'xukmi/HairFrontPlus']:
-                        if (mat['MaterialName'] + '_HGLS.png') in texture_files or ((mat['MaterialName'] + '_NMP.png') not in texture_files and (mat['MaterialName'] + '_MT_CT.png') not in texture_files and (mat['MaterialName'] + '_MT.png') not in texture_files):
-                            hair_mat_list.append(mat['MaterialName'])
-                if len(hair_mat_list):
+            outfit['KKBP outfit ID'] = int(outfit.name[-1:])
+
+            #make uv names match body's names
+            outfit.data.uv_layers[0].name = 'uv_main'
+            outfit.data.uv_layers[1].name = 'uv_nipple_and_shine'
+            outfit.data.uv_layers[2].name = 'uv_underhair'
+            outfit.data.uv_layers[3].name = 'uv_eyeshadow'
+            
+            hair_mat_list = []
+            for mat in material_data:
+                if mat['ShaderName'] in ["Shader Forge/main_hair_front", "Shader Forge/main_hair", 'Koikano/hair_main_sun_front', 'Koikano/hair_main_sun', 'xukmi/HairPlus', 'xukmi/HairFrontPlus']:
+                    if (mat['MaterialName'] + '_HGLS.png') in texture_files or ((mat['MaterialName'] + '_NMP.png') not in texture_files and (mat['MaterialName'] + '_MT_CT.png') not in texture_files and (mat['MaterialName'] + '_MT.png') not in texture_files):
+                        hair_mat_list.append(mat['MaterialName'])
+            if len(hair_mat_list):
+                #Only separate hair if not in pause mode
+                if context.scene.kkbp.categorize_dropdown not in ['B']:
                     separate_material(outfit, hair_mat_list)
                     bpy.data.objects[outfit.name + '.001'].name = 'Hair ' + outfit.name
 
                     #don't reparent hair if Categorize by SMR
                     if context.scene.kkbp.categorize_dropdown not in ['D']:
                         bpy.data.objects['Hair ' + outfit.name].parent = outfit
-        bpy.context.view_layer.objects.active = body
+    bpy.context.view_layer.objects.active = body
     
     if context.scene.kkbp.categorize_dropdown in ['A', 'B']:
         #Select any clothes pieces that are normally supposed to be hidden and hide them
@@ -318,6 +320,7 @@ def separate_everything(context):
             #print('attempting to get the hitboxes off outfit 00')
             separate_material(bpy.data.objects['Outfit 00'], hit_box_list, search_type='fuzzy')
             bpy.data.objects['Outfit 00.001'].name = 'Hitboxes again'
+            bpy.data.objects['Hitboxes again']['KKBP outfit ID'] = None
 
     #Separate the shadowcast if any
     try:
@@ -702,7 +705,6 @@ class separate_body(bpy.types.Operator):
             cleanup()
 
             kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
-                    #if it fails then abort and print the error
             return{'FINISHED'}
 
         except:

@@ -80,7 +80,7 @@ class quick_import(bpy.types.Operator):
         context.scene.kkbp.import_dir = str(self.filepath)[:-9]
 
         #run commands based on selection
-        if context.scene.kkbp.categorize_dropdown == 'A':
+        if context.scene.kkbp.categorize_dropdown == 'A': #Automatic separation
             commands = [
                 import_pmx_models(context.scene.kkbp.import_dir),
                 bpy.ops.kkb.finalizepmx('INVOKE_DEFAULT'),
@@ -91,7 +91,7 @@ class quick_import(bpy.types.Operator):
                 bpy.ops.kkb.importeverything('INVOKE_DEFAULT'),
                 bpy.ops.kkb.importcolors('EXEC_DEFAULT'),
             ]
-        elif context.scene.kkbp.categorize_dropdown == 'B':
+        elif context.scene.kkbp.categorize_dropdown == 'B': #Manual separation
             commands = [
                 import_pmx_models(context.scene.kkbp.import_dir),
                 bpy.ops.kkb.finalizepmx('INVOKE_DEFAULT'),
@@ -100,7 +100,19 @@ class quick_import(bpy.types.Operator):
                 bpy.ops.kkb.cleanarmature('INVOKE_DEFAULT'),
                 bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT'),
             ]
-        elif context.scene.kkbp.categorize_dropdown == 'D':
+        elif context.scene.kkbp.categorize_dropdown == 'C': #Separate every piece
+            commands = [
+                import_pmx_models(context.scene.kkbp.import_dir),
+                bpy.ops.kkb.finalizepmx('INVOKE_DEFAULT'),
+                bpy.ops.kkb.shapekeys('INVOKE_DEFAULT'),
+                bpy.ops.kkb.separatebody('INVOKE_DEFAULT'),
+                bpy.ops.kkb.cleanarmature('INVOKE_DEFAULT'),
+                bpy.ops.kkb.separatemeshes('EXEC_DEFAULT'),
+                bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT'),
+                bpy.ops.kkb.importeverything('INVOKE_DEFAULT'),
+                bpy.ops.kkb.importcolors('EXEC_DEFAULT'),
+            ]
+        else: #SMR pipeline
             commands = [
                 import_pmx_models(context.scene.kkbp.import_dir),
                 bpy.ops.kkb.finalizepmx('INVOKE_DEFAULT'),
@@ -108,18 +120,6 @@ class quick_import(bpy.types.Operator):
                 bpy.ops.kkb.separatebody('INVOKE_DEFAULT'),
                 bpy.ops.kkb.cleanarmature('INVOKE_DEFAULT'),
                 bpy.ops.kkb.separatemeshes('INVOKE_DEFAULT'),
-            ]
-        else:
-            commands = [
-                import_pmx_models(context.scene.kkbp.import_dir),
-                bpy.ops.kkb.finalizepmx('INVOKE_DEFAULT'),
-                bpy.ops.kkb.shapekeys('INVOKE_DEFAULT'),
-                bpy.ops.kkb.separatebody('INVOKE_DEFAULT'),
-                bpy.ops.kkb.cleanarmature('INVOKE_DEFAULT'),
-                bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT'),
-                bpy.ops.kkb.importeverything('INVOKE_DEFAULT'),
-                bpy.ops.kkb.separatemeshes('EXEC_DEFAULT'),
-                bpy.ops.kkb.importcolors('EXEC_DEFAULT'),
             ]
 
         #run commands based on selection

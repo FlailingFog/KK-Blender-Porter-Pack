@@ -44,7 +44,8 @@ def reparent_bones():
                 armature.driver_remove(driver.data_path, -1)
 
     #Select the armature and make it active
-    bpy.ops.object.mode_set(mode='OBJECT')
+    if bpy.context.scene.kkbp.categorize_dropdown in ['A','B']:
+        bpy.ops.object.mode_set(mode='OBJECT')
     bpy.ops.object.select_all(action='DESELECT')
     armature = bpy.data.objects['Armature']
     armature.select_set(True)

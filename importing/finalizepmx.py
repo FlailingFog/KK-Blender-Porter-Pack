@@ -649,7 +649,7 @@ Basic strategy:
 * Match the bone and vertex group locations per material
 * Extract the vertices from the merged vertex group and assign them to the matched vertex group for each material + vertex group / bone combo
 '''
-def fix_accessories():
+'''def fix_accessories():
     armature = bpy.data.objects['Armature']
     body = bpy.data.objects['Body']
 
@@ -821,7 +821,7 @@ def fix_accessories():
                         old_vg_index = index
                 if vertex in materialVertices[material]:
                     body.data.vertices[vertex].groups[old_vg_index].weight = 0
-                    body.vertex_groups[old_vg_index].remove([vertex])
+                    body.vertex_groups[old_vg_index].remove([vertex])'''
 
 def rename_mmd_bones():
     #renames japanese name field for importing vmds via mmd tools

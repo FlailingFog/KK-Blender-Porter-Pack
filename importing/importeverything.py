@@ -189,7 +189,7 @@ def get_templates_and_apply(directory, use_fake_user):
             template.name = 'KK ' + original_material.name
             original_material.material = bpy.data.materials[template.name]
     
-    outfit_objects = [obj for obj in bpy.data.objects if 'Outfit ' in obj.name and 'Hair Outfit ' not in obj.name and obj.type == 'MESH']
+    outfit_objects = [obj for obj in bpy.data.objects if obj.get('KKBP outfit ID') != None and 'Hair Outfit ' not in obj.name]
     #Replace all other materials with the general template and name accordingly
     for ob in outfit_objects:
         for original_material in ob.material_slots:
@@ -214,7 +214,7 @@ def get_templates_and_apply(directory, use_fake_user):
         tongue = bpy.data.objects['Tongue (rigged)']
         tongue.material_slots[0].material = bpy.data.materials['KK Tongue']
 
-    #give the gag eyes a material template
+    #give the gag eyes a material template if they exist and have shapekeys setup
     if bpy.data.objects.get('Gag Eyes'):
         gag = bpy.data.objects['Gag Eyes']
         gag.material_slots['cf_m_gageye_00'].material = bpy.data.materials['KK Gag00']
@@ -423,10 +423,13 @@ def get_and_load_textures(directory):
     fileList = Path(directory).glob('*.*')
     files = [file for file in fileList if file.is_file()]
 
-    #get all images from all outfit directories
-    outfit_objects = [obj for obj in bpy.data.objects if obj.name[:7] == 'Outfit ']
-    for outfit in outfit_objects:
-        fileList = Path(directory + r'\Outfit 0' + outfit.name[8]).glob('*.*')
+    #get images from outfit directory based on outfit ID numbers
+    id_list = []
+    for obj in [obj for obj in bpy.data.objects if obj.get('KKBP outfit ID') != None and obj.type == 'MESH']:
+        if obj['KKBP outfit ID'] not in id_list:
+            id_list.append(obj['KKBP outfit ID'])
+    for outfit_id in id_list:
+        fileList = Path(directory + r'\Outfit 0' + str(outfit_id)).glob('*.*')
         files_to_append = [file for file in fileList if file.is_file()]
         for outfit_file in files_to_append:
             files.append(outfit_file)
@@ -506,18 +509,23 @@ def get_and_load_textures(directory):
     set_uv_type('KK Body', 'NSFWpos', 'nippleuv', 'uv_nipple_and_shine')
     set_uv_type('KK Body', 'NSFWpos', 'underuv', 'uv_underhair')
 
-    try:
+    if bpy.data.images.get('cf_m_body_AM_00.png'):
         #add female alpha mask
-        current_obj.material_slots['KK Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].node_tree.nodes['AlphaBody'].image = bpy.data.images['cf_m_body_AM.png'] #female
-        apply_texture_data_to_image('KK Body', 'BodyShader', 'BodyTransp', 'AlphaBody')
-    except:
-        try:
-            #maybe the character is male
-            current_obj.material_slots['KK Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].node_tree.nodes['AlphaBody'].image = bpy.data.images['cm_m_body_AM.png'] #male
-            apply_texture_data_to_image('KK Body', 'BodyShader', 'BodyTransp', 'AlphaBody')
-        except:
-            #An alpha mask for the clothing wasn't present in the Textures folder
-            current_obj.material_slots['KK Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].inputs['Built in transparency toggle'].default_value = 0
+        current_obj.material_slots['KK Body'].material.node_tree.nodes['Gentex'].node_tree.nodes['Bodyalpha'].image = bpy.data.images['cf_m_body_AM_00.png'] #female
+        apply_texture_data_to_image('cf_m_body_AM_00.png', 'KK Body', 'Gentex', 'Bodyalpha')
+    elif bpy.data.images.get('cm_m_body_AM_00.png'):
+        #maybe the character is male
+        current_obj.material_slots['KK Body'].material.node_tree.nodes['Gentex'].node_tree.nodes['Bodyalpha'].image = bpy.data.images['cm_m_body_AM_00.png'] #male
+        apply_texture_data_to_image('cm_m_body_AM_00.png', 'KK Body', 'Gentex', 'Bodyalpha')
+    else:
+        #check other alpha mask numbers if Outfit 00's wasn't present
+        mask = None
+        for image in bpy.data.images:
+            if '_m_body_AM_' in image.name and outfit.name[-1:].isnumeric():
+                current_obj.material_slots['KK Body'].material.node_tree.nodes['Gentex'].node_tree.nodes['Bodyalpha'].image = bpy.data.images[image.name]
+                apply_texture_data_to_image(image.name, 'KK Body', 'Gentex', 'Bodyalpha')
+        #An alpha mask for the clothing wasn't present in the Textures folder
+        current_obj.material_slots['KK Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].inputs['Built in transparency toggle'].default_value = 0
     
     image_load('KK Face', 'Gentex', 'FaceMain', 'cf_m_face_00_MT_CT.png')
     #default to colors if there's no face maintex
@@ -566,20 +574,21 @@ def get_and_load_textures(directory):
     image_load('KK Tongue', 'Gentex', 'MainNormDetail', 'cf_m_tang_NMP_CNV.png') #load regular map by default
     image_load('KK Tongue', 'Gentex', 'MainNormDetail', 'cf_m_tang_NMPD_CNV.png') #then the detail map if it's there
 
-    #load all gag eyes in
-    current_obj = bpy.data.objects['Gag Eyes']
-    image_load('KK Gag00', 'Gentex', '00gag00', 'cf_m_gageye_00_cf_t_gageye_00_MT_CT.png')
-    image_load('KK Gag00', 'Gentex', '00gag02', 'cf_m_gageye_00_cf_t_gageye_02_MT_CT.png')
-    image_load('KK Gag00', 'Gentex', '00gag04', 'cf_m_gageye_00_cf_t_gageye_04_MT_CT.png')
-    image_load('KK Gag00', 'Gentex', '00gag05', 'cf_m_gageye_00_cf_t_gageye_05_MT_CT.png')
-    image_load('KK Gag00', 'Gentex', '00gag06', 'cf_m_gageye_00_cf_t_gageye_06_MT_CT.png')
+    #load all gag eyes in if it exists
+    if bpy.data.objects.get('Gag Eyes'):
+        current_obj = bpy.data.objects['Gag Eyes']
+        image_load('KK Gag00', 'Gentex', '00gag00', 'cf_m_gageye_00_cf_t_gageye_00_MT_CT.png')
+        image_load('KK Gag00', 'Gentex', '00gag02', 'cf_m_gageye_00_cf_t_gageye_02_MT_CT.png')
+        image_load('KK Gag00', 'Gentex', '00gag04', 'cf_m_gageye_00_cf_t_gageye_04_MT_CT.png')
+        image_load('KK Gag00', 'Gentex', '00gag05', 'cf_m_gageye_00_cf_t_gageye_05_MT_CT.png')
+        image_load('KK Gag00', 'Gentex', '00gag06', 'cf_m_gageye_00_cf_t_gageye_06_MT_CT.png')
 
-    image_load('KK Gag01', 'Gentex', '01gag03', 'cf_m_gageye_01_cf_t_gageye_03_MT_CT.png')
-    image_load('KK Gag01', 'Gentex', '01gag01', 'cf_m_gageye_01_cf_t_gageye_01_MT_CT.png')
+        image_load('KK Gag01', 'Gentex', '01gag03', 'cf_m_gageye_01_cf_t_gageye_03_MT_CT.png')
+        image_load('KK Gag01', 'Gentex', '01gag01', 'cf_m_gageye_01_cf_t_gageye_01_MT_CT.png')
 
-    image_load('KK Gag02', 'Gentex', '02gag07', 'cf_m_gageye_02_cf_t_gageye_07_MT_CT.png')
-    image_load('KK Gag02', 'Gentex', '02gag08', 'cf_m_gageye_02_cf_t_gageye_08_MT_CT.png')
-    image_load('KK Gag02', 'Gentex', '02gag09', 'cf_m_gageye_02_cf_t_gageye_09_MT_CT.png')
+        image_load('KK Gag02', 'Gentex', '02gag07', 'cf_m_gageye_02_cf_t_gageye_07_MT_CT.png')
+        image_load('KK Gag02', 'Gentex', '02gag08', 'cf_m_gageye_02_cf_t_gageye_08_MT_CT.png')
+        image_load('KK Gag02', 'Gentex', '02gag09', 'cf_m_gageye_02_cf_t_gageye_09_MT_CT.png')
 
     #load the tears texture in
     if bpy.data.objects.get('Tears'):
@@ -612,7 +621,7 @@ def get_and_load_textures(directory):
     # Loop through each material in the general object and load the textures, if any, into unique node groups
     # also make unique shader node groups so all materials are unique
     # make a copy of the node group, use it to replace the current node group
-    outfit_objects = [obj for obj in bpy.data.objects if 'Outfit ' in obj.name and 'Hair Outfit ' not in obj.name and obj.type == 'MESH']
+    outfit_objects = [obj for obj in bpy.data.objects if obj.get('KKBP outfit ID') != None and 'Hair Outfit ' not in obj.name and obj.type == 'MESH']
     for object in outfit_objects:
         current_obj = object
         for genMat in current_obj.material_slots:
@@ -738,84 +747,85 @@ def get_and_load_textures(directory):
         empty.hide_render = True
     except:
         #i don't feel like dealing with any errors related to this
-        kklog('The GFN empty wasnt setup correctly')
+        kklog('The GFN empty wasnt setup correctly. Oh well.')
         pass
     
     #setup gag eye drivers
-    gag_keys = [
-        'Circle Eyes 1',
-        'Circle Eyes 2',
-        'Spiral Eyes',
-        'Heart Eyes',
-        'Fiery Eyes',
-        'Cartoony Wink',
-        'Vertical Line',
-        'Cartoony Closed',
-        'Horizontal Line',
-        'Cartoony Crying' 
-    ]
+    if bpy.data.objects.get('Gag Eyes'):
+        gag_keys = [
+            'Circle Eyes 1',
+            'Circle Eyes 2',
+            'Spiral Eyes',
+            'Heart Eyes',
+            'Fiery Eyes',
+            'Cartoony Wink',
+            'Vertical Line',
+            'Cartoony Closed',
+            'Horizontal Line',
+            'Cartoony Crying' 
+        ]
 
-    body = bpy.data.objects['Body']
-    skey_driver = bpy.data.materials['KK Gag00'].node_tree.nodes['Parser'].inputs[0].driver_add('default_value')
-    skey_driver.driver.type = 'SCRIPTED'
-    for key in gag_keys:
+        body = bpy.data.objects['Body']
+        skey_driver = bpy.data.materials['KK Gag00'].node_tree.nodes['Parser'].inputs[0].driver_add('default_value')
+        skey_driver.driver.type = 'SCRIPTED'
+        for key in gag_keys:
+            newVar = skey_driver.driver.variables.new()
+            newVar.name = key.replace(' ','')
+            newVar.type = 'SINGLE_PROP'
+            newVar.targets[0].id_type = 'KEY'
+            newVar.targets[0].id = body.data.shape_keys
+            newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
+        skey_driver.driver.expression = '0 if CircleEyes1 else 1 if CircleEyes2 else 2 if CartoonyClosed else 3 if VerticalLine else 4'
+
+        skey_driver = bpy.data.materials['KK Gag01'].node_tree.nodes['Parser'].inputs[0].driver_add('default_value')
+        skey_driver.driver.type = 'SCRIPTED'
+        for key in gag_keys:
+            newVar = skey_driver.driver.variables.new()
+            newVar.name = key.replace(' ','')
+            newVar.type = 'SINGLE_PROP'
+            newVar.targets[0].id_type = 'KEY'
+            newVar.targets[0].id = body.data.shape_keys
+            newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
+        skey_driver.driver.expression = '0 if HeartEyes else 1'
+
+        skey_driver = bpy.data.materials['KK Gag02'].node_tree.nodes['Parser'].inputs[0].driver_add('default_value')
+        skey_driver.driver.type = 'SCRIPTED'
+        for key in gag_keys:
+            newVar = skey_driver.driver.variables.new()
+            newVar.name = key.replace(' ','')
+            newVar.type = 'SINGLE_PROP'
+            newVar.targets[0].id_type = 'KEY'
+            newVar.targets[0].id = body.data.shape_keys
+            newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
+        skey_driver.driver.expression = '0 if CartoonyCrying else 1 if CartoonyWink else 2'
+
+        #make the eyes and eyeline transparent when the gag shapekey is activated
+        skey_driver = bpy.data.materials['KK EyeR (hitomi)'].node_tree.nodes['EyeShader'].node_tree.nodes['Gagtoggle'].inputs[0].driver_add('default_value')
         newVar = skey_driver.driver.variables.new()
-        newVar.name = key.replace(' ','')
+        newVar.name = 'gag'
         newVar.type = 'SINGLE_PROP'
         newVar.targets[0].id_type = 'KEY'
         newVar.targets[0].id = body.data.shape_keys
-        newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
-    skey_driver.driver.expression = '0 if CircleEyes1 else 1 if CircleEyes2 else 2 if CartoonyClosed else 3 if VerticalLine else 4'
+        newVar.targets[0].data_path = 'key_blocks["KK Eyes_gageye"].value' 
+        skey_driver.driver.expression = 'gag'
 
-    skey_driver = bpy.data.materials['KK Gag01'].node_tree.nodes['Parser'].inputs[0].driver_add('default_value')
-    skey_driver.driver.type = 'SCRIPTED'
-    for key in gag_keys:
+        skey_driver = bpy.data.materials['KK Eyewhites (sirome)'].node_tree.nodes['EyewhiteShader'].node_tree.nodes['Gagtoggle'].inputs[0].driver_add('default_value')
         newVar = skey_driver.driver.variables.new()
-        newVar.name = key.replace(' ','')
+        newVar.name = 'gag'
         newVar.type = 'SINGLE_PROP'
         newVar.targets[0].id_type = 'KEY'
         newVar.targets[0].id = body.data.shape_keys
-        newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
-    skey_driver.driver.expression = '0 if HeartEyes else 1'
+        newVar.targets[0].data_path = 'key_blocks["KK Eyes_gageye"].value' 
+        skey_driver.driver.expression = 'gag'
 
-    skey_driver = bpy.data.materials['KK Gag02'].node_tree.nodes['Parser'].inputs[0].driver_add('default_value')
-    skey_driver.driver.type = 'SCRIPTED'
-    for key in gag_keys:
+        skey_driver = bpy.data.materials['KK Eyeline up'].node_tree.nodes['EyelineShader'].node_tree.nodes['Gagtoggle'].inputs[0].driver_add('default_value')
         newVar = skey_driver.driver.variables.new()
-        newVar.name = key.replace(' ','')
+        newVar.name = 'gag'
         newVar.type = 'SINGLE_PROP'
         newVar.targets[0].id_type = 'KEY'
         newVar.targets[0].id = body.data.shape_keys
-        newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
-    skey_driver.driver.expression = '0 if CartoonyCrying else 1 if CartoonyWink else 2'
-
-    #make the eyes and eyeline transparent when the gag shapekey is activated
-    skey_driver = bpy.data.materials['KK EyeR (hitomi)'].node_tree.nodes['EyeShader'].node_tree.nodes['Gagtoggle'].inputs[0].driver_add('default_value')
-    newVar = skey_driver.driver.variables.new()
-    newVar.name = 'gag'
-    newVar.type = 'SINGLE_PROP'
-    newVar.targets[0].id_type = 'KEY'
-    newVar.targets[0].id = body.data.shape_keys
-    newVar.targets[0].data_path = 'key_blocks["KK Eyes_gageye"].value' 
-    skey_driver.driver.expression = 'gag'
-
-    skey_driver = bpy.data.materials['KK Eyewhites (sirome)'].node_tree.nodes['EyewhiteShader'].node_tree.nodes['Gagtoggle'].inputs[0].driver_add('default_value')
-    newVar = skey_driver.driver.variables.new()
-    newVar.name = 'gag'
-    newVar.type = 'SINGLE_PROP'
-    newVar.targets[0].id_type = 'KEY'
-    newVar.targets[0].id = body.data.shape_keys
-    newVar.targets[0].data_path = 'key_blocks["KK Eyes_gageye"].value' 
-    skey_driver.driver.expression = 'gag'
-
-    skey_driver = bpy.data.materials['KK Eyeline up'].node_tree.nodes['EyelineShader'].node_tree.nodes['Gagtoggle'].inputs[0].driver_add('default_value')
-    newVar = skey_driver.driver.variables.new()
-    newVar.name = 'gag'
-    newVar.type = 'SINGLE_PROP'
-    newVar.targets[0].id_type = 'KEY'
-    newVar.targets[0].id = body.data.shape_keys
-    newVar.targets[0].data_path = 'key_blocks["KK Eyes_gageye"].value' 
-    skey_driver.driver.expression = 'gag'
+        newVar.targets[0].data_path = 'key_blocks["KK Eyes_gageye"].value' 
+        skey_driver.driver.expression = 'gag'
 
 def add_outlines(single_outline_mode):
     #Add face and body outlines, then load in the clothes transparency mask to body outline
@@ -840,14 +850,9 @@ def add_outlines(single_outline_mode):
 
     #body second
     ob.data.materials.append(bpy.data.materials['KK Body Outline'])
-    try:
-        bpy.data.materials['KK Body Outline'].node_tree.nodes['BodyMask'].image = bpy.data.images['cf_m_body_AM.png'] #female
-    except:
-        try:
-            bpy.data.materials['KK Body Outline'].node_tree.nodes['BodyMask'].image = bpy.data.images['cf_m_body_AM.png'] #male
-        except:
-            #An alpha mask for the clothing wasn't present in the Textures folder
-            bpy.data.materials['KK Body Outline'].node_tree.nodes['Clipping prevention toggle'].inputs[0].default_value = 0            
+    if not bpy.data.materials['KK Body Outline'].node_tree.nodes['Gentex'].node_tree.nodes['Bodyalpha'].image:
+        #An alpha mask for the clothing wasn't present in the Textures folder
+        bpy.data.materials['KK Body Outline'].node_tree.nodes['Clipping prevention toggle'].inputs[0].default_value = 0            
 
     #And give the body an inactive data transfer modifier for the shading proxy
     mod = ob.modifiers.new(type='DATA_TRANSFER', name = 'Shadowcast shading proxy')
@@ -861,49 +866,50 @@ def add_outlines(single_outline_mode):
     mod.loop_mapping = 'POLYINTERP_LNORPROJ'
 
     #Give each piece of hair with an alphamask on each hair object it's own outline group
-    hair_objects = [obj for obj in bpy.data.objects if 'Hair Outfit ' in obj.name]
-    for ob in hair_objects:
-        bpy.context.view_layer.objects.active = ob
+    if not single_outline_mode:
+        hair_objects = [obj for obj in bpy.data.objects if 'Hair Outfit ' in obj.name]
+        for ob in hair_objects:
+            bpy.context.view_layer.objects.active = ob
 
-        #Get the length of the material list before starting
-        outlineStart = len(ob.material_slots)
+            #Get the length of the material list before starting
+            outlineStart = len(ob.material_slots)
 
-        for matindex in range(0, outlineStart, 1):
-            #print(matindex)
-            genMat = ob.material_slots[matindex]
-            genType = genMat.name.replace('KK ','')
-            
-            AlphaImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairAlpha'].image
-            MainImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairMainTex'].image
+            for matindex in range(0, outlineStart, 1):
+                #print(matindex)
+                genMat = ob.material_slots[matindex]
+                genType = genMat.name.replace('KK ','')
+                
+                AlphaImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairAlpha'].image
+                MainImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairMainTex'].image
 
-            if AlphaImage or MainImage:
-                #set the material as active and move to the top of the material list
-                ob.active_material_index = ob.data.materials.find(genMat.name)
+                if AlphaImage or MainImage:
+                    #set the material as active and move to the top of the material list
+                    ob.active_material_index = ob.data.materials.find(genMat.name)
 
-                def moveUp():
-                    return bpy.ops.object.material_slot_move(direction='UP')
+                    def moveUp():
+                        return bpy.ops.object.material_slot_move(direction='UP')
 
-                while moveUp() != {"CANCELLED"}:
-                    pass
+                    while moveUp() != {"CANCELLED"}:
+                        pass
 
-                OutlineMat = bpy.data.materials['KK Outline'].copy()
-                OutlineMat.name = 'Outline ' + genType
-                ob.data.materials.append(OutlineMat)
+                    OutlineMat = bpy.data.materials['KK Outline'].copy()
+                    OutlineMat.name = 'Outline ' + genType
+                    ob.data.materials.append(OutlineMat)
 
-                #redraw UI with each material append to prevent crashing
-                bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+                    #redraw UI with each material append to prevent crashing
+                    bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
-                #Make the new outline the first outline in the material list
-                ob.active_material_index = ob.data.materials.find(OutlineMat.name)
-                while ob.active_material_index > outlineStart:
-                    #print(AlphaImage)
-                    #print(ob.active_material_index)
-                    moveUp()
+                    #Make the new outline the first outline in the material list
+                    ob.active_material_index = ob.data.materials.find(OutlineMat.name)
+                    while ob.active_material_index > outlineStart:
+                        #print(AlphaImage)
+                        #print(ob.active_material_index)
+                        moveUp()
 
-                #and after it's done moving...
-                    bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)      
-            else:
-                kklog(genType + ' had no alphamask or maintex')
+                    #and after it's done moving...
+                        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)      
+                else:
+                    kklog(genType + ' had no alphamask or maintex')
 
         #separate hair outline loop to prevent crashing
         if not single_outline_mode:
@@ -949,61 +955,62 @@ def add_outlines(single_outline_mode):
             ob.hide_render = True
 
     #Add a standard outline to all other objects
-    outfit_objects = [obj for obj in bpy.data.objects if 'Outfit ' in obj.name and 'Hair Outfit ' not in obj.name and obj.type == 'MESH']
-    #If the material has a maintex or alphamask then give it it's own outline, mmdtools style
+    outfit_objects = [obj for obj in bpy.data.objects if obj.get('KKBP outfit ID') != None and 'Hair Outfit ' not in obj.name and obj.type == 'MESH']
     #keep a dictionary of the material length list for the next loop
     outlineStart = {}
-    for ob in outfit_objects:
-        bpy.context.view_layer.objects.active = ob
-        
-        #Get the length of the material list before starting
-        outlineStart[ob.name] = len(ob.material_slots)
-        
-        #done this way because the range changes length during the loop
-        for matindex in range(0, outlineStart[ob.name],1):
-            genMat = ob.material_slots[matindex]
-            genType = genMat.name.replace('KK ','')
-            #print(genType)
+    if not single_outline_mode:
+        #If the material has a maintex or alphamask then give it it's own outline, mmdtools style
+        for ob in outfit_objects:
+            bpy.context.view_layer.objects.active = ob
             
-            try:
-                MainImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Maintex'].image
-                AlphaImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Alphamask'].image
+            #Get the length of the material list before starting
+            outlineStart[ob.name] = len(ob.material_slots)
+            
+            #done this way because the range changes length during the loop
+            for matindex in range(0, outlineStart[ob.name],1):
+                genMat = ob.material_slots[matindex]
+                genType = genMat.name.replace('KK ','')
+                #print(genType)
                 
-                if MainImage != None or AlphaImage != None:
-                    transpType = 'alpha'
-                    if AlphaImage != None:
-                        Image = AlphaImage
-                    else:
-                        transpType = 'main'
-                        Image = MainImage
+                try:
+                    MainImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Maintex'].image
+                    AlphaImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Alphamask'].image
                     
-                    #set the material as active and move to the top of the material list
-                    ob.active_material_index = ob.data.materials.find(genMat.name)
-
-                    def moveUp():
-                        return bpy.ops.object.material_slot_move(direction='UP')
-
-                    while moveUp() != {"CANCELLED"}:
-                        pass
-
-                    OutlineMat = bpy.data.materials['KK Outline'].copy()
-                    OutlineMat.name = 'Outline ' + genType
-                    ob.data.materials.append(OutlineMat)
-
-                    #redraw UI with each material append to prevent crashing
-                    bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-
-                    #Make the new outline the first outline in the material list
-                    ob.active_material_index = ob.data.materials.find(OutlineMat.name)
-                    while ob.active_material_index > outlineStart[ob.name]:
-                        moveUp()
-                        #print(ob.active_material_index)
-
-                    #and after it's done moving...
-                        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+                    if MainImage != None or AlphaImage != None:
+                        transpType = 'alpha'
+                        if AlphaImage != None:
+                            Image = AlphaImage
+                        else:
+                            transpType = 'main'
+                            Image = MainImage
                         
-            except:
-                kklog(genType + ' had a maintex image but no transparency')
+                        #set the material as active and move to the top of the material list
+                        ob.active_material_index = ob.data.materials.find(genMat.name)
+
+                        def moveUp():
+                            return bpy.ops.object.material_slot_move(direction='UP')
+
+                        while moveUp() != {"CANCELLED"}:
+                            pass
+
+                        OutlineMat = bpy.data.materials['KK Outline'].copy()
+                        OutlineMat.name = 'Outline ' + genType
+                        ob.data.materials.append(OutlineMat)
+
+                        #redraw UI with each material append to prevent crashing
+                        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+
+                        #Make the new outline the first outline in the material list
+                        ob.active_material_index = ob.data.materials.find(OutlineMat.name)
+                        while ob.active_material_index > outlineStart[ob.name]:
+                            moveUp()
+                            #print(ob.active_material_index)
+
+                        #and after it's done moving...
+                            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+                            
+                except:
+                    kklog(genType + ' had a maintex image but no transparency')
 
     #print(outlineStart)
     #separate loop to prevent crashing
@@ -1103,7 +1110,7 @@ def apply_lbs():
 def apply_sfw():
     #reload the sfw alpha mask
     body_material = bpy.data.objects['Body'].material_slots['KK Body'].material
-    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].node_tree.nodes['AlphaBodyCustom'].image = bpy.data.images['Template: SFW alpha mask.png']
+    body_material.node_tree.nodes['Gentex'].node_tree.nodes['Bodyalphacustom'].image = bpy.data.images['Template: SFW alpha mask.png']
     bpy.data.node_groups["Body Shader"].nodes["BodyTransp"].inputs[0].default_value = 1 #why do i have to do it this way
     bpy.data.node_groups["Body Shader"].nodes["BodyTransp"].inputs[1].default_value = 1
     body_material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].node_tree.inputs[0].hide_value = True
@@ -1132,7 +1139,7 @@ def apply_sfw():
     body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Genital mask'])
     body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Underhair mask'])
 
-    bpy.data.materials['KK Body Outline'].node_tree.nodes['BodyMaskCustom'].image = bpy.data.images['Template: SFW alpha mask.png']
+    bpy.data.materials['KK Body'].node_tree.nodes['Gentex'].node_tree.nodes['Bodyalphacustom'].image = bpy.data.images['Template: SFW alpha mask.png']
     bpy.data.materials['KK Body Outline'].node_tree.nodes['customToggle'].inputs[0].default_value = 1
     bpy.data.materials['KK Body Outline'].node_tree.nodes['customToggle'].inputs[0].hide = True
 

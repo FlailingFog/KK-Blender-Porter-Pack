@@ -51,8 +51,9 @@ def load_smr_data(directory):
             json_smr_data = json.load(json_file)
             
     separate_clothes(json_smr_data)
-    separate_body(json_smr_data)
-            
+    if bpy.context.scene.kkbp.categorize_dropdown != 'C':
+        separate_body(json_smr_data)
+    
 def separate_clothes(json_smr_data): 
     #loop over each outfit
     for obj in bpy.data.objects:
@@ -211,6 +212,7 @@ def separate_body(json_smr_data):
         bpy.ops.object.mode_set(mode = 'OBJECT')
         bpy.ops.object.material_slot_remove_unused()
         bpy.context.selected_objects[0].name = row['SMRName']
+    bpy.ops.object.mode_set(mode = 'OBJECT')
     bpy.ops.object.select_all(action='DESELECT')
     
     #Pass 2: Clean up

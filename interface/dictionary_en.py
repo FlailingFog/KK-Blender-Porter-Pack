@@ -5,7 +5,7 @@ translation_dictionary = {
     'seams'     : "Fix body seams",
     'seams_tt'  : 'This performs a "remove doubles" operation on the body materials. Removing doubles also screws with the weights around certain areas. Disabling this will preserve the weights but may cause seams to appear around the neck and down the chest',
     
-    'outline'     : 'Use generic outline',
+    'outline'     : 'Use single outline',
     'outline_tt'  : "Enable to use one generic outline material as opposed to using several unique ones. Checking this may cause outline transparency issues",
     
     'keep_templates'        : "Keep material templates",
@@ -30,7 +30,7 @@ translation_dictionary = {
     'cat_drop_B'    : "Pause to categorize",
     'cat_drop_B_tt' : "Import everything, but pause to manually separate the clothes into groups of objects. The hair must be separated and named \"Hair\" or \"hair\". When done separating, click the Finish categorization button to finish the import. Hides any alternate clothes by default",
     'cat_drop_C'    : "Automatically categorize",
-    'cat_drop_C_tt' : "Import everyting and automatically separate every piece of clothing into several objects. This option disables the outline modifier shown in blender",
+    'cat_drop_C_tt' : "Import everything and automatically separate every piece of clothing into several objects",
     'cat_drop_D'    : "Categorize by SMR Data",
     'cat_drop_D_tt' : "Import everyting and automatically separate every object by it's Skinned Mesh Renderer. Note: This option is only for exporting meshes so it will not apply any material templates or colors",
 
