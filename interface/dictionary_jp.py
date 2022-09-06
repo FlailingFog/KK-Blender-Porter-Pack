@@ -90,7 +90,7 @@ translation_dictionary = {
     'finish_cat'    : 'カテゴライズしまって',
     'recalc_dark'   : 'ダークな色を再計算する',
     'prep'          : 'ターゲットアプリのために準備する',
-    'apply_temp'    : 'ベークしたテンプレートをつけて',
+    'apply_temp'    : 'ベークしたテンプレートをチェンジ',
 
     'rigify_convert': "Rigifyアーマチュアに変えて",
     'sep_eye'       : "EyesやEyebrowsやBodyのオブジェクトから別々になって",

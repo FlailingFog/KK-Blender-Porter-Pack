@@ -509,24 +509,29 @@ def get_and_load_textures(directory):
     set_uv_type('KK Body', 'NSFWpos', 'nippleuv', 'uv_nipple_and_shine')
     set_uv_type('KK Body', 'NSFWpos', 'underuv', 'uv_underhair')
 
-    if bpy.data.images.get('cf_m_body_AM_00.png'):
-        #add female alpha mask
-        current_obj.material_slots['KK Body'].material.node_tree.nodes['Gentex'].node_tree.nodes['Bodyalpha'].image = bpy.data.images['cf_m_body_AM_00.png'] #female
-        apply_texture_data_to_image('cf_m_body_AM_00.png', 'KK Body', 'Gentex', 'Bodyalpha')
+    #find the appropriate alpha mask
+    alpha_mask = None
+    if bpy.data.images.get('cf_m_body_AM.png'):
+        alpha_mask = bpy.data.images.get('cf_m_body_AM.png')
+    elif bpy.data.images.get('cm_m_body_AM.png'):
+        alpha_mask = bpy.data.images.get('cm_m_body_AM.png')
+    elif bpy.data.images.get('cf_m_body_AM_00.png'):
+        alpha_mask = bpy.data.images.get('cf_m_body_AM_00.png')
     elif bpy.data.images.get('cm_m_body_AM_00.png'):
-        #maybe the character is male
-        current_obj.material_slots['KK Body'].material.node_tree.nodes['Gentex'].node_tree.nodes['Bodyalpha'].image = bpy.data.images['cm_m_body_AM_00.png'] #male
-        apply_texture_data_to_image('cm_m_body_AM_00.png', 'KK Body', 'Gentex', 'Bodyalpha')
+        alpha_mask = bpy.data.images.get('cm_m_body_AM_00.png')
     else:
-        #check other alpha mask numbers if Outfit 00's wasn't present
-        mask = None
+        #check the other alpha mask numbers
         for image in bpy.data.images:
-            if '_m_body_AM_' in image.name and outfit.name[-1:].isnumeric():
-                current_obj.material_slots['KK Body'].material.node_tree.nodes['Gentex'].node_tree.nodes['Bodyalpha'].image = bpy.data.images[image.name]
-                apply_texture_data_to_image(image.name, 'KK Body', 'Gentex', 'Bodyalpha')
-        #An alpha mask for the clothing wasn't present in the Textures folder
+            if '_m_body_AM_' in image.name and image.name[-6:-4].isnumeric():
+                alpha_mask = image
+                break
+    if alpha_mask:
+        current_obj.material_slots['KK Body'].material.node_tree.nodes['Gentex'].node_tree.nodes['Bodyalpha'].image = bpy.data.images[alpha_mask.name] #female
+        apply_texture_data_to_image(alpha_mask.name, 'KK Body', 'Gentex', 'Bodyalpha')
+    else:
+        #disable transparency if no alpha mask is present
         current_obj.material_slots['KK Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].inputs['Built in transparency toggle'].default_value = 0
-    
+
     image_load('KK Face', 'Gentex', 'FaceMain', 'cf_m_face_00_MT_CT.png')
     #default to colors if there's no face maintex
     if not current_obj.material_slots['KK Face'].material.node_tree.nodes['Gentex'].node_tree.nodes['FaceMain'].image:
@@ -714,7 +719,7 @@ def get_and_load_textures(directory):
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.armature.select_all(action='DESELECT')
         head_location = (armature.data.edit_bones['Head'].tail.x+1, armature.data.edit_bones['Head'].tail.y+1, armature.data.edit_bones['Head'].tail.z+1)
-        kklog(head_location)
+        #kklog(head_location)
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.empty_add(type='CUBE', align='WORLD', location=head_location)
         empty = bpy.context.view_layer.objects.active
@@ -747,7 +752,7 @@ def get_and_load_textures(directory):
         empty.hide_render = True
     except:
         #i don't feel like dealing with any errors related to this
-        kklog('The GFN empty wasnt setup correctly. Oh well.')
+        kklog('The GFN empty wasnt setup correctly. Oh well.', 'warn')
         pass
     
     #setup gag eye drivers
@@ -776,6 +781,16 @@ def get_and_load_textures(directory):
             newVar.targets[0].id = body.data.shape_keys
             newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
         skey_driver.driver.expression = '0 if CircleEyes1 else 1 if CircleEyes2 else 2 if CartoonyClosed else 3 if VerticalLine else 4'
+        skey_driver = bpy.data.materials['KK Gag00'].node_tree.nodes['hider'].inputs[0].driver_add('default_value')
+        skey_driver.driver.type = 'SCRIPTED'
+        for key in gag_keys:
+            newVar = skey_driver.driver.variables.new()
+            newVar.name = key.replace(' ','')
+            newVar.type = 'SINGLE_PROP'
+            newVar.targets[0].id_type = 'KEY'
+            newVar.targets[0].id = body.data.shape_keys
+            newVar.targets[0].data_path = 'key_blocks["' + key + '"].value'
+        skey_driver.driver.expression = 'CircleEyes1 or CircleEyes2 or CartoonyClosed or VerticalLine or HorizontalLine'
 
         skey_driver = bpy.data.materials['KK Gag01'].node_tree.nodes['Parser'].inputs[0].driver_add('default_value')
         skey_driver.driver.type = 'SCRIPTED'
@@ -787,6 +802,16 @@ def get_and_load_textures(directory):
             newVar.targets[0].id = body.data.shape_keys
             newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
         skey_driver.driver.expression = '0 if HeartEyes else 1'
+        skey_driver = bpy.data.materials['KK Gag01'].node_tree.nodes['hider'].inputs[0].driver_add('default_value')
+        skey_driver.driver.type = 'SCRIPTED'
+        for key in gag_keys:
+            newVar = skey_driver.driver.variables.new()
+            newVar.name = key.replace(' ','')
+            newVar.type = 'SINGLE_PROP'
+            newVar.targets[0].id_type = 'KEY'
+            newVar.targets[0].id = body.data.shape_keys
+            newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
+        skey_driver.driver.expression = 'HeartEyes or SpiralEyes'
 
         skey_driver = bpy.data.materials['KK Gag02'].node_tree.nodes['Parser'].inputs[0].driver_add('default_value')
         skey_driver.driver.type = 'SCRIPTED'
@@ -798,6 +823,16 @@ def get_and_load_textures(directory):
             newVar.targets[0].id = body.data.shape_keys
             newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
         skey_driver.driver.expression = '0 if CartoonyCrying else 1 if CartoonyWink else 2'
+        skey_driver = bpy.data.materials['KK Gag02'].node_tree.nodes['hider'].inputs[0].driver_add('default_value')
+        skey_driver.driver.type = 'SCRIPTED'
+        for key in gag_keys:
+            newVar = skey_driver.driver.variables.new()
+            newVar.name = key.replace(' ','')
+            newVar.type = 'SINGLE_PROP'
+            newVar.targets[0].id_type = 'KEY'
+            newVar.targets[0].id = body.data.shape_keys
+            newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
+        skey_driver.driver.expression = 'CartoonyCrying or CartoonyWink or FieryEyes'
 
         #make the eyes and eyeline transparent when the gag shapekey is activated
         skey_driver = bpy.data.materials['KK EyeR (hitomi)'].node_tree.nodes['EyeShader'].node_tree.nodes['Gagtoggle'].inputs[0].driver_add('default_value')

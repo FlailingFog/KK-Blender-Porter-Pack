@@ -88,7 +88,7 @@ translation_dictionary = {
     'finish_cat'    : 'Finish categorization',
     'recalc_dark'   : 'Recalculate dark colors',
     'prep'          : 'Prep for target application',
-    'apply_temp'    : 'Apply baked templates',
+    'apply_temp'    : 'Switch baked templates',
 
     'rigify_convert': "Convert for Rigify",
     'sep_eye'       : "Separate Eyes and Eyebrows",
