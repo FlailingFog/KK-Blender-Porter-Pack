@@ -1086,9 +1086,13 @@ def add_outlines(single_outline_mode):
         ob.data.materials.append(bpy.data.materials['KK Outline'])
 
         #hide alts
-        if 'Indoor shoes Outfit ' in ob.name or ' alt ' in ob.name or (ob.name[:7] == 'Outfit ' and ob.name != 'Outfit 00') or (ob.name[:12] == 'Hair Outfit ' and ob.name != 'Hair Outfit 00'):
+        if 'Indoor shoes Outfit ' in ob.name or ' shift Outfit ' in ob.name or ' hang Outfit ' in ob.name or (ob.name[:7] == 'Outfit ' and ob.name != 'Outfit 00') or (ob.name[:12] == 'Hair Outfit ' and ob.name != 'Hair Outfit 00'):
             ob.hide = True
             ob.hide_render = True
+        
+    #hide hair alts
+    for obj in [obj for obj in bpy.data.objects if obj.get('KKBP outfit ID') != None and 'Hair Outfit ' in obj.name and obj.name != 'Hair Outfit 00']:
+        obj.hide = True
 
 def hide_widgets():
     #automatically hide bone widgets collection if it's visible
@@ -1262,13 +1266,14 @@ class import_everything(bpy.types.Operator):
             else:
                 #check the other outfit numbers
                 for ob in bpy.data.objects:
-                    if ob.name[0:8] == 'Outfit 0':
+                    if ob.name[0:8] == 'Outfit 0' and 'Outfit 00' not in ob.name:
                         outfit = ob
                         break
             if outfit:
                 outfit.hide = False
                 for child in outfit.children:
-                    if ' alt ' not in outfit.name and 'Indoor shoes ' not in outfit.name:
+                    child.hide = True
+                    if 'Hair Outfit 0' in child.name:
                         child.hide = False
 
             bpy.data.objects['Armature'].hide = False

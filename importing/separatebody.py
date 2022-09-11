@@ -96,7 +96,7 @@ def add_freestyle_faces():
         bpy.ops.mesh.select_all(action = 'DESELECT')
     bpy.ops.object.mode_set(mode = 'OBJECT')
 
-def separate_material(object, mat_list, search_type = 'exact'):
+def separate_materials(object, mat_list, search_type = 'exact'):
     bpy.ops.object.mode_set(mode = 'OBJECT')
     bpy.ops.object.select_all(action='DESELECT')
     #print(object)
@@ -171,7 +171,7 @@ def separate_everything(context):
             if len(hair_mat_list):
                 #Only separate hair if not in pause mode
                 if context.scene.kkbp.categorize_dropdown not in ['B']:
-                    separate_material(outfit, hair_mat_list)
+                    separate_materials(outfit, hair_mat_list)
                     bpy.data.objects[outfit.name + '.001'].name = 'Hair ' + outfit.name
 
                     #don't reparent hair if Categorize by SMR
@@ -179,133 +179,69 @@ def separate_everything(context):
                         bpy.data.objects['Hair ' + outfit.name].parent = outfit
     bpy.context.view_layer.objects.active = body
     
+    #Select any clothes pieces that are normally supposed to be hidden and hide them
     if context.scene.kkbp.categorize_dropdown in ['A', 'B']:
-        #Select any clothes pieces that are normally supposed to be hidden and hide them
-        #the clothes json contains the clothing objects in a [base object, variation object, base object, variation object] format
-        json_file = open(context.scene.kkbp.import_dir + 'KK_ClothesData.json')
-        clothes_data = json.load(json_file)
-        #the smr json contains the link between the clothing object and the clothing material. The material is used for separation
+        #the KK_ReferenceInfoData json lists the clothes variations' object path in the ENUM order appended to the end of this file
+        json_file = open(context.scene.kkbp.import_dir + 'KK_ReferenceInfoData.json')
+        ref_data = json.load(json_file)
+        #the smr json contains the link between the object path and the clothing material. The material is used for separation
         json_file = open(context.scene.kkbp.import_dir + 'KK_SMRData.json')
         smr_data = json.load(json_file)
-
-        clothes_labels = [
-            'Top',
-            'Bottom',
-            'Bra',
-            'Underwear',
-            'Gloves',
-            'Pantyhose',
-            'Legwear',
-            'Indoor shoes',
-            'Outdoor shoes',
-            'Top part A',
-            'Top part B',
-            'Top part C']
+        #the clothesdata json can identify what objects are the indoor shoes
+        json_file = open(context.scene.kkbp.import_dir + 'KK_ClothesData.json')
+        clothes_data = json.load(json_file)
         
-        def separate_pieces(piece, name_prefix = None):
-            try:
-                separate_material(piece, smr_index['SMRMaterialNames'])
-                bpy.data.objects[piece.name + '.001'].parent = piece
-                bpy.data.objects[piece.name + '.001'].name = name_prefix if name_prefix else (clothes_labels[clothes_index - 12 * outfit_index]) + ' alt ' + chr(ord('A') + label_index) + ' ' + piece.name
-            except:
-                #this piece was already separated
-                pass
-        
-        def get_base_name(mat):
-            return mat[:mat.rfind(' ')]
+        clothes_labels = {
+            'Top shift':       [93, 97, 112, 114, 116],
+            'Bottom shift':    [95, 99],
+            'Bra shift':       [101, 118],
+            'Underwear shift': [107],
+            'Underwear hang':  [108],
+            'Pantyhose shift': [110],}
+            #'Top part shift'}
         
         #If there's multiple pieces to any clothing type, separate them into their own object using the smr data
-        #skip indoor shoes and the Top, Top part A-C categories for now
         outfits = [outfit for outfit in bpy.data.objects if 'Outfit ' in outfit.name and 'Hair' not in outfit.name]
         for outfit in outfits:
-            outfit_index = int(outfit.name[-3:]) if len(outfits) > 1 else 0 #change to 0 for single outfit exports
-            clothes_indexes = [1, 2, 3, 4, 5, 6, 8] 
-            clothes_indexes = [element + (12 * outfit_index) for element in clothes_indexes] #shift based on outfit number
+            outfit_coordinate_index = int(outfit.name[-3:]) if len(outfits) > 1 else 0 #change to 0 for single outfit exports
             
-            for clothes_index in clothes_indexes:
-                variations = len(clothes_data[clothes_index]['RendNormal01'])
-                if variations > 1:
-                    label_index = 0
-                    for index in range(1, variations):
-                        previous_subpart_material_name = None
-                        previous_subpart_object_name = clothes_data[clothes_index]['RendNormal01'][index-1]
+            for clothes_piece in clothes_labels:
+                materials_to_separate = []
+                #go through each nuge piece in this label category
+                for enum_index in clothes_labels[clothes_piece]:
+                    enum_index += 175 * outfit_coordinate_index #shift based on outfit number
+                    #kklog(enum_index)
+                    #if this is the right outfit, then find the material this nuge piece uses
+                    if ref_data[enum_index]['CoordinateType'] == outfit_coordinate_index:
+                        game_path = ref_data[enum_index]['GameObjectPath']
+                        #kklog('looking for ' + game_path)
                         for smr_index in smr_data:
-                            if (smr_index['SMRName'] == previous_subpart_object_name and
-                                smr_index['CoordinateType'] == int(outfit.name[-3:])):
-                                previous_subpart_material_name = get_base_name(smr_index['SMRMaterialNames'][0])
-                                break
-
-                        current_subpart_object_name = clothes_data[clothes_index]['RendNormal01'][index]
-                        for smr_index in smr_data:
-                            if (smr_index['SMRName'] == current_subpart_object_name and
-                                smr_index['CoordinateType'] == int(outfit.name[-3:]) and
-                                previous_subpart_material_name == get_base_name(smr_index['SMRMaterialNames'][0])):
-                                separate_pieces(outfit)
-                                label_index+=1
-                                break
-        
-        #separate indoor shoes
-        #in a separate loop to prevent crashing
-        outfits = [outfit for outfit in bpy.data.objects if 'Outfit ' in outfit.name and 'Hair' not in outfit.name and 'alt ' not in outfit.name and 'Indoor' not in outfit.name]
-        for outfit in outfits:
-            outfit_index = int(outfit.name[-3:]) if len(outfits) > 1 else 0 #change to 0 for single outfit exports
-            clothes_index = 7 + (12 * outfit_index)
+                            #kklog(smr_index['SMRPath'])
+                            if (game_path in smr_index['SMRPath']) and game_path != '':
+                                if len(smr_index['SMRMaterialNames']) > 1:
+                                    for mat in smr_index['SMRMaterialNames']:
+                                        materials_to_separate.append(mat)
+                                else:
+                                    materials_to_separate.append(smr_index['SMRMaterialNames'][0])
+                if materials_to_separate:
+                    #try:
+                        print(materials_to_separate)
+                        separate_materials(outfit, materials_to_separate)
+                        bpy.data.objects[outfit.name + '.001'].parent = outfit
+                        bpy.data.objects[outfit.name + '.001'].name = clothes_piece + ' ' + outfit.name
+                        kklog('Separated {} alternate clothing pieces automatically'.format(materials_to_separate))
+                    #except:
+                    #    bpy.ops.object.mode_set(mode = 'OBJECT')
+                    #    kklog('Couldn\'t separate {} automatically'.format(materials_to_separate), 'warn')
             
-            #Always separate indoor shoes
-            indoor_shoes_name = clothes_data[clothes_index]['RendNormal01']
-            if indoor_shoes_name:
-                for smr_index in smr_data:
-                    if smr_index['SMRName'] == indoor_shoes_name[0] and smr_index['CoordinateType'] == outfit_index:
-                        separate_material(outfit, smr_index['SMRMaterialNames'])
-                        bpy.data.objects[outfit.name + '.001'].name = clothes_labels[7] + ' ' + outfit.name
-                        bpy.data.objects[clothes_labels[7] + ' ' + outfit.name].parent = outfit
-
-        #separate Top pieces and make sure to group them correctly
-        #in a separate loop to prevent crashing
-        outfits = [outfit for outfit in bpy.data.objects if 'Outfit ' in outfit.name and 'Hair' not in outfit.name and 'alt ' not in outfit.name and 'Indoor' not in outfit.name]
-        for outfit in outfits:
-            grouping = {}
-            outfit_index = int(outfit.name[-3:]) if len(outfits) > 1 else 0 #change to 0 for single outfit exports
-            clothes_indexes = [0, 9, 10, 11]
-            clothes_indexes = [element + (12 * outfit_index) for element in clothes_indexes] #shift based on outfit number
-
-            for clothes_index in clothes_indexes:
-                #print(clothes_index)
-                for cat in ['RendNormal01', 'RendEmblem01', 'RendEmblem02']:
-                    variations = len(clothes_data[clothes_index][cat])
-                    if variations > 1 or (variations == 1 and cat not in 'RendNormal01'):
-                        clothes_to_separate = clothes_data[clothes_index][cat]
-                        #kklog(clothes_to_separate)
-                        if cat not in 'RendNormal01' and variations == 1:
-                            clothes_to_separate = [clothes_to_separate]
-                        if len(clothes_to_separate) > 1:
-                            for index in range(1,len(clothes_to_separate)):
-                                previous_subpart_material_name = None
-                                previous_subpart_object_name = clothes_data[clothes_index][cat][index-1]
-                                for smr_index in smr_data:
-                                    if (smr_index['SMRName'] == previous_subpart_object_name and
-                                        smr_index['CoordinateType'] == int(outfit.name[-3:])):
-                                        previous_subpart_material_name = get_base_name(smr_index['SMRMaterialNames'][0])
-                                        break
-
-                                current_subpart_object_name = clothes_data[clothes_index][cat][index]
-                                for smr_index in smr_data:
-                                    if (smr_index['SMRName'] == current_subpart_object_name and
-                                        smr_index['CoordinateType'] == int(outfit.name[-3:]) and
-                                        previous_subpart_material_name == get_base_name(smr_index['SMRMaterialNames'][0])):
-                                        for item in smr_index['SMRMaterialNames']:
-                                            try:
-                                                grouping[index].append(item)
-                                            except:
-                                                grouping[index] = [item]
-                                        break
-            if grouping != {}:
-                label_index = 0
-                for index in grouping:
-                    separate_material(outfit, grouping[index])
-                    bpy.data.objects[outfit.name + '.001'].parent = outfit
-                    bpy.data.objects[outfit.name + '.001'].name = clothes_labels[0] + ' alt ' + chr(ord('A') + label_index) + ' ' + outfit.name
-                    label_index+=1
+            #always separate indoor shoes if present using the clothes data
+            for index, clothes_index in enumerate(clothes_data):
+                if clothes_index['CoordinateType'] == outfit_coordinate_index:
+                    if (index - 12 * outfit_coordinate_index) % 7 == 0:
+                        object = clothes_index['RendNormal01']
+                        for smr_index in smr_data:
+                            if (smr_index['SMRName'] == object):
+                                materials_to_separate.append(smr_index['SMRMaterialNames'])
 
     #Separate hitbox materials, if any
     hit_box_list = []
@@ -314,18 +250,18 @@ def separate_everything(context):
             hit_box_list.append(mat['MaterialName'])
     #kklog(hit_box_list)
     if len(hit_box_list):
-        separate_material(body, hit_box_list)
+        separate_materials(body, hit_box_list)
         bpy.data.objects[body.name + '.001'].name = 'Hitboxes'
         if bpy.data.objects['Outfit 00'].material_slots.get('cf_O_face_atari_M.001'):
             #print('attempting to get the hitboxes off outfit 00')
-            separate_material(bpy.data.objects['Outfit 00'], hit_box_list, search_type='fuzzy')
+            separate_materials(bpy.data.objects['Outfit 00'], hit_box_list, search_type='fuzzy')
             bpy.data.objects['Outfit 00.001'].name = 'Hitboxes again'
             bpy.data.objects['Hitboxes again']['KKBP outfit ID'] = None
 
     #Separate the shadowcast if any
     try:
         shad_mat_list = ['c_m_shadowcast', 'Standard']
-        separate_material(body, shad_mat_list, 'fuzzy')
+        separate_materials(body, shad_mat_list, 'fuzzy')
         bpy.data.objects[body.name + '.001'].name = 'Shadowcast'
     except:
         pass
@@ -333,7 +269,7 @@ def separate_everything(context):
     #Separate the bonelyfans mesh if any
     try:
         bone_mat_list = ['Bonelyfans', 'Bonelyfans.001']
-        separate_material(body, bone_mat_list)
+        separate_materials(body, bone_mat_list)
         bpy.data.objects[body.name + '.001'].name = 'Bonelyfans'
     except:
         pass
@@ -454,7 +390,7 @@ def make_tear_and_gag_shapekeys():
     #Separate tears from body object, parent it to the body so it's hidden in the outliner
     #link shapekeys of tears to body
     tearMats = ['cf_m_namida_00']
-    separate_material(body, tearMats)
+    separate_materials(body, tearMats)
     tears = bpy.data.objects['Body.001']
     tears.name = 'Tears'
     tears.parent = bpy.data.objects['Body']
@@ -545,7 +481,7 @@ def make_tear_and_gag_shapekeys():
     #Separate gag from body object, parent it to the body so it's hidden in the outliner
     #link shapekeys of gag to body
     gag_mat = ['cf_m_gageye_00', 'cf_m_gageye_01', 'cf_m_gageye_02']
-    separate_material(body, gag_mat)
+    separate_materials(body, gag_mat)
     gag = bpy.data.objects['Body.001']
     gag.name = 'Gag Eyes'
     gag.parent = bpy.data.objects['Body']
@@ -556,7 +492,7 @@ def make_tear_and_gag_shapekeys():
         #Separate rigged tongue from body object, parent it to the body so it's hidden in the outliner
         #link shapekeys of tongue to body even though it doesn't have them
         tongueMats = ['cf_m_tang.001']
-        separate_material(body, tongueMats)
+        separate_materials(body, tongueMats)
         tongue = bpy.data.objects['Body.001']
         tongue.name = 'Tongue (rigged)'
         tongue.parent = bpy.data.objects['Body']
@@ -718,3 +654,142 @@ if __name__ == "__main__":
 
     # test call
     print((bpy.ops.kkb.separatebody('INVOKE_DEFAULT')))
+
+#ENUM order that corresponds to ChaReference_RefObjKey value in KK_ReferenceInfoData.json
+'''HeadParent,
+HairParent,
+a_n_hair_pony,
+a_n_hair_twin_L,
+a_n_hair_twin_R,
+a_n_hair_pin,
+a_n_hair_pin_R,
+a_n_headtop,
+a_n_headflont,
+a_n_head,
+a_n_headside,
+a_n_megane,
+a_n_earrings_L,
+a_n_earrings_R,
+a_n_nose,
+a_n_mouth,
+a_n_neck,
+a_n_bust_f,
+a_n_bust,
+a_n_nip_L,
+a_n_nip_R,
+a_n_back,
+a_n_back_L,
+a_n_back_R,
+a_n_waist,
+a_n_waist_f,
+a_n_waist_b,
+a_n_waist_L,
+a_n_waist_R,
+a_n_leg_L,
+a_n_leg_R,
+a_n_knee_L,
+a_n_knee_R,
+a_n_ankle_L,
+a_n_ankle_R,
+a_n_heel_L,
+a_n_heel_R,
+a_n_shoulder_L,
+a_n_shoulder_R,
+a_n_elbo_L,
+a_n_elbo_R,
+a_n_arm_L,
+a_n_arm_R,
+a_n_wrist_L,
+a_n_wrist_R,
+a_n_hand_L,
+a_n_hand_R,
+a_n_ind_L,
+a_n_ind_R,
+a_n_mid_L,
+a_n_mid_R,
+a_n_ring_L,
+a_n_ring_R,
+a_n_dan,
+a_n_kokan,
+a_n_ana,
+k_f_handL_00,
+k_f_handR_00,
+k_f_shoulderL_00,
+k_f_shoulderR_00,
+ObjEyeline,
+ObjEyelineLow,
+ObjEyebrow,
+ObjNoseline,
+ObjEyeL,
+ObjEyeR,
+ObjEyeWL,
+ObjEyeWR,
+ObjFace,
+ObjDoubleTooth,
+ObjBody,
+ObjNip,
+N_FaceSpecial,
+CORRECT_ARM_L,
+CORRECT_ARM_R,
+CORRECT_HAND_L,
+CORRECT_HAND_R,
+CORRECT_TONGUE_TOP,
+CORRECT_MOUTH_TARGET,
+CORRECT_MOUTH_TARGET02,
+CORRECT_HEAD_DBCOL,
+S_ANA,
+S_TongueF,
+S_TongueB,
+S_Son,
+S_SimpleTop,
+S_SimpleBody,
+S_SimpleTongue,
+S_MNPA,
+S_MNPB,
+S_MOZ_ALL,
+S_GOMU,
+S_CTOP_T_DEF,
+S_CTOP_T_NUGE,
+S_CTOP_B_DEF,
+S_CTOP_B_NUGE,
+S_CBOT_T_DEF,
+S_CBOT_T_NUGE,
+S_CBOT_B_DEF,
+S_CBOT_B_NUGE,
+S_UWT_T_DEF,
+S_UWT_T_NUGE,
+S_UWT_B_DEF,
+S_UWT_B_NUGE,
+S_UWB_T_DEF,
+S_UWB_T_NUGE,
+S_UWB_B_DEF,
+S_UWB_B_NUGE,
+S_UWB_B_NUGE2,
+S_PANST_DEF,
+S_PANST_NUGE,
+S_TPARTS_00_DEF,
+S_TPARTS_00_NUGE,
+S_TPARTS_01_DEF,
+S_TPARTS_01_NUGE,
+S_TPARTS_02_DEF,
+S_TPARTS_02_NUGE,
+ObjBraDef,
+ObjBraNuge,
+ObjInnerDef,
+ObjInnerNuge,
+S_TEARS_01,
+S_TEARS_02,
+S_TEARS_03,
+N_EyeBase,
+N_Hitomi,
+N_Gag00,
+N_Gag01,
+N_Gag02,
+DB_SKIRT_TOP,
+DB_SKIRT_TOPA,
+DB_SKIRT_TOPB,
+DB_SKIRT_BOT,
+F_ADJUSTWIDTHSCALE,
+A_ROOTBONE,
+BUSTUP_TARGET,
+NECK_LOOK_TARGET'''
