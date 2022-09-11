@@ -122,9 +122,13 @@ class quick_import(bpy.types.Operator):
                 bpy.ops.kkb.separatemeshes('INVOKE_DEFAULT'),
             ]
 
-        #run commands based on selection
-        for command in commands:
+        #run commands based on selection, and show progress bar
+        #wm = bpy.context.window_manager
+        #wm.progress_begin(0, len(commands))
+        for i, command in enumerate(commands):
             command
+            #wm.progress_update(i)
+        #wm.progress_end()
 
         if context.scene.kkbp.armature_dropdown == 'B' and context.scene.kkbp.categorize_dropdown in ['A', 'B', 'C']:
             bpy.ops.kkb.rigifyconvert('INVOKE_DEFAULT')

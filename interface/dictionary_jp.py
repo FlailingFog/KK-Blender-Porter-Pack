@@ -47,6 +47,8 @@ translation_dictionary = {
     'dark_D_tt' : "ダークな色を飽和する",
     'dark_E'    : '明るさ',
     'dark_E_tt' : "ダークな色黒くする",
+    'dark_F'    : '実験的',
+    'dark_F_tt' : "実験的なスクリプトでダークな色をセットする",
 
     'prep_drop'         : "エクスポートタイプ",
     'prep_drop_A'       : "Unity - VRMコンパチ",

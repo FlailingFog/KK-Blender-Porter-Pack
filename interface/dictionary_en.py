@@ -45,6 +45,8 @@ translation_dictionary = {
     'dark_D_tt' : "Makes the dark colors more saturated than the light ones",
     'dark_E'    : 'Value reduction',
     'dark_E_tt' : "Makes the dark colors darker than the light ones",
+    'dark_F'    : 'Experimental',
+    'dark_F_tt' : "Uses an experimental method to set the dark colors",
 
     'prep_drop'         : "Export type",
     'prep_drop_A'       : "Unity - VRM compatible",

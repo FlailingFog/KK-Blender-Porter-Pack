@@ -3,6 +3,7 @@ import bgl
 import gpu
 import json
 from .importbuttons import kklog
+from .darkcolors import kk_dark_color
 import numpy as np
 from pathlib import Path
 from bpy.types import Operator
@@ -523,7 +524,7 @@ def load_json_colors(directory, lut_light, lut_dark, lut_selection):
     set_color_management()
 
 def update_shaders(json, lut_selection, active_lut, light):
-
+    
     def to_rgba(rgb):
         rgba = [rgb[0], rgb[1], rgb[2], 1]
         return rgba
@@ -600,7 +601,7 @@ def update_shaders(json, lut_selection, active_lut, light):
     ### Set shader colors
     ## Body Shader
     shader_inputs = body_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
-    shader_inputs['Skin color'].default_value = body_colors[0]
+    shader_inputs['Skin color'].default_value = body_colors[0] if light else [1.000000, 0.685285, 0.637749, 1.000000] #hardcode dark body color for now
     shader_inputs['Skin type color'].default_value = body_colors[1]
     shader_inputs['Skin type intensity (Base)'].default_value = 0.5
     shader_inputs['Skin type intensity'].default_value = 1
@@ -618,7 +619,7 @@ def update_shaders(json, lut_selection, active_lut, light):
 
     ## Face Shader
     shader_inputs = face_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
-    shader_inputs['Skin color'].default_value = body_colors[0]
+    shader_inputs['Skin color'].default_value = body_colors[0] if light else [1.000000, 0.685285, 0.637749, 1.000000] #hardcode dark body color for now
     shader_inputs['Skin detail color'].default_value = body_colors[1]
     shader_inputs['Light blush color'].default_value = face_colors[5]
     shader_inputs['Mouth interior multiplier'].default_value = [1, 1, 1, 1]
@@ -649,7 +650,12 @@ def update_shaders(json, lut_selection, active_lut, light):
 
     ## Hair Shader
     shader_inputs = hair_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
-    shader_inputs['Light Hair color' if light else 'Dark Hair color'].default_value = hair_base_color
+    if lut_selection == 'F' and not light:
+        hair_shadow_color = ([el / 255 for el in json_to_color(json[5]['shadowColor'])])
+        color_channel = [el/255 for el in to_rgba(color_to_KK([255*el for el in kk_dark_color(color = hair_base_color, shadow_color = hair_shadow_color)], 'Lut_TimeDay.png'))]
+        shader_inputs['Dark Hair color'].default_value = color_channel
+    else:
+        shader_inputs['Light Hair color' if light else 'Dark Hair color'].default_value = hair_base_color
     shader_inputs['Light Hair rim color' if light else 'Dark Hair rim color'].default_value = hair_root_color
     shader_inputs['Dark fade color'].default_value = hair_root_color
     shader_inputs['Light fade color'].default_value = hair_tip_color
@@ -657,7 +663,7 @@ def update_shaders(json, lut_selection, active_lut, light):
     shader_inputs['Use fade mask? (1 = yes)'].default_value = 0.5
 
     ## Accessories/Items Shader
-    uses_lut = any([lut_selection == 'A', lut_selection == 'B', lut_selection == 'C'])
+    uses_lut = lut_selection in ['A', 'B', 'C', 'F']
     for idx, item in enumerate(item_data):
         pattern_input_names = [
             'Pattern color (red)',
@@ -690,13 +696,24 @@ def update_shaders(json, lut_selection, active_lut, light):
             shader_inputs['Color mask color (base)'].default_value = [0.3, 0.3, 0.3, 0.3]
         else:
             shader_inputs['Color mask color (base)'].default_value = [1, 1, 1, 1]
-
-        for i, colorItem in enumerate(item['colorInfo']):
-            if i < len(color_input_names):
-                color_channel = to_rgba(color_to_KK(json_to_color(colorItem), active_lut) / 255)
-                if not light and lut_selection == 'E':
-                    color_channel = [x * .3 for x in color_channel]
-                shader_inputs[color_input_names[i]].default_value = color_channel
+        
+        if lut_selection == 'F' and not light:
+            for i, colorItem in enumerate(item['colorInfo']):
+                if i < len(color_input_names):
+                    color = ([el / 255 for el in json_to_color(colorItem)])
+                    shadow_color = ([el / 255 for el in json_to_color(item['shadowColor'])])
+                    color_channel = [el/255 for el in to_rgba(color_to_KK([255*el for el in kk_dark_color(color = color, shadow_color = shadow_color)], 'Lut_TimeDay.png'))]
+                    shader_inputs[color_input_names[i]].default_value = color_channel
+            shader_inputs['Use colored maintex?'].default_value = 0
+            shader_inputs['Ignore colormask?'].default_value = 0
+        else:
+            for i, colorItem in enumerate(item['colorInfo']):
+                if i < len(color_input_names):
+                    color_channel = to_rgba(color_to_KK(json_to_color(colorItem), active_lut) / 255)
+                    if not light and lut_selection == 'E':
+                        color_channel = [x * .3 for x in color_channel]
+                    shader_inputs[color_input_names[i]].default_value = color_channel
+            #shader_inputs['Ignore colormask?'].default_value = 1
 
         if not light and lut_selection == 'E':
             shader_inputs['Pattern (base)'].default_value = [0.3, 0.3, 0.3, 0.3]
@@ -755,6 +772,7 @@ class import_colors(bpy.types.Operator):
                 convert_main_textures(lut_light)
                 load_json_colors(directory, lut_light, lut_dark, lut_selection)
 
+            bpy.data.use_autopack = True #enable autopack on file save
             context.scene.kkbp.import_dir = 'cleared'
             bpy.data.objects['Armature'].select_set(True)
             bpy.context.view_layer.objects.active = bpy.data.objects['Armature']

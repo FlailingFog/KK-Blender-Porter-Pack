@@ -1124,10 +1124,45 @@ def clean_orphan_data():
             bpy.data.node_groups.remove(block)
 
 def apply_cycles():
+    #taken from https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/234
+    #remove outline modifier
+    for o in bpy.context.view_layer.objects:
+        for m in o.modifiers:
+            if(m.name == "Outline Modifier"):
+                o.modifiers.show_viewport = False
+                o.modifiers.show_render = False
+                
+    ####fix the eyelash mesh overlap
+    # deselect everything and make body active object
+    active = bpy.context.view_layer.objects.active
+    for o in bpy.data.objects:
+        if o.name == "Body":
+            active = o
+        else:
+            o.select_set(0)
+    # define some stuff
+    ops = bpy.ops
+    obj = ops.object
+    mesh = ops.mesh
+    context = bpy.context
+    object = context.object
+    # edit mode and deselect everything
+    obj.mode_set(mode='EDIT')
+    mesh.select_all(action='DESELECT')
+    # delete eyeline down verts and kage faces
+    object.active_material_index = 6
+    obj.material_slot_select()
+    mesh.delete(type='VERT')
+    object.active_material_index = 5
+    obj.material_slot_select()
+    mesh.delete(type='ONLY_FACE')
+    mesh.select_all(action='DESELECT')
+
+
     #replace rim group with a principled bsdf with roughness = 0 and attach alpha too
     #turn off overlays on face material
     #put face's color out in a mix shader with the cycles face mask
-    #separate eyeline up, eyeline down, eyebrows and turn off shadows in Object properties > Visibility > Ray visibility
+    #separate eyeline up, eyeline down, eyebrows into separate object and turn off shadows in Object properties > Visibility > Ray visibility
     #put colorramp for eyeline alpha, black slider goes to 0.935
     #nipples already work in cycles without any changes?
     #mute shader to rgb nodes for clothing items 
@@ -1218,6 +1253,23 @@ class import_everything(bpy.types.Operator):
 
             if bpy.context.scene.kkbp.sfw_mode:
                 apply_sfw()
+
+            #unhide first found outfit if outfit 00 is not present
+            #find the appropriate outfit
+            outfit = None
+            if bpy.data.objects.get('Outfit 00'):
+                outfit = bpy.data.objects.get('Outfit 00')
+            else:
+                #check the other outfit numbers
+                for ob in bpy.data.objects:
+                    if ob.name[0:8] == 'Outfit 0':
+                        outfit = ob
+                        break
+            if outfit:
+                outfit.hide = False
+                for child in outfit.children:
+                    if ' alt ' not in outfit.name and 'Indoor shoes ' not in outfit.name:
+                        child.hide = False
 
             bpy.data.objects['Armature'].hide = False
             bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)

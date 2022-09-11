@@ -68,8 +68,9 @@ class PlaceholderProperties(PropertyGroup):
             ("B", t('dark_B'), t('dark_B_tt')),
             ("C", t('dark_C'), t('dark_C_tt')),
             ("D", t('dark_D'), t('dark_D_tt')),
-            ("E", t('dark_E'), t('dark_E_tt'))
-        ), name="", default="A", description=t('dark'))
+            ("E", t('dark_E'), t('dark_E_tt')),
+            ("F", t('dark_F'), t('dark_F_tt'))
+        ), name="", default="F", description=t('dark'))
     
     prep_dropdown : EnumProperty(
         items=(
