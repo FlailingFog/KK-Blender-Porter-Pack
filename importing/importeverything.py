@@ -542,9 +542,15 @@ def get_and_load_textures(directory):
     image_load('KK Face', 'Gentex', 'FaceTongue', 'cf_m_face_00_MT.png') #face main texture
     
     image_load('KK Face', 'Gentex', 'linemask', 'cf_m_face_00_LM.png')
-    image_load('KK Face', 'Gentex', 'overlay1', 'cf_m_face_00_T5.png')
-    image_load('KK Face', 'Gentex', 'overlay2', 'cf_m_face_00_T6.png')
-    image_load('KK Face', 'Gentex', 'overlay3', 'cf_m_face_00_T7.png')
+    image_load('KK Face', 'Gentex', 'lowerlip', 'cf_m_face_00_T5.png')
+
+    image_load('KK Face', 'Gentex', 'lipstick', 'cf_m_face_00_ot1.png')
+    image_load('KK Face', 'Gentex', 'flush', 'cf_m_face_00_ot2.png')
+    image_load('KK Face', 'Gentex', 'overlay1', 'cf_m_face_00_T6.png')
+    image_load('KK Face', 'Gentex', 'overlay2', 'cf_m_face_00_T7.png')
+    image_load('KK Face', 'Gentex', 'overlay3', 'cf_m_face_00_T8.png')
+    image_load('KK Face', 'Gentex', 'EyeshadowMask', 'cf_m_face_00_ot3.png')
+    set_uv_type('KK Face', 'Facepos', 'eyeshadowuv', 'uv_eyeshadow')  #face extra texture
     
     image_load('KK Eyebrows (mayuge)', 'Gentex', 'Eyebrow', 'cf_m_mayuge_00_MT_CT.png')
     image_load('KK Nose', 'Gentex', 'Nose', 'cf_m_noseline_00_MT_CT.png')
@@ -568,9 +574,6 @@ def get_and_load_textures(directory):
     image_load('KK EyeL (hitomi)', 'Gentex', 'EyeHD', 'cf_m_hitomi_00_cf_Ohitomi_L02_ot2.png')
     image_load('KK EyeL (hitomi)', 'Gentex', 'expression0', 'cf_m_hitomi_00_cf_t_expression_00_EXPR.png')
     image_load('KK EyeL (hitomi)', 'Gentex', 'expression1', 'cf_m_hitomi_00_cf_t_expression_01_EXPR.png')
-
-    image_load('KK Face', 'Gentex', 'EyeshadowMask', 'cf_m_face_00_ot3.png')
-    set_uv_type('KK Face', 'Facepos', 'eyeshadowuv', 'uv_eyeshadow')
     
     image_load('KK Tongue', 'Gentex', 'Maintex', 'cf_m_tang_CM.png') #done on purpose
     image_load('KK Tongue', 'Gentex', 'MainCol', 'cf_m_tang_CM.png')

@@ -623,9 +623,7 @@ def update_shaders(json, lut_selection, active_lut, light):
     shader_inputs['Skin detail color'].default_value = body_colors[1]
     shader_inputs['Light blush color'].default_value = face_colors[5]
     shader_inputs['Mouth interior multiplier'].default_value = [1, 1, 1, 1]
-    
-    shader_inputs['Overlay 1 color'].default_value = face_colors[6]
-
+    shader_inputs['Lipstick multiplier'].default_value = face_colors[6]
 
     ## Eyebrow Shader
     shader_inputs = eyebrows_shader_node_group.nodes['colorsLight'].inputs

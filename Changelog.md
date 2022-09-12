@@ -65,6 +65,9 @@ Plus some misc changes to the Blender plugin:
 * Material baking is now done [through the use of Geometry Nodes!](https://blender.stackexchange.com/questions/231662/)
     * This works with multiple UV maps, so you no longer need to create a new mesh for hair highlights or anything that uses a separate uv map
     * You can also speed up the baking process by skipping the dark and normal bakes if you don't want them
+* Exporting can now be done without installing the CATS addon
+    * Material Combiner is still required if you want a material atlas
+* Added a simplification choices menu to the export prep button
 * Removed the vanilla armature type toggle in favor of a menu
     * There's four options to choose from. Check the tooltip for a brief description of each option
     * The ability to switch between armature types after import was removed

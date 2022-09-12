@@ -110,17 +110,13 @@ class import_studio(bpy.types.Operator):
                                 if node.type == 'OUTPUT_MATERIAL':
                                     node.name = 'Material Output'
 
-                            #Remove duplicate images
+                            #Remove duplicate images if they exist
                             for node in nodes:
                                 if node.type == 'TEX_IMAGE':
-                                    if '.0' in node.image.name or '.1' in node.image.name or '.2' in node.image.name:
-                                        #print("This image is sus: {}".format(node.image.name))
-                                        base_name, filetype, dupe_number = node.image.name.split('.',3)
-                                        #print(base_name)
-                                        #print(filetype)
-                                        #print(dupe_number)
-                                        if bpy.data.images.get(base_name + '.' + filetype) and int(dupe_number):
-                                            node.image = bpy.data.images.get(base_name + '.' + filetype)
+                                    (base, sep, ext) = node.image.name.rpartition('.')
+                                    if ext.isnumeric():
+                                        if bpy.data.images.get(base):
+                                            node.image = bpy.data.images.get(base)
                                             #print("replaced {} with {}".format(node.image.name, base_name + filetype))
 
                             #DDS files need to be converted to pngs or tgas or the color conversion scripts won't work
