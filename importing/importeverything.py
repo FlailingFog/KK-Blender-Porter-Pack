@@ -974,14 +974,14 @@ def add_outlines(single_outline_mode):
     
         #Add a general outline that covers the rest of the materials on the hair object that don't need transparency
         bpy.context.view_layer.objects.active = ob
-        bpy.ops.object.modifier_add(type='SOLIDIFY')
-        mod = ob.modifiers[1]
+        mod = ob.modifiers.new(
+            type='SOLIDIFY',
+            name='Outline Modifier')
         mod.thickness = 0.0005
         mod.offset = 1
         mod.material_offset = outlineStart
         mod.use_flip_normals = True
         mod.use_rim = False
-        mod.name = 'Outline Modifier'
         mod.show_expanded = False
         hairOutlineMat = bpy.data.materials['KK Outline'].copy()
         hairOutlineMat.name = 'KK Hair Outline'

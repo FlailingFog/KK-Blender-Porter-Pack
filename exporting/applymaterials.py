@@ -109,7 +109,7 @@ def replace_images(folderpath, apply_type):
         else:
             currentImage = [file.name for file in files if (matname in file.name and 'normal' in file.name)]
         if not currentImage:
-            kklog("No {} baked image found for {}".fomrat('light' if apply_type == 'A' else 'dark' if apply_type == 'B' else 'normal', matname))
+            kklog("No {} baked image found for {}".format('light' if apply_type == 'A' else 'dark' if apply_type == 'B' else 'normal', matname))
             continue
 
         imageName = currentImage[0]

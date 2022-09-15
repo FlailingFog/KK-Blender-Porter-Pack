@@ -122,7 +122,7 @@ def separate_materials(object, mat_list, search_type = 'exact'):
                 pass
             bpy.ops.object.material_slot_select()
         else:
-            kklog('Material wasn\'t found when separating body materials: ' + mat, 'warn')
+            kklog('Material wasn\'t found when separating materials: ' + mat, 'warn')
     bpy.ops.mesh.separate(type='SELECTED')
     bpy.ops.object.mode_set(mode = 'OBJECT')
 
@@ -200,6 +200,15 @@ def separate_everything(context):
             'Pantyhose shift': [110],}
             #'Top part shift'}
         
+        #get the maximum enum number from referenceinfodata. This is usually 174 but the length can vary
+        max_enum = 0
+        temp_outfit_tracker = ref_data[0]['CoordinateType']
+        for line in ref_data:
+            if line['CoordinateType'] == temp_outfit_tracker:
+                max_enum = line['ChaReference_RefObjKey']
+            else:
+                break
+
         #If there's multiple pieces to any clothing type, separate them into their own object using the smr data
         outfits = [outfit for outfit in bpy.data.objects if 'Outfit ' in outfit.name and 'Hair' not in outfit.name]
         for outfit in outfits:
@@ -209,7 +218,7 @@ def separate_everything(context):
                 materials_to_separate = []
                 #go through each nuge piece in this label category
                 for enum_index in clothes_labels[clothes_piece]:
-                    enum_index += 175 * outfit_coordinate_index #shift based on outfit number
+                    enum_index += (max_enum + 1) * outfit_coordinate_index #shift based on outfit number
                     #kklog(enum_index)
                     #if this is the right outfit, then find the material this nuge piece uses
                     if ref_data[enum_index]['CoordinateType'] == outfit_coordinate_index:
@@ -224,15 +233,15 @@ def separate_everything(context):
                                 else:
                                     materials_to_separate.append(smr_index['SMRMaterialNames'][0])
                 if materials_to_separate:
-                    #try:
+                    try:
                         print(materials_to_separate)
                         separate_materials(outfit, materials_to_separate)
                         bpy.data.objects[outfit.name + '.001'].parent = outfit
                         bpy.data.objects[outfit.name + '.001'].name = clothes_piece + ' ' + outfit.name
                         kklog('Separated {} alternate clothing pieces automatically'.format(materials_to_separate))
-                    #except:
-                    #    bpy.ops.object.mode_set(mode = 'OBJECT')
-                    #    kklog('Couldn\'t separate {} automatically'.format(materials_to_separate), 'warn')
+                    except:
+                        bpy.ops.object.mode_set(mode = 'OBJECT')
+                        kklog('Couldn\'t separate {} automatically'.format(materials_to_separate), 'warn')
             
             #always separate indoor shoes if present using the clothes data
             for index, clothes_index in enumerate(clothes_data):
