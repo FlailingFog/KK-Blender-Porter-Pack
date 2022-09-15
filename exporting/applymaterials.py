@@ -1,24 +1,29 @@
 '''
 APPLY MATERIALS FOR ATLAS GENERATION
 - Replaces all materials with their baked textures
-- This makes the material templates compatible with the Material Combiner feature in CATS.
+- This allows the Material Combiner feature in CATS to recognize the baked textures
 
 Usage:
 - Select an object that has had its materials baked
 - Select the folder that holds the textures in the Output Properties tab
 - Run script
-
-Tested in Blender 2.91
 '''
 
-import bpy
-import os
+import bpy, os, traceback
+from ..importing.importbuttons import kklog
 from pathlib import Path
 from.bakematerials import sanitizeMaterialName, showError
 
 from bpy.props import StringProperty, BoolProperty
 from bpy_extras.io_utils import ImportHelper
 from bpy.types import Operator
+
+#load plugin language
+from bpy.app.translations import locale
+if locale == 'ja_JP':
+    from ..interface.dictionary_jp import t
+else:
+    from ..interface.dictionary_en import t
 
 def create_atlas_helpers():
     object = bpy.context.active_object
@@ -84,7 +89,6 @@ def create_atlas_helpers():
             #set the mix shader's factor to 1 so the baked image is showing instead of the material
             mainMix.inputs[0].default_value=1
 
-
 def replace_images(folderpath, apply_type):
     fileList = Path(folderpath).glob('*.*')
     files = [file for file in fileList if file.is_file()]
@@ -98,8 +102,14 @@ def replace_images(folderpath, apply_type):
         
         #Check if there's any images for this material
         #if there's no matching images, skip to the next material
-        currentImage = [file.name for file in files if (matname in file.name and 'light' in file.name)]
+        if apply_type == 'A':
+            currentImage = [file.name for file in files if (matname in file.name and 'light' in file.name)]
+        elif apply_type == 'B':
+            currentImage = [file.name for file in files if (matname in file.name and 'dark' in file.name)]
+        else:
+            currentImage = [file.name for file in files if (matname in file.name and 'normal' in file.name)]
         if not currentImage:
+            kklog("No {} baked image found for {}".format('light' if apply_type == 'A' else 'dark' if apply_type == 'B' else 'normal', matname))
             continue
 
         imageName = currentImage[0]
@@ -107,30 +117,21 @@ def replace_images(folderpath, apply_type):
 
         #load the image into the image node
         transpMix = nodes['KK export']
-        
-        if apply_type == 'A':
-            currentImage = [file.name for file in files if (matname in file.name and 'light' in file.name)]
-        elif apply_type == 'B':
-            currentImage = [file.name for file in files if (matname in file.name and 'dark' in file.name)]
-        else:
-            currentImage = [file.name for file in files if (matname in file.name and 'normal' in file.name)]
         imageName = currentImage[0]
         imagePath = folderpath + imageName
 
-        bpy.ops.image.open(filepath=imagePath)
+        bpy.ops.image.open(filepath=imagePath, use_udim_detecting=False)
         bpy.data.images[imageName].pack()
         
         imageNode = transpMix.inputs[0].links[0].from_node
         imageNode.image = bpy.data.images[imageName]
 
         nodes['KK Mix'].inputs[0].default_value = 1
-        
 
 class apply_materials(bpy.types.Operator):
     bl_idname = "kkb.applymaterials"
     bl_label = "Open baked materials folder"
-    bl_description = """Open the folder that contains the baked materials.
-    Use the menu to load the Light / Dark / Normal passes"""
+    bl_description = t('apply_mats_tt')
     bl_options = {'REGISTER', 'UNDO'}
     
     directory : StringProperty(maxlen=1024, default='', subtype='FILE_PATH', options={'HIDDEN'})
@@ -140,28 +141,28 @@ class apply_materials(bpy.types.Operator):
     structure = None
     
     def execute(self, context):
-        scene = context.scene.placeholder
-        apply_type = scene.atlas_dropdown
-
-        #Stop if no object is currently selected
-        object = bpy.context.active_object
         try:
-            #object is active but not selected
-            if not object.select_get():
-                bpy.context.window_manager.popup_menu(showError, title="Error", icon='ERROR')
-                return {'FINISHED'}
-        except:
-            #active object is Nonetype
-            bpy.context.window_manager.popup_menu(showError, title="Error", icon='ERROR')
+            scene = context.scene.kkbp
+            apply_type = scene.atlas_dropdown
+
+            #Get all files from the exported texture folder
+            folderpath = scene.import_dir if scene.import_dir != 'cleared' else self.directory #if applymaterials is run right after bake, use import dir as a temp directory holder
+            scene.import_dir == 'cleared'
+
+            for ob in [obj for obj in bpy.context.view_layer.objects if obj.type == 'MESH']:
+                bpy.ops.object.select_all(action='DESELECT')
+                bpy.context.view_layer.objects.active = ob
+                ob.select_set(True)
+                create_atlas_helpers()
+                replace_images(folderpath, apply_type)
+            
             return {'FINISHED'}
-
-        #Get all files from the exported texture folder
-        folderpath = self.directory
-
-        create_atlas_helpers()
-        replace_images(folderpath, apply_type)
-
-        return {'FINISHED'}
+        
+        except:
+            kklog('Unknown python error occurred', type = 'error')
+            kklog(traceback.format_exc())
+            self.report({'ERROR'}, traceback.format_exc())
+            return {"CANCELLED"}
 
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)

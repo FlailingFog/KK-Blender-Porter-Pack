@@ -6,7 +6,7 @@ from ..importing.importcolors import load_luts, image_to_KK
 class import_studio(bpy.types.Operator):
     bl_idname = "kkb.importstudio"
     bl_label = "Import studio object"
-    bl_description = "Open the folder containing the fbx files"
+    bl_description = "Open the folder containing the fbx files exported with SB3Utility"
     bl_options = {'REGISTER', 'UNDO'}
     
     directory : StringProperty(maxlen=1024, default='', subtype='FILE_PATH', options={'HIDDEN'})
@@ -30,9 +30,9 @@ class import_studio(bpy.types.Operator):
             #Stop if the KK shader was not detected
             def kkError(self, context):
                 self.layout.label(text="You need to append the KK Shader from the KK Shader.blend file to use this shader.")
-                self.layout.label(text="Go to File > Append > choose the KK shader.blend > go into the materials folder > choose \"Template General\" ")
+                self.layout.label(text="Go to File > Append > choose the KK shader.blend > go into the materials folder > choose \"KK General\" ")
             
-            scene = context.scene.placeholder
+            scene = context.scene.kkbp
             shader_type = scene.dropdown_box 
             shadow_type = scene.shadows_dropdown 
             blend_type = scene.blend_dropdown 
@@ -65,7 +65,7 @@ class import_studio(bpy.types.Operator):
                 
                 #pack certain images for later
                 if '_md-DXT' in str(image) or '_mc-DXT' in str(image) or '_t-DXT' in str(image):
-                    bpy.ops.image.open(filepath=str(image))
+                    bpy.ops.image.open(filepath=str(image), use_udim_detecting=False)
                     bpy.data.images[image.name].pack()
                 
                 #save the images in this directory for later
@@ -110,17 +110,13 @@ class import_studio(bpy.types.Operator):
                                 if node.type == 'OUTPUT_MATERIAL':
                                     node.name = 'Material Output'
 
-                            #Remove duplicate images
+                            #Remove duplicate images if they exist
                             for node in nodes:
                                 if node.type == 'TEX_IMAGE':
-                                    if '.0' in node.image.name or '.1' in node.image.name or '.2' in node.image.name:
-                                        #print("This image is sus: {}".format(node.image.name))
-                                        base_name, filetype, dupe_number = node.image.name.split('.',3)
-                                        #print(base_name)
-                                        #print(filetype)
-                                        #print(dupe_number)
-                                        if bpy.data.images.get(base_name + '.' + filetype) and int(dupe_number):
-                                            node.image = bpy.data.images.get(base_name + '.' + filetype)
+                                    (base, sep, ext) = node.image.name.rpartition('.')
+                                    if ext.isnumeric():
+                                        if bpy.data.images.get(base):
+                                            node.image = bpy.data.images.get(base)
                                             #print("replaced {} with {}".format(node.image.name, base_name + filetype))
 
                             #DDS files need to be converted to pngs or tgas or the color conversion scripts won't work
@@ -133,7 +129,7 @@ class import_studio(bpy.types.Operator):
                                         new_path = image.filepath.replace(".dds", ".png").replace(".DDS", ".png")
                                         new_image_name = image.name.replace(".dds", ".png").replace(".DDS", ".png")
                                         image.save_render(bpy.path.abspath(new_path))
-                                        bpy.ops.image.open(filepath=bpy.path.abspath(new_path))
+                                        bpy.ops.image.open(filepath=bpy.path.abspath(new_path), use_udim_detecting=False)
                                         bpy.data.images[new_image_name].pack()
                                         node.image = bpy.data.images[new_image_name]
 
@@ -226,14 +222,14 @@ class import_studio(bpy.types.Operator):
                                     normal = 'nonormal'
                                 
                                 try:
-                                    template = bpy.data.materials['Template General'].copy()
+                                    template = bpy.data.materials['KK General'].copy()
                                 except:
                                     script_dir=Path(__file__).parent
-                                    template_path=(script_dir / '../KK Shader V5.0.blend').resolve()
+                                    template_path=(script_dir / '../KK Shader V6.0.blend').resolve()
                                     filepath = str(template_path)
 
                                     innerpath = 'Material'
-                                    templateList = ['Template General']
+                                    templateList = ['KK General']
 
                                     for template in templateList:
                                         bpy.ops.wm.append(
@@ -242,14 +238,14 @@ class import_studio(bpy.types.Operator):
                                             filename=template,
                                             set_fake=False
                                             )
-                                    template = bpy.data.materials['Template General'].copy()
+                                    template = bpy.data.materials['KK General'].copy()
                                 
-                                template.name = 'Template ' + material.name
+                                template.name = 'KK ' + material.name
                                 material_slot.material = bpy.data.materials[template.name]
                                 material = material_slot.material
                                 nodes = material.node_tree.nodes
 
-                                def imageLoad(group, node, image, raw = False):
+                                def image_load(group, node, image, raw = False):
                                     try:
                                         nodes[group].node_tree.nodes[node].image = bpy.data.images[image]
                                         if raw:
@@ -257,7 +253,7 @@ class import_studio(bpy.types.Operator):
                                     except:
                                         print('Image not found, skipping: ' + str(image))
 
-                                gen_type = material_slot.name.replace('Template ','')
+                                gen_type = material_slot.name.replace('KK ','')
 
                                 #make a copy of the node group, use it to replace the current node group and rename it so each mat has a unique texture group
                                 new_node = material_slot.material.node_tree.nodes['Gentex'].node_tree.copy()
@@ -266,27 +262,27 @@ class import_studio(bpy.types.Operator):
                                 
                                 if image != 'noimage':
                                     #print(image)
-                                    imageLoad('Gentex', 'Maintex', image.name, True)
+                                    image_load('Gentex', 'Maintex', image.name, True)
                                 else:
                                     #if there's no image, fallback to the detected maintex
                                     try:
-                                        imageLoad('Gentex', 'Maintex', detected_maintex, True)
+                                        image_load('Gentex', 'Maintex', detected_maintex, True)
                                     except:
                                         #oh well
                                         pass
                                 
                                 if normal != 'nonormal':
-                                    imageLoad('Gentex', 'MainNorm', normal.name, True)
+                                    image_load('Gentex', 'MainNorm', normal.name, True)
                                 
                                 #try importing the detail mask if there is one
                                 try:
-                                    imageLoad('Gentex', 'MainDet', detected_detailmask, True)
+                                    image_load('Gentex', 'MainDet', detected_detailmask, True)
                                 except:
                                     #or not
                                     pass
                                 
                                 try:
-                                    imageLoad('Gentex', 'MainCol', detected_colormask, True)
+                                    image_load('Gentex', 'MainCol', detected_colormask, True)
                                 except:
                                     #or not
                                     pass

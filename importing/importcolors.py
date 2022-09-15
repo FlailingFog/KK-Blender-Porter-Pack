@@ -1,14 +1,22 @@
-import bpy, os
+import bpy, os, traceback
 import bgl
 import gpu
 import json
-from .finalizepmx import kklog
+from .importbuttons import kklog
+from .darkcolors import kk_dark_color
 import numpy as np
 from pathlib import Path
 from bpy.types import Operator
 from bpy_extras.io_utils import ImportHelper
 from gpu_extras.batch import batch_for_shader
 from bpy.props import StringProperty, BoolProperty
+
+#load plugin language
+from bpy.app.translations import locale
+if locale == 'ja_JP':
+    from ..interface.dictionary_jp import t
+else:
+    from ..interface.dictionary_en import t
 
 ########## ERRORS ##########
 def kk_folder_error(self, context):
@@ -24,9 +32,13 @@ def image_to_KK(image, lut_name):
     vertex_default = '''
     in vec2 a_position;
     in vec2 a_texcoord;
-
+    
+    in vec4 color;
+    out vec4 col;
+    
     void main() {
         gl_Position = vec4(a_position, 0.0, 1.0);
+        col = color;
     }
     '''
 
@@ -35,6 +47,9 @@ def image_to_KK(image, lut_name):
     uniform sampler2D tex0;
     uniform sampler2D lut;
     uniform vec2    u_resolution;
+    
+    in vec4 col;
+    out vec4 out_Color;
 
     vec3 to_srgb(vec3 c){
         c.rgb = max( 1.055 * pow( c.rgb, vec3(0.416666667,0.416666667,0.416666667) ) - 0.055, 0 );
@@ -70,7 +85,7 @@ def image_to_KK(image, lut_name):
 
         newColor = to_srgb(newColor);
         
-        gl_FragColor = vec4(newColor.rgb, texRGBA.a);
+        out_Color = vec4(newColor.rgb, texRGBA.a);
     }
     '''
 
@@ -181,9 +196,13 @@ def color_to_KK(color, lut_name):
     # Some Sauce
     vertex_default = '''
     in vec2 a_position;
+    
+    in vec4 color;
+    out vec4 col;
 
     void main() {
         gl_Position = vec4(a_position, 0.0, 1.0);
+        col = color;
     }
     '''
 
@@ -191,6 +210,9 @@ def color_to_KK(color, lut_name):
     current_code = '''
     uniform vec3 inputColor;
     uniform sampler2D lut;
+    
+    in vec4 col;
+    out vec4 out_Color;
 
     vec3 to_srgb(vec3 c){
         c.rgb = max( 1.055 * pow( c.rgb, vec3(0.416666667,0.416666667,0.416666667) ) - 0.055, 0 );
@@ -219,7 +241,7 @@ def color_to_KK(color, lut_name):
         
         vec3 shaderColor = lutColor;
         
-        gl_FragColor = vec4(shaderColor.rgb, 1);
+        out_Color = vec4(shaderColor.rgb, 1);
     }
     '''
 
@@ -461,17 +483,17 @@ def load_luts(lut_light, lut_dark):
 
 def convert_main_textures(lut_light):
     ignore_list = [
-        "cf_m_eyeline_00_up_MainTex_CT.png",
-        "cf_m_eyeline_down_MainTex_CT.png",
-        "cf_m_noseline_00_MainTex_CT.png",
-        "cf_m_mayuge_00_MainTex_CT.png",
-        "cf_m_eyeline_kage_MainTex.png",
+        "cf_m_eyeline_00_up_MT_CT.png",
+        "cf_m_eyeline_down_MT_CT.png",
+        "cf_m_noseline_00_MT_CT.png",
+        "cf_m_mayuge_00_MT_CT.png",
+        "cf_m_eyeline_kage_MT.png",
     ]
 
     images = bpy.data.images
     first = True
     for image in images:
-        if "_MainTex" in image.name and image.name not in ignore_list:
+        if "_MT" in image.name and image.name not in ignore_list:
             image.reload()
 
             # Need to run image_to_KK twice for the first image due to a weird bug
@@ -484,7 +506,6 @@ def convert_main_textures(lut_light):
             # image.save()
 
 def load_json_colors(directory, lut_light, lut_dark, lut_selection):
-    kklog('\nConverting Colors...')
 
     # "Borrowed" some logic from importeverything.py :P
     file_list = Path(directory).glob('*.*')
@@ -503,7 +524,7 @@ def load_json_colors(directory, lut_light, lut_dark, lut_selection):
     set_color_management()
 
 def update_shaders(json, lut_selection, active_lut, light):
-
+    
     def to_rgba(rgb):
         rgba = [rgb[0], rgb[1], rgb[2], 1]
         return rgba
@@ -580,31 +601,29 @@ def update_shaders(json, lut_selection, active_lut, light):
     ### Set shader colors
     ## Body Shader
     shader_inputs = body_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
-    shader_inputs['Skin color'].default_value = body_colors[0]
+    shader_inputs['Skin color'].default_value = body_colors[0] if light else [1.000000, 0.685285, 0.637749, 1.000000] #hardcode dark body color for now
     shader_inputs['Skin type color'].default_value = body_colors[1]
     shader_inputs['Skin type intensity (Base)'].default_value = 0.5
     shader_inputs['Skin type intensity'].default_value = 1
     shader_inputs['Skin detail color'].default_value = body_colors[1]
     shader_inputs['Skin detail intensity'].default_value = 0.5
     shader_inputs['Nail Color (multiplied)'].default_value = body_colors[2]
-    shader_inputs['Skin gloss intensity'].default_value = 1
-    shader_inputs['Underhair color'].default_value = body_colors[4]
+    shader_inputs['Skin gloss intensity'].default_value = 0.5
 
-    shader_inputs['Nipple base'].default_value = body_colors[3]
-    shader_inputs['Nipple base 2'].default_value = [1, 0, 0, 1] # Red
-    shader_inputs['Nipple shine'].default_value = np.array(body_colors[3]) * 1.5
-    shader_inputs['Nipple rim'].default_value = np.array(body_colors[3]) * 0.5
-
+    if not bpy.context.scene.kkbp.sfw_mode:
+        shader_inputs['Underhair color'].default_value = body_colors[4]
+        shader_inputs['Nipple base'].default_value = body_colors[3]
+        shader_inputs['Nipple base 2'].default_value = [1, 0, 0, 1] # Red
+        shader_inputs['Nipple shine'].default_value = np.array(body_colors[3]) * 1.5
+        shader_inputs['Nipple rim'].default_value = np.array(body_colors[3]) * 0.5
 
     ## Face Shader
     shader_inputs = face_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
-    shader_inputs['Skin color'].default_value = body_colors[0]
+    shader_inputs['Skin color'].default_value = body_colors[0] if light else [1.000000, 0.685285, 0.637749, 1.000000] #hardcode dark body color for now
     shader_inputs['Skin detail color'].default_value = body_colors[1]
     shader_inputs['Light blush color'].default_value = face_colors[5]
     shader_inputs['Mouth interior multiplier'].default_value = [1, 1, 1, 1]
-    
-    shader_inputs['Overlay 1 color'].default_value = face_colors[6]
-
+    shader_inputs['Lipstick multiplier'].default_value = face_colors[6]
 
     ## Eyebrow Shader
     shader_inputs = eyebrows_shader_node_group.nodes['colorsLight'].inputs
@@ -620,6 +639,7 @@ def update_shaders(json, lut_selection, active_lut, light):
     shader_inputs = tongue_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
     #shader_inputs['Use Color mask instead? (1 = yes)'].default_value = 1
     shader_inputs['Manually set detail color? (1 = yes)'].default_value = 0
+    shader_inputs['Maintex Saturation'].default_value = 0.6
     shader_inputs['Detail intensity (green)'].default_value = 0.01
     shader_inputs['Color mask color (base)'].default_value = [1, 1, 1, 1]
     shader_inputs['Color mask color (red)'].default_value = tongue_color
@@ -628,7 +648,12 @@ def update_shaders(json, lut_selection, active_lut, light):
 
     ## Hair Shader
     shader_inputs = hair_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
-    shader_inputs['Light Hair color' if light else 'Dark Hair color'].default_value = hair_base_color
+    if lut_selection == 'F' and not light:
+        hair_shadow_color = ([el / 255 for el in json_to_color(json[5]['shadowColor'])])
+        color_channel = [el/255 for el in to_rgba(color_to_KK([255*el for el in kk_dark_color(color = hair_base_color, shadow_color = hair_shadow_color)], 'Lut_TimeDay.png'))]
+        shader_inputs['Dark Hair color'].default_value = color_channel
+    else:
+        shader_inputs['Light Hair color' if light else 'Dark Hair color'].default_value = hair_base_color
     shader_inputs['Light Hair rim color' if light else 'Dark Hair rim color'].default_value = hair_root_color
     shader_inputs['Dark fade color'].default_value = hair_root_color
     shader_inputs['Light fade color'].default_value = hair_tip_color
@@ -636,7 +661,7 @@ def update_shaders(json, lut_selection, active_lut, light):
     shader_inputs['Use fade mask? (1 = yes)'].default_value = 0.5
 
     ## Accessories/Items Shader
-    uses_lut = any([lut_selection == 'A', lut_selection == 'B', lut_selection == 'C'])
+    uses_lut = lut_selection in ['A', 'B', 'C', 'F']
     for idx, item in enumerate(item_data):
         pattern_input_names = [
             'Pattern color (red)',
@@ -669,13 +694,24 @@ def update_shaders(json, lut_selection, active_lut, light):
             shader_inputs['Color mask color (base)'].default_value = [0.3, 0.3, 0.3, 0.3]
         else:
             shader_inputs['Color mask color (base)'].default_value = [1, 1, 1, 1]
-
-        for i, colorItem in enumerate(item['colorInfo']):
-            if i < len(color_input_names):
-                color_channel = to_rgba(color_to_KK(json_to_color(colorItem), active_lut) / 255)
-                if not light and lut_selection == 'E':
-                    color_channel = [x * .3 for x in color_channel]
-                shader_inputs[color_input_names[i]].default_value = color_channel
+        
+        if lut_selection == 'F' and not light:
+            for i, colorItem in enumerate(item['colorInfo']):
+                if i < len(color_input_names):
+                    color = ([el / 255 for el in json_to_color(colorItem)])
+                    shadow_color = ([el / 255 for el in json_to_color(item['shadowColor'])])
+                    color_channel = [el/255 for el in to_rgba(color_to_KK([255*el for el in kk_dark_color(color = color, shadow_color = shadow_color)], 'Lut_TimeDay.png'))]
+                    shader_inputs[color_input_names[i]].default_value = color_channel
+            shader_inputs['Use colored maintex?'].default_value = 0
+            shader_inputs['Ignore colormask?'].default_value = 0
+        else:
+            for i, colorItem in enumerate(item['colorInfo']):
+                if i < len(color_input_names):
+                    color_channel = to_rgba(color_to_KK(json_to_color(colorItem), active_lut) / 255)
+                    if not light and lut_selection == 'E':
+                        color_channel = [x * .3 for x in color_channel]
+                    shader_inputs[color_input_names[i]].default_value = color_channel
+            #shader_inputs['Ignore colormask?'].default_value = 1
 
         if not light and lut_selection == 'E':
             shader_inputs['Pattern (base)'].default_value = [0.3, 0.3, 0.3, 0.3]
@@ -698,7 +734,7 @@ def set_color_management():
 class import_colors(bpy.types.Operator):
     bl_idname = "kkb.importcolors"
     bl_label = "Open Export folder"
-    bl_description = "Open the folder containing your model.pmx file"
+    bl_description = t('import_colors_tt')
     bl_options = {'REGISTER', 'UNDO'}
     
     directory : StringProperty(maxlen=1024, default='', subtype='FILE_PATH', options={'HIDDEN'})
@@ -708,26 +744,44 @@ class import_colors(bpy.types.Operator):
     structure = None
 
     def execute(self, context):
-        directory = self.directory
-        error = checks(directory)
+        kklog('\nConverting Colors...')
+        print(context.scene.kkbp.import_dir)
+        try:
+            if self.directory == '':
+                directory = context.scene.kkbp.import_dir
+            else:
+                directory = self.directory
 
-        scene = context.scene.placeholder
-        lut_selection = scene.colors_dropdown
+            error = checks(directory)
+
+            scene = context.scene.kkbp
+            lut_selection = scene.colors_dropdown
+            
+            if lut_selection == 'A':
+                lut_dark = 'Lut_TimeNight.png'
+            elif lut_selection == 'B':
+                lut_dark = 'Lut_TimeSunset.png'
+            else:
+                lut_dark = 'Lut_TimeDay.png'
+            lut_light = 'Lut_TimeDay.png'
+
+            if not error:
+                load_luts(lut_light, lut_dark)
+                convert_main_textures(lut_light)
+                load_json_colors(directory, lut_light, lut_dark, lut_selection)
+
+            bpy.data.use_autopack = True #enable autopack on file save
+            context.scene.kkbp.import_dir = 'cleared'
+            bpy.data.objects['Armature'].select_set(True)
+            bpy.context.view_layer.objects.active = bpy.data.objects['Armature']
+
+            return {'FINISHED'}
         
-        if lut_selection == 'A':
-            lut_dark = 'Lut_TimeNight.png'
-        elif lut_selection == 'B':
-            lut_dark = 'Lut_TimeSunset.png'
-        else:
-            lut_dark = 'Lut_TimeDay.png'
-        lut_light = 'Lut_TimeDay.png'
-
-        if not error:
-            load_luts(lut_light, lut_dark)
-            convert_main_textures(lut_light)
-            load_json_colors(directory, lut_light, lut_dark, lut_selection)
-
-        return {'FINISHED'}
+        except:
+            kklog('Unknown python error occurred', type = 'error')
+            kklog(traceback.format_exc())
+            self.report({'ERROR'}, traceback.format_exc())
+            return {"CANCELLED"}
 
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)

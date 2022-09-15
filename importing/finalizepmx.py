@@ -8,55 +8,79 @@ FINALIZE PMX
 some code stolen from MediaMoots here https://github.com/FlailingFog/KK-Blender-Shader-Pack/issues/29
 '''
 
-import bpy
+import bpy, math, time, traceback
 from mathutils import Vector
-import math
+from .importbuttons import kklog
 
-def kklog(log_text, type = 'standard'):
-    if not bpy.data.texts.get('KKBP Log'):
-        bpy.data.texts.new(name='KKBP Log')
-        if bpy.data.screens.get('Scripting'):
-            for area in bpy.data.screens['Scripting'].areas:
-                if area.type == 'TEXT_EDITOR':
-                    area.spaces[0].text = bpy.data.texts['KKBP Log']
-
-    if type == 'error':
-        log_text = 'Error:          ' + log_text
-    elif type == 'warn':
-        log_text = 'Warning:        ' + log_text
-    bpy.data.texts['KKBP Log'].write(log_text + '\n')
-    print(log_text)
-
-# makes the pmx armature and bone names match the koikatsu armature structure and bone names
-def standardize_armature():
+def rename_and_merge_outfits():
     bpy.ops.object.mode_set(mode='OBJECT')
+    
+    #get objects
     armature = bpy.data.objects['Model_arm']
     body = bpy.data.objects['Model_mesh']
     empty = bpy.data.objects['Model']
+    
+    #rename
     armature.parent = None
     armature.name = 'Armature'
     body.name = 'Body'
-
+    body.modifiers[0].show_in_editmode = True
+    body.modifiers[0].show_on_cage = True
+    body.modifiers[0].show_expanded = False
+    
     #Deselect all objects
     bpy.ops.object.select_all(action='DESELECT')
+
+    bpy.data.objects.remove(empty)
+    
+    idx = 1
+    for obj in bpy.data.objects:
+        if "Model_arm" in obj.name and obj.type == 'ARMATURE':
+            #get objects
+            empty = bpy.data.objects['Model.' + str(idx).zfill(3)]
+            id = empty['KKBP outfit ID']
+            outfit_arm = bpy.data.objects['Model_arm.' + str(idx).zfill(3)]
+            outfit = bpy.data.objects[empty.name  + '_mesh']
+            
+            bpy.data.objects.remove(empty)
+            bpy.data.objects.remove(outfit_arm)
+            #rename outfit to match ID
+            outfit.name = 'Outfit ' + id
+            outfit.parent = armature
+            outfit.modifiers[0].object = armature
+            outfit.modifiers[0].show_in_editmode = True
+            outfit.modifiers[0].show_on_cage = True
+            outfit.modifiers[0].show_expanded = False
+            
+            idx += 1
+        
     #Select the Body object
     body.select_set(True)
     #and make it active
-    bpy.context.view_layer.objects.active = armature
+    bpy.context.view_layer.objects.active = armature   
 
-    bpy.data.objects.remove(empty)
-
-    #reparent foot to leg03
+# makes the pmx armature and bone names match the koikatsu armature structure and bone names
+def standardize_armature(modify_arm):
+    rename_and_merge_outfits()
+    
+    armature = bpy.data.objects['Armature']
+    
+    #scale all bone sizes down by a factor of 12
     try:
         bpy.ops.object.mode_set(mode='EDIT')
     except:
         armature.hide = False
         bpy.ops.object.mode_set(mode='EDIT')
-    armature.data.edit_bones['cf_j_foot_R'].parent = armature.data.edit_bones['cf_j_leg03_R']
-    armature.data.edit_bones['cf_j_foot_L'].parent = armature.data.edit_bones['cf_j_leg03_L']
+    for bone in armature.data.edit_bones:
+        bone.tail.z = bone.head.z + (bone.tail.z - bone.head.z)/12
+    
+    if modify_arm != 'D':
+        #reparent foot to leg03
+        armature.data.edit_bones['cf_j_foot_R'].parent = armature.data.edit_bones['cf_j_leg03_R']
+        armature.data.edit_bones['cf_j_foot_L'].parent = armature.data.edit_bones['cf_j_leg03_L']
 
-    #unparent body bone to match KK
-    armature.data.edit_bones['p_cf_body_bone'].parent = None
+        #unparent body bone to match KK
+        armature.data.edit_bones['p_cf_body_bone'].parent = None
 
     #remove all constraints from all bones
     bpy.ops.object.mode_set(mode='POSE')
@@ -104,13 +128,17 @@ def standardize_armature():
         except:
             #The script hit the last bone in the chain
             return
-    select_children(armature.data.edit_bones['cf_n_height'])
 
-    #make sure these bones aren't deleted
-    for preserve_bone in ['cf_j_root', 'p_cf_body_bone', 'cf_n_height']:
-        armature.data.edit_bones[preserve_bone].select = True
-        armature.data.edit_bones[preserve_bone].select_head = True
-        armature.data.edit_bones[preserve_bone].select_tail = True
+    if modify_arm == 'D':
+        select_children(armature.data.edit_bones['BodyTop'])
+    else:
+        select_children(armature.data.edit_bones['cf_n_height'])
+
+        #make sure these bones aren't deleted
+        for preserve_bone in ['cf_j_root', 'p_cf_body_bone', 'cf_n_height']:
+            armature.data.edit_bones[preserve_bone].select = True
+            armature.data.edit_bones[preserve_bone].select_head = True
+            armature.data.edit_bones[preserve_bone].select_tail = True
 
     bpy.ops.armature.select_all(action='INVERT')
     bpy.ops.armature.delete()
@@ -594,7 +622,7 @@ def modify_pmx_armature():
 
 #100% repurposed from https://github.com/FlailingFog/KK-Blender-Shader-Pack/issues/29
 ### Function to check for empty vertex groups
-#returns a dictionary in the form {vertex_group1: weight1, vertex_group2: weight2, etc}
+#returns a dictionary in the form {vertex_group1: maxweight1, vertex_group2: maxweight2, etc}
 def survey(obj):
     maxWeight = {}
     #prefill vertex group list with zeroes
@@ -621,7 +649,7 @@ Basic strategy:
 * Match the bone and vertex group locations per material
 * Extract the vertices from the merged vertex group and assign them to the matched vertex group for each material + vertex group / bone combo
 '''
-def fix_accessories():
+'''def fix_accessories():
     armature = bpy.data.objects['Armature']
     body = bpy.data.objects['Body']
 
@@ -793,7 +821,7 @@ def fix_accessories():
                         old_vg_index = index
                 if vertex in materialVertices[material]:
                     body.data.vertices[vertex].groups[old_vg_index].weight = 0
-                    body.vertex_groups[old_vg_index].remove([vertex])
+                    body.vertex_groups[old_vg_index].remove([vertex])'''
 
 def rename_mmd_bones():
     #renames japanese name field for importing vmds via mmd tools
@@ -860,58 +888,65 @@ def rename_mmd_bones():
     for bone in pmx_rename_dict:
         if armature.pose.bones.get(pmx_rename_dict[bone]):
             armature.pose.bones[pmx_rename_dict[bone]].mmd_bone.name_j = bone
-            
+
+def survey_vertexes(obj):
+    has_vertexes = {}
+    for i in obj.vertex_groups:
+        has_vertexes[i.name] = False
+    #preserve the indexes
+    keylist = list(has_vertexes)
+    #then fill in the real value using the indexes
+    for v in obj.data.vertices:
+        for g in v.groups:
+            gn = g.group
+            w = obj.vertex_groups[g.group].weight(v.index)
+            if (has_vertexes.get(keylist[gn]) is None or w>has_vertexes[keylist[gn]]):
+                has_vertexes[keylist[gn]] = True
+    return has_vertexes
+    
+def remove_empty_vertex_groups():
+    #check body for groups with no vertexes. Delete if the group is not a bone on the armature
+    body = bpy.data.objects['Body']
+    armature = bpy.data.objects['Armature']
+    vertexWeightMap = survey_vertexes(body)
+    bones_in_armature = [bone.name for bone in armature.data.bones]
+    for group in vertexWeightMap:
+        if group not in bones_in_armature and vertexWeightMap[group] == False and 'cf_J_Vagina' not in group:
+            body.vertex_groups.remove(body.vertex_groups[group])
+
 class finalize_pmx(bpy.types.Operator):
     bl_idname = "kkb.finalizepmx"
     bl_label = "Finalize .pmx file"
     bl_description = "Finalize CATS .pmx file"
     bl_options = {'REGISTER', 'UNDO'}
 
-    def execute(self, context): 
+    def execute(self, context):
+        try:
+            last_step = time.time()
 
-        scene = context.scene.placeholder
-        modify_armature = scene.armature_edit_bool
+            scene = context.scene.kkbp
+            modify_armature = scene.armature_dropdown
 
-        #get rid of the text files mmd tools generates
-        if bpy.data.texts.get('Model'):
-                bpy.data.texts.remove(bpy.data.texts['Model'])
-                bpy.data.texts.remove(bpy.data.texts['Model_e'])
-        
-        kklog('====    KKBP Log    ====')
-        
-        standardize_armature()
-        reset_and_reroll_bones()
-        if modify_armature:
-            kklog('Modifying armature...')
-            modify_pmx_armature()
-        #if fix_accs:
-            #kklog('Fixing accessories...')
-            #fix_accessories()
-        rename_mmd_bones()
-        
-        #Set the view transform 
-        bpy.context.scene.view_settings.view_transform = 'Standard'
-        bpy.ops.object.select_all(action='DESELECT')
-        
-        #redraw the UI after each operation to let the user know the plugin is actually doing something
-        kklog('\nFixing shapekeys...')
-        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-        bpy.ops.kkb.shapekeys('INVOKE_DEFAULT')
+            kklog('\nFinalizing PMX file...')
+            standardize_armature(modify_armature)
+            reset_and_reroll_bones()
+            if modify_armature in ['A', 'B']:
+                kklog('Modifying armature...', type='timed')
+                modify_pmx_armature()
+            #if fix_accs:
+                #kklog('Fixing accessories...')
+                #fix_accessories()
+            rename_mmd_bones()
+            remove_empty_vertex_groups()
+            kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
+            
+            return {'FINISHED'}
+        except:
+            kklog('Unknown python error occurred', type = 'error')
+            kklog(traceback.format_exc())
+            self.report({'ERROR'}, traceback.format_exc())
+            return {"CANCELLED"}
 
-        kklog('\nSeparating body, clothes and shadowcast, then removing duplicate materials...')
-        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-        bpy.ops.kkb.separatebody('INVOKE_DEFAULT')
-
-        kklog('\nCategorizing bones into armature layers...')
-        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-        bpy.ops.kkb.cleanarmature('INVOKE_DEFAULT')
-
-        kklog('\nAdding bone drivers...')
-        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-        bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT')
-        
-        return {'FINISHED'}
-    
 if __name__ == "__main__":
     bpy.utils.register_class(finalize_pmx)
     

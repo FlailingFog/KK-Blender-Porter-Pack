@@ -1,3 +1,89 @@
+### Changes for V6.0.0
+Huge feature updates by **MediaMoots**!
+* The KKBP exporter now works in Koikatsu Sunshine!
+* The KKBP Blender plugin now works in Blender 3.1+!
+* All outfits are now exported!
+    * These are automatically exported from Koikatsu
+    * These are available as hidden objects after the model is imported into Blender. They are parented to the armature
+    * If you don't want to use these, you can shorten your import time by deleting the "Outfit ##" folder from the export folder 
+* Alternate clothing states (shift / hang state) can now be exported!
+    * Export these by checking the "Export Variations" box in Koikatsu
+    * These are available as hidden objects after the model is imported into Blender. They are parented to the outfit object
+* Hitboxes can now be exported!
+    * Export these by checking the "Export Hit Meshes" box in Koikatsu
+    * These are placed in their own collection when the model is imported into Blender
+* The tears object is now exported and available as new shapekeys on the body object!
+    * These are parented to the body
+    * The tears material also has settings to allow minor color edits
+* The eye gag object for heart eyes, firey eyes, etc is now exported and available as new shapekeys on the body object!
+    * These are parented to the body
+    * The shapekeys will automatically hide the eyes and eyeline materials when active
+    * The swirly eye rotation speed, heart eye pulse speed and cry/fire eye animation speed can be changed in the Eye Gag materials 
+* The animated tongue is now exported!
+    * This is parented to the body object and hidden by default
+    * The rigged tongue doesn't use shapekeys like the rest of the face does
+* Shapekeys are more accurate than before!
+* The heart and sparkle Eye overlays are now exported
+* Eyewhite shapekeys are fixed on the exporter-side now!
+    * This means Blender is less likely to crash when importing the model
+* Small fangs are now exported!
+* Accessories are now automatically linked to the correct limb bone!
+* Eye and overlay textures are now scaled automatically!
+* Hair shine, eyeshadow, nipple and underhair UVmaps are now exported!
+    * Thanks to that, these items no longer need to be set and scaled manually for each character
+* Converted Normal Maps for use in Unreal and Unity are now exported
+* Separated objects can now be exported with the "Export separated meshes" button
+* A lot of character info is now exported
+    * Check the .json files in the export folder for info on materials, accessories, objects, renderers and bones
+* Exported character heights are 4% more accurate
+* Texture suffixes are shortened
+    * Image names over 64 characters long would cause blender to cufoff the filename, so this means long texture names are less likely to cause issues during import
+* The Koikatsu / BepInEx console will now be print out each mesh being exported. If the exporter is not working for a specific character, accessory or clothing item, you can use this to track down what is causing the exporter to fail.
+    * These messages are prefixed with [Info   :   Console]
+
+Rigify armature updates by **an anonymous contributor**!
+* Better Penetration bones will now be placed in the "Torso (Tweak)" layer when converting to the Rigify armature
+    * You need to use the Better Penetration armature type in Koikatsu for these bones to appear
+
+Unity normal blending and mirrored blush scaling by **poisenbery**!
+* Unity normal blending is an alternative normal map detail blending method that can be accessed in the "Raw shading" group
+* Mirrored blush scaling is an easier way to scale the blush and eyeshadow if the texture is symmetrical. This can be accessed in the "Blush positioning" group on the Face material
+
+Better face normals using shader nodes!
+* The face now uses a bastardized version of the Generated Face Normals setup [described in this post by **aVersionOfReality**](https://www.aversionofreality.com/blog/2021/9/5/clean-toon-shading)
+* This setup is disabled by default for performance reasons. Enable it by going to the face material > swap the "Raw Shading" node group to "Raw Shading (face)"
+* This setup only works in Blender
+* The GFN Empty position and scale can be edited by unhiding it. It's parented to the armature
+* The GFN options can be edited in the node group called "Generated Face Normals" inside of the the "Raw shading (face)" group
+
+Plus some misc changes to the Blender plugin:
+* Added a one-click option for importing models!
+    * Hair is now separated from the model automatically, so the entire import process has been reduced to a single button
+    * The behaviour from V5.0 (where you can separate objects as you please) can still be accessed by changing the "Don't pause to categorize" option on the upper right to "Pause to categorize", then pressing the "Finish categorization" button when you're done.
+* The main plugin UI can now be fully translated!
+    * Current languages: English, Japanese (日本語)
+* Material baking is now done [through the use of Geometry Nodes!](https://blender.stackexchange.com/questions/231662/)
+    * This works with multiple UV maps, so you no longer need to create a new mesh for hair highlights or anything that uses a separate uv map
+    * You can also speed up the baking process by skipping the dark and normal bakes if you don't want them
+* Exporting can now be done without installing the CATS addon
+    * Material Combiner is still required if you want a material atlas
+* Added a simplification choices menu to the export prep button
+* Removed the vanilla armature type toggle in favor of a menu
+    * There's four options to choose from. Check the tooltip for a brief description of each option
+    * The ability to switch between armature types after import was removed
+* Shapekeys on clothes and hair objects are now deleted
+    * Shapekeys only affect the face, so these weren't needed anyway
+* The Eye, Eyebrow, Eyewhite, Eyeline and Nose materials are now marked as freestyle faces by default (for freestyle exclusion)
+* Added a safe for work mode toggle that probably works
+* Python errors are now copied to the KK Log in the Scripting tab on the top
+* The import directory string listed in the KK Log is now censored if it detects your Windows username
+* The plugin now uses an HDRI from polyhaven
+* All KKBP panel options are now visible by default
+* The KKBP panel will now gray out some buttons after a model is imported  
+
+Bugfixes:
+lkjfdlsnkklfd
+
 ### Changes for V5.1.0
 * Added per-character light linking to the KK shader
     * If you have multiple characters in a scene, this allows you to "link" a light to a character, so you can achieve ideal lighting for each character and not have to fiddle with a global lighting setup that affects all characters at once. This works for up to three characters / light sources. It's enabled by default and can be found inside of the Raw Shading group.
@@ -54,6 +140,7 @@
     * This allows you to make the Eyes and Eyebrows show through the hair using Cryptomatte and other compositor features
 * Shader-to-RGB nodes added to clothing color inputs!
     * This allows you to plug metal and other types of materials into clothing colormask inputs
+
 ### Changes for V4.3.1:
 * Renamed the spine bones during the "1) Run right after importing" script
     * CATS was not detecting the Spine, Chest and Upper Chest bones correctly. This resulted in the spine and chest bones being merged into one bone with awkward spine bends. Renaming the bones lets CATS detect the three bones correctly.

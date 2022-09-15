@@ -60,27 +60,15 @@ class switch_armature(bpy.types.Operator):
             rename_bones_for_clarity('stock')
 
             # reset the orientation for the leg/arm bones to stock
-            #   orientation is based on armature origin
             #   also move some head/tail positions back to counteract the
-            #   results of the finalizepmx/fbx's relocate tail function
-            if armature.data.edit_bones.get('Greybone'):
-                height_adder = Vector((0,0.1,0))
-            else:
-                height_adder = Vector((0,0,0.1))
+            #   results of the finalizepmx relocate tail function
+            height_adder = Vector((0,0,0.1))
 
             def unorient(bone):
-                if armature.data.edit_bones.get('Greybone'):
-                    if 'leg' in bone:
-                        armature.data.edit_bones[bone].head.z -= 0.002
-                    elif 'forearm' in bone:
-                        armature.data.edit_bones[bone].head.z -= -0.002
-                    elif 'hand' in bone:
-                        armature.data.edit_bones[bone].tail.y -= .01
-                else:
-                    if 'leg' in bone:
-                        armature.data.edit_bones[bone].head.y -= -.004
-                    elif 'hand' in bone:
-                        armature.data.edit_bones[bone].tail.z -= .01
+                if 'leg' in bone:
+                    armature.data.edit_bones[bone].head.y -= -.004
+                elif 'hand' in bone:
+                    armature.data.edit_bones[bone].tail.z -= .01
 
                 armature.data.edit_bones[bone].tail = armature.data.edit_bones[bone].head + height_adder
                 armature.data.edit_bones[bone].roll = 0
@@ -133,10 +121,7 @@ class switch_armature(bpy.types.Operator):
             reparent('p_cf_body_bone', 'cf_pv_root')
 
             #then modify the bone names back and set the orientations for IKs
-            if armature.data.bones.get('Greybone'):
-                modify_fbx_armature()
-            else:
-                modify_pmx_armature()
+            modify_pmx_armature()
             
             rename_bones_for_clarity('modified')
 
@@ -144,13 +129,10 @@ class switch_armature(bpy.types.Operator):
             #if the armature has renamed bones, and it was never modified and this is a stock armature
             #this means the user wants to switch to the modified armature
             print('switching from stock to modified for the first time')
-            if armature.data.bones.get('Greybone'):
-                modify_fbx_armature()
-            else:
-                modify_pmx_armature()
+            modify_pmx_armature()
 
             armature.hide = False
-            scene = context.scene.placeholder
+            scene = context.scene.kkbp
             scene.armature_edit_bool = True
             bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT')
             bpy.ops.object.mode_set(mode='OBJECT')
