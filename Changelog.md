@@ -1,5 +1,5 @@
 ### Changes for V6.0.0
-Huge feature updates by **MediaMoots**!
+Huge feature and usability updates by **MediaMoots**!
 * The KKBP exporter now works in Koikatsu Sunshine!
 * The KKBP Blender plugin now works in Blender 3.1+!
 * All outfits are now exported!
@@ -74,15 +74,16 @@ Plus some misc changes to the Blender plugin:
 * Shapekeys on clothes and hair objects are now deleted
     * Shapekeys only affect the face, so these weren't needed anyway
 * The Eye, Eyebrow, Eyewhite, Eyeline and Nose materials are now marked as freestyle faces by default (for freestyle exclusion)
+* Lipstick and Flush textures are now loaded into the face material
 * Added a safe for work mode toggle that probably works
+* The permalight/permadark texture has been merged into one file
 * Python errors are now copied to the KK Log in the Scripting tab on the top
 * The import directory string listed in the KK Log is now censored if it detects your Windows username
 * The plugin now uses an HDRI from polyhaven
 * All KKBP panel options are now visible by default
 * The KKBP panel will now gray out some buttons after a model is imported  
 
-Bugfixes:
-lkjfdlsnkklfd
+And many bugfixes
 
 ### Changes for V5.1.0
 * Added per-character light linking to the KK shader
