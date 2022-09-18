@@ -58,6 +58,11 @@ translation_dictionary = {
     'prep_drop_B'       : "汎用FBX - 変更なし",
     'prep_drop_B_tt'    : """アウトラインを削除して...
     Eyewhiteの複写を削除して""",
+    'prep_drop_D'       : "Unity - VRChatコンパチ",
+    'prep_drop_D_tt'    : """アウトラインを削除して...
+    Eyewhiteの複写を削除して,
+    Upper Chestの骨を削除して、
+    Unityがボーンをひとりでに見つけられるためにアーマチュアを改造して""",
 
     'simp_drop'     : 'アーマチュアの簡略化',
     'simp_drop_A'   : '超シンプル (遅い)',

@@ -56,6 +56,11 @@ translation_dictionary = {
     'prep_drop_B'       : "Generic FBX - No changes",
     'prep_drop_B_tt'    : """Removes the outline and...
     removes duplicate Eyewhite material slot if present""",
+    'prep_drop_D'       : "Unity - VRChat compatible",
+    'prep_drop_D_tt'    : """Removes the outline and...
+    removes duplicate Eyewhite material slot if present,
+    removes the "Upper Chest" bone,
+    edits bone hierarchy to allow Unity to automatically detect the right bones""",
 
     'simp_drop'     : 'Armature simplification type',
     'simp_drop_A'   : 'Very simple (SLOW)',

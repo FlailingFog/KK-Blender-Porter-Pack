@@ -75,7 +75,8 @@ class PlaceholderProperties(PropertyGroup):
     prep_dropdown : EnumProperty(
         items=(
             ("A", t('prep_drop_A'), t('prep_drop_A_tt')),
-            #("B", "MikuMikuDance - PMX compatible", " "),
+            #("C", "MikuMikuDance - PMX compatible", " "),
+            ("D", t('prep_drop_D'), t('prep_drop_D_tt')),
             ("B", t('prep_drop_B'), t('prep_drop_B_tt')),
         ), name="", default="A", description=t('prep_drop'))
 

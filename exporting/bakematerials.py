@@ -20,7 +20,7 @@ Notes:
 fillerplane driver + shader code taken from https://blenderartists.org/t/scripts-create-camera-image-plane/580839
 '''
 
-import bpy, os, traceback
+import bpy, os, traceback, time
 from pathlib import Path, WindowsPath
 from ..importing.importbuttons import kklog
 from bpy.props import StringProperty, BoolProperty
@@ -428,6 +428,7 @@ class bake_materials(bpy.types.Operator):
     
     def execute(self, context):
         try:
+            last_step = time.time()
             kklog('Switching to EEVEE for material baking...')
             bpy.context.scene.render.engine = 'BLENDER_EEVEE'
             print(self.directory)
@@ -452,6 +453,7 @@ class bake_materials(bpy.types.Operator):
             #run the apply materials script right after baking
             scene.import_dir = folderpath #use import dir as a temp directory holder
             bpy.ops.kkb.applymaterials('EXEC_DEFAULT')
+            kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             return {'FINISHED'}
         except:
             kklog('Unknown python error occurred', type = 'error')

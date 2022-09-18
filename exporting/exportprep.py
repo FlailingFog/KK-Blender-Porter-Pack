@@ -103,8 +103,8 @@ def main(prep_type, simp_type):
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.kkb.cats_merge_weights()
 
-    #If exporting for VRM...
-    if prep_type == 'A':
+    #If exporting for VRM or VRC...
+    if prep_type in ['A', 'D']:
         kklog('Editing armature for VRM...')
         bpy.context.view_layer.objects.active=armature
         bpy.ops.object.mode_set(mode='EDIT')
@@ -128,6 +128,9 @@ def main(prep_type, simp_type):
         #Merge specific bones for unity rig autodetect
         armature = bpy.data.objects['Armature']
         merge_these = ['cf_j_waist02', 'cf_s_waist01', 'cf_s_hand_L', 'cf_s_hand_R']
+        #Delete the upper chest for VR chat models, since it apparently causes errors with eye tracking
+        if prep_type == 'D':
+            merge_these.append('Upper Chest')
         for bone in armature.data.bones:
             if bone.name in merge_these:
                 bone.select = True
@@ -219,8 +222,12 @@ def main(prep_type, simp_type):
         armature.data.edit_bones['右足'].parent = armature.data.edit_bones['下半身']
 
         #refresh the vertex groups? Bones will act as if they're detached if this isn't done
-        body.vertex_groups.active=0
+        body.vertex_groups.active=body.vertex_groups['BodyTop']
 
+        #combine all objects into one
+
+        #create leg IKs?
+        
         kklog('Using CATS to simplify more bones for MMD...')
 
         #use mmd_tools to convert
@@ -239,10 +246,10 @@ class export_prep(bpy.types.Operator):
         prep_type = scene.prep_dropdown
         simp_type = scene.simp_dropdown
         last_step = time.time()
-        kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
         try:
             main(prep_type, simp_type)
             scene.is_prepped = True
+            kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             return {'FINISHED'}
         except:
             kklog('Unknown python error occurred', type = 'error')
