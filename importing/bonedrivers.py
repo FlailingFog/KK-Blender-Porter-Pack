@@ -572,41 +572,38 @@ def scale_final_bones():
     bpy.ops.armature.select_all(action='DESELECT')
     bpy.ops.object.mode_set(mode='POSE')
 
-    def resize_bone(bone, scale, type='MIDPOINT'):
+    def shorten_bone(bone, scale):
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.armature.select_all(action='DESELECT')
         bpy.context.object.data.edit_bones[bone].select_head = True
         bpy.context.object.data.edit_bones[bone].select_tail = True
-        previous_roll = bpy.context.object.data.edit_bones[bone].roll + 1
-        if type == 'MIDPOINT':
-            bpy.ops.transform.resize(value=(scale, scale, scale), orient_type='GLOBAL',
-            orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL',
-            mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH',
-            proportional_size=0.683013, use_proportional_connected=False, use_proportional_projected=False)
-        else:
-            bpy.context.object.data.edit_bones[bone].tail = (bpy.context.object.data.edit_bones[bone].tail+bpy.context.object.data.edit_bones[bone].head)/2
-            bpy.context.object.data.edit_bones[bone].tail = (bpy.context.object.data.edit_bones[bone].tail+bpy.context.object.data.edit_bones[bone].head)/2
-            bpy.context.object.data.edit_bones[bone].tail = (bpy.context.object.data.edit_bones[bone].tail+bpy.context.object.data.edit_bones[bone].head)/2
+        previous_roll = bpy.context.object.data.edit_bones[bone].roll + 1 #roll doesn't save if you don't add a number at the end
+        bpy.context.object.data.edit_bones[bone].tail = (bpy.context.object.data.edit_bones[bone].tail+bpy.context.object.data.edit_bones[bone].head)/2
+        bpy.context.object.data.edit_bones[bone].tail = (bpy.context.object.data.edit_bones[bone].tail+bpy.context.object.data.edit_bones[bone].head)/2
+        bpy.context.object.data.edit_bones[bone].tail = (bpy.context.object.data.edit_bones[bone].tail+bpy.context.object.data.edit_bones[bone].head)/2
         bpy.context.object.data.edit_bones[bone].select_head = False
         bpy.context.object.data.edit_bones[bone].select_tail = False
         bpy.context.object.data.edit_bones[bone].roll = previous_roll - 1
         bpy.ops.object.mode_set(mode='POSE')
     
-    def connect_bone(bone):
+    def connect_bone(root, chain):
+        bone = 'cf_j_sk_0'+str(root)+'_0'+str(chain)
+        child_bone = 'cf_j_sk_0'+str(root)+'_0'+str(chain+1)
+        #first connect tail to child bone to keep head in place during connection
         bpy.ops.object.mode_set(mode='EDIT')
-        bpy.context.object.data.edit_bones[bone].use_connect = True
+        if bpy.context.object.data.edit_bones.get(bone) and bpy.context.object.data.edit_bones.get(child_bone) and chain <= 4:
+            bpy.context.object.data.edit_bones[bone].tail = bpy.context.object.data.edit_bones[child_bone].head
+            #then connect child head to parent tail (both are at the same position, so head doesn't move)
+            bpy.context.object.data.edit_bones[child_bone].use_connect = True
 
-    skirtbones = [0,1,2,3,4,5,6,7]
-    skirtlength = [0,1,2,3,4]
-
+    skirtchain = [0,1,2,3,4,5,6,7]
+    skirtchild = [0,1,2,3,4]
     try:
-        for root in skirtbones:
-            for chain in skirtlength:
-                bone = 'cf_j_sk_0'+str(root)+'_0'+str(chain)
-                resize_bone(bone, 0.25)
-                connect_bone(bone)
+        for root in skirtchain:
+            for chain in skirtchild:
+                connect_bone(root, chain)
     except:
-        kklog('No skirt bones detected. Skipping', type = 'warn')
+        kklog('No skirt bones detected. Skipping...', type = 'warn')
     
     #scale eye bones, mouth bones, eyebrow bones
     bpy.ops.object.mode_set(mode='POSE')
@@ -618,8 +615,8 @@ def scale_final_bones():
         left = 'cf_J_Eye0'+str(piece)+'_s_L'
         right = 'cf_J_Eye0'+str(piece)+'_s_R'
         
-        resize_bone(left, 0.1, 'face')
-        resize_bone(right, 0.1, 'face')
+        shorten_bone(left, 0.1)
+        shorten_bone(right, 0.1)
         
     restOfFace = [
     'cf_J_Mayu_R', 'cf_J_MayuMid_s_R', 'cf_J_MayuTip_s_R',
@@ -629,7 +626,7 @@ def scale_final_bones():
     
     for bone in restOfFace:
         bpy.ops.pose.select_all(action='DESELECT')
-        resize_bone(bone, 0.1, 'face')
+        shorten_bone(bone, 0.1)
     
     #move eye bone location
     bpy.ops.object.mode_set(mode='EDIT')

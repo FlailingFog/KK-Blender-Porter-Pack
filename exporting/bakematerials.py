@@ -59,9 +59,21 @@ def setup_camera():
     for block in bpy.data.lights:
         if block.users == 0:
             bpy.data.lights.remove(block)
+    for block in bpy.data.worlds:
+        if block.users == 0:
+            bpy.data.worlds.remove(block)
 
-    #and set the world color to black 
-    bpy.data.worlds[0].node_tree.nodes['Background'].inputs[0].default_value = (0,0,0,1)
+    #and set the world color to black
+    try:
+        background = [node for node in bpy.data.worlds[0].node_tree.nodes if node.type == 'BACKGROUND'][0]
+        background.inputs[0].default_value = (0,0,0,1)
+    except:
+        #world doesn't exist, so create it
+        bpy.data.worlds.new(name='World')
+        bpy.data.worlds[0].use_nodes = True
+        background = [node for node in bpy.data.worlds[0].node_tree.nodes if node.type == 'BACKGROUND'][0]
+        background.inputs[0].default_value = (0,0,0,1)
+        
     #Add a new camera
     bpy.ops.object.camera_add(enter_editmode=False, align='VIEW', location=(0, 0, 1), rotation=(0, 0, 0))
     #save it for later
