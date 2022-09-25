@@ -16,6 +16,7 @@ The latest version of KKBP can be downloaded by using the green CODE button on t
 
 #### Prerequisites:
 * Install [HF Patch v3.16 or later](https://github.com/ManlyMarco/KK-HF_Patch) for Koikatsu or [HF Patch v1.7 or later](https://github.com/ManlyMarco/KKS-HF_Patch) for Koikatsu Sunshine
+* Install Blender 3.2 or 3.3
 * Install either [CATS](https://github.com/GiveMeAllYourCats/cats-blender-plugin) or [mmd_tools](https://github.com/UuuNyaa/blender_mmd_tools) for Blender
 
 1. Install KKBP for Koikatsu by copying the KKBP_Exporter.DLL into the plugins folder: C:/Koikatsu install directory/BepInEx/plugins/  
@@ -41,6 +42,13 @@ The latest version of KKBP can be downloaded by using the green CODE button on t
 1. Create an altas for the body, clothes and hair objects using the [material combiner](https://github.com/Grim-es/material-combiner-addon) addon
 1. Hit the undo button to return to the state before you created the atlas. Change the menu under the "Apply baked templates" button to "Dark" and click the button to load in the dark textures. Use material combiner again to generate the dark version of the material atlas 
 1. Click the export FBX button to invoke the built-in fbx export dialog
+</details>
+
+### Video walkthrough
+<details><summary>Click for playlist</summary> 
+
+[![ ](https://i.ytimg.com/vi/JSdggnGtcmU/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLB775lTVjcdZef5X39gSuwgKiRiBw)](https://www.youtube.com/playlist?list=PLhiuav2SCuvc-wbexi2vwSnVHnZFwkYNP)
+
 </details>
 
 # Similar Projects

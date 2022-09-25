@@ -415,6 +415,8 @@ def get_and_load_textures(directory):
     bpy.ops.object.mode_set(mode='OBJECT')
     if r"C:\Users" in directory:
         print_directory =  directory[directory.find('\\', 10):]
+    elif r"/home" == directory[0:4]:
+        print_directory =  directory[directory.find('/', 7):]
     else:
         print_directory = directory
     kklog('Getting textures from: ' + print_directory)
@@ -904,8 +906,10 @@ def add_outlines(single_outline_mode):
     mod.loop_mapping = 'POLYINTERP_LNORPROJ'
 
     #Give each piece of hair with an alphamask on each hair object it's own outline group
+    outlineStart = 200
     if not single_outline_mode:
         hair_objects = [obj for obj in bpy.data.objects if 'Hair Outfit ' in obj.name]
+
         for ob in hair_objects:
             bpy.context.view_layer.objects.active = ob
 
@@ -950,7 +954,7 @@ def add_outlines(single_outline_mode):
                     kklog(genType + ' had no alphamask or maintex')
 
         #separate hair outline loop to prevent crashing
-        if not single_outline_mode:
+        for ob in hair_objects:
             bpy.context.view_layer.objects.active = ob
             for OutlineMat in ob.material_slots:
                 if 'Outline ' in OutlineMat.name:
@@ -969,28 +973,27 @@ def add_outlines(single_outline_mode):
                         OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs[0].default_value = 1.0
                     
                     OutlineMat.material.node_tree.nodes['outlinetransparency'].inputs[0].default_value = 1.0
-        else:
-            outlineStart = 200
     
         #Add a general outline that covers the rest of the materials on the hair object that don't need transparency
-        bpy.context.view_layer.objects.active = ob
-        mod = ob.modifiers.new(
-            type='SOLIDIFY',
-            name='Outline Modifier')
-        mod.thickness = 0.0005
-        mod.offset = 1
-        mod.material_offset = outlineStart
-        mod.use_flip_normals = True
-        mod.use_rim = False
-        mod.show_expanded = False
-        hairOutlineMat = bpy.data.materials['KK Outline'].copy()
-        hairOutlineMat.name = 'KK Hair Outline'
-        ob.data.materials.append(hairOutlineMat)
+        for ob in hair_objects:
+            bpy.context.view_layer.objects.active = ob
+            mod = ob.modifiers.new(
+                type='SOLIDIFY',
+                name='Outline Modifier')
+            mod.thickness = 0.0005
+            mod.offset = 1
+            mod.material_offset = outlineStart
+            mod.use_flip_normals = True
+            mod.use_rim = False
+            mod.show_expanded = False
+            hairOutlineMat = bpy.data.materials['KK Outline'].copy()
+            hairOutlineMat.name = 'KK Hair Outline'
+            ob.data.materials.append(hairOutlineMat)
 
-        #hide alts
-        if ob.name[:12] == 'Hair Outfit ' and ob.name != 'Hair Outfit 00':
-            ob.hide = True
-            ob.hide_render = True
+            #hide alts
+            if ob.name[:12] == 'Hair Outfit ' and ob.name != 'Hair Outfit 00':
+                ob.hide = True
+                ob.hide_render = True
 
     #Add a standard outline to all other objects
     outfit_objects = [obj for obj in bpy.data.objects if obj.get('KKBP outfit ID') != None and 'Hair Outfit ' not in obj.name and obj.type == 'MESH']

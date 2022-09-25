@@ -288,6 +288,7 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
                 fillerplane.material_slots[0].material = currentmaterial
 
                 #then render it
+                #print(stoprightthere)
                 bpy.context.scene.render.filepath = folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + bake_type
                 bpy.context.scene.render.image_settings.file_format=exportType
                 bpy.context.scene.render.image_settings.color_mode=exportColormode
