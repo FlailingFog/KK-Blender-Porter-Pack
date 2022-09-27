@@ -38,6 +38,7 @@ def import_pmx_models(directory):
                     files=[{'name': pmx_path}],
                     directory=pmx_path,
                     scale=1,
+                    clean_model = False,
                     types={'MESH', 'ARMATURE', 'MORPHS'} if not outfit else {'MESH'} ,
                     log_level='WARNING')
                 
