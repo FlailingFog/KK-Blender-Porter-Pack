@@ -370,9 +370,6 @@ def start_baking(folderpath, resolutionMultiplier, light, dark, norm):
     object_to_bake.select_set(True)
     bpy.context.view_layer.objects.active=object_to_bake
 
-    #remove the outline materials because they won't be baked
-    bpy.ops.object.material_slot_remove_unused()
-
     if light:
         #bake the light versions of each material to the selected folder at sun intensity 5
         bake_pass(resolutionMultiplier, folderpath, 'light' , 5)
@@ -444,6 +441,13 @@ class bake_materials(bpy.types.Operator):
             last_step = time.time()
             kklog('Switching to EEVEE for material baking...')
             bpy.context.scene.render.engine = 'BLENDER_EEVEE'
+            #set viewport shading to wireframe for better performance
+            my_areas = bpy.context.workspace.screens[0].areas
+            my_shading = 'WIREFRAME'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
+            for area in my_areas:
+                for space in area.spaces:
+                    if space.type == 'VIEW_3D':
+                        space.shading.type = my_shading 
             print(self.directory)
             folderpath =  self.directory
             scene = context.scene.kkbp
@@ -459,18 +463,39 @@ class bake_materials(bpy.types.Operator):
                 ob.select_set(True)
                 setup_geometry_nodes_and_fillerplane(camera)
                 bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+                #remove the outline materials because they won't be baked
+                bpy.ops.object.material_slot_remove_unused()
+                #remove the object itself for the old baking system
+                if bpy.context.scene.kkbp.old_bake_bool:
+                    ob.hide_render = True
+                    ob.hide_viewport = True
                 start_baking(folderpath, resolutionMultiplier, scene.bake_light_bool, scene.bake_dark_bool, scene.bake_norm_bool)
                 for obj in bpy.context.view_layer.objects:
                     obj.hide_render = False
+                    ob.hide_viewport = False
                 cleanup()
             #run the apply materials script right after baking
             scene.import_dir = folderpath #use import dir as a temp directory holder
             bpy.ops.kkb.applymaterials('EXEC_DEFAULT')
             kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
+            #reset viewport shading back to material preview
+            my_areas = bpy.context.workspace.screens[0].areas
+            my_shading = 'MATERIAL'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
+            for area in my_areas:
+                for space in area.spaces:
+                    if space.type == 'VIEW_3D':
+                        space.shading.type = my_shading 
             return {'FINISHED'}
         except:
             kklog('Unknown python error occurred', type = 'error')
             kklog(traceback.format_exc())
+            #reset viewport shading back to material preview
+            my_areas = bpy.context.workspace.screens[0].areas
+            my_shading = 'MATERIAL'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
+            for area in my_areas:
+                for space in area.spaces:
+                    if space.type == 'VIEW_3D':
+                        space.shading.type = my_shading 
             self.report({'ERROR'}, traceback.format_exc())
             return {"CANCELLED"}
 

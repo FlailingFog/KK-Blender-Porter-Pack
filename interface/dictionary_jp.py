@@ -1,9 +1,7 @@
 from .dictionary_en import translation_dictionary as english_fallback
 
 translation_dictionary = {
-    'bake_mult'     : 'ベーク乗数:',
-    'bake_mult_tt'  : "ベークしたテクスチャーがぼやけている場合は２，３にしてみて",
-    
+
     'seams'     : "体を縫合する",
     'seams_tt'  : '体に近い頂点をマージ。 このマージには首のウエイトが台無しになる可能性がある。 このオプションを無効にしたらウエイトが保存されるけど体に縫い目が見えるかも',
     
@@ -79,6 +77,10 @@ translation_dictionary = {
     'bake_dark_tt'  : "ダークテクスチャーをベーク",
     'bake_norm'     : "ノーマル",
     'bake_norm_tt'  : "ノーマルテクスチャーをベーク",
+    'bake_mult'     : 'ベーク乗数:',
+    'bake_mult_tt'  : "ベークしたテクスチャーがぼやけている場合は２，３にしてみて",
+    'old_bake'      : '古いベーカー',
+    'old_bake_tt'   : 'ふるいテクスチャーベーカーを使う。古いベーカーはUVMap2,3,4をベークできないから髪のハイライトや目のアイシャドウをベークされない',
 
     'shape_A'       : 'KKBPシェイプキーにする',
     'shape_A_tt'    : 'シェイプキーを変更して部分的なシェイプキーを削除する',
