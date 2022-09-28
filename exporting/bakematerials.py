@@ -239,13 +239,17 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
         if 'Outline ' in currentmaterial.name or 'KK Outline' in currentmaterial.name or 'KK Body Outline' in currentmaterial.name:
             continue
 
-        #Don't bake this material if the material already has the atlas nodes loaded in and the mix shader is set to 1 and the image already exists
+        #Don't bake this material if the material already has the atlas nodes loaded in and the mix shader is set to 1 and the image already exists (re-baking)
         if currentmaterial.node_tree.nodes.get('KK Mix'):
             if currentmaterial.node_tree.nodes['KK Mix'].inputs[0].default_value > 0.5 and WindowsPath(folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + bake_type + '.png') in files:
                 continue
             else:
                 currentmaterial.node_tree.nodes['KK Mix'].inputs[0].default_value = 0
         
+        #Don't bake this material if the material does not have the atlas nodes loaded in yet and the image already exists (baking interrupted)
+        if not currentmaterial.node_tree.nodes.get('KK Mix') and WindowsPath(folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + bake_type + '.png') in files:
+            continue
+
         #Turn off the normals for the raw shading node group input if this isn't a normal pass
         if nodes.get('RawShade') and bake_type != 'normal':
             original_normal_state = nodes['RawShade'].inputs[1].default_value

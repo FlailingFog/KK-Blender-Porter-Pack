@@ -157,7 +157,7 @@ class rigify_convert(bpy.types.Operator):
             bpy.context.view_layer.objects.active=rig
             rig.show_in_front = True
             bpy.context.scene.tool_settings.transform_pivot_point = 'INDIVIDUAL_ORIGINS'
-            bpy.context.tool_settings.mesh_select_mode = (False, False, True)
+            bpy.context.tool_settings.mesh_select_mode = (False, False, True) #enable face select in edit mode
             return {'FINISHED'}
             
         except:
