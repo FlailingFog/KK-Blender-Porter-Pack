@@ -62,38 +62,6 @@ def add_freestyle_faces():
         'cf_m_mayuge_00',]
     mark_as_freestyle(freestyle_list)
     bpy.ops.mesh.select_all(action = 'DESELECT')
-
-    if bpy.context.scene.kkbp.sfw_mode:
-        def mark_group_as_freestyle(group_list, search_type = 'exact'):
-            for group in group_list:
-                group_found = body.vertex_groups.find(group)      
-                if group_found > -1:
-                    bpy.context.object.active_material_index = group_found
-                    bpy.ops.object.vertex_group_select()
-                else:
-                    kklog('Group wasn\'t found when freestyling vertex groups: ' + group, 'warn')
-            bpy.ops.mesh.mark_freestyle_face(clear=False)
-        freestyle_list = [
-            'cf_j_bnip02_L', 'cf_j_bnip02_R',
-            'cf_s_bust03_L', 'cf_s_bust03_R']
-        mark_group_as_freestyle(freestyle_list)
-        bpy.ops.mesh.select_all(action = 'DESELECT')
-
-        def delete_group(group_list):
-            bpy.ops.mesh.select_all(action = 'DESELECT')
-            for group in group_list:
-                group_found = body.vertex_groups.find(group)      
-                if group_found > -1:
-                    bpy.context.object.vertex_groups.active_index = group_found
-                    bpy.ops.object.vertex_group_select()
-                else:
-                    kklog('Group wasn\'t found when deleting vertex groups: ' + group, 'warn')
-            bpy.ops.mesh.delete(type='VERT')
-        delete_list = [
-            'cf_j_kokan', 'cf_j_ana',
-            'cf_s_bnip025_L', 'cf_s_bnip025_R']
-        delete_group(delete_list)
-        bpy.ops.mesh.select_all(action = 'DESELECT')
     bpy.ops.object.mode_set(mode = 'OBJECT')
 
 def separate_materials(object, mat_list, search_type = 'exact'):
@@ -513,11 +481,11 @@ def remove_duplicate_slots():
     for obj in bpy.data.objects:
         if 'Body' == obj.name or 'Indoor shoes Outfit ' in obj.name or 'Outfit ' in obj.name or 'Hair' in obj.name:
             #combine duplicated material slots
-            bpy.ops.object.material_slot_remove_unused()
             mesh = obj
             bpy.ops.object.select_all(action='DESELECT')
             mesh.select_set(True)
             bpy.context.view_layer.objects.active=mesh
+            bpy.ops.object.material_slot_remove_unused()
             bpy.ops.object.mode_set(mode='EDIT')
             bpy.ops.mesh.select_all(action='DESELECT')
             

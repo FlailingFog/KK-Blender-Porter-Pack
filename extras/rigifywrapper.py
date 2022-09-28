@@ -105,6 +105,52 @@ class rigify_convert(bpy.types.Operator):
             empty.hide = True
             empty.hide_render = True
 
+            #delete nsfw bones if sfw mode enebled
+            if bpy.context.scene.kkbp.sfw_mode:
+                def delete_group_and_bone(group_list):
+                    #delete bones too
+                    bpy.ops.object.mode_set(mode = 'OBJECT')
+                    bpy.ops.object.select_all(action='DESELECT')
+                    rig.select_set(True)
+                    bpy.context.view_layer.objects.active = rig
+                    bpy.ops.object.mode_set(mode = 'EDIT')
+                    bpy.ops.armature.select_all(action='DESELECT')
+                    for bone in group_list:
+                        if rig.data.bones.get(bone):
+                            rig.data.edit_bones[bone].select = True
+                            bpy.ops.armature.delete()
+                        else:
+                            kklog('Bone wasn\'t found when deleting bones: ' + bone, 'warn')
+                    bpy.ops.armature.select_all(action='DESELECT')
+                    bpy.ops.object.mode_set(mode = 'OBJECT')
+
+                delete_list = ['cf_s_bnip025_L', 'cf_s_bnip025_R',
+                'cf_j_kokan', 'cf_j_ana', 'cf_d_ana', 'cf_d_kokan', 'cf_s_ana',
+                'cf_J_Vagina_root',
+                'cf_J_Vagina_B',
+                'cf_J_Vagina_F',
+                'cf_J_Vagina_L.005',
+                'cf_J_Vagina_R.005',
+                'cf_J_Vagina_L.004',
+                'cf_J_Vagina_L.001',
+                'cf_J_Vagina_L.002',
+                'cf_J_Vagina_L.003',
+                'cf_J_Vagina_R.001',
+                'cf_J_Vagina_R.002',
+                'cf_J_Vagina_R.003',
+                'cf_J_Vagina_R.004',
+                'cf_j_bnip02root_L',
+                'cf_j_bnip02_L',
+                'cf_s_bnip01_L',
+                'cf_s_bust03_L',
+                'cf_s_bust02_L',
+                'cf_j_bnip02root_R',
+                'cf_j_bnip02_R',
+                'cf_s_bnip01_R',
+                'cf_s_bust03_R',
+                'cf_s_bust02_R',]
+                delete_group_and_bone(delete_list)
+
             armature.hide_set(True)
             bpy.ops.object.select_all(action='DESELECT')
             rig.select_set(True)
