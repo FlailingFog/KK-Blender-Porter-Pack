@@ -1,7 +1,5 @@
 translation_dictionary = {
-    'bake_mult'     : 'Bake multiplier:',
-    'bake_mult_tt'  : "Set this to 2 or 3 if the baked texture is blurry",
-    
+
     'seams'     : "Fix body seams",
     'seams_tt'  : 'This performs a "remove doubles" operation on the body materials. Removing doubles also screws with the weights around certain areas. Disabling this will preserve the weights but may cause seams to appear around the neck and down the chest',
     
@@ -77,6 +75,10 @@ translation_dictionary = {
     'bake_dark_tt'  : "Bake dark version of all textures",
     'bake_norm'     : "Normal",
     'bake_norm_tt'  : "Bake normal version of all textures",
+    'bake_mult'     : 'Bake multiplier',
+    'bake_mult_tt'  : "Set this to 2 or 3 if the baked texture is blurry",
+    'old_bake'      : 'Use old baker',
+    'old_bake_tt'   : 'Enable to use the old baking system. This system will not bake any extra UV maps like hair shine or eyeshadow',
 
     'shape_A'       : 'Use KKBP shapekeys',
     'shape_A_tt'    : 'Rename and delete the old shapekeys. This will merge the shapekeys that are part of the same expression and delete the rest',
@@ -115,5 +117,5 @@ def t(text_entry):
     try:
         return translation_dictionary[text_entry]
     except:
-        return '???'
+        return text_entry
 

@@ -268,8 +268,9 @@ def setup_iks():
 def setup_joints():
     bpy.ops.object.mode_set(mode='EDIT')
 
-    #make the kokan bone shorter or larger depending on the armature
-    bpy.data.objects['Armature'].data.edit_bones['cf_j_kokan'].tail.z = bpy.data.objects['Armature'].data.edit_bones['cf_s_waist02'].head.z
+    #make the kokan bone shorter or larger if it's on the armature
+    if bpy.data.objects['Armature'].data.edit_bones.get('cf_j_kokan'):
+        bpy.data.objects['Armature'].data.edit_bones['cf_j_kokan'].tail.z = bpy.data.objects['Armature'].data.edit_bones['cf_s_waist02'].head.z
 
     bpy.ops.object.mode_set(mode='POSE')
 
@@ -639,13 +640,10 @@ def scale_final_bones():
         bpy.context.object.data.edit_bones[eyebone].head.z = bpy.context.object.data.edit_bones['cf_J_Nose_tip'].tail.z
 
     #scale BP bones if they exist
-    try:
-        BPList = ['cf_j_kokan', 'cf_j_ana', 'Vagina_Root', 'Vagina_B', 'Vagina_F', 'Vagina_001_L', 'Vagina_002_L', 'Vagina_003_L', 'Vagina_004_L', 'Vagina_005_L',  'Vagina_001_R', 'Vagina_002_R', 'Vagina_003_R', 'Vagina_004_R', 'Vagina_005_R']
-        for bone in BPList:
+    BPList = ['cf_j_kokan', 'cf_j_ana', 'Vagina_Root', 'Vagina_B', 'Vagina_F', 'Vagina_001_L', 'Vagina_002_L', 'Vagina_003_L', 'Vagina_004_L', 'Vagina_005_L',  'Vagina_001_R', 'Vagina_002_R', 'Vagina_003_R', 'Vagina_004_R', 'Vagina_005_R']
+    for bone in BPList:
+        if armature.data.edit_bones.get(bone):
             armature.data.edit_bones[bone].tail.z = armature.data.edit_bones[bone].tail.z*.95
-    except:
-        #this isn't a BP armature
-        pass
 
 def categorize_bones():
     armature = bpy.data.objects['Armature']

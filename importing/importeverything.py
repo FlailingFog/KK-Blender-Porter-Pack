@@ -1188,6 +1188,48 @@ def apply_lbs():
     pass
 
 def apply_sfw():
+    #delete nsfw parts of the mesh
+    body = bpy.data.objects['Body']
+    bpy.ops.object.select_all(action='DESELECT')
+    body.select_set(True)
+    bpy.context.view_layer.objects.active=body
+    bpy.ops.object.mode_set(mode = 'EDIT')
+    def mark_group_as_freestyle(group_list):
+        for group in group_list:
+            group_found = body.vertex_groups.find(group)      
+            if group_found > -1:
+                bpy.context.object.active_material_index = group_found
+                bpy.ops.object.vertex_group_select()
+            else:
+                kklog('Group wasn\'t found when freestyling vertex groups: ' + group, 'warn')
+        bpy.ops.mesh.mark_freestyle_face(clear=False)
+    freestyle_list = [
+        'cf_j_bnip02_L', 'cf_j_bnip02_R',
+        'cf_s_bust03_L', 'cf_s_bust03_R']
+    mark_group_as_freestyle(freestyle_list)
+    bpy.ops.mesh.select_all(action = 'DESELECT')
+
+    def delete_group_and_bone(group_list):
+        #delete vertex groups
+        bpy.ops.mesh.select_all(action = 'DESELECT')
+        for group in group_list:
+            group_found = body.vertex_groups.find(group)      
+            if group_found > -1:
+                bpy.context.object.vertex_groups.active_index = group_found
+                bpy.ops.object.vertex_group_select()
+            else:
+                kklog('Group wasn\'t found when deleting vertex groups: ' + group, 'warn')
+        bpy.ops.mesh.delete(type='VERT')
+        bpy.ops.mesh.select_all(action = 'DESELECT')
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+
+    delete_list = ['cf_s_bnip025_L', 'cf_s_bnip025_R',
+    'cf_j_kokan', 'cf_j_ana', 'cf_d_ana', 'cf_d_kokan', 'cf_s_ana',
+    'Vagina_Root', 'Vagina_B', 'Vagina_F', 'Vagina_001_L', 'Vagina_002_L',
+    'Vagina_003_L', 'Vagina_004_L', 'Vagina_005_L',  'Vagina_001_R', 'Vagina_002_R',
+    'Vagina_003_R', 'Vagina_004_R', 'Vagina_005_R']
+    delete_group_and_bone(delete_list)
+
     #reload the sfw alpha mask
     body_material = bpy.data.objects['Body'].material_slots['KK Body'].material
     body_material.node_tree.nodes['Gentex'].node_tree.nodes['Bodyalphacustom'].image = bpy.data.images['Template: SFW alpha mask.png']

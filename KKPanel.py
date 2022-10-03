@@ -46,6 +46,10 @@ class PlaceholderProperties(PropertyGroup):
     description=t('keep_templates_tt'),
     default = True)
 
+    old_bake_bool : BoolProperty(
+    description=t('old_bake_tt'),
+    default = False)
+
     armature_dropdown : EnumProperty(
         items=(
             ("A", t('arm_drop_A'), t('arm_drop_A_tt')),
@@ -258,8 +262,8 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         split.prop(context.scene.kkbp, "bake_norm_bool", toggle=True, text = t('bake_norm'))
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
-        split.label(text=t('bake_mult'))
-        split.prop(context.scene.kkbp, "bake_mult", text = '')
+        split.prop(context.scene.kkbp, 'old_bake_bool', toggle=True, text = t('old_bake'))
+        split.prop(context.scene.kkbp, "bake_mult", text = t('bake_mult'))
 
         col = box.column(align=True)
         row = col.row(align=True)
