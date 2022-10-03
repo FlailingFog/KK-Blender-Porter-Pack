@@ -504,7 +504,7 @@ def remove_duplicate_slots():
                     'cf_m_tang.001',
                 ]
                 #don't merge the above materials if categorize by SMR is chosen.
-                eye_flag = mat.name not in mat_name_list and bpy.context.scene.kkbp.categorize_dropdown != 'D'
+                eye_flag = mat.name not in mat_name_list if bpy.context.scene.kkbp.categorize_dropdown == 'D' else True
                 
                 if '.' in mat.name[-4:] and eye_flag:
                     try:
