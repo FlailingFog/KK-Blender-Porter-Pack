@@ -1,5 +1,25 @@
 ### Changes for V6.1.0
-
+* Rigify armature updates by an anonymous contributor! (Changelog copy-pasted below)
+    * 'Rigified' the new rigged tongue;
+    * Moved the eyes and rigged tongue bones to their own layers to reduce clutter in the face layers;
+    * Fixed the skirt bones alignment when converted, and also added the sixth bone (cf_j_sk_##_05) to the chains, just in case;
+    * Characters without skirt bones are now supported;
+    * Connected hair/accessory bones in the same way the CATS plugin does, and changed their widgets from 'circle' to 'limb' type, so the connections with their MCH parents are more apparent;
+    * Enabled a small new Rigify adjustment to the toe bones for Blender 3.2+ (this one: https://www.youtube.com/watch?v=H80AjLWgECY );
+    * Enabled a small new Rigify feature to the limb bones for Blender 3.3+, which allows you to scale the arms and legs uniformly by scaling the gear control bone at their base;
+    * Now the script that is run after the Rigify conversion automatically changes parents and armature modifier targets to the generated rig for all mesh objects in the scene that are related to its metarig; it does it without relying on object names so it should be safe even with multiple characters in the same scene (it detects its metarig from a common bone with a random alphanumeric string in its name). In other words, there's no more need to parent objects with empty groups.
+* Multiple bugfixes by **MediaMoots**!
+    * See #266, #257, #281
+* Basic Cycles shader support!
+    * This will make the KKBP materials work in Cycles
+* Basic Lightning Boy Shader support!
+    * This will attach the KKBP materials to LBS nodes
+    * The LBS addon must be installed for this to work
+    * Tested on LBS 2.1.3
+* Baking changes
+    * Bugfixes to the new baking system
+    * The old baking system can now be accessed with the 'old baker' toggle on the KKBP panel 
+    * If Blender crashes during the baking process, the baking process will resume where it left off instead of trying to bake everything again.
 
 ### Changes for V6.0.0
 Huge feature and usability updates by **MediaMoots**!
