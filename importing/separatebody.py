@@ -515,7 +515,7 @@ def remove_duplicate_slots():
                         base_name, rest_of_base_name, dupe_number = mat.name.split('.',2)
                         base_name = base_name + rest_of_base_name
                     #remap material if it's a dupe, but don't touch the eye dupe
-                    if material_list.get(base_name) and int(dupe_number) and 'cf_m_hitomi_00' not in base_name:
+                    if material_list.get(base_name) and int(dupe_number) and 'cf_m_hitomi_00' not in base_name and 'cf_m_tang' not in base_name:
                         mat.user_remap(material_list[base_name])
                         bpy.data.materials.remove(mat)
                     else:

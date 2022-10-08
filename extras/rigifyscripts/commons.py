@@ -8,7 +8,14 @@ import json
 import re
 import bmesh
 from rna_prop_ui import rna_idprop_ui_create
+import random
+import string
 
+def generateRandomAlphanumericString():
+    randomString = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+    return randomString
+
+metarigIdBonePrefix = "Metarig_ID:"
 leftNamePrefix = "Left "
 rightNamePrefix = "Right "
 leftNameSuffix1 = "_L"
@@ -28,6 +35,7 @@ def leftNameToRightName(leftName):
     return leftName
 
 bodyName = "Body"
+riggedTongueName = "Tongue (rigged)"
 
 eyelidsShapeKeyName = "KK Eyes_default_cl"
 eyelidsShapeKeyCopyName = eyelidsShapeKeyName + copyNameSuffix
@@ -82,6 +90,19 @@ leftEyeballTrackBoneName = leftEyeballBoneName + trackBoneSuffix
 rightEyeballTrackBoneName = leftNameToRightName(leftEyeballTrackBoneName)
 leftEyeballTrackCorrectionBoneName = leftEyeballTrackBoneName + " correction"
 rightEyeballTrackCorrectionBoneName = leftNameToRightName(leftEyeballTrackCorrectionBoneName)
+riggedTongueLeftBoneBaseName = "cf_j_tang_L"
+riggedTongueRightBoneBaseName = leftNameToRightName(riggedTongueLeftBoneBaseName)
+riggedTongueBone1Name = "cf_j_tang_01"
+riggedTongueBone2Name = "cf_j_tang_02"
+riggedTongueBone3Name = "cf_j_tang_03"
+riggedTongueLeftBone3Name = riggedTongueLeftBoneBaseName + "_03"
+riggedTongueRightBone3Name = riggedTongueRightBoneBaseName + "_03"
+riggedTongueBone4Name = "cf_j_tang_04"
+riggedTongueLeftBone4Name = riggedTongueLeftBoneBaseName + "_04"
+riggedTongueRightBone4Name = riggedTongueRightBoneBaseName + "_04"
+riggedTongueBone5Name = "cf_j_tang_05"
+riggedTongueLeftBone5Name = riggedTongueLeftBoneBaseName + "_05"
+riggedTongueRightBone5Name = riggedTongueRightBoneBaseName + "_05"
 headBoneName = "Head"
 leftHeadMarkerXBoneName = leftNamePrefix + headBoneName + markerBoneSuffix + xBoneSuffix
 rightHeadMarkerXBoneName = leftNameToRightName(leftHeadMarkerXBoneName)
@@ -746,6 +767,12 @@ def removeAllDrivers(rig, boneName):
             if ownerName == boneName:
                 rig.animation_data.drivers.remove(driver)
             
+def createBone(rig, newBoneName):
+    newBone = rig.data.edit_bones.new(newBoneName)
+    newBone.head = (0, 1, 1) # if the head and tail are the same, the bone is deleted
+    newBone.tail = (0, 1, 2)
+    return newBone
+
 def deleteBone(rig, boneName):
     bone = rig.data.edit_bones.get(boneName)
     removeAllConstraints(rig, boneName)
@@ -805,8 +832,10 @@ def lockUnlockAllObjectTransforms(objectName, lock):
     object.lock_scale[1] = lock
     object.lock_scale[2] = lock
     
-faceLayerBoneNames = [eyesHandleBoneName, leftEyeHandleBoneName, rightEyeHandleBoneName]
-faceMchLayerBoneNames = [eyesTrackTargetBoneName, eyeballsBoneName, leftEyeballBoneName, rightEyeballBoneName]
+eyesPrimaryLayerBoneNames = [eyesHandleBoneName, leftEyeHandleBoneName, rightEyeHandleBoneName, riggedTongueBone1Name, riggedTongueBone2Name, 
+riggedTongueBone3Name, riggedTongueBone4Name, riggedTongueBone5Name]
+eyesSecondaryLayerBoneNames = [eyesTrackTargetBoneName, eyeballsBoneName, leftEyeballBoneName, rightEyeballBoneName, riggedTongueLeftBone3Name, 
+riggedTongueRightBone3Name, riggedTongueLeftBone4Name, riggedTongueRightBone4Name, riggedTongueLeftBone5Name, riggedTongueRightBone5Name]
 torsoLayerBoneNames = [headBoneName, neckBoneName, upperChestBoneName, chestBoneName, spineBoneName, 
 hipsBoneName, pelvisBoneName, waistBoneName, buttocksHandleBoneName, leftButtockHandleBoneName, rightButtockHandleBoneName,
 breastsHandleBoneName, leftBreastHandleBoneName, rightBreastHandleBoneName, leftShoulderBoneName, rightShoulderBoneName]
@@ -842,18 +871,22 @@ originalPhysicsLayerIndex = 11
 originalExtraLayerIndex = 12
 originalUpperFaceLayerIndex = 16
 originalLowerFaceLayerIndex = 17
+originalRiggedTongueLayerIndex = 18
 
 temporaryAccessoryMchLayerIndex = 7
-temporaryFaceMchLayerIndex = 18
+temporaryFaceMchLayerIndex = 19
 temporaryOriginalDeformLayerIndex = 26
 
 detailLayerSuffix =  " (Detail)"
+primaryLayerSuffix =  " (Primary)"
+secondaryLayerSuffix =  " (Secondary)"
 mchLayerSuffix =  " (MCH)"
 tweakLayerSuffix = " (Tweak)"
 ikLayerSuffix = " IK"
 fkLayerSuffix = " FK"
 
 hairLayerName = "Hair/Accessories"
+eyesLayerName = "Eyes/Rig_Tongue"
 faceLayerName = "Face"
 torsoLayerName = "Torso"
 leftArmLayerName = "Arm.L"
@@ -885,28 +918,28 @@ rigifyLayers = [
 RigifyLayer(hairLayerName, 1, extraBoneGroupIndex),
 RigifyLayer(hairLayerName + detailLayerSuffix, 2, fkBoneGroupIndex),
 RigifyLayer(hairLayerName + mchLayerSuffix, 3, rootBoneGroupIndex),
-RigifyLayer(faceLayerName, 4, fkBoneGroupIndex),
-RigifyLayer(faceLayerName + mchLayerSuffix, 5, rootBoneGroupIndex),
-RigifyLayer(torsoLayerName, 6, specialBoneGroupIndex),
-RigifyLayer(torsoLayerName + tweakLayerSuffix, 7, tweakBoneGroupIndex),
-RigifyLayer(leftArmLayerName + ikLayerSuffix, 8, ikBoneGroupIndex),
-RigifyLayer(leftArmLayerName + fkLayerSuffix, 9, fkBoneGroupIndex),
-RigifyLayer(leftArmLayerName + tweakLayerSuffix, 10, tweakBoneGroupIndex),
-RigifyLayer(rightArmLayerName + ikLayerSuffix, 8, ikBoneGroupIndex),
-RigifyLayer(rightArmLayerName + fkLayerSuffix, 9, fkBoneGroupIndex),
-RigifyLayer(rightArmLayerName + tweakLayerSuffix, 10, tweakBoneGroupIndex),
-RigifyLayer(fingersLayerName, 11, extraBoneGroupIndex),
-RigifyLayer(fingersLayerName + detailLayerSuffix, 12, fkBoneGroupIndex),
-RigifyLayer(leftLegLayerName + ikLayerSuffix, 13, ikBoneGroupIndex),
-RigifyLayer(leftLegLayerName + fkLayerSuffix, 14, fkBoneGroupIndex),
-RigifyLayer(leftLegLayerName + tweakLayerSuffix, 15, tweakBoneGroupIndex),
-RigifyLayer(rightLegLayerName + ikLayerSuffix, 13, ikBoneGroupIndex),
-RigifyLayer(rightLegLayerName + fkLayerSuffix, 14, fkBoneGroupIndex),
-RigifyLayer(rightLegLayerName + tweakLayerSuffix, 15, tweakBoneGroupIndex),
-RigifyLayer(skirtLayerName, 16, extraBoneGroupIndex),
-RigifyLayer(skirtLayerName + detailLayerSuffix, 17, fkBoneGroupIndex),
-RigifyLayer("", 28, noneBoneGroupIndex),
-RigifyLayer("", 28, noneBoneGroupIndex),
+RigifyLayer(eyesLayerName + primaryLayerSuffix, 4, extraBoneGroupIndex),
+RigifyLayer(eyesLayerName + secondaryLayerSuffix, 5, fkBoneGroupIndex),
+RigifyLayer(faceLayerName, 6, tweakBoneGroupIndex),
+RigifyLayer(faceLayerName + mchLayerSuffix, 7, rootBoneGroupIndex),
+RigifyLayer(torsoLayerName, 8, specialBoneGroupIndex),
+RigifyLayer(torsoLayerName + tweakLayerSuffix, 9, tweakBoneGroupIndex),
+RigifyLayer(leftArmLayerName + ikLayerSuffix, 10, ikBoneGroupIndex),
+RigifyLayer(leftArmLayerName + fkLayerSuffix, 11, fkBoneGroupIndex),
+RigifyLayer(leftArmLayerName + tweakLayerSuffix, 12, tweakBoneGroupIndex),
+RigifyLayer(rightArmLayerName + ikLayerSuffix, 10, ikBoneGroupIndex),
+RigifyLayer(rightArmLayerName + fkLayerSuffix, 11, fkBoneGroupIndex),
+RigifyLayer(rightArmLayerName + tweakLayerSuffix, 12, tweakBoneGroupIndex),
+RigifyLayer(fingersLayerName, 13, extraBoneGroupIndex),
+RigifyLayer(fingersLayerName + detailLayerSuffix, 14, fkBoneGroupIndex),
+RigifyLayer(leftLegLayerName + ikLayerSuffix, 15, ikBoneGroupIndex),
+RigifyLayer(leftLegLayerName + fkLayerSuffix, 16, fkBoneGroupIndex),
+RigifyLayer(leftLegLayerName + tweakLayerSuffix, 17, tweakBoneGroupIndex),
+RigifyLayer(rightLegLayerName + ikLayerSuffix, 15, ikBoneGroupIndex),
+RigifyLayer(rightLegLayerName + fkLayerSuffix, 16, fkBoneGroupIndex),
+RigifyLayer(rightLegLayerName + tweakLayerSuffix, 17, tweakBoneGroupIndex),
+RigifyLayer(skirtLayerName, 18, extraBoneGroupIndex),
+RigifyLayer(skirtLayerName + detailLayerSuffix, 19, fkBoneGroupIndex),
 RigifyLayer("", 28, noneBoneGroupIndex),
 RigifyLayer("", 28, noneBoneGroupIndex),
 RigifyLayer(junkLayerName, 29, noneBoneGroupIndex)

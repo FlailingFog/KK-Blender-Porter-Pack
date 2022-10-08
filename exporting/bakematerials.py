@@ -8,16 +8,9 @@ BAKE MATERIAL TO TEXTURE SCRIPT
 - Export defaults to 8-bit PNG with an alpha channel.
 --    Defaults can be changed by editing the exportType and exportColormode variables below.
 
-Usage:
-- Select the object you want to bake in the 3D viewport
-- Press the button and choose the folder to dump the images into
-- Textures are baked to that output folder
-
 Notes:
-- This script deletes all camera and light objects in the scene
-- This script sets the world color in the World tab to black
-
-fillerplane driver + shader code taken from https://blenderartists.org/t/scripts-create-camera-image-plane/580839
+- This script deletes all camera objects in the scene
+- fillerplane driver + shader code taken from https://blenderartists.org/t/scripts-create-camera-image-plane/580839
 '''
 
 import bpy, os, traceback, time
@@ -40,40 +33,19 @@ def showError(self, context):
 def typeError(self, context):
     self.layout.label(text="The object to bake must be a mesh object (make sure the body object is selected)")
 
-#returns None if an error is encountered
+#setup and return a camera
 def setup_camera():
-    #Select all camera and light objects
+    #Delete all cameras in the scene
     for obj in bpy.context.scene.objects:
-        if obj.type == 'CAMERA' or obj.type == 'LIGHT':
+        if obj.type == 'CAMERA':
             obj.select_set(True)
         else:
             obj.select_set(False)
-
-    #Then delete them
     bpy.ops.object.delete()
-    
-    #Purge unused cameras and lights from orphan data
     for block in bpy.data.cameras:
         if block.users == 0:
             bpy.data.cameras.remove(block)
-    for block in bpy.data.lights:
-        if block.users == 0:
-            bpy.data.lights.remove(block)
-    for block in bpy.data.worlds:
-        if block.users == 0:
-            bpy.data.worlds.remove(block)
-
-    #and set the world color to black
-    try:
-        background = [node for node in bpy.data.worlds[0].node_tree.nodes if node.type == 'BACKGROUND'][0]
-        background.inputs[0].default_value = (0,0,0,1)
-    except:
-        #world doesn't exist, so create it
-        bpy.data.worlds.new(name='World')
-        bpy.data.worlds[0].use_nodes = True
-        background = [node for node in bpy.data.worlds[0].node_tree.nodes if node.type == 'BACKGROUND'][0]
-        background.inputs[0].default_value = (0,0,0,1)
-        
+   
     #Add a new camera
     bpy.ops.object.camera_add(enter_editmode=False, align='VIEW', location=(0, 0, 1), rotation=(0, 0, 0))
     #save it for later
@@ -85,7 +57,6 @@ def setup_camera():
     bpy.data.cameras[camera.name].ortho_scale=6
     bpy.context.scene.render.pixel_aspect_y=1
     bpy.context.scene.render.pixel_aspect_x=1
-
     return camera
 
 def setup_geometry_nodes_and_fillerplane(camera):
@@ -126,6 +97,7 @@ def setup_geometry_nodes_and_fillerplane(camera):
         resolution_y.targets[0].data_path = 'render.resolution_y'
     
     #setup X scale for bake object and plane
+    print(object_to_bake)
     driver = object_to_bake.driver_add('scale',0).driver
     driver.type = 'SCRIPTED'
     setup_driver_variables(driver, camera)
@@ -204,22 +176,13 @@ def sanitizeMaterialName(text):
             text = text.replace(ch,'')
     return text
 
-def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
+def bake_pass(resolutionMultiplier, folderpath, bake_type):
     #get list of already baked files
-    fileList = Path(directory).glob('*.*')
+    fileList = Path(folderpath).glob('*.*')
     files = [file for file in fileList if file.is_file()]
     #print(files)
     exportType = 'PNG'
     exportColormode = 'RGBA'
-    #get the most recently created light object
-    sun = bpy.data.lights[len(bpy.data.lights)-1]
-    #make sure shadows are turned off
-    sun.use_shadow = False
-    #set the sun strength
-    sun.energy = sun_strength
-    #print('the sun is ' + str(bake_type) + ' at ' + str(sun_strength))
-    #preserve the filepath
-    folderpath = directory
     #get the currently selected object as the active object
     object_to_bake = bpy.context.active_object
     #remember what order the materials are in for later
@@ -228,6 +191,14 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
         original_material_order.append(matslot.name)
     #get the filler plane
     fillerplane = bpy.data.objects['fillerplane']
+
+    #if this is a light or dark pass, make sure the RawShade group is a constant light or dark
+    if bake_type in ['light', 'dark']:
+        raw = bpy.data.node_groups['Raw Shading']
+        getOut = raw.nodes['breaknode'].inputs[1].links[0]
+        raw.links.remove(getOut)
+        raw.nodes['breaknode'].inputs[1].default_value = (1,1,1,1) if bake_type == 'light' else (0,0,0,1)
+
     #go through each material slot
     for currentmaterial in object_to_bake.data.materials:
         nodes = currentmaterial.node_tree.nodes
@@ -239,14 +210,14 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
         if 'Outline ' in currentmaterial.name or 'KK Outline' in currentmaterial.name or 'KK Body Outline' in currentmaterial.name:
             continue
 
-        #Don't bake this material if the material already has the atlas nodes loaded in and the mix shader is set to 1 and the image already exists (re-baking)
+        #Don't bake this material if the material already has the atlas nodes loaded in and the mix shader is set to 1 and the image already exists (user is re-baking a mat)
         if currentmaterial.node_tree.nodes.get('KK Mix'):
             if currentmaterial.node_tree.nodes['KK Mix'].inputs[0].default_value > 0.5 and WindowsPath(folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + bake_type + '.png') in files:
                 continue
             else:
                 currentmaterial.node_tree.nodes['KK Mix'].inputs[0].default_value = 0
         
-        #Don't bake this material if the material does not have the atlas nodes loaded in yet and the image already exists (baking interrupted)
+        #Don't bake this material if the material does not have the atlas nodes loaded in yet and the image already exists (baking was interrupted)
         if not currentmaterial.node_tree.nodes.get('KK Mix') and WindowsPath(folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + bake_type + '.png') in files:
             continue
 
@@ -292,7 +263,6 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
                 fillerplane.material_slots[0].material = currentmaterial
 
                 #then render it
-                #print(stoprightthere)
                 bpy.context.scene.render.filepath = folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + bake_type
                 bpy.context.scene.render.image_settings.file_format=exportType
                 bpy.context.scene.render.image_settings.color_mode=exportColormode
@@ -354,6 +324,10 @@ def bake_pass(resolutionMultiplier, directory, bake_type, sun_strength):
         #reset material slots
         for material_index in range(len(original_material_order)):
             object_to_bake.material_slots[material_index].material = bpy.data.materials[original_material_order[material_index]]
+    
+    #reset raw shading group state
+    if bake_type in ['light', 'dark']:
+        raw.links.new(raw.nodes['breakreroute'].outputs[0], raw.nodes['breaknode'].inputs[1])
 
 def start_baking(folderpath, resolutionMultiplier, light, dark, norm):
     #enable transparency
@@ -376,15 +350,15 @@ def start_baking(folderpath, resolutionMultiplier, light, dark, norm):
 
     if light:
         #bake the light versions of each material to the selected folder at sun intensity 5
-        bake_pass(resolutionMultiplier, folderpath, 'light' , 5)
+        bake_pass(resolutionMultiplier, folderpath, 'light')
     
     if dark:
         #bake the dark versions of each material at sun intensity 0
-        bake_pass(resolutionMultiplier, folderpath, 'dark' , 0)
+        bake_pass(resolutionMultiplier, folderpath, 'dark')
     
     if norm:
         #bake the normal maps
-        bake_pass(resolutionMultiplier, folderpath, 'normal' , 0)
+        bake_pass(resolutionMultiplier, folderpath, 'normal')
 
     #Make the originally selected object active again
     bpy.ops.object.select_all(action='DESELECT')
@@ -394,9 +368,6 @@ def start_baking(folderpath, resolutionMultiplier, light, dark, norm):
 def cleanup():
     # Deselect all objects
     bpy.ops.object.select_all(action='DESELECT')
-    #Select the sun
-    for sun in [o for o in bpy.data.objects if o.type == 'LIGHT']:
-        sun.select_set(True)
     #Select the camera
     for camera in [o for o in bpy.data.objects if o.type == 'CAMERA']:
         camera.select_set(True)
@@ -412,9 +383,6 @@ def cleanup():
     for block in bpy.data.cameras:
         if block.users == 0:
             bpy.data.cameras.remove(block)
-    for block in bpy.data.lights:
-        if block.users == 0:
-            bpy.data.lights.remove(block)
     for ob in [obj for obj in bpy.context.view_layer.objects if obj.type == 'MESH']:
         #delete the geometry modifier
         if ob.modifiers.get('Flattener'):
@@ -493,9 +461,9 @@ class bake_materials(bpy.types.Operator):
         except:
             kklog('Unknown python error occurred', type = 'error')
             kklog(traceback.format_exc())
-            #reset viewport shading back to material preview
+            #reset viewport shading back to solid
             my_areas = bpy.context.workspace.screens[0].areas
-            my_shading = 'MATERIAL'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
+            my_shading = 'SOLID'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
             for area in my_areas:
                 for space in area.spaces:
                     if space.type == 'VIEW_3D':

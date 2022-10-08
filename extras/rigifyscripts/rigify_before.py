@@ -1,7 +1,7 @@
 
 #Switch to Object Mode and select Metarig
 
-import bpy, bmesh, mathutils
+import bpy
 from typing import NamedTuple
 import math
 from math import radians
@@ -13,22 +13,13 @@ import sys
 from . import commons as koikatsuCommons
     
 def main():
-    koikatsuCommonsName = "Koikatsu Commons.py";
-    """
-    koikatsuCommonsPath = "C:\\Users\\UserName\\Desktop\\"
-
-    text = bpy.data.texts.get(koikatsuCommonsName)
-    if text is not None:
-        bpy.data.texts.remove(text)
-    text = bpy.data.texts.load(koikatsuCommonsPath + koikatsuCommonsName)
-    koikatsuCommons = text.as_module()
-    """
-    #koikatsuCommons = bpy.data.texts[koikatsuCommonsName].as_module()
-	
     metarig = bpy.context.active_object
 
     assert metarig.mode == "OBJECT", 'assert metarig.mode == "OBJECT"'
     assert metarig.type == "ARMATURE", 'assert metarig.type == "ARMATURE"'
+    
+    metarig.show_in_front = True
+    metarig.display_type = 'TEXTURED'
     
     selectedLayers = []
     for i in range(32):
@@ -39,6 +30,19 @@ def main():
         else:
             metarig.data.layers[i] = False
             
+    hasSkirt = True    
+    if koikatsuCommons.skirtParentBoneName not in metarig.pose.bones:
+        hasSkirt = False
+    else:
+        for primaryIndex in range(8):
+            if koikatsuCommons.getSkirtBoneName(True, primaryIndex) not in metarig.pose.bones:
+                hasSkirt = False
+                break
+            for secondaryIndex in range(6):
+                if koikatsuCommons.getSkirtBoneName(False, primaryIndex, secondaryIndex) not in metarig.pose.bones:
+                    hasSkirt = False
+                    break
+    
     isMale = koikatsuCommons.isVertexGroupEmpty(koikatsuCommons.leftNippleDeformBone1Name, koikatsuCommons.bodyName)
 
     def objToBone(obj, rig, boneName):
@@ -119,6 +123,14 @@ def main():
 
     bpy.ops.object.mode_set(mode='EDIT')
     
+    metarigIdBoneName = None
+    for bone in metarig.data.edit_bones:
+        if bone.name.startswith(koikatsuCommons.metarigIdBonePrefix):
+            metarigIdBoneName = bone.name
+    if not metarigIdBoneName:
+        metarigIdBoneName = koikatsuCommons.metarigIdBonePrefix + koikatsuCommons.generateRandomAlphanumericString()
+        koikatsuCommons.createBone(metarig, metarigIdBoneName)
+    
     eyesBone = koikatsuCommons.copyBone(metarig, koikatsuCommons.originalEyesBoneName, koikatsuCommons.eyesBoneName)
     leftEyeBone = koikatsuCommons.copyBone(metarig, koikatsuCommons.originalEyesBoneName, koikatsuCommons.leftEyeBoneName)
     rightEyeBone = koikatsuCommons.copyBone(metarig, koikatsuCommons.originalEyesBoneName, koikatsuCommons.rightEyeBoneName)
@@ -163,37 +175,15 @@ def main():
         
         bpy.ops.object.mode_set(mode='EDIT')
 
-        #print({k:v for k, v in bpy.context.copy().items() if v is not None})
         bpy.context.scene.tool_settings.transform_pivot_point = 'BOUNDING_BOX_CENTER'
         bpy.ops.mesh.select_all(action='SELECT')
-        bpy.context.tool_settings.mesh_select_mode = (True, True, True)
-
         if rotate:
-            bm = bmesh.from_edit_mesh(bpy.context.view_layer.objects.active.data)
-            selected_verts = [v for v in bm.verts if v.select]
-            center = sum((Vector(b) for b in bpy.context.view_layer.objects.active.bound_box), Vector())
-            center /= 8
             if rotateXRadians:
-                bmesh.ops.rotate(
-                bm,
-                verts=selected_verts,
-                cent=center,
-                matrix=mathutils.Matrix.Rotation(math.radians(rotateXRadians), 3, 'Z'))
-                #bmesh.update_edit_mesh(bpy.context.view_layer.objects.active.data)
+                bpy.ops.transform.rotate(value=math.radians(rotateXRadians), orient_axis='X', orient_type='GLOBAL')
             if rotateYRadians:
-                bmesh.ops.rotate(
-                bm,
-                verts=selected_verts,
-                cent=center,
-                matrix=mathutils.Matrix.Rotation(math.radians(rotateYRadians), 3, 'Y'))
-                #bmesh.update_edit_mesh(bpy.context.view_layer.objects.active.data)
+                bpy.ops.transform.rotate(value=math.radians(rotateYRadians), orient_axis='Y', orient_type='GLOBAL')
             if rotateZRadians:
-                bmesh.ops.rotate(
-                bm,
-                verts=selected_verts,
-                cent=center,
-                matrix=mathutils.Matrix.Rotation(math.radians(rotateZRadians), 3, 'X'))
-                #bmesh.update_edit_mesh(bpy.context.view_layer.objects.active.data)
+                bpy.ops.transform.rotate(value=math.radians(rotateZRadians), orient_axis='Z', orient_type='GLOBAL')
         leftVertexGroupExtremities = koikatsuCommons.findVertexGroupExtremities(leftVertexGroupName, vertexGroupObjectName)
         rightVertexGroupExtremities = koikatsuCommons.findVertexGroupExtremities(rightVertexGroupName, vertexGroupObjectName)
         leftVertexGroupMidZ = (leftVertexGroupExtremities.maxZ + leftVertexGroupExtremities.minZ) / 2
@@ -220,31 +210,12 @@ def main():
         bpy.context.scene.tool_settings.transform_pivot_point = 'BOUNDING_BOX_CENTER'
         bpy.ops.mesh.select_all(action='SELECT')
         if rotate:
-            bm = bmesh.from_edit_mesh(bpy.context.view_layer.objects.active.data)
-            selected_verts = [v for v in bm.verts if v.select]
-            center = sum((Vector(b) for b in bpy.context.view_layer.objects.active.bound_box), Vector())
-            center /= 8
             if rotateXRadians:
-                bmesh.ops.rotate(
-                bm,
-                verts=selected_verts,
-                cent=center,
-                matrix=mathutils.Matrix.Rotation(math.radians(rotateXRadians), 3, 'Z'))
-                #bmesh.update_edit_mesh(bpy.context.view_layer.objects.active.data)
+                bpy.ops.transform.rotate(value=math.radians(rotateXRadians), orient_axis='X', orient_type='GLOBAL')
             if rotateYRadians:
-                bmesh.ops.rotate(
-                bm,
-                verts=selected_verts,
-                cent=center,
-                matrix=mathutils.Matrix.Rotation(math.radians(rotateYRadians), 3, 'Y'))
-                #bmesh.update_edit_mesh(bpy.context.view_layer.objects.active.data)
+                bpy.ops.transform.rotate(value=math.radians(rotateYRadians), orient_axis='Y', orient_type='GLOBAL')
             if rotateZRadians:
-                bmesh.ops.rotate(
-                bm,
-                verts=selected_verts,
-                cent=center,
-                matrix=mathutils.Matrix.Rotation(math.radians(rotateZRadians), 3, 'X'))
-                #bmesh.update_edit_mesh(bpy.context.view_layer.objects.active.data)
+                bpy.ops.transform.rotate(value=math.radians(rotateZRadians), orient_axis='Z', orient_type='GLOBAL')
         if translate and not createHandleBones:
             bpy.ops.transform.translate(value=(leftVertexGroupMidX * vertexGroupMidXFactor, leftVertexGroupExtremities.minY * vertexGroupMinYFactor, -(leftChildWidget.location[2] - leftVertexGroupMidZ * parentWidgetTranslateZFactor)), orient_type='GLOBAL')
         #leftVertexGroupArea = (leftVertexGroupExtremities.maxX - leftVertexGroupExtremities.minX) * (leftVertexGroupExtremities.maxZ - leftVertexGroupExtremities.minZ) 
@@ -281,31 +252,12 @@ def main():
         bpy.context.scene.tool_settings.transform_pivot_point = 'BOUNDING_BOX_CENTER'
         bpy.ops.mesh.select_all(action='SELECT')
         if rotate:
-            bm = bmesh.from_edit_mesh(bpy.context.view_layer.objects.active.data)
-            selected_verts = [v for v in bm.verts if v.select]
-            center = sum((Vector(b) for b in bpy.context.view_layer.objects.active.bound_box), Vector())
-            center /= 8
             if rotateXRadians:
-                bmesh.ops.rotate(
-                bm,
-                verts=selected_verts,
-                cent=center,
-                matrix=mathutils.Matrix.Rotation(math.radians(rotateXRadians), 3, 'Z'))
-                #bmesh.update_edit_mesh(bpy.context.view_layer.objects.active.data)
+                bpy.ops.transform.rotate(value=math.radians(rotateXRadians), orient_axis='X', orient_type='GLOBAL')
             if rotateYRadians:
-                bmesh.ops.rotate(
-                bm,
-                verts=selected_verts,
-                cent=center,
-                matrix=mathutils.Matrix.Rotation(math.radians(rotateYRadians), 3, 'Y'))
-                #bmesh.update_edit_mesh(bpy.context.view_layer.objects.active.data)
+                bpy.ops.transform.rotate(value=math.radians(rotateYRadians), orient_axis='Y', orient_type='GLOBAL')
             if rotateZRadians:
-                bmesh.ops.rotate(
-                bm,
-                verts=selected_verts,
-                cent=center,
-                matrix=mathutils.Matrix.Rotation(math.radians(rotateZRadians), 3, 'X'))
-                #bmesh.update_edit_mesh(bpy.context.view_layer.objects.active.data)
+                bpy.ops.transform.rotate(value=math.radians(rotateZRadians), orient_axis='Z', orient_type='GLOBAL')
         if translate and not createHandleBones:
             bpy.ops.transform.translate(value=(rightVertexGroupMidX * vertexGroupMidXFactor, rightVertexGroupExtremities.minY * vertexGroupMinYFactor, -(rightChildWidget.location[2] - rightVertexGroupMidZ * parentWidgetTranslateZFactor)), orient_type='GLOBAL')
         #rightChildWidgetResizeXFactor = statistics.mean([parentWidgetResizeXFactor, parentWidgetResizeXFactor * (rightVertexGroupArea / averageVertexGroupArea)])
@@ -391,7 +343,7 @@ def main():
         
     arrangeTripleWidgetSet(koikatsuCommons.widgetCollectionName, widgetButtocks, widgetButtockLeft, widgetButtockRight, True, 
     koikatsuCommons.bodyName, koikatsuCommons.leftButtockDeformBoneName, koikatsuCommons.rightButtockDeformBoneName, 
-    False, None, None, None, 
+    False, None, None, None,
     True, 0, -3.6, 1, 
     True, 30, 1, 25, 
     True, metarig, koikatsuCommons.buttocksBoneName, koikatsuCommons.buttocksHandleBoneName, koikatsuCommons.leftButtockBoneName, koikatsuCommons.leftButtockHandleBoneName, koikatsuCommons.rightButtockBoneName, koikatsuCommons.rightButtockHandleBoneName)
@@ -956,9 +908,26 @@ def main():
     renameAllVertexGroups(koikatsuCommons.leftToeBoneName, koikatsuCommons.leftToeDeformBoneName)
     renameAllVertexGroups(koikatsuCommons.rightToeBoneName, koikatsuCommons.rightToeDeformBoneName)
     
-    for primaryIndex in range(8):
-        for secondaryIndex in range(5):
-            renameAllVertexGroups(koikatsuCommons.getSkirtBoneName(False, primaryIndex, secondaryIndex), koikatsuCommons.getSkirtDeformBoneName(primaryIndex, secondaryIndex)) 
+    if hasSkirt:
+        for primaryIndex in range(8):
+            for secondaryIndex in range(6):
+                renameAllVertexGroups(koikatsuCommons.getSkirtBoneName(False, primaryIndex, secondaryIndex), koikatsuCommons.getSkirtDeformBoneName(primaryIndex, secondaryIndex)) 
+    
+    def fix_bone_orientations(armature):
+        # Connect all bones with their children if they have exactly one
+        for bone in armature.data.edit_bones:
+            if len(bone.children) == 1 and (metarig.data.bones[bone.name].layers[koikatsuCommons.originalAccessoryLayerIndex] == True or metarig.data.bones[bone.name].layers[koikatsuCommons.originalMchLayerIndex] == True):
+                p1 = bone.head
+                p2 = bone.children[0].head
+                dist = ((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2 + (p2[2] - p1[2]) ** 2) ** (1/2)
+
+                # Only connect them if the other bone is a certain distance away, otherwise blender will delete them
+                if dist > 0.005:
+                    bone.tail = bone.children[0].head
+                    if len(bone.parent.children) == 1:  # if the bone's parent bone only has one child, connect the bones (Don't connect them all because that would mess up hand/finger bones)
+                        bone.use_connect = True
+                    
+    fix_bone_orientations(metarig)
     
     accessoryBoneNames = []
     accessoryMchBoneNames = []
@@ -985,8 +954,8 @@ def main():
                 if not insideExcludedLayer and (excludedList is None or childBone.parent.name not in excludedList):
                     mchBoneNames.append(childBone.parent.name)
             
-    finalizeMchList(metarig, faceMchBoneNames, 10, [16, 17])
-    finalizeMchList(metarig, accessoryMchBoneNames, 10, [9], faceMchBoneNames)    
+    finalizeMchList(metarig, faceMchBoneNames, koikatsuCommons.originalMchLayerIndex, [koikatsuCommons.originalUpperFaceLayerIndex, koikatsuCommons.originalLowerFaceLayerIndex])
+    finalizeMchList(metarig, accessoryMchBoneNames, koikatsuCommons.originalMchLayerIndex, [koikatsuCommons.originalAccessoryLayerIndex], faceMchBoneNames)    
             
     accessoryBoneConnectedChildNames = [] 
     accessoryBoneConnectedParentNames = [] 
@@ -1013,6 +982,10 @@ def main():
         childBone.parent = parentBone
         childBone.use_connect = connected
     
+    connectAndParentBones(metarig, koikatsuCommons.riggedTongueBone5Name, koikatsuCommons.riggedTongueBone4Name, True)
+    connectAndParentBones(metarig, koikatsuCommons.riggedTongueBone4Name, koikatsuCommons.riggedTongueBone3Name, True)
+    connectAndParentBones(metarig, koikatsuCommons.riggedTongueBone3Name, koikatsuCommons.riggedTongueBone2Name, True)
+    connectAndParentBones(metarig, koikatsuCommons.riggedTongueBone2Name, koikatsuCommons.riggedTongueBone1Name, False)
     connectAndParentBones(metarig, koikatsuCommons.headBoneName, koikatsuCommons.neckBoneName, True)
     connectAndParentBones(metarig, koikatsuCommons.neckBoneName, koikatsuCommons.upperChestBoneName, False)
     connectAndParentBones(metarig, koikatsuCommons.upperChestBoneName, koikatsuCommons.chestBoneName, True)
@@ -1051,9 +1024,36 @@ def main():
     connectAndParentBones(metarig, koikatsuCommons.leftKneeBoneName, koikatsuCommons.leftLegBoneName, True)
     connectAndParentBones(metarig, koikatsuCommons.rightKneeBoneName, koikatsuCommons.rightLegBoneName, True)
     
+    #using left vertex groups as reference for right bones because of inconsistent right group values
+    def finalizeRiggedTongueSideBones(rig, leftBoneName, rightBoneName, length, factorX, factorY = None, factorZ = None):
+        leftBone = rig.data.edit_bones[leftBoneName]
+        rightBone = rig.data.edit_bones[rightBoneName]
+        riggedTongueLeftBoneVertexGroupExtremities = koikatsuCommons.findVertexGroupExtremities(leftBoneName, koikatsuCommons.riggedTongueName)
+        leftBone.head.x = riggedTongueLeftBoneVertexGroupExtremities.minX + math.dist([riggedTongueLeftBoneVertexGroupExtremities.minX], [riggedTongueLeftBoneVertexGroupExtremities.maxX]) * factorX
+        leftBone.tail.x = leftBone.head.x
+        rightBone.head.x = -leftBone.head.x
+        rightBone.tail.x = rightBone.head.x
+        if factorY:
+            leftBone.head.y = riggedTongueLeftBoneVertexGroupExtremities.minY + math.dist([riggedTongueLeftBoneVertexGroupExtremities.minY], [riggedTongueLeftBoneVertexGroupExtremities.maxY]) * factorY
+            leftBone.tail.y = leftBone.head.y
+            rightBone.head.y = leftBone.head.y
+            rightBone.tail.y = rightBone.head.y
+        if factorZ:
+            leftBone.head.z = riggedTongueLeftBoneVertexGroupExtremities.minZ + math.dist([riggedTongueLeftBoneVertexGroupExtremities.minZ], [riggedTongueLeftBoneVertexGroupExtremities.maxZ]) * factorZ
+            rightBone.head.z = leftBone.head.z
+        leftBone.length = length
+        rightBone.length = length
+    
+    riggedTongueBone2 = metarig.data.edit_bones[koikatsuCommons.riggedTongueBone2Name]
+    finalizeRiggedTongueSideBones(metarig, koikatsuCommons.riggedTongueLeftBone3Name, koikatsuCommons.riggedTongueRightBone3Name, riggedTongueBone2.length, 0.75)
+    finalizeRiggedTongueSideBones(metarig, koikatsuCommons.riggedTongueLeftBone4Name, koikatsuCommons.riggedTongueRightBone4Name, riggedTongueBone2.length, 0.65, 0.5, 0.5)
+    finalizeRiggedTongueSideBones(metarig, koikatsuCommons.riggedTongueLeftBone5Name, koikatsuCommons.riggedTongueRightBone5Name, riggedTongueBone2.length, 0.65, 0.2, 0.3)
+    riggedTongueBone5 = metarig.data.edit_bones[koikatsuCommons.riggedTongueBone5Name]
+    riggedTongueLeftBone5VertexGroupExtremities = koikatsuCommons.findVertexGroupExtremities(koikatsuCommons.riggedTongueLeftBone5Name, koikatsuCommons.riggedTongueName)
+    riggedTongueBone5.tail.z = riggedTongueLeftBone5VertexGroupExtremities.minZ + math.dist([riggedTongueLeftBone5VertexGroupExtremities.minZ], [riggedTongueLeftBone5VertexGroupExtremities.maxZ]) * 0.17
+    riggedTongueBone5.tail.y = riggedTongueLeftBone5VertexGroupExtremities.minY
     metarig.data.edit_bones[koikatsuCommons.headBoneName].tail.z = koikatsuCommons.findVertexGroupExtremities(koikatsuCommons.originalFaceUpDeformBoneName, koikatsuCommons.bodyName).maxZ
     metarig.data.edit_bones[koikatsuCommons.hipsBoneName].head = metarig.data.edit_bones[koikatsuCommons.waistBoneName].head
-    
     leftShoulderJointCorrectionBone = metarig.data.edit_bones[koikatsuCommons.leftShoulderJointCorrectionBoneName]
     rightShoulderJointCorrectionBone = metarig.data.edit_bones[koikatsuCommons.rightShoulderJointCorrectionBoneName]
     midLeftElbowJointCorrectionBone = metarig.data.edit_bones[koikatsuCommons.midLeftElbowJointCorrectionBoneName]
@@ -1238,10 +1238,20 @@ def main():
     finalizeFingerBones(True, metarig, koikatsuCommons.leftWristBoneName, koikatsuCommons.leftIndexFingerPalmBoneName, koikatsuCommons.leftThumbBone1Name, koikatsuCommons.leftThumbBone2Name, koikatsuCommons.leftThumbBone3Name, koikatsuCommons.leftThumbDeformBone1Name, koikatsuCommons.leftThumbDeformBone2Name, koikatsuCommons.leftThumbDeformBone3Name, koikatsuCommons.bodyName, None, radians(-257), radians(-260), radians(-263), False, True)
     finalizeFingerBones(False, metarig, koikatsuCommons.rightWristBoneName, koikatsuCommons.rightIndexFingerPalmBoneName, koikatsuCommons.rightThumbBone1Name, koikatsuCommons.rightThumbBone2Name, koikatsuCommons.rightThumbBone3Name, koikatsuCommons.rightThumbDeformBone1Name, koikatsuCommons.rightThumbDeformBone2Name, koikatsuCommons.rightThumbDeformBone3Name, koikatsuCommons.bodyName, None, radians(-103), radians(-106), radians(-109), False, True)
         
-    if not metarig.data.edit_bones.get(koikatsuCommons.skirtParentBoneCopyName):
+    skirtPalmBoneRatioReferences = [Vector((-0.0000, -0.0083, 0.0287)), Vector((-0.0057, -0.0080, 0.0294)), Vector((-0.0136, -0.0002, 0.0317)), Vector((-0.0094, 0.0151, 0.0360)), Vector((-0.0010, 0.0153, 0.0333)), Vector((0.0094, 0.0151, 0.0360)), Vector((0.0136, -0.0002, 0.0317)), Vector((0.0057, -0.0080, 0.0294))]
+    if hasSkirt and not metarig.data.edit_bones.get(koikatsuCommons.skirtParentBoneCopyName):
         koikatsuCommons.copyBone(metarig, koikatsuCommons.skirtParentBoneName, koikatsuCommons.skirtParentBoneCopyName)
         for primaryIndex in range(8):
             skirtPalmBone = metarig.data.edit_bones[koikatsuCommons.getSkirtBoneName(True, primaryIndex)]
+            skirtBone0 = metarig.data.edit_bones[koikatsuCommons.getSkirtBoneName(False, primaryIndex, 0)]
+            skirtBone4 = metarig.data.edit_bones[koikatsuCommons.getSkirtBoneName(False, primaryIndex, 4)]
+            skirtBone5 = metarig.data.edit_bones[koikatsuCommons.getSkirtBoneName(False, primaryIndex, 5)]
+            skirtPalmBone.tail = skirtPalmBone.head - skirtPalmBoneRatioReferences[primaryIndex]
+            skirtPalmBone.length = skirtBone0.length / 2
+            headPos = skirtPalmBone.head.copy()
+            skirtPalmBone.head = skirtPalmBone.tail
+            skirtPalmBone.tail = headPos            
+            skirtBone5.tail = skirtBone5.head - (skirtBone4.head - skirtBone4.tail)            
             skirtPalmBoneLength = skirtPalmBone.length
             shrinkFactorX = skirtPalmBone.head.x * 0.1
             shrinkFactorY = skirtPalmBone.head.y * 0.1
@@ -1249,7 +1259,7 @@ def main():
             skirtPalmBone.tail = skirtPalmBone.tail - Vector((shrinkFactorX, shrinkFactorY, 0))
             skirtBoneLengths = []
             skirtBoneOrientations = []
-            for secondaryIndex in range(5):
+            for secondaryIndex in range(6):
                 skirtBone = metarig.data.edit_bones[koikatsuCommons.getSkirtBoneName(False, primaryIndex, secondaryIndex)]
                 skirtBoneLengths.append(skirtBone.length)
                 skirtBoneOrientations.append(skirtBone.tail - skirtBone.head)
@@ -1259,7 +1269,7 @@ def main():
                 skirtBone.tail = skirtBone.tail - Vector((shrinkFactorX, shrinkFactorY, 0))
             skirtPalmBone.length = skirtPalmBoneLength
             previousBoneOrientation = skirtPalmBone.tail - skirtPalmBone.head
-            for secondaryIndex in range(5):
+            for secondaryIndex in range(6):
                 skirtBone = metarig.data.edit_bones[koikatsuCommons.getSkirtBoneName(False, primaryIndex, secondaryIndex)]
                 if secondaryIndex == 0:
                     skirtBone.tail = skirtBone.head + previousBoneOrientation * Vector((0.4, 0.4, 0.4)) + skirtBoneOrientations[secondaryIndex] * Vector((0.6, 0.6, 0.6))
@@ -1267,7 +1277,7 @@ def main():
                     skirtBone.tail = skirtBone.head + previousBoneOrientation * Vector((0.5, 0.5, 0.5)) + skirtBoneOrientations[secondaryIndex] * Vector((0, 0, 0.5))
                 skirtBone.length = skirtBoneLengths[secondaryIndex]
                 previousBoneOrientation = skirtBone.tail - skirtBone.head
-                
+    
     bpy.ops.object.mode_set(mode='OBJECT')
     
     legConstrainedBoneNames = [koikatsuCommons.waistJointCorrectionBoneName, koikatsuCommons.leftButtockJointCorrectionBoneName, koikatsuCommons.rightButtockJointCorrectionBoneName, koikatsuCommons.leftLegJointCorrectionBoneName, koikatsuCommons.rightLegJointCorrectionBoneName]
@@ -1342,7 +1352,26 @@ def main():
     metarig.pose.bones[koikatsuCommons.leftEyeballBoneName].custom_shape = None
     metarig.pose.bones[koikatsuCommons.leftEyeballBoneName].rigify_parameters.optional_widget_type = "bone"
     metarig.pose.bones[koikatsuCommons.rightEyeballBoneName].custom_shape = None
-    metarig.pose.bones[koikatsuCommons.rightEyeballBoneName].rigify_parameters.optional_widget_type = "bone"
+    metarig.pose.bones[koikatsuCommons.rightEyeballBoneName].rigify_parameters.optional_widget_type = "bone"   
+    metarig.pose.bones[koikatsuCommons.riggedTongueBone1Name].rigify_parameters.optional_widget_type = "jaw" 
+    metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_type = "limbs.super_finger"
+    metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_parameters.primary_rotation_axis = "-X"
+    metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_parameters.make_extra_ik_control = True
+    metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].custom_shape = None
+    metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_parameters.tweak_layers[1] = False
+    metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.eyesLayerName + koikatsuCommons.secondaryLayerSuffix)] = True
+    metarig.pose.bones[koikatsuCommons.riggedTongueBone3Name].rigify_type = ""
+    metarig.pose.bones[koikatsuCommons.riggedTongueBone3Name].custom_shape = None
+    metarig.pose.bones[koikatsuCommons.riggedTongueLeftBone3Name].rigify_parameters.optional_widget_type = "sphere"
+    metarig.pose.bones[koikatsuCommons.riggedTongueRightBone3Name].rigify_parameters.optional_widget_type = "sphere"
+    metarig.pose.bones[koikatsuCommons.riggedTongueBone4Name].rigify_type = ""
+    metarig.pose.bones[koikatsuCommons.riggedTongueBone4Name].custom_shape = None
+    metarig.pose.bones[koikatsuCommons.riggedTongueLeftBone4Name].rigify_parameters.optional_widget_type = "sphere"
+    metarig.pose.bones[koikatsuCommons.riggedTongueRightBone4Name].rigify_parameters.optional_widget_type = "sphere"
+    metarig.pose.bones[koikatsuCommons.riggedTongueBone5Name].rigify_type = ""
+    metarig.pose.bones[koikatsuCommons.riggedTongueBone5Name].custom_shape = None
+    metarig.pose.bones[koikatsuCommons.riggedTongueLeftBone5Name].rigify_parameters.optional_widget_type = "sphere"
+    metarig.pose.bones[koikatsuCommons.riggedTongueRightBone5Name].rigify_parameters.optional_widget_type = "sphere"
     metarig.pose.bones[koikatsuCommons.headBoneName].custom_shape = None
     metarig.pose.bones[koikatsuCommons.headBoneName].rigify_type = ""    
     metarig.pose.bones[koikatsuCommons.neckBoneName].custom_shape = None
@@ -1365,6 +1394,8 @@ def main():
     metarig.pose.bones[koikatsuCommons.hipsBoneName].rigify_parameters.fk_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.torsoLayerName + koikatsuCommons.tweakLayerSuffix)] = True
     metarig.pose.bones[koikatsuCommons.waistBoneName].custom_shape = None
     metarig.pose.bones[koikatsuCommons.waistBoneName].rigify_parameters.optional_widget_type = "diamond"
+    metarig.pose.bones[koikatsuCommons.anusBoneName].custom_shape = None
+    metarig.pose.bones[koikatsuCommons.anusBoneName].rigify_parameters.optional_widget_type = "sphere"
     metarig.pose.bones[koikatsuCommons.leftBreastDeformBone1Name].rigify_parameters.optional_widget_type = "sphere"
     metarig.pose.bones[koikatsuCommons.rightBreastDeformBone1Name].rigify_parameters.optional_widget_type = "sphere"
     widgetFace = bpy.data.objects[koikatsuCommons.widgetFaceName]
@@ -1398,6 +1429,9 @@ def main():
     metarig.pose.bones[koikatsuCommons.rightArmBoneName].rigify_parameters.segments = 3
     metarig.pose.bones[koikatsuCommons.leftArmBoneName].rigify_parameters.rotation_axis = "automatic"
     metarig.pose.bones[koikatsuCommons.rightArmBoneName].rigify_parameters.rotation_axis = "automatic"
+    if (bpy.app.version[0] == 3 and bpy.app.version[1] >= 3) or bpy.app.version[0] > 3:
+        metarig.pose.bones[koikatsuCommons.leftArmBoneName].rigify_parameters.limb_uniform_scale = True
+        metarig.pose.bones[koikatsuCommons.rightArmBoneName].rigify_parameters.limb_uniform_scale = True
     metarig.pose.bones[koikatsuCommons.leftArmBoneName].rigify_parameters.auto_align_extremity = True
     metarig.pose.bones[koikatsuCommons.rightArmBoneName].rigify_parameters.auto_align_extremity = True
     metarig.pose.bones[koikatsuCommons.leftArmBoneName].rigify_parameters.make_ik_wrist_pivot = True
@@ -1465,10 +1499,16 @@ def main():
     metarig.pose.bones[koikatsuCommons.rightLegBoneName].custom_shape = None
     metarig.pose.bones[koikatsuCommons.leftLegBoneName].rigify_type = "limbs.leg"
     metarig.pose.bones[koikatsuCommons.rightLegBoneName].rigify_type = "limbs.leg"
+    if (bpy.app.version[0] == 3 and bpy.app.version[1] >= 2) or bpy.app.version[0] > 3:
+        metarig.pose.bones[koikatsuCommons.leftLegBoneName].rigify_parameters.extra_ik_toe = True
+        metarig.pose.bones[koikatsuCommons.rightLegBoneName].rigify_parameters.extra_ik_toe = True
     metarig.pose.bones[koikatsuCommons.leftLegBoneName].rigify_parameters.segments = 3
     metarig.pose.bones[koikatsuCommons.rightLegBoneName].rigify_parameters.segments = 3
     metarig.pose.bones[koikatsuCommons.leftLegBoneName].rigify_parameters.rotation_axis = "automatic"
     metarig.pose.bones[koikatsuCommons.rightLegBoneName].rigify_parameters.rotation_axis = "automatic"
+    if (bpy.app.version[0] == 3 and bpy.app.version[1] >= 3) or bpy.app.version[0] > 3:
+        metarig.pose.bones[koikatsuCommons.leftLegBoneName].rigify_parameters.limb_uniform_scale = True
+        metarig.pose.bones[koikatsuCommons.rightLegBoneName].rigify_parameters.limb_uniform_scale = True
     metarig.pose.bones[koikatsuCommons.leftLegBoneName].rigify_parameters.tweak_layers[1] = False
     metarig.pose.bones[koikatsuCommons.rightLegBoneName].rigify_parameters.tweak_layers[1] = False
     metarig.pose.bones[koikatsuCommons.leftLegBoneName].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.leftLegLayerName + koikatsuCommons.tweakLayerSuffix)] = True
@@ -1538,8 +1578,8 @@ def main():
             pass
                 
     ctrlBoneNames = []
-    ctrlBoneNames.extend(koikatsuCommons.faceLayerBoneNames)
-    ctrlBoneNames.extend(koikatsuCommons.faceMchLayerBoneNames)
+    ctrlBoneNames.extend(koikatsuCommons.eyesPrimaryLayerBoneNames)
+    ctrlBoneNames.extend(koikatsuCommons.eyesSecondaryLayerBoneNames)
     ctrlBoneNames.extend(koikatsuCommons.torsoLayerBoneNames)
     ctrlBoneNames.extend(koikatsuCommons.torsoTweakLayerBoneNames)
     ctrlBoneNames.extend(koikatsuCommons.leftArmIkLayerBoneNames)
@@ -1556,8 +1596,8 @@ def main():
                 ctrlBoneNames.append(bone.name)
             koikatsuCommons.assignSingleBoneLayer(metarig, bone.name, koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.faceLayerName))
             
-    koikatsuCommons.assignSingleBoneLayerToList(metarig, koikatsuCommons.faceLayerBoneNames, koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.faceLayerName))
-    koikatsuCommons.assignSingleBoneLayerToList(metarig, koikatsuCommons.faceMchLayerBoneNames, koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.faceLayerName + koikatsuCommons.mchLayerSuffix))
+    koikatsuCommons.assignSingleBoneLayerToList(metarig, koikatsuCommons.eyesPrimaryLayerBoneNames, koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.eyesLayerName + koikatsuCommons.primaryLayerSuffix))
+    koikatsuCommons.assignSingleBoneLayerToList(metarig, koikatsuCommons.eyesSecondaryLayerBoneNames, koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.eyesLayerName + koikatsuCommons.secondaryLayerSuffix))
     koikatsuCommons.assignSingleBoneLayerToList(metarig, koikatsuCommons.torsoLayerBoneNames, koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.torsoLayerName))
     koikatsuCommons.assignSingleBoneLayerToList(metarig, koikatsuCommons.torsoTweakLayerBoneNames, koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.torsoLayerName + koikatsuCommons.tweakLayerSuffix))
     koikatsuCommons.assignSingleBoneLayerToList(metarig, koikatsuCommons.leftArmIkLayerBoneNames, koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.leftArmLayerName + koikatsuCommons.ikLayerSuffix))
@@ -1566,7 +1606,7 @@ def main():
     koikatsuCommons.assignSingleBoneLayerToList(metarig, koikatsuCommons.leftLegIkLayerBoneNames, koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.leftLegLayerName + koikatsuCommons.ikLayerSuffix))
     koikatsuCommons.assignSingleBoneLayerToList(metarig, koikatsuCommons.rightLegIkLayerBoneNames, koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.rightLegLayerName + koikatsuCommons.ikLayerSuffix))
     
-    usefulBoneNames = [koikatsuCommons.eyesXBoneName, koikatsuCommons.eyesBoneName, koikatsuCommons.leftEyeBoneName, koikatsuCommons.rightEyeBoneName, koikatsuCommons.eyesTrackTargetParentBoneName, koikatsuCommons.eyesHandleMarkerBoneName, koikatsuCommons.leftEyeHandleMarkerBoneName, koikatsuCommons.rightEyeHandleMarkerBoneName, koikatsuCommons.leftEyeHandleMarkerXBoneName, koikatsuCommons.rightEyeHandleMarkerXBoneName, koikatsuCommons.leftEyeHandleMarkerZBoneName, koikatsuCommons.rightEyeHandleMarkerZBoneName, koikatsuCommons.eyeballsTrackBoneName, koikatsuCommons.leftEyeballTrackBoneName, koikatsuCommons.rightEyeballTrackBoneName, koikatsuCommons.leftEyeballTrackCorrectionBoneName, koikatsuCommons.rightEyeballTrackCorrectionBoneName, koikatsuCommons.leftHeadMarkerXBoneName, koikatsuCommons.rightHeadMarkerXBoneName, koikatsuCommons.leftHeadMarkerZBoneName, koikatsuCommons.rightHeadMarkerZBoneName]
+    usefulBoneNames = [metarigIdBoneName, koikatsuCommons.eyesXBoneName, koikatsuCommons.eyesBoneName, koikatsuCommons.leftEyeBoneName, koikatsuCommons.rightEyeBoneName, koikatsuCommons.eyesTrackTargetParentBoneName, koikatsuCommons.eyesHandleMarkerBoneName, koikatsuCommons.leftEyeHandleMarkerBoneName, koikatsuCommons.rightEyeHandleMarkerBoneName, koikatsuCommons.leftEyeHandleMarkerXBoneName, koikatsuCommons.rightEyeHandleMarkerXBoneName, koikatsuCommons.leftEyeHandleMarkerZBoneName, koikatsuCommons.rightEyeHandleMarkerZBoneName, koikatsuCommons.eyeballsTrackBoneName, koikatsuCommons.leftEyeballTrackBoneName, koikatsuCommons.rightEyeballTrackBoneName, koikatsuCommons.leftEyeballTrackCorrectionBoneName, koikatsuCommons.rightEyeballTrackCorrectionBoneName, koikatsuCommons.leftHeadMarkerXBoneName, koikatsuCommons.rightHeadMarkerXBoneName, koikatsuCommons.leftHeadMarkerZBoneName, koikatsuCommons.rightHeadMarkerZBoneName]
     usefulBoneNames.extend(ctrlBoneNames)
     
     defBoneNames = koikatsuCommons.getDeformBoneNames(metarig)
@@ -1575,36 +1615,37 @@ def main():
         if name not in usefulBoneNames:
             usefulBoneNames.append(name)
     
-    for primaryIndex in range(8):
-        skirtPalmBoneName = koikatsuCommons.getSkirtBoneName(True, primaryIndex)
-        if skirtPalmBoneName not in ctrlBoneNames:
-            ctrlBoneNames.append(skirtPalmBoneName)
-        if skirtPalmBoneName not in usefulBoneNames:
-            usefulBoneNames.append(skirtPalmBoneName)
-        metarig.pose.bones[skirtPalmBoneName].custom_shape = None
-        koikatsuCommons.assignSingleBoneLayer(metarig, skirtPalmBoneName, koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.skirtLayerName))
-        if primaryIndex == 4:
-            metarig.pose.bones[skirtPalmBoneName].rigify_type = "limbs.super_palm"
-            metarig.pose.bones[skirtPalmBoneName].rigify_parameters.palm_both_sides = True
-            metarig.pose.bones[skirtPalmBoneName].rigify_parameters.palm_rotation_axis = 'X'
-            metarig.pose.bones[skirtPalmBoneName].rigify_parameters.make_extra_control = True
-        else:
-            metarig.pose.bones[skirtPalmBoneName].rigify_type = ""
-        for secondaryIndex in range(5):
-            skirtBoneName = koikatsuCommons.getSkirtBoneName(False, primaryIndex, secondaryIndex)
-            if skirtBoneName not in ctrlBoneNames:
-                ctrlBoneNames.append(skirtBoneName)
-            if skirtBoneName not in usefulBoneNames:
-                usefulBoneNames.append(skirtBoneName)
-            metarig.pose.bones[skirtBoneName].custom_shape = None
-            koikatsuCommons.assignSingleBoneLayer(metarig, skirtBoneName, koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.skirtLayerName))
-            if secondaryIndex == 0:
-                metarig.pose.bones[skirtBoneName].rigify_type = "limbs.super_finger"
-                metarig.pose.bones[skirtBoneName].rigify_parameters.make_extra_ik_control = True
-                metarig.pose.bones[skirtBoneName].rigify_parameters.tweak_layers[1] = False
-                metarig.pose.bones[skirtBoneName].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.skirtLayerName + koikatsuCommons.detailLayerSuffix)] = True
+    if hasSkirt:
+        for primaryIndex in range(8):
+            skirtPalmBoneName = koikatsuCommons.getSkirtBoneName(True, primaryIndex)
+            if skirtPalmBoneName not in ctrlBoneNames:
+                ctrlBoneNames.append(skirtPalmBoneName)
+            if skirtPalmBoneName not in usefulBoneNames:
+                usefulBoneNames.append(skirtPalmBoneName)
+            metarig.pose.bones[skirtPalmBoneName].custom_shape = None
+            koikatsuCommons.assignSingleBoneLayer(metarig, skirtPalmBoneName, koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.skirtLayerName))
+            if primaryIndex == 2:
+                metarig.pose.bones[skirtPalmBoneName].rigify_type = "limbs.super_palm"
+                metarig.pose.bones[skirtPalmBoneName].rigify_parameters.palm_both_sides = True
+                metarig.pose.bones[skirtPalmBoneName].rigify_parameters.palm_rotation_axis = 'X'
+                metarig.pose.bones[skirtPalmBoneName].rigify_parameters.make_extra_control = True
             else:
-                metarig.pose.bones[skirtBoneName].rigify_type = ""
+                metarig.pose.bones[skirtPalmBoneName].rigify_type = ""
+            for secondaryIndex in range(6):
+                skirtBoneName = koikatsuCommons.getSkirtBoneName(False, primaryIndex, secondaryIndex)
+                if skirtBoneName not in ctrlBoneNames:
+                    ctrlBoneNames.append(skirtBoneName)
+                if skirtBoneName not in usefulBoneNames:
+                    usefulBoneNames.append(skirtBoneName)
+                metarig.pose.bones[skirtBoneName].custom_shape = None
+                koikatsuCommons.assignSingleBoneLayer(metarig, skirtBoneName, koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.skirtLayerName))
+                if secondaryIndex == 0:
+                    metarig.pose.bones[skirtBoneName].rigify_type = "limbs.super_finger"
+                    metarig.pose.bones[skirtBoneName].rigify_parameters.make_extra_ik_control = True
+                    metarig.pose.bones[skirtBoneName].rigify_parameters.tweak_layers[1] = False
+                    metarig.pose.bones[skirtBoneName].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.skirtLayerName + koikatsuCommons.detailLayerSuffix)] = True
+                else:
+                    metarig.pose.bones[skirtBoneName].rigify_type = ""
                 
     for boneName in accessoryBoneNames:
         if boneName not in usefulBoneNames:
@@ -1627,7 +1668,7 @@ def main():
             bone.rigify_type = "basic.super_copy"
             bone.rigify_parameters.make_control = True
             bone.rigify_parameters.make_widget = True
-            bone.rigify_parameters.super_copy_widget_type = "circle"  
+            bone.rigify_parameters.super_copy_widget_type = "limb"  
             bone.rigify_parameters.make_deform = True
     
     accessoryMchPalmBoneNames = []
@@ -1734,7 +1775,7 @@ def main():
                 bone.use_connect = False #may otherwise cause Rigify generation failure if part of a finger chain
     
     bpy.ops.object.mode_set(mode='OBJECT')
-    
+                
     for i in range(32):
         index = 31 - i
         if index in selectedLayers:

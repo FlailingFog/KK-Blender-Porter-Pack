@@ -8,22 +8,13 @@ import sys
 from . import commons as koikatsuCommons
 
 def main():
-    #koikatsuCommonsName = "Koikatsu Commons.py";
-    """
-    koikatsuCommonsPath = "C:\\Users\\UserName\\Desktop\\"
-
-    text = bpy.data.texts.get(koikatsuCommonsName)
-    if text is not None:
-        bpy.data.texts.remove(text)
-    text = bpy.data.texts.load(koikatsuCommonsPath + koikatsuCommonsName)
-    koikatsuCommons = text.as_module()
-    """
-    #koikatsuCommons = bpy.data.texts[koikatsuCommonsName].as_module()
-
     generatedRig = bpy.context.active_object
 
     assert generatedRig.mode == "OBJECT", 'assert generated_rig.mode == "OBJECT"'
     assert generatedRig.type == "ARMATURE", 'assert generatedRig.type == "ARMATURE"'
+    
+    generatedRig.show_in_front = True
+    generatedRig.display_type = 'TEXTURED'
 
     bpy.ops.object.mode_set(mode='EDIT')
 
@@ -45,22 +36,50 @@ def main():
         else:
             generatedRig.data.layers[i] = False
     """
-
-    body = bpy.data.objects[koikatsuCommons.bodyName]
-    leftEyeModifier = body.modifiers["Left Eye UV warp"]
-    leftEyeModifier.object_from = generatedRig
-    leftEyeModifier.bone_from = koikatsuCommons.eyesXBoneName
-    leftEyeModifier.object_to = generatedRig
-    leftEyeModifier.bone_to = koikatsuCommons.leftEyeBoneName
-    rightEyeModifier = body.modifiers["Right Eye UV warp"]
-    rightEyeModifier.object_from = generatedRig
-    rightEyeModifier.bone_from = koikatsuCommons.eyesXBoneName
-    rightEyeModifier.object_to = generatedRig
-    rightEyeModifier.bone_to = koikatsuCommons.rightEyeBoneName
+    
+    metarig = None
+    for bone in generatedRig.pose.bones:
+        if bone.name.startswith(koikatsuCommons.metarigIdBonePrefix):
+            generatedRigIdBoneName = bone.name
+            for object in bpy.data.objects:
+                if object != generatedRig and object.type == "ARMATURE":
+                    for objectBone in object.pose.bones:
+                        if objectBone.name == generatedRigIdBoneName:
+                            metarig = object
+                            break
+            break
+                        
+    if metarig:
+        metarig.hide_set(True)
+        for object in bpy.data.objects:
+            if object.type == "MESH":
+                if object.parent == metarig:
+                    object.parent = generatedRig
+                for modifier in object.modifiers:
+                    if modifier.type == "ARMATURE" and modifier.object == metarig:
+                        modifier.object = generatedRig
+                    if modifier.type == "UV_WARP" and modifier.object_from == metarig:
+                        if modifier.name == "Left Eye UV warp":
+                            modifier.object_from = generatedRig
+                            modifier.bone_from = koikatsuCommons.eyesXBoneName
+                            modifier.object_to = generatedRig
+                            modifier.bone_to = koikatsuCommons.leftEyeBoneName
+                        elif modifier.name == "Right Eye UV warp":
+                            modifier.object_from = generatedRig
+                            modifier.bone_from = koikatsuCommons.eyesXBoneName
+                            modifier.object_to = generatedRig
+                            modifier.bone_to = koikatsuCommons.rightEyeBoneName
 
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.eyesTrackTargetBoneName, 1.5)
+    koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.riggedTongueLeftBone3Name, 0.25)
+    koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.riggedTongueRightBone3Name, 0.25)
+    koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.riggedTongueLeftBone4Name, 0.25)
+    koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.riggedTongueRightBone4Name, 0.25)
+    koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.riggedTongueLeftBone5Name, 0.25)
+    koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.riggedTongueRightBone5Name, 0.25)
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.headTweakBoneName, 1.1)
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.crotchBoneName, 25)
+    koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.anusBoneName, 0.25)
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.anusBoneName, 3.5)
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.leftBreastDeformBone1Name, 0.4)
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.rightBreastDeformBone1Name, 0.4)
@@ -111,7 +130,7 @@ def main():
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.rootBoneName, 0.35)
     
     for bone in generatedRig.pose.bones:
-        if generatedRig.data.bones[bone.name].layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.faceLayerName + koikatsuCommons.mchLayerSuffix)] == True and bone.name not in koikatsuCommons.faceMchLayerBoneNames:
+        if generatedRig.data.bones[bone.name].layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.faceLayerName + koikatsuCommons.mchLayerSuffix)] == True:
             koikatsuCommons.setBoneCustomShapeScale(generatedRig, bone.name, 0.15)
     
     """

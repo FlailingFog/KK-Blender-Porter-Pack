@@ -40,11 +40,11 @@ The latest version of KKBP can be downloaded by using the green CODE button on t
 1. Click the "Prep for target application" button
 1. Click the "Bake material templates" button and choose the folder you want to store all of your baked images to (warning: there's going to be a lot, so an empty folder is recommended)
 1. Create an altas for the body, clothes and hair objects using the [material combiner](https://github.com/Grim-es/material-combiner-addon) addon
-1. Hit the undo button to return to the state before you created the atlas. Change the menu under the "Apply baked templates" button to "Dark" and click the button to load in the dark textures. Use material combiner again to generate the dark version of the material atlas 
+1. Hit the undo button to return to the state before you created the atlas. Change the menu under the "Apply baked templates" button from "Light" to "Dark" and click the button to load in the dark textures. Use material combiner again to generate the dark version of the material atlas 
 1. Click the export FBX button to invoke the built-in fbx export dialog
 </details>
 
-### Video walkthrough
+### Video walkthrough of all plugin options
 <details><summary>Click for playlist</summary> 
 
 [![ ](https://i.ytimg.com/vi/JSdggnGtcmU/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLB775lTVjcdZef5X39gSuwgKiRiBw)](https://www.youtube.com/playlist?list=PLhiuav2SCuvc-wbexi2vwSnVHnZFwkYNP)

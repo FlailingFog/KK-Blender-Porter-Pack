@@ -14,6 +14,10 @@ import sys
 from typing import NamedTuple
 import mathutils
 
+#Stop if rigify is not enabled
+def rigify_not_enabled(self, context):
+    self.layout.label(text="There was an issue preparing the rigify rig. \n Make sure the Rigify addon is installed and enabled.")
+
 from pathlib import Path
 
 class rigify_convert(bpy.types.Operator):
@@ -33,21 +37,28 @@ class rigify_convert(bpy.types.Operator):
             armature.select_set(True)
             bpy.context.view_layer.objects.active=armature
 
-            bpy.ops.kkb.rigbefore('INVOKE_DEFAULT')
+            try:
+                bpy.ops.kkb.rigbefore('INVOKE_DEFAULT')
+            except:
+                if 'Calling operator "bpy.ops.pose.rigify_layer_init" error, could not be found' in traceback.format_exc():
+                    kklog("There was an issue preparing the rigify metarig. \nMake sure the Rigify addon is installed and enabled.\n\n", 'error')
+                    bpy.context.window_manager.popup_menu(rigify_not_enabled, title="Error", icon='ERROR')
+                kklog(traceback.format_exc())
+                return {'FINISHED'}
 
             bpy.ops.pose.rigify_generate()
             
             bpy.ops.kkb.rigafter('INVOKE_DEFAULT')
             
-            #make sure things are parented correctly and hide original armature
-            rig = bpy.context.active_object
+            '''#make sure things are parented correctly and hide original armature
+            
             armature = bpy.data.objects['Armature']
             for child in armature.children:
                 if child.name in ['Body'] or 'Outfit ' in child.name:
                     print(child.name)
                     #do for children first
                     for ob in child.children:
-                        if ob.name in ['Tears'] or 'Outfit ' in ob.name:
+                        if ob.name in ['Tears', 'Gag Eyes', 'Tongue (rigged)'] or 'Outfit ' in ob.name:
                             print(ob.name)
                             hidden = ob.hide
                             parent = ob.parent
@@ -73,9 +84,10 @@ class rigify_convert(bpy.types.Operator):
                     #find the last created armature modifier, replace it with the existing one
                     child.modifiers[0].object = child.modifiers[-1].object
                     child.modifiers.remove(child.modifiers[-1])
-                    child.modifiers[0].name = 'Rigify Armature'
+                    child.modifiers[0].name = 'Rigify Armature' '''
 
             #make sure the new bones on the generated rig retain the KKBP outfit id entry
+            rig = bpy.context.active_object
             for bone in rig.data.bones:
                 if bone.layers[0] == True or bone.layers[2] == True:
                     if rig.data.bones.get('ORG-' + bone.name):
