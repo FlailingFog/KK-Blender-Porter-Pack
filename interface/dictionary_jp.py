@@ -89,6 +89,10 @@ translation_dictionary = {
     'shape_C'       : "シェイプキー変更しない",
     'shape_C_tt'    : "コイカツのシェイプキーにする。シェイプキーが変更されない",
 
+    'shader_A'       : 'Eeveeにする',
+    'shader_B'       : "Cyclesにする",
+    'shader_C'       : "LBSにする",
+
     'atlas'         : 'アトラスタイプ',
 
     'export_fbx'    : 'FBXでエクスポート',

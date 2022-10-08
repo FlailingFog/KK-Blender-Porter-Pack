@@ -47,6 +47,12 @@ def wrong_folder_error(self, context):
 def missing_texture_error(self, context):
     self.layout.label(text="The files cf_m_body_CM.png and cf_m_face_00_CM.png were not found in the folder.\nMake sure to open the exported folder. \nHit undo and try again")
 
+#Stop if lightning boy shader is not installed
+def missing_lbs(self, context):
+    text = "An error occured when adding a Lightning Boy Shader node. Make sure it's installed."
+    kklog(text, 'error')
+    self.layout.label(text=text)
+
 def get_templates_and_apply(directory, use_fake_user):
     #if a single thing was separated but the user forgot to rename it, it's probably the hair object
     #if bpy.data.objects.get('Clothes.001') and len(bpy.data.objects) == 6:
@@ -124,13 +130,14 @@ def get_templates_and_apply(directory, use_fake_user):
             set_fake=use_fake_user
             )
     
-    #import gfn face node group as well
-    bpy.ops.wm.append(
-            filepath=os.path.join(filepath, 'NodeTree', 'Raw Shading (face)'),
-            directory=os.path.join(filepath, 'NodeTree'),
-            filename='Raw Shading (face)',
-            set_fake=use_fake_user
-            )
+    #import gfn face node group, cycles node groups as well
+    for group in ['Raw Shading (face)', 'Cycles', 'Cycles no shadows', 'LBS', 'LBS face normals']:
+        bpy.ops.wm.append(
+                filepath=os.path.join(filepath, 'NodeTree', group),
+                directory=os.path.join(filepath, 'NodeTree'),
+                filename=group,
+                set_fake=use_fake_user
+                )
     
     #Replace all materials on the body with templates
     body = bpy.data.objects['Body']
@@ -167,8 +174,8 @@ def get_templates_and_apply(directory, use_fake_user):
     newNode.name = 'Tongue Textures'
     
     #Make the shader group unique
-    newNode = tongue_template.node_tree.nodes['KKShader'].node_tree.copy()
-    tongue_template.node_tree.nodes['KKShader'].node_tree = newNode
+    newNode = tongue_template.node_tree.nodes['Shader'].node_tree.copy()
+    tongue_template.node_tree.nodes['Shader'].node_tree = newNode
     newNode.name = 'Tongue Shader'
     
     #Make sure the hair object's name is correctly capitalized
@@ -487,7 +494,7 @@ def get_and_load_textures(directory):
     current_obj = bpy.data.objects['Body']
     image_load('KK Body', 'Gentex', 'BodyMain', 'cf_m_body_MT_CT.png')
     if not current_obj.material_slots['KK Body'].material.node_tree.nodes['Gentex'].node_tree.nodes['BodyMain'].image:
-        current_obj.material_slots['KK Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].inputs['Use maintex instead?'].default_value = 0
+        current_obj.material_slots['KK Body'].material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use maintex instead?'].default_value = 0
     image_load('KK Body', 'Gentex', 'BodyMC', 'cf_m_body_CM.png')
     image_load('KK Body', 'Gentex', 'BodyMD', 'cf_m_body_DM.png') #cfm female
     image_load('KK Body', 'Gentex', 'BodyLine', 'cf_m_body_LM.png')
@@ -532,12 +539,12 @@ def get_and_load_textures(directory):
         apply_texture_data_to_image(alpha_mask.name, 'KK Body', 'Gentex', 'Bodyalpha')
     else:
         #disable transparency if no alpha mask is present
-        current_obj.material_slots['KK Body'].material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].inputs['Built in transparency toggle'].default_value = 0
+        current_obj.material_slots['KK Body'].material.node_tree.nodes['Shader'].node_tree.nodes['BodyTransp'].inputs['Built in transparency toggle'].default_value = 0
 
     image_load('KK Face', 'Gentex', 'FaceMain', 'cf_m_face_00_MT_CT.png')
     #default to colors if there's no face maintex
     if not current_obj.material_slots['KK Face'].material.node_tree.nodes['Gentex'].node_tree.nodes['FaceMain'].image:
-        current_obj.material_slots['KK Face'].material.node_tree.nodes['FaceShader'].node_tree.nodes['colorsLight'].inputs['Use maintex instead?'].default_value = 0
+        current_obj.material_slots['KK Face'].material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use maintex instead?'].default_value = 0
     image_load('KK Face', 'Gentex', 'FaceMC', 'cf_m_face_00_CM.png')
     image_load('KK Face', 'Gentex', 'FaceMD', 'cf_m_face_00_DM.png')
     image_load('KK Face', 'Gentex', 'BlushMask', 'cf_m_face_00_T4.png')
@@ -666,52 +673,52 @@ def get_and_load_textures(directory):
             AlphaImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Alphamask'].image
                     
             #Also, make a copy of the General shader node group, as it's unlikely everything using it will be the same color
-            newNode = genMat.material.node_tree.nodes['KKShader'].node_tree.copy()
-            genMat.material.node_tree.nodes['KKShader'].node_tree = newNode
+            newNode = genMat.material.node_tree.nodes['Shader'].node_tree.copy()
+            genMat.material.node_tree.nodes['Shader'].node_tree = newNode
             newNode.name = genType + ' Shader'
             
             #If an alpha mask was loaded in, enable the alpha mask toggle in the KK shader
             if  AlphaImage != None:
-                toggle = genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['alphatoggle'].inputs['Transparency toggle'].default_value = 1
+                toggle = genMat.material.node_tree.nodes['Shader'].node_tree.nodes['alphatoggle'].inputs['Transparency toggle'].default_value = 1
 
             #If no main image was loaded in, there's no alpha channel being fed into the KK Shader.
             #Unlink the input node and make the alpha channel pure white
             if  not MainImage:
-                getOut = genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['alphatoggle'].inputs['maintex alpha'].links[0]
-                genMat.material.node_tree.nodes['KKShader'].node_tree.links.remove(getOut)
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['alphatoggle'].inputs['maintex alpha'].default_value = (1,1,1,1)
+                getOut = genMat.material.node_tree.nodes['Shader'].node_tree.nodes['alphatoggle'].inputs['maintex alpha'].links[0]
+                genMat.material.node_tree.nodes['Shader'].node_tree.links.remove(getOut)
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['alphatoggle'].inputs['maintex alpha'].default_value = (1,1,1,1)
             
             #check maintex config
             plainMain = not genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Maintexplain'].image.name == 'Template: Maintex plain placeholder'
             if not MainImage and not plainMain:
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 0
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Ignore colormask?'].default_value = 0
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 0
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 0
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 0
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Ignore colormask?'].default_value = 0
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 0
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 0
 
             elif not MainImage and plainMain:
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 1
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Use colored maintex?'].default_value = 0
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Ignore colormask?'].default_value = 0
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Use colored maintex?'].default_value = 0
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 0
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 1
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 1
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use colored maintex?'].default_value = 0
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Ignore colormask?'].default_value = 0
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use colored maintex?'].default_value = 0
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 0
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 1
 
             elif MainImage and not plainMain:
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 1
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Use colored maintex?'].default_value = 1
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Ignore colormask?'].default_value = 1
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Use colored maintex?'].default_value = 1
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 1
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 1
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 1
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use colored maintex?'].default_value = 1
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Ignore colormask?'].default_value = 1
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use colored maintex?'].default_value = 1
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 1
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 1
 
             else: #MainImage and plainMain
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 1
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Use colored maintex?'].default_value = 1
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsLight'].inputs['Ignore colormask?'].default_value = 1
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Use colored maintex?'].default_value = 1
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 1
-                genMat.material.node_tree.nodes['KKShader'].node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 1
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 1
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use colored maintex?'].default_value = 1
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Ignore colormask?'].default_value = 1
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use colored maintex?'].default_value = 1
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 1
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 1
     
     #setup face normals
     try:
@@ -840,7 +847,7 @@ def get_and_load_textures(directory):
         skey_driver.driver.expression = 'CartoonyCrying or CartoonyWink or FieryEyes'
 
         #make the eyes and eyeline transparent when the gag shapekey is activated
-        skey_driver = bpy.data.materials['KK EyeR (hitomi)'].node_tree.nodes['EyeShader'].node_tree.nodes['Gagtoggle'].inputs[0].driver_add('default_value')
+        skey_driver = bpy.data.materials['KK EyeR (hitomi)'].node_tree.nodes['Shader'].node_tree.nodes['Gagtoggle'].inputs[0].driver_add('default_value')
         newVar = skey_driver.driver.variables.new()
         newVar.name = 'gag'
         newVar.type = 'SINGLE_PROP'
@@ -849,7 +856,7 @@ def get_and_load_textures(directory):
         newVar.targets[0].data_path = 'key_blocks["KK Eyes_gageye"].value' 
         skey_driver.driver.expression = 'gag'
 
-        skey_driver = bpy.data.materials['KK Eyewhites (sirome)'].node_tree.nodes['EyewhiteShader'].node_tree.nodes['Gagtoggle'].inputs[0].driver_add('default_value')
+        skey_driver = bpy.data.materials['KK Eyewhites (sirome)'].node_tree.nodes['Shader'].node_tree.nodes['Gagtoggle'].inputs[0].driver_add('default_value')
         newVar = skey_driver.driver.variables.new()
         newVar.name = 'gag'
         newVar.type = 'SINGLE_PROP'
@@ -858,7 +865,7 @@ def get_and_load_textures(directory):
         newVar.targets[0].data_path = 'key_blocks["KK Eyes_gageye"].value' 
         skey_driver.driver.expression = 'gag'
 
-        skey_driver = bpy.data.materials['KK Eyeline up'].node_tree.nodes['EyelineShader'].node_tree.nodes['Gagtoggle'].inputs[0].driver_add('default_value')
+        skey_driver = bpy.data.materials['KK Eyeline up'].node_tree.nodes['Shader'].node_tree.nodes['Gagtoggle'].inputs[0].driver_add('default_value')
         newVar = skey_driver.driver.variables.new()
         newVar.name = 'gag'
         newVar.type = 'SINGLE_PROP'
@@ -1139,17 +1146,16 @@ def apply_cycles():
     for o in bpy.context.view_layer.objects:
         for m in o.modifiers:
             if(m.name == "Outline Modifier"):
-                o.modifiers.show_viewport = False
-                o.modifiers.show_render = False
+                m.show_viewport = False
+                m.show_render = False
                 
     ####fix the eyelash mesh overlap
     # deselect everything and make body active object
-    active = bpy.context.view_layer.objects.active
-    for o in bpy.data.objects:
-        if o.name == "Body":
-            active = o
-        else:
-            o.select_set(0)
+    body = bpy.data.objects['Body']
+    bpy.ops.object.select_all(action='DESELECT')
+    body.select_set(True)
+    bpy.context.view_layer.objects.active=body
+    bpy.ops.object.mode_set(mode = 'EDIT')
     # define some stuff
     ops = bpy.ops
     obj = ops.object
@@ -1166,26 +1172,118 @@ def apply_cycles():
     object.active_material_index = 5
     obj.material_slot_select()
     mesh.delete(type='ONLY_FACE')
+    #delete nose if no texture loaded in
+    if not bpy.data.node_groups['Nose'].nodes[1].image:
+        object.active_material_index = 2
+        obj.material_slot_select()
+        mesh.delete(type='VERT')
     mesh.select_all(action='DESELECT')
 
-
-    #replace rim group with a principled bsdf with roughness = 0 and attach alpha too
-    #turn off overlays on face material
+    #add principled bsdf
+    for tree in [mat.node_tree for mat in bpy.data.materials if 'KK ' in mat.name]:
+        nodes = tree.nodes
+        links = tree.links
+        if nodes.get('Rim') and nodes.get('Shader'):
+            nodes['Rim'].node_tree = bpy.data.node_groups['Cycles']
+            links.new(nodes['Shader'].outputs['Color out light'], nodes['Rim'].inputs[0])
+            links.new(nodes['Shader'].outputs[3], nodes['Rim'].inputs[2])
+            #if nodes['Shader'].node_tree.name != 'Body Shader':
+            #    links.new(nodes['RawShade'].outputs['Normal passthrough'], nodes['Rim'].inputs[3])
+    #remove linemask and blush on face material
+    bpy.data.node_groups['Face Shader'].nodes['colorsLight'].inputs['Linemask intensity'].default_value = 0
+    bpy.data.node_groups['Face Shader'].nodes['colorsLight'].inputs['Blush intensity'].default_value = 0
+    #set eyeline up and eyebrows as shadowless
+    for mat in [bpy.data.materials['KK Eyebrows (mayuge)'], bpy.data.materials['KK Eyeline up']]:
+        mat.node_tree.nodes['Rim'].node_tree = bpy.data.node_groups['Cycles no shadows']
+    
     #put face's color out in a mix shader with the cycles face mask
-    #separate eyeline up, eyeline down, eyebrows into separate object and turn off shadows in Object properties > Visibility > Ray visibility
-    #put colorramp for eyeline alpha, black slider goes to 0.935
     #nipples already work in cycles without any changes?
-    #mute shader to rgb nodes for clothing items 
-    pass
+    #mute shader to rgb nodes for clothing items
+    for node in [n for n in bpy.data.node_groups['General overlays'].nodes if 'Shader to RGB' in n.name]:
+        node.mute = True
+    
+    bpy.context.scene.render.engine = 'CYCLES'
+    bpy.context.scene.cycles.preview_samples = 10
 
 def apply_lbs():
     #Import lbs node group and replace rim group with the lbs group
-    #Attach normal to that
-    #turn on ambient occlusion in render settings
+    keep_list = ['KK Eyebrows (mayuge)', 'KK EyeL (hitomi)', 'KK EyeR (hitomi)', 'KK Eyeline up']
+    for tree in [mat.node_tree for mat in bpy.data.materials if ('KK ' in mat.name and mat.name not in keep_list)]:
+        nodes = tree.nodes
+        links = tree.links
+        if nodes.get('Rim') and nodes.get('Shader'):
+            nodes['Rim'].node_tree = bpy.data.node_groups['LBS']
+            links.new(nodes['Shader'].outputs['Color out light'], nodes['Rim'].inputs['Color light'])
+            links.new(nodes['Shader'].outputs['Color out dark'], nodes['Rim'].inputs['Color dark'])
+            links.new(nodes['Shader'].outputs[3], nodes['Rim'].inputs[2])
+            #if nodes['Shader'].node_tree.name != 'Body Shader':
+            #    links.new(nodes['RawShade'].outputs['Normal passthrough'], nodes['Rim'].inputs[3])
+    #construct LBS node group from scratch because it can't be included with the KK shader
+    nodes = bpy.data.node_groups['LBS'].nodes
+    links = bpy.data.node_groups['LBS'].links
+    try:
+        LBS = nodes.new('LBSShaderNode')
+    except:
+        bpy.context.window_manager.popup_menu(missing_lbs, title="Error", icon='ERROR')
+        return
+    LBS.initialize_group = ".Lightning Boy Shader"
+    LBS.inputs['.transparency'].enabled = False
+    LBS.inputs[0].enabled = False
+    LBS.layers = 4
+    LBS.location = 930,320
+    links.new(nodes['Group Input'].outputs['Alpha'], LBS.inputs[-3]) #connect alpha
+    links.new(nodes['Group Input'].outputs['Color dark'], LBS.inputs[-4]) #connect dark
+    links.new(LBS.outputs[0], nodes['Group Output'].inputs[0]) #connect LBS out
+
+    key = nodes.new('LBSBaseNode')
+    key.initialize_group = '.Key Light*'
+    key.location = 660,200
+    links.new(nodes['Group Input'].outputs['Color light'], key.inputs[0])
+    links.new(nodes['Group Input'].outputs['Normal'], key.inputs[5])
+    links.new(key.outputs[0], LBS.inputs[-5]) #connect light
+
+    ao = nodes.new('LBSBaseNode')
+    ao.initialize_group = '.Ambient Occlusion (SS)'
+    ao.location = 700,330
+    links.new(nodes['Group Input'].outputs['Color dark'], ao.inputs[0])
+    links.new(ao.outputs[0], LBS.inputs[-6]) #connect light
+
+    rim = nodes.new('LBSBaseNode')
+    rim.initialize_group = '.2D Rim Light*'
+    rim.location = 500,145
+    links.new(nodes['Group Input'].outputs['Color light'], nodes['RGB Curves'].inputs[0])
+    links.new(nodes['RGB Curves'].outputs[0], rim.inputs[0])
+    links.new(rim.outputs[0], LBS.inputs[-7]) #connect 2d rim
+
+    #turn on ambient occlusion and bloom in render settings
+    bpy.context.scene.eevee.use_gtao = True
+
     #turn on bloom in render settings
-    #layer 1 of lbs is dark color, layer 2 is light going through key light, layer 3 is dark going to ambient occlusion, layer 4 is rim with color fed through rgb curves
-    #face has special setup to work with gfn
-    pass
+    bpy.context.scene.eevee.use_bloom = True
+
+    #face has special normal setup to work with gfn. make a copy and add the normals inside of the copy
+    #this group prevents Amb Occ issues around nose, and mouth interior
+    face_nodes = bpy.data.node_groups['LBS'].copy()
+    face_nodes.use_fake_user = True
+    face_nodes.name = 'LBS (Face)'
+    nodes = bpy.data.node_groups['LBS (Face)'].nodes
+    links = bpy.data.node_groups['LBS (Face)'].links
+    face_norms = nodes.new('ShaderNodeGroup')
+    face_norms.node_tree = bpy.data.node_groups['LBS face normals']
+    face_norms.location = 410, 190
+    links.new(face_norms.outputs[0], rim.inputs[-1])
+    links.new(face_norms.outputs[0], key.inputs[-1])
+
+    #select entire face and body and reset vectors to prevent Amb Occ seam around the neck 
+    body = bpy.data.objects['Body']
+    bpy.ops.object.select_all(action='DESELECT')
+    body.select_set(True)
+    bpy.context.view_layer.objects.active=body
+    bpy.ops.object.mode_set(mode = 'EDIT')
+    body.active_material_index = 1
+    bpy.ops.object.material_slot_select()
+    bpy.ops.mesh.normals_tools(mode='RESET')
+    bpy.ops.object.mode_set(mode = 'OBJECT')
 
 def apply_sfw():
     #delete nsfw parts of the mesh
@@ -1235,31 +1333,31 @@ def apply_sfw():
     body_material.node_tree.nodes['Gentex'].node_tree.nodes['Bodyalphacustom'].image = bpy.data.images['Template: SFW alpha mask.png']
     bpy.data.node_groups["Body Shader"].nodes["BodyTransp"].inputs[0].default_value = 1 #why do i have to do it this way
     bpy.data.node_groups["Body Shader"].nodes["BodyTransp"].inputs[1].default_value = 1
-    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].node_tree.inputs[0].hide_value = True
-    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['BodyTransp'].node_tree.inputs[1].hide_value = True
+    body_material.node_tree.nodes['Shader'].node_tree.nodes['BodyTransp'].node_tree.inputs[0].hide_value = True
+    body_material.node_tree.nodes['Shader'].node_tree.nodes['BodyTransp'].node_tree.inputs[1].hide_value = True
 
     #get rid of the nsfw groups on the body
     body_material.node_tree.nodes.remove(body_material.node_tree.nodes['NSFWTextures'])
     body_material.node_tree.nodes.remove(body_material.node_tree.nodes['NSFWpos'])
 
-    body_material.node_tree.nodes['BodyShader'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.inputs['Nipple mask'])
-    body_material.node_tree.nodes['BodyShader'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.inputs['Nipple alpha'])
-    body_material.node_tree.nodes['BodyShader'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.inputs['Genital mask'])
-    body_material.node_tree.nodes['BodyShader'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.inputs['Underhair mask'])
+    body_material.node_tree.nodes['Shader'].node_tree.inputs.remove(body_material.node_tree.nodes['Shader'].node_tree.inputs['Nipple mask'])
+    body_material.node_tree.nodes['Shader'].node_tree.inputs.remove(body_material.node_tree.nodes['Shader'].node_tree.inputs['Nipple alpha'])
+    body_material.node_tree.nodes['Shader'].node_tree.inputs.remove(body_material.node_tree.nodes['Shader'].node_tree.inputs['Genital mask'])
+    body_material.node_tree.nodes['Shader'].node_tree.inputs.remove(body_material.node_tree.nodes['Shader'].node_tree.inputs['Underhair mask'])
 
-    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Genital intensity'])
-    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Genital saturation'])
-    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Genital hue'])
-    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Underhair color'])
-    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Underhair intensity'])
-    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Nipple base'])
-    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Nipple base 2'])
-    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Nipple shine'])
-    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Nipple rim'])
-    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Nipple alpha'])
-    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Nipple texture'])
-    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Genital mask'])
-    body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['BodyShader'].node_tree.nodes['colorsLight'].node_tree.inputs['Underhair mask'])
+    body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs['Genital intensity'])
+    body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs['Genital saturation'])
+    body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs['Genital hue'])
+    body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs['Underhair color'])
+    body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs['Underhair intensity'])
+    body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs['Nipple base'])
+    body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs['Nipple base 2'])
+    body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs['Nipple shine'])
+    body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs['Nipple rim'])
+    body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs['Nipple alpha'])
+    body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs['Nipple texture'])
+    body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs['Genital mask'])
+    body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs['Underhair mask'])
 
     bpy.data.materials['KK Body'].node_tree.nodes['Gentex'].node_tree.nodes['Bodyalphacustom'].image = bpy.data.images['Template: SFW alpha mask.png']
     bpy.data.materials['KK Body Outline'].node_tree.nodes['customToggle'].inputs[0].default_value = 1
@@ -1305,6 +1403,10 @@ class import_everything(bpy.types.Operator):
 
             if bpy.context.scene.kkbp.sfw_mode:
                 apply_sfw()
+            if bpy.context.scene.kkbp.shader_dropdown == 'B':
+                apply_cycles()
+            elif bpy.context.scene.kkbp.shader_dropdown == 'C':
+                apply_lbs()
 
             #unhide first found outfit if outfit 00 is not present
             #find the appropriate outfit

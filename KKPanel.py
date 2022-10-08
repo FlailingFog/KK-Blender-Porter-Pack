@@ -110,6 +110,13 @@ class PlaceholderProperties(PropertyGroup):
             ("C", t('shape_C'), t('shape_C_tt')),
         ), name="", default="A", description="")
     
+    shader_dropdown : EnumProperty(
+        items=(
+            ("A", t('shader_A'), ''),
+            ("B", t('shader_B'), ''),
+            ("C", t('shader_C'), t('shader_C_tt')),
+        ), name="", default="A", description="Shader")
+    
     atlas_dropdown : EnumProperty(
         items=(
             ("A", t('bake_light'), ""),
@@ -214,19 +221,20 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "shapekeys_dropdown")
-        split.prop(context.scene.kkbp, "fix_seams", toggle=True, text = t('seams'))
+        split.prop(context.scene.kkbp, "shader_dropdown")
+        
         row.enabled = not scene.import_dir == 'cleared' and not scene.is_prepped
         
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
-        split.prop(context.scene.kkbp, "texture_outline_bool", toggle=True, text = t('outline'))
+        split.prop(context.scene.kkbp, "fix_seams", toggle=True, text = t('seams'))
         split.prop(context.scene.kkbp, "templates_bool", toggle=True, text = t('keep_templates'))
         row.enabled = not scene.import_dir == 'cleared' and not scene.is_prepped
 
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
+        split.prop(context.scene.kkbp, "texture_outline_bool", toggle=True, text = t('outline'))
         split.prop(context.scene.kkbp, "sfw_mode", toggle=True, text = t('sfw_mode'))
-        #split.prop(context.scene.kkbp, "templates_bool", toggle=True, text = t('keep_templates'))
         row.enabled = not scene.import_dir == 'cleared' and not scene.is_prepped
     
 class EXPORTING_PT_panel(bpy.types.Panel):

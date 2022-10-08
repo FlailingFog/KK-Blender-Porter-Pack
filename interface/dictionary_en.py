@@ -87,6 +87,11 @@ translation_dictionary = {
     'shape_C'       : "Skip modifying shapekeys",
     'shape_C_tt'    : "Use the stock Koikatsu shapekeys. This will not change the shapekeys in any way",
 
+    'shader_A'       : 'Use Eevee',
+    'shader_B'       : "Use Cycles",
+    'shader_C'       : "Use LBS",
+    'shader_C_tt'    : "Uses a modified shader setup for Lightning Boy Shader 2.1.3",
+
     'atlas'         : 'Atlas type',
 
     'export_fbx'    : 'Export FBX',

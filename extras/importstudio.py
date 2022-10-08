@@ -288,8 +288,8 @@ class import_studio(bpy.types.Operator):
                                     pass
                                 
                                 #Also, make a copy of the General shader node group, as it's unlikely everything using it will be the same color
-                                new_node = material_slot.material.node_tree.nodes['KKShader'].node_tree.copy()
-                                material_slot.material.node_tree.nodes['KKShader'].node_tree = new_node
+                                new_node = material_slot.material.node_tree.nodes['Shader'].node_tree.copy()
+                                material_slot.material.node_tree.nodes['Shader'].node_tree = new_node
                                 new_node.name = gen_type + ' Shader'
                                 
                                 main_image = material_slot.material.node_tree.nodes['Gentex'].node_tree.nodes['Maintex'].image
@@ -298,9 +298,9 @@ class import_studio(bpy.types.Operator):
                                 #If no main image was loaded in, there's no alpha channel being fed into the KK Shader.
                                 #Unlink the input node and make the alpha channel pure white
                                 if  main_image == None:
-                                    getOut = material_slot.material.node_tree.nodes['KKShader'].node_tree.nodes['alphatoggle'].inputs['maintex alpha'].links[0]
-                                    material_slot.material.node_tree.nodes['KKShader'].node_tree.links.remove(getOut)
-                                    material_slot.material.node_tree.nodes['KKShader'].node_tree.nodes['alphatoggle'].inputs['maintex alpha'].default_value = (1,1,1,1)   
+                                    getOut = material_slot.material.node_tree.nodes['Shader'].node_tree.nodes['alphatoggle'].inputs['maintex alpha'].links[0]
+                                    material_slot.material.node_tree.nodes['Shader'].node_tree.links.remove(getOut)
+                                    material_slot.material.node_tree.nodes['Shader'].node_tree.nodes['alphatoggle'].inputs['maintex alpha'].default_value = (1,1,1,1)   
 
                                 material.use_backface_culling = True
                                 material.show_transparent_back = False
