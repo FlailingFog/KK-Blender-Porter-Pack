@@ -32,23 +32,23 @@ class PlaceholderProperties(PropertyGroup):
 
     sfw_mode : BoolProperty(
     description=t('sfw_mode_tt'),
-    default = False)
+    default = bpy.context.preferences.addons[__package__].preferences.sfw_mode)
 
     fix_seams : BoolProperty(
     description=t('seams_tt'),
-    default = True)
+    default = bpy.context.preferences.addons[__package__].preferences.fix_seams)
     
     texture_outline_bool : BoolProperty(
     description= t('outline_tt'),
-    default = False)
+    default = bpy.context.preferences.addons[__package__].preferences.texture_outline_bool)
     
     templates_bool : BoolProperty(
     description=t('keep_templates_tt'),
-    default = True)
+    default = bpy.context.preferences.addons[__package__].preferences.templates_bool)
 
     old_bake_bool : BoolProperty(
     description=t('old_bake_tt'),
-    default = False)
+    default = bpy.context.preferences.addons[__package__].preferences.old_bake_bool)
 
     armature_dropdown : EnumProperty(
         items=(
@@ -56,7 +56,7 @@ class PlaceholderProperties(PropertyGroup):
             ("B", t('arm_drop_B'), t('arm_drop_B_tt')),
             ("C", t('arm_drop_C'), t('arm_drop_C_tt')),
             ("D", t('arm_drop_D'), t('arm_drop_D_tt')),
-        ), name="", default="A", description=t('arm_drop'))
+        ), name="", default=bpy.context.preferences.addons[__package__].preferences.armature_dropdown, description=t('arm_drop'))
 
     categorize_dropdown : EnumProperty(
         items=(
@@ -64,7 +64,7 @@ class PlaceholderProperties(PropertyGroup):
             ("B", t('cat_drop_B'), t('cat_drop_B_tt')),
             ("C", t('cat_drop_C'), t('cat_drop_C_tt') ),
             ("D", t('cat_drop_D'), t('cat_drop_D_tt')),
-        ), name="", default="A", description=t('cat_drop'))
+        ), name="", default=bpy.context.preferences.addons[__package__].preferences.categorize_dropdown, description=t('cat_drop'))
     
     colors_dropdown : EnumProperty(
         items=(
@@ -74,7 +74,7 @@ class PlaceholderProperties(PropertyGroup):
             ("D", t('dark_D'), t('dark_D_tt')),
             ("E", t('dark_E'), t('dark_E_tt')),
             ("F", t('dark_F'), t('dark_F_tt'))
-        ), name="", default="F", description=t('dark'))
+        ), name="", default=bpy.context.preferences.addons[__package__].preferences.colors_dropdown, description=t('dark'))
     
     prep_dropdown : EnumProperty(
         items=(
@@ -82,14 +82,14 @@ class PlaceholderProperties(PropertyGroup):
             #("C", "MikuMikuDance - PMX compatible", " "),
             ("D", t('prep_drop_D'), t('prep_drop_D_tt')),
             ("B", t('prep_drop_B'), t('prep_drop_B_tt')),
-        ), name="", default="A", description=t('prep_drop'))
+        ), name="", default=bpy.context.preferences.addons[__package__].preferences.prep_dropdown, description=t('prep_drop'))
 
     simp_dropdown : EnumProperty(
         items=(
             ("A", t('simp_drop_A'), t('simp_drop_A_tt')),
             ("B", t('simp_drop_B'), t('simp_drop_B_tt')),
             ("C", t('simp_drop_C'), t('simp_drop_C_tt')),
-        ), name="", default="A", description=t('simp_drop'))
+        ), name="", default=bpy.context.preferences.addons[__package__].preferences.simp_dropdown, description=t('simp_drop'))
     
     bake_light_bool : BoolProperty(
     description=t('bake_light_tt'),
@@ -108,14 +108,14 @@ class PlaceholderProperties(PropertyGroup):
             ("A", t('shape_A'), t('shape_A_tt')),
             ("B", t('shape_B'), t('shape_B_tt')),
             ("C", t('shape_C'), t('shape_C_tt')),
-        ), name="", default="A", description="")
+        ), name="", default=bpy.context.preferences.addons[__package__].preferences.shapekeys_dropdown, description="")
     
     shader_dropdown : EnumProperty(
         items=(
             ("A", t('shader_A'), ''),
             ("B", t('shader_B'), ''),
             ("C", t('shader_C'), t('shader_C_tt')),
-        ), name="", default="A", description="Shader")
+        ), name="", default=bpy.context.preferences.addons[__package__].preferences.shader_dropdown, description="Shader")
     
     atlas_dropdown : EnumProperty(
         items=(

@@ -16,7 +16,7 @@ The latest version of KKBP can be downloaded by using the green CODE button on t
 
 #### Prerequisites:
 * Install [HF Patch v3.16 or later](https://github.com/ManlyMarco/KK-HF_Patch) for Koikatsu or [HF Patch v1.7 or later](https://github.com/ManlyMarco/KKS-HF_Patch) for Koikatsu Sunshine
-* Install Blender 3.2 or 3.3
+* Install Blender 3.3
 * Install either [CATS](https://github.com/GiveMeAllYourCats/cats-blender-plugin) or [mmd_tools](https://github.com/UuuNyaa/blender_mmd_tools) for Blender
 
 1. Install KKBP for Koikatsu by copying the KKBP_Exporter.DLL into the plugins folder: C:/Koikatsu install directory/BepInEx/plugins/  
