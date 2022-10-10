@@ -1227,6 +1227,7 @@ def apply_lbs():
         bpy.context.window_manager.popup_menu(missing_lbs, title="Error", icon='ERROR')
         return
     LBS.initialize_group = ".Lightning Boy Shader"
+    LBS.inputs['.transparency'].default_value = 0.001
     LBS.inputs['.transparency'].enabled = False
     LBS.inputs[0].enabled = False
     LBS.layers = 4
