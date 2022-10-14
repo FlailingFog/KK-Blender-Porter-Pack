@@ -2,17 +2,8 @@
 Wrapper for the rigifyscripts folder
 '''
 import bpy
-import bmesh
-import math
-from math import radians
-import statistics
 from ..importing.importbuttons import kklog
-from mathutils import Matrix, Vector, Euler
 import traceback
-import sys
-
-from typing import NamedTuple
-import mathutils
 
 #Stop if rigify is not enabled
 def rigify_not_enabled(self, context):
@@ -119,7 +110,7 @@ class rigify_convert(bpy.types.Operator):
 
             #delete nsfw bones if sfw mode enebled
             if bpy.context.scene.kkbp.sfw_mode:
-                def delete_group_and_bone(group_list):
+                def delete_bone(group_list):
                     #delete bones too
                     bpy.ops.object.mode_set(mode = 'OBJECT')
                     bpy.ops.object.select_all(action='DESELECT')
@@ -130,7 +121,7 @@ class rigify_convert(bpy.types.Operator):
                     for bone in group_list:
                         if rig.data.bones.get(bone):
                             rig.data.edit_bones[bone].select = True
-                            bpy.ops.armature.delete()
+                            bpy.ops.kkb.cats_merge_weights()
                         else:
                             kklog('Bone wasn\'t found when deleting bones: ' + bone, 'warn')
                     bpy.ops.armature.select_all(action='DESELECT')
@@ -154,14 +145,14 @@ class rigify_convert(bpy.types.Operator):
                 'cf_j_bnip02root_L',
                 'cf_j_bnip02_L',
                 'cf_s_bnip01_L',
-                'cf_s_bust03_L',
+                #'cf_s_bust03_L',
                 'cf_s_bust02_L',
                 'cf_j_bnip02root_R',
                 'cf_j_bnip02_R',
                 'cf_s_bnip01_R',
-                'cf_s_bust03_R',
+                #'cf_s_bust03_R',
                 'cf_s_bust02_R',]
-                delete_group_and_bone(delete_list)
+                delete_bone(delete_list)
 
             armature.hide_set(True)
             bpy.ops.object.select_all(action='DESELECT')
