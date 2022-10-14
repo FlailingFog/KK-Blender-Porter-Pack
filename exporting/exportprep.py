@@ -7,6 +7,8 @@ from ..importing.importbuttons import kklog
 from bpy.app.translations import locale
 if locale == 'ja_JP':
     from ..interface.dictionary_jp import t
+elif locale == 'zh_CN':
+    from ..interface.dictionary_zh import t
 else:
     from ..interface.dictionary_en import t
 
