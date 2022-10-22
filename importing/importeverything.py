@@ -1141,6 +1141,7 @@ def clean_orphan_data():
             bpy.data.node_groups.remove(block)
 
 def apply_cycles():
+    kklog('Applying Cycles adjustments...')
     #taken from https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/234
     #remove outline modifier
     for o in bpy.context.view_layer.objects:
@@ -1206,6 +1207,7 @@ def apply_cycles():
     bpy.context.scene.cycles.preview_samples = 10
 
 def apply_lbs():
+    kklog('Applying Lightning Boy Shader adjustments...')
     #Import lbs node group and replace rim group with the lbs group
     keep_list = ['KK Eyebrows (mayuge)', 'KK EyeL (hitomi)', 'KK EyeR (hitomi)', 'KK Eyeline up']
     for tree in [mat.node_tree for mat in bpy.data.materials if ('KK ' in mat.name and mat.name not in keep_list)]:
@@ -1226,34 +1228,54 @@ def apply_lbs():
     except:
         bpy.context.window_manager.popup_menu(missing_lbs, title="Error", icon='ERROR')
         return
+    def expand(node):
+        node.hide = False
+        for sock in node.inputs:
+            sock.hide = False
     LBS.initialize_group = ".Lightning Boy Shader"
     LBS.inputs['.transparency'].default_value = 0.001
     LBS.inputs['.transparency'].enabled = False
     LBS.inputs[0].enabled = False
     LBS.layers = 4
-    LBS.location = 930,320
-    links.new(nodes['Group Input'].outputs['Alpha'], LBS.inputs[-3]) #connect alpha
-    links.new(nodes['Group Input'].outputs['Color dark'], LBS.inputs[-4]) #connect dark
-    links.new(LBS.outputs[0], nodes['Group Output'].inputs[0]) #connect LBS out
+    LBS.location = 444.6600, 61.8538
+    expand(LBS)
+    output = [out for out in nodes if out.type == 'GROUP_OUTPUT'][0]
+    output.location = 694.6600, -10.6462
+    input =  [out for out in nodes if out.type == 'GROUP_INPUT'][0]
+    input.location = -538.7341, 24.3778
+    reroute_alpha = nodes.new('NodeReroute')
+    reroute_alpha.location = 121.4401, -429.1375
+    links.new(input.outputs[2], reroute_alpha.inputs[0])
+    links.new(reroute_alpha.outputs[0], LBS.inputs[-3]) #connect alpha through reroute
+    reroute_dark = nodes.new('NodeReroute')
+    reroute_dark.location = 121.4401, -398.1375
+    links.new(input.outputs[1], reroute_dark.inputs[0])
+    links.new(reroute_dark.outputs[0], LBS.inputs[-4]) #connect dark
+    links.new(LBS.outputs[0], output.inputs[0]) #connect LBS out
 
     key = nodes.new('LBSBaseNode')
     key.initialize_group = '.Key Light*'
-    key.location = 660,200
-    links.new(nodes['Group Input'].outputs['Color light'], key.inputs[0])
-    links.new(nodes['Group Input'].outputs['Normal'], key.inputs[5])
+    key.location = 49.4401, -144.1374
+    expand(key)
+    links.new(input.outputs['Color light'], key.inputs[0])
+    links.new(input.outputs['Normal'], key.inputs[5])
     links.new(key.outputs[0], LBS.inputs[-5]) #connect light
 
     ao = nodes.new('LBSBaseNode')
     ao.initialize_group = '.Ambient Occlusion (SS)'
-    ao.location = 700,330
-    links.new(nodes['Group Input'].outputs['Color dark'], ao.inputs[0])
+    ao.location = 49.4401, 109.8626
+    expand(ao)
+    links.new(input.outputs['Color dark'], ao.inputs[0])
     links.new(ao.outputs[0], LBS.inputs[-6]) #connect light
 
     rim = nodes.new('LBSBaseNode')
     rim.initialize_group = '.2D Rim Light*'
-    rim.location = 500,145
-    links.new(nodes['Group Input'].outputs['Color light'], nodes['RGB Curves'].inputs[0])
-    links.new(nodes['RGB Curves'].outputs[0], rim.inputs[0])
+    rim.location = 49.4401, 423.8625
+    expand(rim)
+    curves = [out for out in nodes if out.type == 'CURVE_RGB'][0]
+    curves.location = -215.5599, 289.3625
+    links.new(input.outputs['Color light'], curves.inputs[0])
+    links.new(curves.outputs[0], rim.inputs[0])
     links.new(rim.outputs[0], LBS.inputs[-7]) #connect 2d rim
 
     #turn on ambient occlusion and bloom in render settings

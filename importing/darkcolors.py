@@ -127,25 +127,16 @@ def ShadeAdjustItem(col, _ShadowColor):
     u_xlat1 = u_xlat1.clamp() #94
     u_xlat1 = u_xlat1 + (-1); #95
     u_xlat1 = (u_xlat30) * u_xlat1 + 1; #96
+    #print([u_xlat1.x, u_xlat1.y, u_xlat1.z, 1])
     return float4(u_xlat1.x, u_xlat1.y, u_xlat1.z, 1) #97
 
 #rest is from https://github.com/xukmi/KKShadersPlus/blob/main/Shaders/Item/MainItemPlus.shader
-#lines without comments at the end have been copied verbatim from the C# source
+#This was stripped down to just the shadow portion, and to remove all constants
 def kk_dark_color(color, shadow_color):
     ################### variable setup
-    _ShadowExtendAnother = 0 #manually set in game
-    _ShadowExtend = 0 #manually set in game
-    finalRamp = .26 #assume ramp is inversion of shadow setting in the charamaker. setting it to 1 gives the original light color back
-    a = 0.666
-    _ambientshadowG = float4(a,a,a,1) #defaults to 0.666, 0.666, 0.666, 1
-    _CustomAmbient = _ambientshadowG
-    _LightColor0 = float4(1,1,1,1) #assume light color is 1
-    vertexLighting = float4(0,0,0,1) #assume vertex lighting is 0
-    vertexLightRamp = float4(0,0,0,1) #assume light ramp is black
-    detailMask = float4(0,0,0,1) #black if no detail mask loaded in
-
+    _ambientshadowG = float4(0.15, 0.15, 0.15, 0.15) #constant from experimentation
     diffuse = float4(color[0],color[1],color[2],1) #maintex color
-    _ShadowColor = float4(shadow_color[0],shadow_color[1],shadow_color[2],1) #shadow color from material editor defaults to [.764, .880, 1, 1]
+    _ShadowColor = float4(shadow_color[0],shadow_color[1],shadow_color[2],1) #the shadow color from material editor
     ##########################
     
     #start at line 344 because the other one is for outlines
@@ -154,98 +145,73 @@ def kk_dark_color(color, shadow_color):
     #skip to line 352
     diffuseShaded = shadingAdjustment * 0.899999976 - 0.5;
     diffuseShaded = -diffuseShaded * 2 + 1;
-    ambientShadow = 1 - float4(_ambientshadowG.w, _ambientshadowG.x, _ambientshadowG.y, _ambientshadowG.z) #354
-    ambientShadowIntensity = -ambientShadow.x * float4(ambientShadow.y, ambientShadow.z, ambientShadow.w, 1) + 1 #355
-    ambientShadowAdjust = _ambientshadowG.w * 0.5 + 0.5;
-    ambientShadowAdjustDoubled = ambientShadowAdjust + ambientShadowAdjust;
-    ambientShadowAdjustShow = 0.5 < ambientShadowAdjust;
-    ambientShadow = ambientShadowAdjustDoubled * _ambientshadowG; #359
-    finalAmbientShadow = ambientShadowIntensity if ambientShadowAdjustShow else ambientShadow; #360
-    finalAmbientShadow = finalAmbientShadow.saturate(); #361
-    invertFinalAmbientShadow = 1 - finalAmbientShadow;
+
     compTest = 0.555555582 < shadingAdjustment;
-    shadingAdjustment *= finalAmbientShadow;
     shadingAdjustment *= 1.79999995;
-    diffuseShaded = -diffuseShaded * invertFinalAmbientShadow + 1;
+    diffuseShaded = -diffuseShaded * 0.7225 + 1; #invertfinalambient shadow is a constant 0.7225, so don't calc it
 
     hlslcc_movcTemp = shadingAdjustment;
     hlslcc_movcTemp.x = diffuseShaded.x if (compTest.x) else shadingAdjustment.x; #370
     hlslcc_movcTemp.y = diffuseShaded.y if (compTest.y) else shadingAdjustment.y; #371
     hlslcc_movcTemp.z = diffuseShaded.z if (compTest.z) else shadingAdjustment.z; #372
-    #shadowCol = lerp(1, _ShadowColor.rgb, 1 - saturate(_ShadowColor.a));
-    shadowCol = _ShadowColor # but the lerp result is going to be this because shadowColor's alpha is always 1
-    shadingAdjustment = (hlslcc_movcTemp * shadowCol).saturate(); #374
-    shadowExtendAnother = 1 - _ShadowExtendAnother;
-    shadowExtendAnother -= 0; #assume KKMetal is 0
-    shadowExtendAnother += 1;
-    shadowExtendAnother = (0 if shadowExtendAnother < 0 else 1 if shadowExtendAnother > 1 else shadowExtendAnother) * 0.670000017 + 0.330000013 #384
-    shadowExtendShaded = shadowExtendAnother * shadingAdjustment;
-    shadingAdjustment = -shadingAdjustment * shadowExtendAnother + 1;
-    diffuseShadow = diffuse * shadowExtendShaded;
-    diffuseShadowBlended = -shadowExtendShaded * diffuse + diffuse;
+    shadingAdjustment = (hlslcc_movcTemp).saturate(); #374 the lerp result (and shadowCol) is going to be this because shadowColor's alpha is always 1 making shadowCol 1
 
-    #skip to 437
-    diffuseShadow = finalRamp *  diffuseShadowBlended + diffuseShadow;
+    diffuseShadow = diffuse * shadingAdjustment;
 
-    #jump up to 248 function definition
-    def AmbientShadowAdjust():
-        u_xlatb30 = _ambientshadowG.y >= _ambientshadowG.z;
-        u_xlat30 = 1 if u_xlatb30 else float(0.0); #256
-        u_xlat5 = float4(_ambientshadowG.y, _ambientshadowG.z); #257
-        u_xlat5.z = float(0.0);
-        u_xlat5.w = float(-0.333333343);
-        u_xlat6 = float4(_ambientshadowG.z, _ambientshadowG.y); #260
-        u_xlat6.z = float(-1.0);
-        u_xlat6.w = float(0.666666687);
-        u_xlat5 = u_xlat5 + (-u_xlat6);
-        u_xlat5 = (u_xlat30) * float4(u_xlat5.x, u_xlat5.y, u_xlat5.w, u_xlat5.z) + float4(u_xlat6.x, u_xlat6.y, u_xlat6.w, u_xlat6.z); #264
-        u_xlatb30 = _ambientshadowG.x >= u_xlat5.x;
-        u_xlat30 = 1 if u_xlatb30 else float(0.0); #266
-        u_xlat6.z = u_xlat5.w;
-        u_xlat5.w = _ambientshadowG.x;
-        u_xlat6 = float4(u_xlat5.w, u_xlat5.y, u_xlat6.z, u_xlat5.x) #269
-        u_xlat6 = (-u_xlat5) + u_xlat6;
-        u_xlat5 = (u_xlat30) * u_xlat6 + u_xlat5;
-        u_xlat30 = min(u_xlat5.y, u_xlat5.w);
-        u_xlat30 = (-u_xlat30) + u_xlat5.x;
-        u_xlat30 = u_xlat30 * 6.0 + 1.00000001e-10;
-        u_xlat31 = (-u_xlat5.y) + u_xlat5.w;
-        u_xlat30 = u_xlat31 / u_xlat30;
-        u_xlat30 = u_xlat30 + u_xlat5.z;
-        #xlat5's w component is not used after this point, so ignore it
-        u_xlat5 = abs((u_xlat30)) + float4(0.0, -0.333333343, 0.333333343, None); #278
-        u_xlat5 = u_xlat5.frac(); #279
-        u_xlat5 = (-u_xlat5) * 2.0 + 1.0; #280
-        u_xlat5 = u_xlat5.abs() * 3 + (-1); #281
-        u_xlat5 = u_xlat5.clamp(); #282
-        u_xlat5 = u_xlat5 * float4(0.400000006, 0.400000006, 0.400000006) + float4(0.300000012, 0.300000012, 0.300000012); #283
-        return float4(u_xlat5.x, u_xlat5.y, u_xlat5.z, 1)
-
-    #jump back down to 470 where this function is used
-    ambientShadowAdjust2 = AmbientShadowAdjust()
-    #skip to 482
-    ambientShadowAdjust2 = ambientShadowAdjust2.clamphalf() #clamp between zero and .5
-    diffuseShadow += ambientShadowAdjust2;
-
-    lightCol = (_LightColor0 + vertexLighting * vertexLightRamp) * float4(0.600000024, 0.600000024, 0.600000024, 0) + _CustomAmbient;
-    ambientCol = max(lightCol, _ambientshadowG);
+    # lightCol is constant 1.0656, 1.0656, 1.0656, 1 calculated from the custom ambient of 0.666, 0.666, 0.666, 1 and sun light color 0.666, 0.666, 0.666, 1,
+    # so ambientCol always results in lightCol after the max function
+    ambientCol = float4(1.0656, 1.0656, 1.0656, 1);
     diffuseShadow = diffuseShadow * ambientCol;
-    shadowExtend = _ShadowExtend * -1.20000005 + 1.0;
-    drawnShadow = detailMask.y * (1 - shadowExtend) + shadowExtend;
-
-    #skip to 495
-    shadingAdjustment = drawnShadow * shadingAdjustment + shadowExtendShaded
-    shadingAdjustment *= diffuseShadow;
-    diffuse *= shadowExtendShaded;
-
-    #print('diffuse is ' + str(diffuse))
-    #print('diffuseShadow is ' + str(diffuseShadow))
-    #print('diffuseShaded is ' + str(diffuseShaded))
-    #print('drawnShadow is ' + str(drawnShadow))
-    #print('diffuseShadowblended is ' + str(diffuseShadowBlended))
-    return [diffuse.x, diffuse.y, diffuse.z]
+    
+    return [diffuseShadow.x, diffuseShadow.y, diffuseShadow.z]
 
 if __name__ == '__main__':
-    color = [.5, .5, .5]
-    shadow_color = [.764, .880, 1]
-    new_color = kk_dark_color(color, shadow_color)
+    test_matrix = {
+        #    Input          customAmbient    ShadowColor Shadow  Density setting Koikatsu light Koikatsu Dark
+        1:  [[1, 1, 1],  [.666, .666, .666, 1],  [.764, .880, 1, 1],  74,  [1, 1, 1],  [.772, .851, .937]],
+        2:  [[.5, .5, .5],  [.666, .666, .666, 1],  [.764, .880, 1, 1],  74,  [.5, .5, .5],  [.38, .423, .466]],
+        #3:  [[1, 1, 1],  [0, 0, 0, 1],  [.764, .880, 1, 1],  74,  [.79, .79, .79],  [.611, .678, .745]],
+        #4:  [[.5, .5, .5],  [0, 0, 0, 1],  [.764, .880, 1, 1],  74,  [.4, .4, .4],  [.298, .329, .368]],
+        5:  [[1, 1, 1],  [.666, .666, .666, 1],  [1, 1, 1, 1],  74,  [1, 1, 1],  [.93, .93, .93]],
+        6:  [[.5, .5, .5],  [.666, .666, .666, 1],  [1, 1, 1, 1],  74,  [.5, .5, .5],  [.46, .46, .46]],
+        #7:  [[1, 1, 1],  [.666, .666, .666, 1],  [.764, .880, 1, 1],  100,  [1, 1, 1],  [.67, .788, .913]],
+        #8:  [[.5, .5, .5],  [.666, .666, .666, 1],  [.764, .880, 1, 1],  100,  [.5, .5, .5],  [.325, .392, .454]],
+        #9:  [[1, 1, 1],  [0, 0, 0, 1],  [1, 1, 1],  100,  [.796, .796, .796],  [.72, .72, .72]],
+        #10:  [[.5, .5, .5],  [0, 0, 0, 1],  [1, 1, 1],  100,  [.4, .4, .4],  [.35, .35, .35]],
+        #11:  [[1, 1, 1],  [.666, .666, .666, 1],  [1, 1, 1],  100,  [1],  [0.9, 0.9, 0.9]],
+        #12:  [[.5, .5, .5],  [.666, .666, .666, 1],  [1, 1, 1],  100,  [.5, .5, .5],  [.454, .454, .454]],
+        }
+    for test in test_matrix:
+        print('Test ' + str(test))
+        color = test_matrix[test][0]
+        shadow_color = test_matrix[test][2]
+        expected_color = test_matrix[test][5]
+        print(expected_color)
+        print(str(kk_dark_color(color, shadow_color)) + '\n')
+
+#stripped down source
+'''				float3 diffuse = mainTex * color;
+
+				float3 shadingAdjustment = ShadeAdjustItem(diffuse);
+
+				float3 diffuseShaded = shadingAdjustment * 0.899999976 - 0.5;
+				diffuseShaded = -diffuseShaded * 2 + 1;
+
+				bool3 compTest = 0.555555582 < shadingAdjustment;
+				shadingAdjustment *= 1.79999995;
+				diffuseShaded = -diffuseShaded * 0.7225 + 1;
+				{
+					float3 hlslcc_movcTemp = shadingAdjustment;
+					hlslcc_movcTemp.x = (compTest.x) ? diffuseShaded.x : shadingAdjustment.x;
+					hlslcc_movcTemp.y = (compTest.y) ? diffuseShaded.y : shadingAdjustment.y;
+					hlslcc_movcTemp.z = (compTest.z) ? diffuseShaded.z : shadingAdjustment.z;
+					shadingAdjustment = saturate(hlslcc_movcTemp);
+				}
+
+				float3 diffuseShadow = diffuse * shadingAdjustment;
+
+				float3 lightCol = float3(1.0656, 1.0656, 1.0656); // constant calculated from custom ambient .666 and light color .666
+				float3 ambientCol = max(lightCol, .15);
+				diffuseShadow = diffuseShadow * ambientCol;
+
+				return float4(diffuseShadow, 1);'''
