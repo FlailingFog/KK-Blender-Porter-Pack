@@ -20,14 +20,7 @@ from bpy.props import StringProperty, BoolProperty
 from bpy_extras.io_utils import ImportHelper
 from bpy.types import Operator
 
-#load plugin language
-from bpy.app.translations import locale
-if locale == 'ja_JP':
-    from ..interface.dictionary_jp import t
-elif locale == 'zh_CN':
-    from ..interface.dictionary_zh import t
-else:
-    from ..interface.dictionary_en import t
+from ..interface.dictionary_en import t
 
 def showError(self, context):
     self.layout.label(text="No object selected (make sure the body object is selected)")

@@ -2,14 +2,7 @@ import bpy, time, traceback
 import os
 from bpy.props import StringProperty
 
-#load plugin language
-from bpy.app.translations import locale
-if locale == 'ja_JP':
-    from ..interface.dictionary_jp import t
-elif locale == 'zh_CN':
-    from ..interface.dictionary_zh import t
-else:
-    from ..interface.dictionary_en import t
+from ..interface.dictionary_en import t
 
 def kklog(log_text, type = 'standard'):
     if not bpy.data.texts.get('KKBP Log'):

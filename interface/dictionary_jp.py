@@ -1,5 +1,3 @@
-from .dictionary_en import translation_dictionary as english_fallback
-
 translation_dictionary = {
 
     'seams'     : "体を縫合する",
@@ -118,10 +116,4 @@ translation_dictionary = {
     'import_colors_tt'  : ".PMXフォルダを選択したらダークな色を再計算できる",
 
     }
-
-def t(text_entry):
-    try:
-        return translation_dictionary[text_entry]
-    except:
-        return english_fallback[text_entry]
 

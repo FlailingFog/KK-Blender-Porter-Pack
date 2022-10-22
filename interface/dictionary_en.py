@@ -1,3 +1,7 @@
+from bpy.app.translations import locale
+from .dictionary_jp import translation_dictionary as jp_translation
+from .dictionary_zh import translation_dictionary as zh_translation
+
 translation_dictionary = {
 
     'seams'     : "Fix body seams",
@@ -120,7 +124,12 @@ translation_dictionary = {
 
 def t(text_entry):
     try:
-        return translation_dictionary[text_entry]
+        if locale == 'ja_JP':
+            return jp_translation[text_entry]
+        elif locale == 'zh_CN':
+            return zh_translation[text_entry]
+        else:
+            return translation_dictionary[text_entry]
     except:
         return text_entry
 

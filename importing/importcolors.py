@@ -11,14 +11,7 @@ from bpy_extras.io_utils import ImportHelper
 from gpu_extras.batch import batch_for_shader
 from bpy.props import StringProperty, BoolProperty
 
-#load plugin language
-from bpy.app.translations import locale
-if locale == 'ja_JP':
-    from ..interface.dictionary_jp import t
-elif locale == 'zh_CN':
-    from ..interface.dictionary_zh import t
-else:
-    from ..interface.dictionary_en import t
+from ..interface.dictionary_en import t
 
 ########## ERRORS ##########
 def kk_folder_error(self, context):

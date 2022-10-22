@@ -1,6 +1,5 @@
 translation_dictionary = {
-    
-    
+
     'seams'     : "修复身体接缝",
     'seams_tt'  : '合并靠近身体的顶点。这种合并可能会破坏颈部权重。如果禁用此选项，将保存权重，但可能会在身体上看到接缝',
     
@@ -117,10 +116,3 @@ translation_dictionary = {
     'import_colors_tt'  : "打开包括.pmx模型文件的文件夹以重新计算暗色",
 
     }
-
-def t(text_entry):
-    try:
-        return translation_dictionary[text_entry]
-    except:
-        return english_fallback[text_entry]
-
