@@ -3,7 +3,7 @@ import bgl
 import gpu
 import json
 from .importbuttons import kklog
-from .darkcolors import kk_dark_color
+from .darkcolors import clothes_dark_color, hair_dark_color, skin_dark_color
 import numpy as np
 from pathlib import Path
 from bpy.types import Operator
@@ -567,28 +567,36 @@ def update_shaders(json, lut_selection, active_lut, light):
                 item_data.append(item)
                 item_shader_node_groups.append(node_groups[shader_name])
 
-
     ### Get body/face/hair colors
-    body_colors.append(to_rgba(color_to_KK(json_to_color(json[0]['colorInfo'][0]), active_lut) / 255))
+    body_colors.append(to_rgba(color_to_KK(json_to_color(json[0]['colorInfo'][0]), active_lut) / 255)) #light body color
     body_colors.append(to_rgba(color_to_KK(json_to_color(json[0]['colorInfo'][1]), active_lut) / 255))
     body_colors.append(to_rgba(color_to_KK(json_to_color(json[0]['colorInfo'][2]), active_lut) / 255))
     body_colors.append(to_rgba(color_to_KK(json_to_color(json[0]['colorInfo'][3]), active_lut) / 255))
     body_colors.append(to_rgba(color_to_KK(json_to_color(json[0]['colorInfo'][4]), active_lut) / 255))
     body_colors.append(to_rgba(color_to_KK(json_to_color(json[0]['colorInfo'][5]), active_lut) / 255))
+    body_colors.append(to_rgba(color_to_KK(skin_dark_color(json_to_color(json[0]['colorInfo'][0])), active_lut) / 255)) #dark body color
 
-    face_colors.append(to_rgba(color_to_KK(json_to_color(json[1]['colorInfo'][0]), active_lut) / 255))
+    face_colors.append(to_rgba(color_to_KK(json_to_color(json[1]['colorInfo'][0]), active_lut) / 255)) #light face color
     face_colors.append(to_rgba(color_to_KK(json_to_color(json[1]['colorInfo'][1]), active_lut) / 255))
     face_colors.append(to_rgba(color_to_KK(json_to_color(json[1]['colorInfo'][2]), active_lut) / 255))
     face_colors.append(to_rgba(color_to_KK(json_to_color(json[1]['colorInfo'][3]), active_lut) / 255))
     face_colors.append(to_rgba(color_to_KK(json_to_color(json[1]['colorInfo'][4]), active_lut) / 255))
     face_colors.append(to_rgba(color_to_KK(json_to_color(json[1]['colorInfo'][5]), active_lut) / 255))
     face_colors.append(to_rgba(color_to_KK(json_to_color(json[1]['colorInfo'][6]), active_lut) / 255))
+    face_colors.append(to_rgba(color_to_KK(skin_dark_color(json_to_color(json[1]['colorInfo'][0])), active_lut) / 255)) #dark body color
 
     kage_color = to_rgba(color_to_KK(json_to_color(json[2]['colorInfo'][0]), active_lut) / 255)
 
     tongue_color = to_rgba(color_to_KK(json_to_color(json[4]['colorInfo'][0]), active_lut) / 255)
 
     hair_base_color = to_rgba(color_to_KK(json_to_color(json[5]['colorInfo'][0]), active_lut) / 255)
+    hair_shadow_color = ([el / 255 for el in json_to_color(json[5]['shadowColor'])])
+    dcolor = ([el / 255 for el in json_to_color(json[5]['colorInfo'][0])])
+    dshadow_color = hair_shadow_color
+    hair_dark = [el/255 for el in to_rgba(color_to_KK([255*el for el in clothes_dark_color(color = dcolor, shadow_color = dshadow_color)], 'Lut_TimeDay.png'))]
+    #kklog(dcolor)
+    #kklog(dshadow_color)
+    #kklog(hair_dark)
     hair_root_color = to_rgba(color_to_KK(json_to_color(json[5]['colorInfo'][1]), active_lut) / 255)
     hair_tip_color = to_rgba(color_to_KK(json_to_color(json[5]['colorInfo'][2]), active_lut) / 255)
     #hair_outline_color = to_rgba(color_to_KK(json_to_color(json[5]['colorInfo'][3]), active_lut) / 255)
@@ -596,7 +604,7 @@ def update_shaders(json, lut_selection, active_lut, light):
     ### Set shader colors
     ## Body Shader
     shader_inputs = body_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
-    shader_inputs['Skin color'].default_value = body_colors[0] if light else [1.000000, 0.685285, 0.637749, 1.000000] #hardcode dark body color for now
+    shader_inputs['Skin color'].default_value = body_colors[0] if light else body_colors[6]
     shader_inputs['Skin type color'].default_value = body_colors[1]
     shader_inputs['Skin type intensity (Base)'].default_value = 0.5
     shader_inputs['Skin type intensity'].default_value = 1
@@ -614,7 +622,7 @@ def update_shaders(json, lut_selection, active_lut, light):
 
     ## Face Shader
     shader_inputs = face_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
-    shader_inputs['Skin color'].default_value = body_colors[0] if light else [1.000000, 0.685285, 0.637749, 1.000000] #hardcode dark body color for now
+    shader_inputs['Skin color'].default_value = body_colors[0] if light else body_colors[6]
     shader_inputs['Skin detail color'].default_value = body_colors[1]
     shader_inputs['Light blush color'].default_value = face_colors[5]
     shader_inputs['Mouth interior multiplier'].default_value = [1, 1, 1, 1]
@@ -644,9 +652,7 @@ def update_shaders(json, lut_selection, active_lut, light):
     ## Hair Shader
     shader_inputs = hair_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
     if lut_selection == 'F' and not light:
-        hair_shadow_color = ([el / 255 for el in json_to_color(json[5]['shadowColor'])])
-        color_channel = [el/255 for el in to_rgba(color_to_KK([255*el for el in kk_dark_color(color = hair_base_color, shadow_color = hair_shadow_color)], 'Lut_TimeDay.png'))]
-        shader_inputs['Dark Hair color'].default_value = color_channel
+        shader_inputs['Dark Hair color'].default_value = hair_dark
     else:
         shader_inputs['Light Hair color' if light else 'Dark Hair color'].default_value = hair_base_color
     shader_inputs['Light Hair rim color' if light else 'Dark Hair rim color'].default_value = hair_root_color
@@ -695,12 +701,12 @@ def update_shaders(json, lut_selection, active_lut, light):
                 if i < len(color_input_names):
                     color = ([el / 255 for el in json_to_color(colorItem)])
                     shadow_color = ([el / 255 for el in json_to_color(item['shadowColor'])])
-                    color_channel = [el/255 for el in to_rgba(color_to_KK([255*el for el in kk_dark_color(color = color, shadow_color = shadow_color)], 'Lut_TimeDay.png'))]
+                    color_channel = [el/255 for el in to_rgba(color_to_KK([255*el for el in clothes_dark_color(color = color, shadow_color = shadow_color)], 'Lut_TimeDay.png'))]
                     shader_inputs[color_input_names[i]].default_value = color_channel
             shader_inputs['Use colored maintex?'].default_value = 0
             shader_inputs['Ignore colormask?'].default_value = 0
             #doesn't work?
-            #shader_inputs['Color mask color (base)'].default_value = [el/255 for el in to_rgba(color_to_KK([255*el for el in kk_dark_color(color = [255, 255, 255], shadow_color = shadow_color)], 'Lut_TimeDay.png'))]
+            #shader_inputs['Color mask color (base)'].default_value = [el/255 for el in to_rgba(color_to_KK([255*el for el in clothes_dark_color(color = [255, 255, 255], shadow_color = shadow_color)], 'Lut_TimeDay.png'))]
         else:
             for i, colorItem in enumerate(item['colorInfo']):
                 if i < len(color_input_names):

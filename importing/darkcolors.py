@@ -89,50 +89,147 @@ class float4:
     def __str__(self):
         return str([self.x, self.y, self.z, self.w])
     __repr__ = __str__
+
+#something is wrong with this one
+def hair_dark_color(color, shadow_color):
+    diffuse = float4(color[0], color[1], color[2], 1)
+    _ShadowColor = float4(shadow_color[0], shadow_color[1], shadow_color[2], 1)
+
+    finalAmbientShadow = 0.7225; #constant
+    invertFinalAmbientShadow = finalAmbientShadow #this shouldn't be equal to this but it works so whatever
+
+    finalAmbientShadow = finalAmbientShadow * _ShadowColor
+    finalAmbientShadow += finalAmbientShadow;
+    shadowCol = _ShadowColor - 0.5;
+    shadowCol = -shadowCol * 2 + 1;
+
+    invertFinalAmbientShadow = -shadowCol * invertFinalAmbientShadow + 1;
+    shadeCheck = 0.5 < _ShadowColor;
+    hlslcc_movcTemp = finalAmbientShadow;
+    hlslcc_movcTemp.x = invertFinalAmbientShadow.x if (shadeCheck.x) else finalAmbientShadow.x; 
+    hlslcc_movcTemp.y = invertFinalAmbientShadow.y if (shadeCheck.y) else finalAmbientShadow.y; 
+    hlslcc_movcTemp.z = invertFinalAmbientShadow.z if (shadeCheck.z) else finalAmbientShadow.z; 
+    finalAmbientShadow = (hlslcc_movcTemp).saturate();
+    diffuse *= finalAmbientShadow;
+
+    finalDiffuse  = diffuse.saturate();
+
+    shading = 1 - finalAmbientShadow;
+    shading = 1 * shading + finalAmbientShadow;
+    finalDiffuse *= shading;
+    shading = 1.0656;
+    finalDiffuse *= shading;
+
+    return [finalDiffuse.x, finalDiffuse.y, finalDiffuse.z];
+
+#mapvaluesmain function is from https://github.com/xukmi/KKShadersPlus/blob/main/Shaders/Skin/KKPDiffuse.cginc
+def MapValuesMain(color):
+    t0 = color;
+    tb30 = t0.y>=t0.z;
+    t30 = 1 if tb30 else float(0.0);
+    t1 = float4(t0.z, t0.y, t0.z, t0.w);
+    t2 = float4(t0.y - t1.x,  t0.z - t1.y); 
+    t1.z = float(-1.0);
+    t1.w = float(0.666666687);
+    t2.z = float(1.0);
+    t2.w = float(-1.0);
+    t1 = float4(t30, t30, t30, t30) * float4(t2.x, t2.y, t2.w, t2.z) + float4(t1.x, t1.y, t1.w, t1.z);
+    tb30 = t0.x>=t1.x;
+    t30 = 1 if tb30 else 0.0;
+    t2.z = t1.w;
+    t1.w = t0.x;
+    t2 = float4(t1.w, t1.y, t2.z, t1.x)
+    t2 = (-t1) + t2;
+    t1 = float4(t30, t30, t30, t30) * t2 + t1;
+    t30 = min(t1.y, t1.w);
+    t30 = (-t30) + t1.x;
+    t2.x = t30 * 6.0 + 1.00000001e-10;
+    t11 = (-t1.y) + t1.w;
+    t11 = t11 / t2.x;
+    t11 = t11 + t1.z;
+    t1.x = t1.x + 1.00000001e-10;
+    t30 = t30 / t1.x;
+    t30 = t30 * 0.660000026;
+    #w component isn't used anymore so ignore
+    t2 = float4(t11, t11, t11).abs() + float4(-0.0799999982, -0.413333356, 0.25333333)
+    t2 = t2.frac()
+    t2 = (-t2) * float4(2.0, 2.0, 2.0) + float4(1.0, 1.0, 1.0);
+    t2 = t2.abs() * float4(3.0, 3.0, 3.0) + float4(-1.0, -1.0, -1.0);
+    t2 = t2.clamp()
+    t2 = t2 + float4(-1.0, -1.0, -1.0);
+    t2 = float4(t30, t30, t30) * t2 + float4(1.0, 1.0, 1.0);
+    return float4(t2.x, t2.y, t2.z, 1);
+
+#skin is from https://github.com/xukmi/KKShadersPlus/blob/main/Shaders/Skin/KKPSkinFrag.cginc 
+def skin_dark_color(color, shadow_color = None):
+    diffuse = float4(color[0], color[1], color[2], 1)
+    shadingAdjustment = MapValuesMain(diffuse);
+
+    diffuseShaded = shadingAdjustment * 0.899999976 - 0.5;
+    diffuseShaded = -diffuseShaded * 2 + 1;
     
+    compTest = 0.555555582 < shadingAdjustment;
+    shadingAdjustment *= 1.79999995;
+    diffuseShaded = -diffuseShaded * 0.7225 + 1;
+    hlslcc_movcTemp = shadingAdjustment;
+    hlslcc_movcTemp.x = diffuseShaded.x if (compTest.x) else shadingAdjustment.x; #370
+    hlslcc_movcTemp.y = diffuseShaded.y if (compTest.y) else shadingAdjustment.y; #371
+    hlslcc_movcTemp.z = diffuseShaded.z if (compTest.z) else shadingAdjustment.z; #372
+    shadingAdjustment = (hlslcc_movcTemp).saturate(); #374 the lerp result (and shadowCol) is going to be this because shadowColor's alpha is always 1 making shadowCol 1
+
+    #print(diffuse)
+    #print(shadingAdjustment)
+    finalDiffuse = diffuse * shadingAdjustment;
     
-#this function is from https://github.com/xukmi/KKShadersPlus/blob/main/Shaders/Item/KKPItemDiffuse.cginc
+    bodyShine = float4(1.0656, 1.0656, 1.0656, 1);
+    finalDiffuse *= bodyShine;
+    fudge_factor = float4(0.02, 0.05, 0, 0) #result is slightly off but it looks consistently off so add a fudge factor
+    finalDiffuse += fudge_factor
+
+    return [finalDiffuse.x, finalDiffuse.y, finalDiffuse.z]
+
+#shadeadjust function is from https://github.com/xukmi/KKShadersPlus/blob/main/Shaders/Item/KKPItemDiffuse.cginc
 #lines without comments at the end have been copied verbatim from the C# source
 def ShadeAdjustItem(col, _ShadowColor):
     #start at line 63
-    u_xlat0 = col
-    u_xlat1 = float4(u_xlat0.y, u_xlat0.z, None, u_xlat0.x) * float4(_ShadowColor.y, _ShadowColor.z, None, _ShadowColor.x) #line 65
-    u_xlat2 = float4(u_xlat1.y, u_xlat1.x) #66
-    u_xlat3 = float4(u_xlat0.y, u_xlat0.z) * float4(_ShadowColor.y, _ShadowColor.z) + (-float4(u_xlat2.x, u_xlat2.y)); #67
-    u_xlatb30 = u_xlat2.y >= u_xlat1.y;
-    u_xlat30 = 1 if u_xlatb30 else 0;
-    u_xlat2 = float4(u_xlat2.x, u_xlat2.y, -1.0, 0.666666687); #70-71
-    u_xlat3 = float4(u_xlat3.x, u_xlat3.y, 1.0, -1); #72-73
-    u_xlat2 = (u_xlat30) * u_xlat3 + u_xlat2;
-    u_xlatb30 = u_xlat1.w >= u_xlat2.x; 
-    u_xlat30 = 1 if u_xlatb30 else float(0.0);
-    u_xlat1 = float4(u_xlat2.x, u_xlat2.y, u_xlat2.w, u_xlat1.w) #77
-    u_xlat2 = float4(u_xlat1.w, u_xlat1.y, u_xlat2.z, u_xlat1.x) #78
-    u_xlat2 = (-u_xlat1) + u_xlat2;
-    u_xlat1 = (u_xlat30) * u_xlat2 + u_xlat1;
-    u_xlat30 = min(u_xlat1.y, u_xlat1.w);
-    u_xlat30 = (-u_xlat30) + u_xlat1.x;
-    u_xlat2.x = u_xlat30 * 6.0 + 1.00000001e-10;
-    u_xlat11 = (-u_xlat1.y) + u_xlat1.w;
-    u_xlat11 = u_xlat11 / u_xlat2.x;
-    u_xlat11 = u_xlat11 + u_xlat1.z;
-    u_xlat1.x = u_xlat1.x + 1.00000001e-10;
-    u_xlat30 = u_xlat30 / u_xlat1.x;
-    u_xlat30 = u_xlat30 * 0.5;
-    #the w component of u_xlat1 is no longer used, so ignore it
-    u_xlat1 = abs((u_xlat11)) + float4(0.0, -0.333333343, 0.333333343, 1); #90
-    u_xlat1 = u_xlat1.frac(); #91
-    u_xlat1 = -u_xlat1 * 2 + 1; #92
-    u_xlat1 = u_xlat1.abs() * 3 + (-1) #93
-    u_xlat1 = u_xlat1.clamp() #94
-    u_xlat1 = u_xlat1 + (-1); #95
-    u_xlat1 = (u_xlat30) * u_xlat1 + 1; #96
-    #print([u_xlat1.x, u_xlat1.y, u_xlat1.z, 1])
-    return float4(u_xlat1.x, u_xlat1.y, u_xlat1.z, 1) #97
+    t0 = col
+    t1 = float4(t0.y, t0.z, None, t0.x) * float4(_ShadowColor.y, _ShadowColor.z, None, _ShadowColor.x) #line 65
+    t2 = float4(t1.y, t1.x) #66
+    t3 = float4(t0.y, t0.z) * float4(_ShadowColor.y, _ShadowColor.z) + (-float4(t2.x, t2.y)); #67
+    tb30 = t2.y >= t1.y;
+    t30 = 1 if tb30 else 0;
+    t2 = float4(t2.x, t2.y, -1.0, 0.666666687); #70-71
+    t3 = float4(t3.x, t3.y, 1.0, -1); #72-73
+    t2 = (t30) * t3 + t2;
+    tb30 = t1.w >= t2.x; 
+    t30 = 1 if tb30 else float(0.0);
+    t1 = float4(t2.x, t2.y, t2.w, t1.w) #77
+    t2 = float4(t1.w, t1.y, t2.z, t1.x) #78
+    t2 = (-t1) + t2;
+    t1 = (t30) * t2 + t1;
+    t30 = min(t1.y, t1.w);
+    t30 = (-t30) + t1.x;
+    t2.x = t30 * 6.0 + 1.00000001e-10;
+    t11 = (-t1.y) + t1.w;
+    t11 = t11 / t2.x;
+    t11 = t11 + t1.z;
+    t1.x = t1.x + 1.00000001e-10;
+    t30 = t30 / t1.x;
+    t30 = t30 * 0.5;
+    #the w component of t1 is no longer used, so ignore it
+    t1 = abs((t11)) + float4(0.0, -0.333333343, 0.333333343, 1); #90
+    t1 = t1.frac(); #91
+    t1 = -t1 * 2 + 1; #92
+    t1 = t1.abs() * 3 + (-1) #93
+    t1 = t1.clamp() #94
+    t1 = t1 + (-1); #95
+    t1 = (t30) * t1 + 1; #96
+    #print([t1.x, t1.y, t1.z, 1])
+    return float4(t1.x, t1.y, t1.z, 1) #97
 
-#rest is from https://github.com/xukmi/KKShadersPlus/blob/main/Shaders/Item/MainItemPlus.shader
+#clothes is from https://github.com/xukmi/KKShadersPlus/blob/main/Shaders/Item/MainItemPlus.shader
 #This was stripped down to just the shadow portion, and to remove all constants
-def kk_dark_color(color, shadow_color):
+def clothes_dark_color(color, shadow_color):
     ################### variable setup
     _ambientshadowG = float4(0.15, 0.15, 0.15, 0.15) #constant from experimentation
     diffuse = float4(color[0],color[1],color[2],1) #maintex color
@@ -168,50 +265,111 @@ def kk_dark_color(color, shadow_color):
 if __name__ == '__main__':
     test_matrix = {
         #    Input          customAmbient    ShadowColor Shadow  Density setting Koikatsu light Koikatsu Dark
-        1:  [[1, 1, 1],  [.666, .666, .666, 1],  [.764, .880, 1, 1],  74,  [1, 1, 1],  [.772, .851, .937]],
+        1:  [[1, 1, 1],  [.666, .666, .666, 1],  [.764, .880, 1, 1],  74,  [1, 1, 1],  [.772, .851, .937]], #items
         2:  [[.5, .5, .5],  [.666, .666, .666, 1],  [.764, .880, 1, 1],  74,  [.5, .5, .5],  [.38, .423, .466]],
-        #3:  [[1, 1, 1],  [0, 0, 0, 1],  [.764, .880, 1, 1],  74,  [.79, .79, .79],  [.611, .678, .745]],
-        #4:  [[.5, .5, .5],  [0, 0, 0, 1],  [.764, .880, 1, 1],  74,  [.4, .4, .4],  [.298, .329, .368]],
         5:  [[1, 1, 1],  [.666, .666, .666, 1],  [1, 1, 1, 1],  74,  [1, 1, 1],  [.93, .93, .93]],
         6:  [[.5, .5, .5],  [.666, .666, .666, 1],  [1, 1, 1, 1],  74,  [.5, .5, .5],  [.46, .46, .46]],
-        #7:  [[1, 1, 1],  [.666, .666, .666, 1],  [.764, .880, 1, 1],  100,  [1, 1, 1],  [.67, .788, .913]],
-        #8:  [[.5, .5, .5],  [.666, .666, .666, 1],  [.764, .880, 1, 1],  100,  [.5, .5, .5],  [.325, .392, .454]],
-        #9:  [[1, 1, 1],  [0, 0, 0, 1],  [1, 1, 1],  100,  [.796, .796, .796],  [.72, .72, .72]],
-        #10:  [[.5, .5, .5],  [0, 0, 0, 1],  [1, 1, 1],  100,  [.4, .4, .4],  [.35, .35, .35]],
-        #11:  [[1, 1, 1],  [.666, .666, .666, 1],  [1, 1, 1],  100,  [1],  [0.9, 0.9, 0.9]],
-        #12:  [[.5, .5, .5],  [.666, .666, .666, 1],  [1, 1, 1],  100,  [.5, .5, .5],  [.454, .454, .454]],
+        7:  [[1, 230/255, 223/255], [.666, .666, .666, 1], [0,0,0,0], 0, [1], [238/255, 196/255, 183/255]], #skin default
+        8:  [[209/255, 188/255, 173/255], [.666, .666, .666, 1], [0,0,0,0], 0, [1], [195/255, 158/255, 134/255]], #skin tan
+        9:  [[1, 1, 1], [.666, .666, .666, 1], [0.8304498,0.8662278,0.9411765,1], 0, [1], [209/255, 214/255, 249/255]], #hair white
+        10:  [[136/255, 159/255, 114/255], [.666, .666, .666, 1], [0.6943483,0.7576795,0.8235294,1], 0, [1], [99/255, 126/255, 104/255]] #hair green
         }
-    for test in test_matrix:
-        print('Test ' + str(test))
-        color = test_matrix[test][0]
-        shadow_color = test_matrix[test][2]
-        expected_color = test_matrix[test][5]
-        print(expected_color)
-        print(str(kk_dark_color(color, shadow_color)) + '\n')
+    
+    test = 9
+    print('Test ' + str(test))
+    color = test_matrix[test][0]
+    shadow_color = test_matrix[test][2]
+    expected_color = test_matrix[test][5]
+    actual_color = hair_dark_color(color, shadow_color)
+    print(expected_color)
+    print(str(actual_color) + '\n')
+    print('{}, {}, {}'.format(expected_color[0] - actual_color[0], expected_color[1] - actual_color[1], expected_color[2] - actual_color[2]))
 
-#stripped down source
-'''				float3 diffuse = mainTex * color;
+#stripped down clothes source
+'''                float3 diffuse = mainTex * color;
 
-				float3 shadingAdjustment = ShadeAdjustItem(diffuse);
+                float3 shadingAdjustment = ShadeAdjustItem(diffuse);
 
-				float3 diffuseShaded = shadingAdjustment * 0.899999976 - 0.5;
-				diffuseShaded = -diffuseShaded * 2 + 1;
+                float3 diffuseShaded = shadingAdjustment * 0.899999976 - 0.5;
+                diffuseShaded = -diffuseShaded * 2 + 1;
 
-				bool3 compTest = 0.555555582 < shadingAdjustment;
-				shadingAdjustment *= 1.79999995;
-				diffuseShaded = -diffuseShaded * 0.7225 + 1;
-				{
-					float3 hlslcc_movcTemp = shadingAdjustment;
-					hlslcc_movcTemp.x = (compTest.x) ? diffuseShaded.x : shadingAdjustment.x;
-					hlslcc_movcTemp.y = (compTest.y) ? diffuseShaded.y : shadingAdjustment.y;
-					hlslcc_movcTemp.z = (compTest.z) ? diffuseShaded.z : shadingAdjustment.z;
-					shadingAdjustment = saturate(hlslcc_movcTemp);
-				}
+                bool3 compTest = 0.555555582 < shadingAdjustment;
+                shadingAdjustment *= 1.79999995;
+                diffuseShaded = -diffuseShaded * 0.7225 + 1;
+                {
+                    float3 hlslcc_movcTemp = shadingAdjustment;
+                    hlslcc_movcTemp.x = (compTest.x) ? diffuseShaded.x : shadingAdjustment.x;
+                    hlslcc_movcTemp.y = (compTest.y) ? diffuseShaded.y : shadingAdjustment.y;
+                    hlslcc_movcTemp.z = (compTest.z) ? diffuseShaded.z : shadingAdjustment.z;
+                    shadingAdjustment = saturate(hlslcc_movcTemp);
+                }
 
-				float3 diffuseShadow = diffuse * shadingAdjustment;
+                float3 diffuseShadow = diffuse * shadingAdjustment;
 
-				float3 lightCol = float3(1.0656, 1.0656, 1.0656); // constant calculated from custom ambient .666 and light color .666
-				float3 ambientCol = max(lightCol, .15);
-				diffuseShadow = diffuseShadow * ambientCol;
+                float3 lightCol = float3(1.0656, 1.0656, 1.0656); // constant calculated from custom ambient .666 and light color .666
+                float3 ambientCol = max(lightCol, .15);
+                diffuseShadow = diffuseShadow * ambientCol;
 
-				return float4(diffuseShadow, 1);'''
+                return float4(diffuseShadow, 1);'''
+
+#stripped down skin source
+'''                //Diffuse and color maps KK uses for shading I assume
+                float3 diffuse = GetDiffuse(i);
+                float3 specularAdjustment; //Adjustments for specular from detailmap
+                float3 shadingAdjustment; //Adjustments for shading
+                MapValuesMain(diffuse, specularAdjustment, shadingAdjustment);
+
+                //Shading
+                float3 diffuseShaded = shadingAdjustment * 0.899999976 - 0.5;
+                diffuseShaded = -diffuseShaded * 2 + 1;
+                
+                bool3 compTest = 0.555555582 < shadingAdjustment;
+                shadingAdjustment *= 1.79999995;
+                diffuseShaded = -diffuseShaded * 0.7225 + 1;
+                {
+                    float3 hlslcc_movcTemp = shadingAdjustment;
+                    hlslcc_movcTemp.x = (compTest.x) ? diffuseShaded.x : shadingAdjustment.x;
+                    hlslcc_movcTemp.y = (compTest.y) ? diffuseShaded.y : shadingAdjustment.y;
+                    hlslcc_movcTemp.z = (compTest.z) ? diffuseShaded.z : shadingAdjustment.z;
+                    shadingAdjustment = saturate(hlslcc_movcTemp);
+                }
+                float3 finalDiffuse = diffuse * shadingAdjustment;
+                
+                float3 bodyShine = float3(1.0656, 1.0656, 1.0656);
+                finalDiffuse *= bodyShine;
+
+                return float4(finalDiffuse, 1);'''
+
+#stripped down hair source
+'''float3 diffuse = GetDiffuse(i.uv0) * mainTex.rgb;
+
+    float3 finalAmbientShadow = 0.7225;
+    finalAmbientShadow = saturate(finalAmbientShadow);
+    float3 invertFinalAmbientShadow = 0.7225;
+
+    finalAmbientShadow = finalAmbientShadow * _ShadowColor.xyz;
+    finalAmbientShadow += finalAmbientShadow;
+    float3 shadowCol = _ShadowColor - 0.5;
+    shadowCol = -shadowCol * 2 + 1;
+
+    invertFinalAmbientShadow = -shadowCol * invertFinalAmbientShadow + 1;
+    bool3 shadeCheck = 0.5 < _ShadowColor.xyz;
+    {
+        float3 hlslcc_movcTemp = finalAmbientShadow;
+        hlslcc_movcTemp.x = (shadeCheck.x) ? invertFinalAmbientShadow.x : finalAmbientShadow.x;
+        hlslcc_movcTemp.y = (shadeCheck.y) ? invertFinalAmbientShadow.y : finalAmbientShadow.y;
+        hlslcc_movcTemp.z = (shadeCheck.z) ? invertFinalAmbientShadow.z : finalAmbientShadow.z;
+        finalAmbientShadow = hlslcc_movcTemp;
+    }
+    finalAmbientShadow = saturate(finalAmbientShadow);
+    diffuse *= finalAmbientShadow;
+
+    float3 finalDiffuse  = saturate(diffuse);
+
+    float3 shading = 1 - finalAmbientShadow;
+    shading = 1 * shading + finalAmbientShadow;
+    finalDiffuse *= shading;
+    shading = 1.0656;
+    finalDiffuse *= shading;
+
+    return float4(finalDiffuse, alpha);'''

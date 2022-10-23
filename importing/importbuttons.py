@@ -71,6 +71,7 @@ class quick_import(bpy.types.Operator):
 
         #create KKLog
         kklog('====    KKBP Log    ====')
+        kklog('Importing pmx files with mmdtools...')
 
         #save filepath for later
         context.scene.kkbp.import_dir = str(self.filepath)[:-9]
