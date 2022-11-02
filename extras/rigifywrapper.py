@@ -156,6 +156,17 @@ class rigify_convert(bpy.types.Operator):
 
             armature.hide_set(True)
             bpy.ops.object.select_all(action='DESELECT')
+
+            #make sure everything is deselected in edit mode for the body
+            body = bpy.data.objects['Body']
+            bpy.ops.object.select_all(action='DESELECT')
+            body.select_set(True)
+            bpy.context.view_layer.objects.active=body
+            bpy.ops.object.mode_set(mode = 'EDIT')
+            bpy.ops.mesh.select_all(action='DESELECT')
+            bpy.ops.object.mode_set(mode = 'OBJECT')
+            bpy.ops.object.select_all(action='DESELECT')
+
             rig.select_set(True)
             bpy.context.view_layer.objects.active=rig
             rig.show_in_front = True
