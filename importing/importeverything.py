@@ -8,6 +8,7 @@ Usage:
 Texture Postfix Legend:
 
     _MT_CT -> _MainTex_ColorTexture
+    _MT_DT -> _MainTex_DarkenedColorTexture
     _MT -> _MainTex
     _AM -> _AlphaMask
     _CM -> _ColorMask
@@ -38,6 +39,7 @@ from pathlib import Path
 from bpy.props import StringProperty
 from .importbuttons import kklog
 from .cleanarmature import get_bone_list
+from .darkcolors import create_darktex
 
 #Stop if this is the wrong folder
 def wrong_folder_error(self, context):
@@ -447,6 +449,9 @@ def get_and_load_textures(directory):
         bpy.ops.image.open(filepath=str(image), use_udim_detecting=False)
         try:
             bpy.data.images[image.name].pack()
+            #if '_MT_CT' in image.name:
+            #     shadow_color = [r,g,b]
+            #    create_darktex(image, shadow_color) #[211/255,220/255,240/255])
         except:
             kklog('This image was not automatically loaded in because its name exceeds 64 characters: ' + image.name, type = 'warn')
     
