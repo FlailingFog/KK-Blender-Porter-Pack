@@ -29,11 +29,60 @@ def clean_body():
                     kklog('Material wasn\'t found when deleting body materials: ' + mat, 'warn')
             bpy.ops.mesh.delete(type='VERT')
 
-        #check if there's a face material. If there isn't then the model most likely has a face02 face. Rename to correct name
-        if body.data.materials.find('cf_m_face_00') == -1:
-            for mat in body.data.materials:
-                if 'cf_m_face_02 -' in mat.name:
-                    mat.name = 'cf_m_face_00'
+        #save body material listing to the body object using the SMR data
+        json_file = open(bpy.context.scene.kkbp.import_dir + 'KK_SMRData.json')
+        smr_data = json.load(json_file)
+        body['KKBP materials'] = {}
+        #find the start of the -1 coordinate types in the SMR data, then assign the material names in order from there
+        for index, line in enumerate(smr_data):
+            if line['CoordinateType'] == -1:
+                break
+        materials = [
+            'face',
+            'mayuge',
+            'noseline',
+            'tooth',
+            'eyelineup',
+            'eyelinedown',
+            'namidaL',
+            'namidaM',
+            'namidaS',
+            'eyewhiteL',
+            'eyewhiteR',
+            'hitomiL',
+            'hitomiR',
+            'gag00',
+            'gag01',
+            'gag02',
+            'tang',
+            'body',
+            #'bonelyfans',
+            'tangrigged'
+            ]
+        
+        for mat in materials:
+            #skip over bonelyfans because the position is different between games
+            if 'Bonelyfan' in smr_data[index]['SMRMaterialNames'][0]:
+                index+=1
+            body['KKBP materials'][mat] = smr_data[index]['SMRMaterialNames'][0]
+            index+=1
+            print(body['KKBP materials'][mat])
+        if body['KKBP materials']['tangrigged'] == body['KKBP materials']['tang']:
+            body['KKBP materials']['tangrigged'] = body['KKBP materials']['tang'] + '.001'
+        if body['KKBP materials']['eyewhiteL'] == body['KKBP materials']['eyewhiteR']:
+            body['KKBP materials']['eyewhiteL'] = body['KKBP materials']['eyewhiteR'] + '.001'
+        
+        if bpy.context.scene.kkbp.categorize_dropdown != 'D' and bpy.data.materials.get(body['KKBP materials']['tangrigged']):
+            #Separate rigged tongue from body object, parent it to the body so it's hidden in the outliner
+            #link shapekeys of tongue to body even though it doesn't have them
+            tongueMats = [body['KKBP materials']['tangrigged']]
+            separate_materials(body, tongueMats)
+            tongue = bpy.data.objects['Body.001']
+            tongue.name = 'Tongue (rigged)'
+            tongue.parent = bpy.data.objects['Body']
+            bpy.ops.object.mode_set(mode = 'OBJECT')
+            link_keys(body, [tongue])
+            tongue.hide = True
 
 def add_freestyle_faces():
     body = bpy.data.objects['Body']
@@ -51,15 +100,14 @@ def add_freestyle_faces():
                 kklog('Material wasn\'t found when freestyling body materials: ' + mat, 'warn')
         bpy.ops.mesh.mark_freestyle_face(clear=False)
     freestyle_list = [
-        'cf_m_hitomi_00_cf_Ohitomi_R02',
-        'cf_m_hitomi_00_cf_Ohitomi_L02',
-        'cf_m_sirome_00.001',
-        'cf_m_sirome_00',
-        'cf_m_eyeline_kage',
-        'cf_m_eyeline_down',
-        'cf_m_eyeline_00_up',
-        'cf_m_noseline_00',
-        'cf_m_mayuge_00',]
+        body['KKBP materials']['hitomiL'] + '_' + 'cf_Ohitomi_L02',
+        body['KKBP materials']['hitomiR'] + '_' + 'cf_Ohitomi_R02',
+        body['KKBP materials']['eyewhiteL'],
+        body['KKBP materials']['eyewhiteR'],
+        body['KKBP materials']['eyelinedown'],
+        body['KKBP materials']['eyelineup'],
+        body['KKBP materials']['noseline'],
+        body['KKBP materials']['mayuge'],]
     mark_as_freestyle(freestyle_list)
     bpy.ops.mesh.select_all(action = 'DESELECT')
     bpy.ops.object.mode_set(mode = 'OBJECT')
@@ -312,12 +360,12 @@ def make_tear_and_gag_shapekeys():
     
     #Move tears and gag backwards on the basis shapekey
     tear_mats = {
-        'cf_m_namida_00.002':   'Tears small',
-        'cf_m_namida_00.001':   "Tears med",
-        'cf_m_namida_00':       "Tears big",
-        'cf_m_gageye_00':       "Gag eye 00",
-        'cf_m_gageye_01':       "Gag eye 01",
-        'cf_m_gageye_02':       "Gag eye 02"
+        body['KKBP materials']['namidaS']:   'Tears small',
+        body['KKBP materials']['namidaM']:   "Tears med",
+        body['KKBP materials']['namidaL']:   "Tears big",
+        body['KKBP materials']['gag00']:     "Gag eye 00",
+        body['KKBP materials']['gag01']:     "Gag eye 01",
+        body['KKBP materials']['gag02']:     "Gag eye 02"
     }
     bpy.ops.object.mode_set(mode = 'EDIT')
     bpy.ops.mesh.select_all(action='DESELECT')
@@ -348,16 +396,16 @@ def make_tear_and_gag_shapekeys():
         bpy.ops.object.mode_set(mode = 'EDIT')
         bpy.ops.transform.translate(value=(0, -1 * abs(amount_to_move_tears_back), 0))
         bpy.ops.object.mode_set(mode = 'OBJECT')
-        bpy.ops.object.shape_key_move(type='TOP' if 'cf_m_namida_00' in mat else 'BOTTOM')
+        bpy.ops.object.shape_key_move(type='TOP' if body['KKBP materials']['namidaL'] in mat else 'BOTTOM')
 
     #Merge the tear materials
     bpy.ops.object.mode_set(mode = 'EDIT')
     bpy.ops.mesh.select_all(action='DESELECT')
-    tear_mats = ['cf_m_namida_00.001', 'cf_m_namida_00.002']
+    tear_mats = [body['KKBP materials']['namidaM'], body['KKBP materials']['namidaS']]
     for mat in tear_mats:
         bpy.context.object.active_material_index = body.data.materials.find(mat)
         bpy.ops.object.material_slot_select()
-        bpy.context.object.active_material_index = body.data.materials.find('cf_m_namida_00')
+        bpy.context.object.active_material_index = body.data.materials.find(body['KKBP materials']['namidaL'])
         bpy.ops.object.material_slot_assign()
         bpy.ops.mesh.select_all(action='DESELECT')
 
@@ -365,13 +413,13 @@ def make_tear_and_gag_shapekeys():
     bpy.ops.object.vertex_group_add()
     bpy.ops.mesh.select_all(action='SELECT')
     body.vertex_groups.active.name = "Body without Tears"
-    bpy.context.object.active_material_index = body.data.materials.find('cf_m_namida_00')
+    bpy.context.object.active_material_index = body.data.materials.find(body['KKBP materials']['namidaL'])
     bpy.ops.object.material_slot_deselect()
     bpy.ops.object.vertex_group_assign()
 
     #Separate tears from body object, parent it to the body so it's hidden in the outliner
     #link shapekeys of tears to body
-    tearMats = ['cf_m_namida_00']
+    tearMats = [body['KKBP materials']['namidaL']]
     separate_materials(body, tearMats)
     tears = bpy.data.objects['Body.001']
     tears.name = 'Tears'
@@ -400,7 +448,8 @@ def make_tear_and_gag_shapekeys():
         body.data.shape_keys.key_blocks[-1].name = key
         bpy.context.object.active_shape_key_index = last_shapekey
         bpy.ops.object.shape_key_move(type='TOP')
-
+    
+    bpy.context.object.active_shape_key_index = 0
     #make most gag eye shapekeys activate the body's gag key
     skey_driver = bpy.data.shape_keys[0].key_blocks['KK Eyes_gageye'].driver_add('value')
     skey_driver.driver.type = 'SCRIPTED'
@@ -455,14 +504,14 @@ def make_tear_and_gag_shapekeys():
     bpy.ops.object.mode_set(mode = 'EDIT')
     bpy.ops.mesh.select_all(action='SELECT')
     body.vertex_groups.active.name = "Body without Gag eyes"
-    for gag_mat in ['cf_m_gageye_00', 'cf_m_gageye_01', 'cf_m_gageye_02']:
+    for gag_mat in [body['KKBP materials']['gag00'], body['KKBP materials']['gag01'], body['KKBP materials']['gag02']]:
         bpy.context.object.active_material_index = body.data.materials.find(gag_mat)
         bpy.ops.object.material_slot_deselect()
     bpy.ops.object.vertex_group_assign()
 
     #Separate gag from body object, parent it to the body so it's hidden in the outliner
     #link shapekeys of gag to body
-    gag_mat = ['cf_m_gageye_00', 'cf_m_gageye_01', 'cf_m_gageye_02']
+    gag_mat = [body['KKBP materials']['gag00'], body['KKBP materials']['gag01'], body['KKBP materials']['gag02']]
     separate_materials(body, gag_mat)
     gag = bpy.data.objects['Body.001']
     gag.name = 'Gag Eyes'
@@ -470,19 +519,8 @@ def make_tear_and_gag_shapekeys():
     bpy.ops.object.mode_set(mode = 'OBJECT')
     link_keys(body, [gag])
 
-    if bpy.context.scene.kkbp.categorize_dropdown != 'D' and bpy.data.materials.get('cf_m_tang.001'):
-        #Separate rigged tongue from body object, parent it to the body so it's hidden in the outliner
-        #link shapekeys of tongue to body even though it doesn't have them
-        tongueMats = ['cf_m_tang.001']
-        separate_materials(body, tongueMats)
-        tongue = bpy.data.objects['Body.001']
-        tongue.name = 'Tongue (rigged)'
-        tongue.parent = bpy.data.objects['Body']
-        bpy.ops.object.mode_set(mode = 'OBJECT')
-        link_keys(body, [tongue])
-        tongue.hide = True
-
 def remove_duplicate_slots():
+    body = bpy.data.objects['Body']
     for obj in bpy.data.objects:
         if 'Body' == obj.name or 'Indoor shoes Outfit ' in obj.name or 'Outfit ' in obj.name or 'Hair' in obj.name:
             #combine duplicated material slots
@@ -498,15 +536,15 @@ def remove_duplicate_slots():
             material_list = mesh.data.materials
             for mat in material_list:
                 mat_name_list = [
-                    'cf_m_hitomi_00_cf_Ohitomi_L02',
-                    'cf_m_hitomi_00_cf_Ohitomi_R02',
-                    'cf_m_sirome_00',
-                    'cf_m_sirome_00.001',
-                    'cf_m_namida_00',
-                    'cf_m_namida_00.001',
-                    'cf_m_namida_00.002',
-                    'cf_m_tang',
-                    'cf_m_tang.001',
+                    body['KKBP materials']['hitomiL'] + '_' + 'cf_Ohitomi_L02',
+                    body['KKBP materials']['hitomiR'] + '_' + 'cf_Ohitomi_R02',
+                    body['KKBP materials']['eyewhiteL'],
+                    body['KKBP materials']['eyewhiteR'],
+                    body['KKBP materials']['namidaL'],
+                    body['KKBP materials']['namidaM'],
+                    body['KKBP materials']['namidaS'],
+                    body['KKBP materials']['tang'],
+                    body['KKBP materials']['tangrigged'],
                 ]
                 #don't merge the above materials if categorize by SMR is chosen.
                 eye_flag = mat.name not in mat_name_list if bpy.context.scene.kkbp.categorize_dropdown == 'D' else True
@@ -520,7 +558,7 @@ def remove_duplicate_slots():
                         base_name, rest_of_base_name, dupe_number = mat.name.split('.',2)
                         base_name = base_name + rest_of_base_name
                     #remap material if it's a dupe, but don't touch the eye dupe
-                    if material_list.get(base_name) and int(dupe_number) and 'cf_m_hitomi_00' not in base_name and 'cf_m_tang' not in base_name:
+                    if material_list.get(base_name) and int(dupe_number) and 'cf_m_hitomi_00' not in base_name and body['KKBP materials']['tang'] not in base_name:
                         mat.user_remap(material_list[base_name])
                         bpy.data.materials.remove(mat)
                     else:

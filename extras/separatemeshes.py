@@ -139,19 +139,19 @@ def separate_body(json_smr_data):
         return
     
     body_obj_material_map = {
-        'cf_Ohitomi_L' : {'cf_m_sirome_00'},
-        'cf_Ohitomi_R' : {'cf_m_sirome_00.001'},
-        'cf_Ohitomi_L02' : {'cf_m_hitomi_00_cf_Ohitomi_L02'},
-        'cf_Ohitomi_R02' : {'cf_m_hitomi_00_cf_Ohitomi_R02'},
-        'cf_O_namida_L' : {'cf_m_namida_00'},
-        'cf_O_namida_M' : {'cf_m_namida_00.001'},
-        'cf_O_namida_S' : {'cf_m_namida_00.002'},
-        'cf_O_gag_eye_00' : {'cf_m_gageye_00'},
-        'cf_O_gag_eye_01' : {'cf_m_gageye_01'},
-        'cf_O_gag_eye_02' : {'cf_m_gageye_02'},
-        'cf_O_eyeline' : {'cf_m_eyeline_00_up','cf_m_eyeline_kage'},
-        'cf_O_eyeline_low' : {'cf_m_eyeline_down'},
-        'o_tang' : {'cf_m_tang'},
+        'cf_Ohitomi_L' : {body['KKBP materials']['eyewhiteL']},
+        'cf_Ohitomi_R' : {body['KKBP materials']['eyewhiteR']},
+        'cf_Ohitomi_L02' : {body['KKBP materials']['hitomiL'] + '_' + 'cf_Ohitomi_L02'},
+        'cf_Ohitomi_R02' : {body['KKBP materials']['hitomiR'] + '_' + 'cf_Ohitomi_R02'},
+        'cf_O_namida_L' : {body['KKBP materials']['namidaL']},
+        'cf_O_namida_M' : {body['KKBP materials']['namidaM']},
+        'cf_O_namida_S' : {body['KKBP materials']['namidaS']},
+        'cf_O_gag_eye_00' : {body['KKBP materials']['gag00']},
+        'cf_O_gag_eye_01' : {body['KKBP materials']['gag01']},
+        'cf_O_gag_eye_02' : {body['KKBP materials']['gag02']},
+        'cf_O_eyeline' : {body['KKBP materials']['eyelineup'],'cf_m_eyeline_kage'},
+        'cf_O_eyeline_low' : {body['KKBP materials']['eyelinedown']},
+        'o_tang' : {body['KKBP materials']['tang']},
     }
     
     #Pass 1: To make sure each material has a mesh
@@ -183,7 +183,7 @@ def separate_body(json_smr_data):
         
         #deal with tang
         if (row['SMRName'] == 'o_tang' and len(row['SMRBoneNames']) > 1):
-            mat_name = 'cf_m_tang.001'
+            mat_name = body['KKBP materials']['tangrigged']
             found_mat_idx = body_data.materials.find(mat_name)
             
             if found_mat_idx == -1:
@@ -256,18 +256,19 @@ if __name__ == "__main__":
 
 ########## EXPORTER ##########
 def export_meshes(directory):
+    body = bpy.data.objects['Body']
     bpy.ops.object.mode_set(mode = 'OBJECT')
     
     obj_material_map = {
-        'cf_Ohitomi_L' : 'cf_m_sirome_00',
-        'cf_Ohitomi_R' : 'cf_m_sirome_00',
-        'cf_Ohitomi_L02' : 'cf_m_hitomi_00_cf_Ohitomi_L02',
-        'cf_Ohitomi_R02' : 'cf_m_hitomi_00_cf_Ohitomi_R02',
-        'cf_O_namida_L' : 'cf_m_namida_00',
-        'cf_O_namida_M' : 'cf_m_namida_00',
-        'cf_O_namida_S' : 'cf_m_namida_00',
-        'o_tang' : 'cf_m_tang',
-        'o_tang.001' : 'cf_m_tang',
+        'cf_Ohitomi_L' : body['KKBP materials']['eyewhiteL'],
+        'cf_Ohitomi_R' : body['KKBP materials']['eyewhiteL'],
+        'cf_Ohitomi_L02' : body['KKBP materials']['hitomiL'] + '_' + 'cf_Ohitomi_L02',
+        'cf_Ohitomi_R02' : body['KKBP materials']['hitomiR'] + '_' + 'cf_Ohitomi_R02',
+        'cf_O_namida_L' : body['KKBP materials']['namidaL'],
+        'cf_O_namida_M' : body['KKBP materials']['namidaL'],
+        'cf_O_namida_S' : body['KKBP materials']['namidaL'],
+        'o_tang' : body['KKBP materials']['tang'],
+        'o_tang.001' : body['KKBP materials']['tang'],
     }
 
     armature = bpy.data.objects['Armature']
