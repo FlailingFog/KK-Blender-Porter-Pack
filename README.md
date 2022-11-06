@@ -6,18 +6,18 @@ The ```KKBP exporter for Koikatsu``` is used to export the character's mesh, arm
 The changelog for the pack [can be found here.](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/master/Changelog.md)
 The pack [also has a barebones wiki here.](https://github.com/FlailingFog/KK-Blender-Shader-Pack/wiki)
 
-# Download
+## Download
 Stable versions of KKBP are [on the release page](https://github.com/FlailingFog/KK-Blender-Porter-Pack/releases).  
 The latest version of KKBP can be downloaded by using the green CODE button on the top right of the page and choosing "Download ZIP"
 
-# Usage Instructions for V6
-### Exporting from Koikatsu and importing to Blender
-<details><summary>Click to expand</summary> 
-
+## Usage Instructions for V6
 #### Prerequisites:
 * Install [HF Patch v3.16 or later](https://github.com/ManlyMarco/KK-HF_Patch) for Koikatsu or [HF Patch v1.7 or later](https://github.com/ManlyMarco/KKS-HF_Patch) for Koikatsu Sunshine
 * Install Blender 3.3
 * Install either [CATS](https://github.com/GiveMeAllYourCats/cats-blender-plugin) or [mmd_tools](https://github.com/UuuNyaa/blender_mmd_tools) for Blender
+
+#### Exporting from Koikatsu and importing to Blender
+<details><summary>Click to expand</summary> 
 
 1. Install KKBP for Koikatsu by copying the KKBP_Exporter.DLL into the plugins folder: C:/Koikatsu install directory/BepInEx/plugins/  
     a. Use the net3.5 exporter for Koikatsu and Koikatsu Party  
@@ -31,7 +31,7 @@ The latest version of KKBP can be downloaded by using the green CODE button on t
 ![ ](https://github.com/FlailingFog/KK-Blender-Porter-Pack/blob/assets/readme/panelimport.PNG)
 </details>
 
-### Exporting from Blender
+#### Exporting from Blender
 
 <details><summary>Click to expand</summary> 
 
@@ -44,13 +44,13 @@ The latest version of KKBP can be downloaded by using the green CODE button on t
 1. Click the export FBX button to invoke the built-in fbx export dialog
 </details>
 
-### Video walkthrough of all plugin options
+#### Video walkthrough of all plugin options
 
 [(Click for playlist)  
 ![ ](https://i.ytimg.com/vi/JSdggnGtcmU/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLB775lTVjcdZef5X39gSuwgKiRiBw)](https://www.youtube.com/playlist?list=PLhiuav2SCuvc-wbexi2vwSnVHnZFwkYNP)
 
 
-# Similar Projects
+## Similar Projects
 
 * [Koikatsu Pmx Exporter (Reverse Engineered & updated)](https://github.com/Snittern/KoikatsuPmxExporterReverseEngineered)
 * [KKPMX](https://github.com/CazzoPMX/KKPMX)
