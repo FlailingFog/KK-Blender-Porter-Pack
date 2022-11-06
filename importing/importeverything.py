@@ -445,13 +445,26 @@ def get_and_load_textures(directory):
         for outfit_file in files_to_append:
             files.append(outfit_file)
 
+    #get shadow colors for each material and store the dictionary on the body object
+    for file in files:
+        if 'KK_CharacterColors.json' in str(file):
+            json_file_path = str(file)
+            json_file = open(json_file_path)
+            json_color_data = json.load(json_file)
+            color_dict = {}
+            for line in json_color_data:
+                color_dict[line['materialName']] = line['shadowColor']
+    body['KKBP shadow colors'] = color_dict
+
     for image in files:
         bpy.ops.image.open(filepath=str(image), use_udim_detecting=False)
         try:
             bpy.data.images[image.name].pack()
+            # too slow to do during import
             #if '_MT_CT' in image.name:
-            #     shadow_color = [r,g,b]
-            #    create_darktex(image, shadow_color) #[211/255,220/255,240/255])
+            #    material_name = image.name[:-10]
+            #    shadow_color = [color_dict[material_name]['r']/255, color_dict[material_name]['g']/255, color_dict[material_name]['b']/255]
+            #    create_darktex(bpy.data.images[image.name], shadow_color)
         except:
             kklog('This image was not automatically loaded in because its name exceeds 64 characters: ' + image.name, type = 'warn')
     

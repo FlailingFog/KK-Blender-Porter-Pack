@@ -4,7 +4,7 @@ bl_info = {
     "author" : "a blendlet and some blenderchads",
     "location" : "View 3D > Tool Shelf > KKBP and Image Editor > Tool Shelf > KKBP",
     "description" : "Scripts to automate cleanup of a Koikatsu export",
-    "version": (6, 1, 0),
+    "version": (6, 2, 0),
     "blender" : (3, 3, 0),
     "category" : "3D View",
     "tracker_url" : "https://github.com/FlailingFog/KK-Blender-Porter-Pack/"
@@ -48,6 +48,7 @@ def wrap(register_bool):
     from .extras.toggleik import toggle_ik
     from .extras.updatebones import update_bones
     from .extras.imageconvert import image_convert
+    from .extras.imageconvert import image_dark_convert
     from .extras.rigifywrapper import rigify_convert
     from .extras.rigifyscripts.rigify_before import rigify_before
     from .extras.rigifyscripts.rigify_after import rigify_after
@@ -69,6 +70,7 @@ def wrap(register_bool):
         export_prep,
         export_fbx,
         image_convert, 
+        image_dark_convert,
 
         import_animation, 
         import_studio, 

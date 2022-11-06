@@ -162,6 +162,7 @@ class PlaceholderProperties(PropertyGroup):
         ), name="", default="A", description="LUT Choice")
     
 
+#The main panel
 class IMPORTINGHEADER_PT_panel(bpy.types.Panel):
     bl_label = t('import_export')
     bl_category = "KKBP"
@@ -369,7 +370,7 @@ class EXTRAS_PT_panel(bpy.types.Panel):
             split.operator('kkb.linkshapekeys', icon = icon)
 '''
 
-
+#The panel inside of the image editor
 class EDITOR_PT_panel(bpy.types.Panel):
     bl_label = 'Convert Image'
     bl_category = "KKBP"
@@ -386,6 +387,8 @@ class EDITOR_PT_panel(bpy.types.Panel):
 
         row = col.row(align=True)
         row.prop(context.scene.kkbp, "image_dropdown")
+        row = col.row(align=True)
+        row.operator('kkb.imagedarkconvert', text = 'Create KKBP dark version', icon = 'IMAGE')
 
 def register():
     bpy.utils.register_class(PlaceholderProperties)

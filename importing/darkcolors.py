@@ -263,28 +263,33 @@ def clothes_dark_color(color, shadow_color):
     
     return [diffuseShadow.x, diffuseShadow.y, diffuseShadow.z]
 
-#accepts a bpy image and creates a dark alternate using the darkening code above
+#accepts a bpy image and creates a dark alternate using the darkening code above. Returns the new image
 def create_darktex(maintex, shadow_color):
     if not os.path.isfile(bpy.context.scene.kkbp.import_dir + '/dark_files/' + maintex.name[:-6] + 'DT.png'):
         ok = time.time()
+        #kklog('1')
         image_array = numpy.asarray(maintex.pixels)
         image_length = len(image_array)
         dark_array = numpy.empty(image_length)
         for pixel_start in range(image_length):
             if pixel_start % 4 == 0:
                 pixel = image_array[pixel_start:pixel_start+4].tolist()
-                print(pixel)
+                #print(pixel)
                 dark_array[pixel_start:pixel_start+3] = numpy.asarray(clothes_dark_color(pixel[0:3], shadow_color)) #rgb
                 dark_array[pixel_start+3] = pixel[3] #preserve alpha
         #make a new image and place the dark pixels into it
-        darktex = bpy.data.images.new(maintex.name[:-6] + 'DT.png', width=maintex.size[0], height=maintex.size[1])
+        #kklog('2')
+        darktex = bpy.data.images.new(maintex.name[:-7] + '_DT.png', width=maintex.size[0], height=maintex.size[1])
         darktex.file_format = 'PNG'
         darktex.pixels = dark_array.ravel()
         darktex.use_fake_user = True
-        darktex.filepath_raw = bpy.context.scene.kkbp.import_dir + '/dark_files/' + maintex.name[:-6] + 'DT.png'
+        darktex_filename = maintex.filepath_raw[maintex.filepath_raw.find(maintex.name):][:-7]+ '_DT.png'
+        darktex_filepath = maintex.filepath_raw[maintex.filepath_raw.find(maintex.name):]
+        darktex.filepath_raw = darktex_filepath + 'dark_files/' + darktex_filename
         darktex.pack()
         darktex.save()
         kklog('Created dark version of {} in {} seconds'.format(darktex.name, time.time() - ok))
+        return darktex
 
 if __name__ == '__main__':
     test_matrix = {
