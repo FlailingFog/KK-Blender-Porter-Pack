@@ -139,19 +139,19 @@ def separate_body(json_smr_data):
         return
     
     body_obj_material_map = {
-        'cf_Ohitomi_L' : {body['KKBP materials']['eyewhiteL']},
-        'cf_Ohitomi_R' : {body['KKBP materials']['eyewhiteR']},
-        'cf_Ohitomi_L02' : {body['KKBP materials']['hitomiL'] + '_' + 'cf_Ohitomi_L02'},
-        'cf_Ohitomi_R02' : {body['KKBP materials']['hitomiR'] + '_' + 'cf_Ohitomi_R02'},
-        'cf_O_namida_L' : {body['KKBP materials']['namidaL']},
-        'cf_O_namida_M' : {body['KKBP materials']['namidaM']},
-        'cf_O_namida_S' : {body['KKBP materials']['namidaS']},
-        'cf_O_gag_eye_00' : {body['KKBP materials']['gag00']},
-        'cf_O_gag_eye_01' : {body['KKBP materials']['gag01']},
-        'cf_O_gag_eye_02' : {body['KKBP materials']['gag02']},
-        'cf_O_eyeline' : {body['KKBP materials']['eyelineup'],'cf_m_eyeline_kage'},
-        'cf_O_eyeline_low' : {body['KKBP materials']['eyelinedown']},
-        'o_tang' : {body['KKBP materials']['tang']},
+        'cf_Ohitomi_L' : {body['KKBP materials']['cf_Ohitomi_L']},
+        'cf_Ohitomi_R' : {body['KKBP materials']['cf_Ohitomi_R']},
+        'cf_Ohitomi_L02' : {body['KKBP materials']['cf_Ohitomi_L02'] + '_' + 'cf_Ohitomi_L02'},
+        'cf_Ohitomi_R02' : {body['KKBP materials']['cf_Ohitomi_R02'] + '_' + 'cf_Ohitomi_R02'},
+        'cf_O_namida_L' : {body['KKBP materials']['cf_O_namida_L']},
+        'cf_O_namida_M' : {body['KKBP materials']['cf_O_namida_M']},
+        'cf_O_namida_S' : {body['KKBP materials']['cf_O_namida_S']},
+        'cf_O_gag_eye_00' : {body['KKBP materials']['cf_O_gag_eye_00']},
+        'cf_O_gag_eye_01' : {body['KKBP materials']['cf_O_gag_eye_01']},
+        'cf_O_gag_eye_02' : {body['KKBP materials']['cf_O_gag_eye_02']},
+        'cf_O_eyeline' : {body['KKBP materials']['cf_O_eyeline'],'cf_m_eyeline_kage'},
+        'cf_O_eyeline_low' : {body['KKBP materials']['cf_O_eyeline_low']},
+        'o_tang' : {body['KKBP materials']['o_tang']},
     }
     
     #Pass 1: To make sure each material has a mesh
@@ -183,7 +183,7 @@ def separate_body(json_smr_data):
         
         #deal with tang
         if (row['SMRName'] == 'o_tang' and len(row['SMRBoneNames']) > 1):
-            mat_name = body['KKBP materials']['tangrigged']
+            mat_name = body['KKBP materials']['o_tang_rigged']
             found_mat_idx = body_data.materials.find(mat_name)
             
             if found_mat_idx == -1:
@@ -260,15 +260,15 @@ def export_meshes(directory):
     bpy.ops.object.mode_set(mode = 'OBJECT')
     
     obj_material_map = {
-        'cf_Ohitomi_L' : body['KKBP materials']['eyewhiteL'],
-        'cf_Ohitomi_R' : body['KKBP materials']['eyewhiteL'],
-        'cf_Ohitomi_L02' : body['KKBP materials']['hitomiL'] + '_' + 'cf_Ohitomi_L02',
-        'cf_Ohitomi_R02' : body['KKBP materials']['hitomiR'] + '_' + 'cf_Ohitomi_R02',
-        'cf_O_namida_L' : body['KKBP materials']['namidaL'],
-        'cf_O_namida_M' : body['KKBP materials']['namidaL'],
-        'cf_O_namida_S' : body['KKBP materials']['namidaL'],
-        'o_tang' : body['KKBP materials']['tang'],
-        'o_tang.001' : body['KKBP materials']['tang'],
+        'cf_Ohitomi_L' : body['KKBP materials']['cf_Ohitomi_L'],
+        'cf_Ohitomi_R' : body['KKBP materials']['cf_Ohitomi_L'],
+        'cf_Ohitomi_L02' : body['KKBP materials']['cf_Ohitomi_L02'] + '_' + 'cf_Ohitomi_L02',
+        'cf_Ohitomi_R02' : body['KKBP materials']['cf_Ohitomi_R02'] + '_' + 'cf_Ohitomi_R02',
+        'cf_O_namida_L' : body['KKBP materials']['cf_O_namida_L'],
+        'cf_O_namida_M' : body['KKBP materials']['cf_O_namida_L'],
+        'cf_O_namida_S' : body['KKBP materials']['cf_O_namida_L'],
+        'o_tang' : body['KKBP materials']['o_tang'],
+        'o_tang.001' : body['KKBP materials']['o_tang'],
     }
 
     armature = bpy.data.objects['Armature']

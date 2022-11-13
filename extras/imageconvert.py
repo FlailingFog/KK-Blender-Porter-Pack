@@ -56,16 +56,17 @@ class image_dark_convert(bpy.types.Operator):
         #kklog(body['KKBP shadow colors'])
         #kklog(body['KKBP shadow colors'][material_name])
         #kklog(body['KKBP shadow colors'][material_name]['r'])
-        try:
-            shadow_color = [body['KKBP shadow colors'][material_name]['r'], body['KKBP shadow colors'][material_name]['g'], body['KKBP shadow colors'][material_name]['b']]
-            #kklog(shadow_color)
-            darktex = create_darktex(bpy.data.images[image.name], shadow_color)
-            material_name = 'KK ' + image.name[:-10]
-            bpy.data.materials[material_name].node_tree.nodes['Gentex'].node_tree.nodes['Darktex'].image = darktex
-            bpy.data.materials[material_name].node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use dark maintex?'].default_value = 1
-            bpy.data.materials[material_name].node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 1
-        except:
-            kklog('Tried to create a dark version of {} but there was no shadow color available. \nDark color conversion is only available for Koikatsu images that end in \'_MT_CT.png\''.format(image.name), type='error')
+        #try:
+        shadow_color = [body['KKBP shadow colors'][material_name]['r'], body['KKBP shadow colors'][material_name]['g'], body['KKBP shadow colors'][material_name]['b']]
+        #kklog(shadow_color)
+        darktex = create_darktex(bpy.data.images[image.name], shadow_color)
+        material_name = 'KK ' + image.name[:-10]
+        bpy.data.materials[material_name].node_tree.nodes['Gentex'].node_tree.nodes['Darktex'].image = darktex
+        bpy.data.materials[material_name].node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use dark maintex?'].default_value = 1
+        bpy.data.materials[material_name].node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 1
+        #except Exception as oops:
+        #    kklog(oops)
+            #kklog('Tried to create a dark version of {} but there was no shadow color available. \nDark color conversion is only available for Koikatsu images that end in \'_MT_CT.png\''.format(image.name), type='error')
         
         return {'FINISHED'}
 

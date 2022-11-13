@@ -155,8 +155,8 @@ def fix_eyewhite_shapekeys():
 
     #Remove the ### tag on the second eyewhite material
     for mat in body.data.materials:
-        if body['KKBP materials']['eyewhiteL'] in mat.name and len(mat.name) > 15:
-            mat.name = body['KKBP materials']['eyewhiteR']
+        if body['KKBP materials']['cf_Ohitomi_L'] in mat.name and len(mat.name) > 15:
+            mat.name = body['KKBP materials']['cf_Ohitomi_R']
 
     #Deselect all objects
     bpy.ops.object.select_all(action='DESELECT')
@@ -173,7 +173,7 @@ def fix_eyewhite_shapekeys():
         eyewhiteMats = [None,None]
         materialCount = len(body.data.materials.values())-1
         while currentMat <= materialCount:
-            if body['KKBP materials']['eyewhiteL'] in body.data.materials[currentMat].name:
+            if body['KKBP materials']['cf_Ohitomi_L'] in body.data.materials[currentMat].name:
                 eyewhiteMats[eyewhitePos] = body.data.materials[currentMat].name
                 eyewhitePos+=1
             currentMat+=1
@@ -184,8 +184,8 @@ def fix_eyewhite_shapekeys():
             bpy.ops.object.material_slot_move(direction='UP')
 
         body.data.materials[body.data.materials.find(eyewhiteMats[0])].name = 'cf_m_sirome_00.temp'
-        body.data.materials[body.data.materials.find(eyewhiteMats[1])].name = body['KKBP materials']['eyewhiteL']
-        body.data.materials[body.data.materials.find('cf_m_sirome_00.temp')].name = body['KKBP materials']['eyewhiteR']
+        body.data.materials[body.data.materials.find(eyewhiteMats[1])].name = body['KKBP materials']['cf_Ohitomi_L']
+        body.data.materials[body.data.materials.find('cf_m_sirome_00.temp')].name = body['KKBP materials']['cf_Ohitomi_R']
 
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_all(action='DESELECT')
@@ -196,13 +196,13 @@ def fix_eyewhite_shapekeys():
 
     except:
         #the sirome material was already merged
-        body.data.materials[body.data.materials.find(eyewhiteMats[0])].name = body['KKBP materials']['eyewhiteL']
+        body.data.materials[body.data.materials.find(eyewhiteMats[0])].name = body['KKBP materials']['cf_Ohitomi_L']
         pass
 
     #delete the right eyewhites mesh
     bpy.ops.object.mode_set(mode = 'EDIT')
     bpy.ops.mesh.select_all(action = 'DESELECT')
-    bpy.context.object.active_material_index = body.data.materials.find(body['KKBP materials']['eyewhiteL'])
+    bpy.context.object.active_material_index = body.data.materials.find(body['KKBP materials']['cf_Ohitomi_L'])
     bpy.ops.object.material_slot_select()
 
     #refresh the selection
@@ -228,7 +228,7 @@ def fix_eyewhite_shapekeys():
 
     #assign the left eyewhites into a vertex group
     bpy.ops.mesh.select_all(action = 'DESELECT')
-    bpy.context.object.active_material_index = body.data.materials.find(body['KKBP materials']['eyewhiteL'])
+    bpy.context.object.active_material_index = body.data.materials.find(body['KKBP materials']['cf_Ohitomi_L'])
     bpy.ops.object.material_slot_select()
 
     bm = bmesh.from_edit_mesh(body.data)
@@ -420,7 +420,9 @@ def combine_shapekeys(keep_partial_shapekeys):
 
     #Delete all shapekeys that don't have a "KK" in their name
     #Don't delete the Basis shapekey though
-    if not keep_partial_shapekeys:
+    #If no KK shapekeys were generated, something went wrong so don't delete any shapekeys
+    it_worked = True if [key for key in shapekey_block if 'KK ' in key.name] else False
+    if it_worked and not keep_partial_shapekeys:
         for remove_shapekey in shapekey_block:
             try:
                 if ('KK ' not in remove_shapekey.name and remove_shapekey.name != shapekey_block[0].name):

@@ -270,18 +270,23 @@ def create_darktex(maintex, shadow_color):
         #kklog('1')
         image_array = numpy.asarray(maintex.pixels)
         image_length = len(image_array)
-        dark_array = numpy.empty(image_length)
-        for pixel_start in range(image_length):
-            if pixel_start % 4 == 0:
-                pixel = image_array[pixel_start:pixel_start+4].tolist()
-                #print(pixel)
-                dark_array[pixel_start:pixel_start+3] = numpy.asarray(clothes_dark_color(pixel[0:3], shadow_color)) #rgb
-                dark_array[pixel_start+3] = pixel[3] #preserve alpha
+        image_row_length = int(image_length/4)
+        image_array = image_array.reshape((image_row_length, 4))
+        color_array = image_array[:,:3]
+        alpha_array = image_array[:,3].reshape(image_row_length, 1)
+        dark_array = numpy.apply_along_axis(clothes_dark_color, 1, color_array, shadow_color)
+        #dark_array = numpy.empty(image_length)
+        #for pixel_start in range(image_length):
+        #    if pixel_start % 4 == 0:
+        #        pixel = image_array[pixel_start:pixel_start+4].tolist()
+        #        #print(pixel)
+        #        dark_array[pixel_start:pixel_start+3] = numpy.asarray(clothes_dark_color(pixel[0:3], shadow_color)) #rgb
+        #        dark_array[pixel_start+3] = pixel[3] #preserve alpha
         #make a new image and place the dark pixels into it
         #kklog('2')
         darktex = bpy.data.images.new(maintex.name[:-7] + '_DT.png', width=maintex.size[0], height=maintex.size[1])
         darktex.file_format = 'PNG'
-        darktex.pixels = dark_array.ravel()
+        darktex.pixels = numpy.hstack((dark_array[:,:3], alpha_array[:,3].reshape(2,1))).reshape((1, image_row_length)).ravel()
         darktex.use_fake_user = True
         darktex_filename = maintex.filepath_raw[maintex.filepath_raw.find(maintex.name):][:-7]+ '_DT.png'
         darktex_filepath = maintex.filepath_raw[maintex.filepath_raw.find(maintex.name):]
