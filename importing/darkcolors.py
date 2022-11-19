@@ -263,7 +263,7 @@ def clothes_dark_color(color, shadow_color):
     
     return [diffuseShadow.x, diffuseShadow.y, diffuseShadow.z]
 
-#accepts a bpy image and creates a dark alternate using the darkening code above. Returns the new image
+#accepts a bpy image and creates a dark alternate using a modified version of the darkening code above. Returns a new bpy image
 def create_darktex(maintex, shadow_color):
     if not os.path.isfile(bpy.context.scene.kkbp.import_dir + '/dark_files/' + maintex.name[:-6] + 'DT.png'):
         ok = time.time()
@@ -272,21 +272,79 @@ def create_darktex(maintex, shadow_color):
         image_length = len(image_array)
         image_row_length = int(image_length/4)
         image_array = image_array.reshape((image_row_length, 4))
-        color_array = image_array[:,:3]
-        alpha_array = image_array[:,3].reshape(image_row_length, 1)
-        dark_array = numpy.apply_along_axis(clothes_dark_color, 1, color_array, shadow_color)
-        #dark_array = numpy.empty(image_length)
-        #for pixel_start in range(image_length):
-        #    if pixel_start % 4 == 0:
-        #        pixel = image_array[pixel_start:pixel_start+4].tolist()
-        #        #print(pixel)
-        #        dark_array[pixel_start:pixel_start+3] = numpy.asarray(clothes_dark_color(pixel[0:3], shadow_color)) #rgb
-        #        dark_array[pixel_start+3] = pixel[3] #preserve alpha
+
+        ################### variable setup
+        _ambientshadowG = numpy.asarray([0.15, 0.15, 0.15, .15]) #constant from experimentation
+        diffuse = image_array #maintex color
+        _ShadowColor = numpy.asarray([shadow_color[0],shadow_color[1],shadow_color[2], 1]) #the shadow color from material editor
+        ##########################
+        
+        #start at line 344 because the other one is for outlines
+        #shadingAdjustment = ShadeAdjustItemNumpy(diffuse, _ShadowColor)
+        #start at line 63
+        x=0;y=1;z=2;w=3;
+        t0 = diffuse
+        t1 = t0[:, [y, z, z, x]] * _ShadowColor[[y,z,z,x]]
+        t2 = t1[:, [y,x]]
+        t3 = t0[:, [y,z]] * _ShadowColor[[y,z]] + (-t2)
+        tb30 = t2[:, [y]] >= t1[:, [y]]
+        t30 = tb30.astype(int)
+        t2 = numpy.hstack((t2[:, [x,y]], numpy.full((t2.shape[0], 1), -1, t2.dtype), numpy.full((t2.shape[0], 1), 0.666666687, t2.dtype))) 
+        t3 = numpy.hstack((t3[:, [x,y]], numpy.full((t3.shape[0], 1),  1, t3.dtype), numpy.full((t3.shape[0], 1), -1,          t3.dtype))) 
+        t2 = t30 * t3 + t2
+        tb30 = t1[:, [w]] >= t1[:, [x]]
+        t30 = tb30.astype(int)
+        t1 = numpy.hstack((t2[:, [x, y, w]], t1[:, [w]]))
+        t2 = numpy.hstack((t1[:, [w, y]], t2[:, [z]], t1[:, [x]]))
+        t2 = -t1 + t2
+        t1 = t30 * t2 + t1
+        t30 = numpy.minimum(t1[:, [y]], t1[:, [w]])
+        t30 = -t30 + t1[:, [x]]
+        t2[:, [x]] = t30 * 6 + 1.00000001e-10
+        t11 = -t1[:, [y]] + t1[:, [w]]
+        t11 = t11 / t2[:, [x]];
+        t11 = t11 + t1[:, [z]];
+        t1[:, [x]] = t1[:, [x]] + 1.00000001e-10;
+        t30 = t30 / t1[:, [x]];
+        t30 = t30 * 0.5;
+        #the w component of t1 is no longer used, so ignore it
+        t1 = numpy.absolute(t11) + numpy.asarray([0.0, -0.333333343, 0.333333343, 1]); #90
+        t1 = t1 - numpy.floor(t1)
+        t1 = -t1 * 2 + 1
+        t1 = numpy.absolute(t1) * 3 + (-1)
+        t1 = numpy.clip(t1, 0, 1)
+        t1 = t1 + (-1); #95
+        t1 = (t30) * t1 + 1; #96
+
+        shadingAdjustment = t1
+
+        #skip to line 352
+        diffuseShaded = shadingAdjustment * 0.899999976 - 0.5;
+        diffuseShaded = -diffuseShaded * 2 + 1;
+
+        compTest = 0.555555582 < shadingAdjustment;
+        shadingAdjustment *= 1.79999995;
+        diffuseShaded = -diffuseShaded * 0.7225 + 1; #invertfinalambient shadow is a constant 0.7225, so don't calc it
+
+        hlslcc_movcTemp = shadingAdjustment;
+        #reframe ifs as selects
+        hlslcc_movcTemp[:, [x]] = numpy.select(condlist=[compTest[:, [x]], numpy.invert(compTest[:, [x]])], choicelist=[diffuseShaded[:, [x]], shadingAdjustment[:, [x]]])
+        hlslcc_movcTemp[:, [y]] = numpy.select(condlist=[compTest[:, [y]], numpy.invert(compTest[:, [y]])], choicelist=[diffuseShaded[:, [y]], shadingAdjustment[:, [y]]])
+        hlslcc_movcTemp[:, [z]] = numpy.select(condlist=[compTest[:, [z]], numpy.invert(compTest[:, [z]])], choicelist=[diffuseShaded[:, [z]], shadingAdjustment[:, [z]]])
+        shadingAdjustment = numpy.clip(hlslcc_movcTemp, 0, 1) #374 the lerp result (and shadowCol) is going to be this because shadowColor's alpha is always 1 making shadowCol 1
+
+        diffuseShadow = diffuse * shadingAdjustment;
+
+        # lightCol is constant 1.0656, 1.0656, 1.0656, 1 calculated from the custom ambient of 0.666, 0.666, 0.666, 1 and sun light color 0.666, 0.666, 0.666, 1,
+        # so ambientCol always results in lightCol after the max function
+        ambientCol = numpy.asarray([1.0656, 1.0656, 1.0656, 1]);
+        diffuseShadow = diffuseShadow * ambientCol;
+
         #make a new image and place the dark pixels into it
-        #kklog('2')
+        dark_array = diffuseShadow
         darktex = bpy.data.images.new(maintex.name[:-7] + '_DT.png', width=maintex.size[0], height=maintex.size[1])
         darktex.file_format = 'PNG'
-        darktex.pixels = numpy.hstack((dark_array[:,:3], alpha_array[:,3].reshape(2,1))).reshape((1, image_row_length)).ravel()
+        darktex.pixels = dark_array.ravel()
         darktex.use_fake_user = True
         darktex_filename = maintex.filepath_raw[maintex.filepath_raw.find(maintex.name):][:-7]+ '_DT.png'
         darktex_filepath = maintex.filepath_raw[maintex.filepath_raw.find(maintex.name):]

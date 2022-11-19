@@ -704,7 +704,7 @@ def update_shaders(json, lut_selection, active_lut, light):
                     color_channel = [el/255 for el in to_rgba(color_to_KK([255*el for el in clothes_dark_color(color = color, shadow_color = shadow_color)], 'Lut_TimeDay.png'))]
                     shader_inputs[color_input_names[i]].default_value = color_channel
             shader_inputs['Use colored maintex?'].default_value = 0
-            shader_inputs['Ignore colormask?'].default_value = 0
+            shader_inputs['Ignore colormask?'].default_value = shader_inputs['Use dark maintex?'].default_value #these should match up
             #doesn't work?
             #shader_inputs['Color mask color (base)'].default_value = [el/255 for el in to_rgba(color_to_KK([255*el for el in clothes_dark_color(color = [255, 255, 255], shadow_color = shadow_color)], 'Lut_TimeDay.png'))]
         else:

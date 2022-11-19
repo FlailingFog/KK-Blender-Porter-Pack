@@ -6,8 +6,8 @@ from ..importing.darkcolors import create_darktex
 
 class image_convert(bpy.types.Operator):
     bl_idname = "kkb.imageconvert"
-    bl_label = "Convert image"
-    bl_description = "Click this to convert the currently loaded image"
+    bl_label = "Convert light image"
+    bl_description = "Click this to saturate the currently loaded image using the selected Koikatsu LUT"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
@@ -40,8 +40,8 @@ class image_convert(bpy.types.Operator):
 
 class image_dark_convert(bpy.types.Operator):
     bl_idname = "kkb.imagedarkconvert"
-    bl_label = "Convert image"
-    bl_description = "(SLOW!) Click this to create a dark version of the currently loaded maintex image. The new image will end in 'MT_DT.png' The new image will be automatically loaded to the dark color node group"
+    bl_label = "Convert dark image"
+    bl_description = "Click this to create a dark version of the currently loaded maintex image. The new image will end in 'MT_DT.png' The new image will be automatically loaded to the dark color node group"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
@@ -49,24 +49,16 @@ class image_dark_convert(bpy.types.Operator):
         kklog("Converting image: ".format(context.space_data.image))
 
         image = context.space_data.image
-        image.reload()
-
         material_name = image.name[:-10]
-        #kklog(material_name)
-        #kklog(body['KKBP shadow colors'])
-        #kklog(body['KKBP shadow colors'][material_name])
-        #kklog(body['KKBP shadow colors'][material_name]['r'])
-        #try:
-        shadow_color = [body['KKBP shadow colors'][material_name]['r'], body['KKBP shadow colors'][material_name]['g'], body['KKBP shadow colors'][material_name]['b']]
-        #kklog(shadow_color)
-        darktex = create_darktex(bpy.data.images[image.name], shadow_color)
-        material_name = 'KK ' + image.name[:-10]
-        bpy.data.materials[material_name].node_tree.nodes['Gentex'].node_tree.nodes['Darktex'].image = darktex
-        bpy.data.materials[material_name].node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use dark maintex?'].default_value = 1
-        bpy.data.materials[material_name].node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 1
-        #except Exception as oops:
-        #    kklog(oops)
-            #kklog('Tried to create a dark version of {} but there was no shadow color available. \nDark color conversion is only available for Koikatsu images that end in \'_MT_CT.png\''.format(image.name), type='error')
+        try:
+            shadow_color = [body['KKBP shadow colors'][material_name]['r'], body['KKBP shadow colors'][material_name]['g'], body['KKBP shadow colors'][material_name]['b']]
+            darktex = create_darktex(bpy.data.images[image.name], shadow_color)
+            material_name = 'KK ' + image.name[:-10]
+            bpy.data.materials[material_name].node_tree.nodes['Gentex'].node_tree.nodes['Darktex'].image = darktex
+            bpy.data.materials[material_name].node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use dark maintex?'].default_value = 1
+            bpy.data.materials[material_name].node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 1
+        except:
+            kklog('Tried to create a dark version of {} but there was no shadow color available. \nDark color conversion is only available for Koikatsu images that end in \'_MT_CT.png\''.format(image.name), type='error')
         
         return {'FINISHED'}
 

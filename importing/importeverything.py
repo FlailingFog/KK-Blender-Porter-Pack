@@ -456,17 +456,26 @@ def get_and_load_textures(directory):
                 color_dict[line['materialName']] = line['shadowColor']
     body['KKBP shadow colors'] = color_dict
 
+    #open all images into blender and create dark variants if the image is a maintex
     for image in files:
         bpy.ops.image.open(filepath=str(image), use_udim_detecting=False)
         try:
             bpy.data.images[image.name].pack()
-            # too slow to do during import
-            #if '_MT_CT' in image.name:
-            #    material_name = image.name[:-10]
-            #    shadow_color = [color_dict[material_name]['r']/255, color_dict[material_name]['g']/255, color_dict[material_name]['b']/255]
-            #    create_darktex(bpy.data.images[image.name], shadow_color)
         except:
-            kklog('This image was not automatically loaded in because its name exceeds 64 characters: ' + image.name, type = 'warn')
+            kklog('This image was not automatically loaded in because its name exceeds 64 characters: ' + image.name, type = 'error')
+        try:
+            skip_list = ['cf_m_gageye', 'cf_m_eyeline', 'cf_m_mayuge', 'cf_m_namida_00', 'cf_m_noseline_00', 'cf_m_sirome_00', 'cf_m_tooth', '_cf_Ohitomi_', 'cf_m_emblem']
+            convert_this = True
+            for item in skip_list:
+                if item in image.name:
+                    convert_this = False
+            if '_MT_CT' in image.name and convert_this:
+                #kklog(image.name)
+                material_name = image.name[:-10]
+                shadow_color = [body['KKBP shadow colors'][material_name]['r'], body['KKBP shadow colors'][material_name]['g'], body['KKBP shadow colors'][material_name]['b']]
+                darktex = create_darktex(bpy.data.images[image.name], shadow_color) #create the darktex now and load it in later
+        except:
+            kklog('Tried to create a dark version of {} but something went wrong. It won\'t be loaded in.'.format(image.name), type='warn')
     
     #Get texture data for offset and scale
     for file in files:
@@ -511,8 +520,13 @@ def get_and_load_textures(directory):
     
     current_obj = bpy.data.objects['Body']
     image_load('KK Body', 'Gentex', 'BodyMain', body['KKBP materials']['o_body_a'] + '_MT_CT.png')
+    image_load('KK Body', 'Gentex', 'Darktex', body['KKBP materials']['o_body_a'] + '_MT_DT.png')
+    #check there's a maintex, if not there fallback to colors
     if not current_obj.material_slots['KK Body'].material.node_tree.nodes['Gentex'].node_tree.nodes['BodyMain'].image:
         current_obj.material_slots['KK Body'].material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use maintex instead?'].default_value = 0
+    #but if it is, make sure the body darktex is being used as default
+    else:
+        current_obj.material_slots['KK Body'].material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use maintex instead?'].default_value = 1
     image_load('KK Body', 'Gentex', 'BodyMC', body['KKBP materials']['o_body_a'] + '_CM.png')
     image_load('KK Body', 'Gentex', 'BodyMD', body['KKBP materials']['o_body_a'] + '_DM.png') #cfm female
     image_load('KK Body', 'Gentex', 'BodyLine', body['KKBP materials']['o_body_a'] + '_LM.png')
@@ -556,9 +570,12 @@ def get_and_load_textures(directory):
         current_obj.material_slots['KK Body'].material.node_tree.nodes['Shader'].node_tree.nodes['BodyTransp'].inputs['Built in transparency toggle'].default_value = 0
 
     image_load('KK Face', 'Gentex', 'FaceMain', body['KKBP materials']['cf_O_face'] + '_MT_CT.png')
+    image_load('KK Face', 'Gentex', 'Darktex', body['KKBP materials']['cf_O_face'] + '_MT_DT.png')
     #default to colors if there's no face maintex
     if not current_obj.material_slots['KK Face'].material.node_tree.nodes['Gentex'].node_tree.nodes['FaceMain'].image:
         current_obj.material_slots['KK Face'].material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use maintex instead?'].default_value = 0
+    else:
+        current_obj.material_slots['KK Face'].material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use maintex instead?'].default_value = 1        
     image_load('KK Face', 'Gentex', 'FaceMC', body['KKBP materials']['cf_O_face'] + '_CM.png')
     image_load('KK Face', 'Gentex', 'FaceMD', body['KKBP materials']['cf_O_face'] + '_DM.png')
     image_load('KK Face', 'Gentex', 'BlushMask', body['KKBP materials']['cf_O_face'] + '_T4.png')
@@ -672,6 +689,7 @@ def get_and_load_textures(directory):
             image_load(genMat.name, 'Gentex', 'Maintexplain', genType+ '_MT.png')
             image_load(genMat.name, 'Gentex', 'Maintex', genType+ '_MT.png')
             image_load(genMat.name, 'Gentex', 'Maintex', genType+'_MT_CT.png')
+            image_load(genMat.name, 'Gentex', 'Darktex', genType+'_MT_DT.png')
             image_load(genMat.name, 'Gentex', 'MainCol', genType+'_CM.png')
             image_load(genMat.name, 'Gentex', 'MainDet', genType+'_DM.png')
             image_load(genMat.name, 'Gentex', 'MainNorm', genType+'_NMP.png')
@@ -685,8 +703,14 @@ def get_and_load_textures(directory):
             image_load(genMat.name, 'Gentex', 'PatBlue', genType+'_PM3.png')
             
             MainImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Maintex'].image
+            DarkImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Darktex'].image
             AlphaImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Alphamask'].image
-                    
+
+            #set dark colors to use the maintex if there was a dark image loaded in
+            if DarkImage and 'Template: Pattern Placeholder' not in DarkImage.name:
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use dark maintex?'].default_value = 1
+                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 1
+
             #Also, make a copy of the General shader node group, as it's unlikely everything using it will be the same color
             newNode = genMat.material.node_tree.nodes['Shader'].node_tree.copy()
             genMat.material.node_tree.nodes['Shader'].node_tree = newNode
