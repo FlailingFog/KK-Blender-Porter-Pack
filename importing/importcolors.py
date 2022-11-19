@@ -63,8 +63,8 @@ def image_to_KK(image, lut_name):
         vec2 coord_bot = coord.xy + coord_floor.zz * texel_height_X0;
         vec2 coord_top = coord_bot + texel_height_X0;
 
-        vec3 lutcol_bot = texture2D( lut, coord_bot ).rgb;
-        vec3 lutcol_top = texture2D( lut, coord_top ).rgb;
+        vec3 lutcol_bot = texture( lut, coord_bot ).rgb; //Changed from texture2D to texture just in case (apparently depreciated in opengl 3.1?)
+        vec3 lutcol_top = texture( lut, coord_top ).rgb;
         
         vec3 lutColor = mix(lutcol_bot, lutcol_top, coord_frac.z);
         
@@ -72,7 +72,7 @@ def image_to_KK(image, lut_name):
     }
 
     void main() {
-        vec4 texRGBA = texture2D(tex0, gl_FragCoord.xy / u_resolution);
+        vec4 texRGBA = texture(tex0, gl_FragCoord.xy / u_resolution);
 
         vec3 texColor = to_srgb(texRGBA.rgb);
 
@@ -103,8 +103,8 @@ def image_to_KK(image, lut_name):
         # It makes sure that all the vertex attributes necessary for a specific shader are provided.
         batch = batch_for_shader(
             shader, 
-            'TRI_FAN', {
-                'a_position': ((-1, -1), (1, -1), (1, 1), (-1, 1))
+            'TRI_STRIP', { #https://wiki.blender.org/wiki/Reference/Release_Notes/3.2/Python_API for TRI_FAN depreciation
+                'a_position': ((-1, -1), (1, -1), (1, 1), (-1, 1), (-1, -1))
             },
         )
 
@@ -259,8 +259,8 @@ def color_to_KK(color, lut_name):
         # It makes sure that all the vertex attributes necessary for a specific shader are provided.
         batch = batch_for_shader(
             shader, 
-            'TRI_FAN', {
-                'a_position': ((-1, -1), (1, -1), (1, 1), (-1, 1))
+            'TRI_STRIP', { #https://wiki.blender.org/wiki/Reference/Release_Notes/3.2/Python_API for TRI_FAN depreciation
+                'a_position': ((-1, -1), (1, -1), (1, 1), (-1, 1), (-1, -1))
             },
         )
 

@@ -34,9 +34,8 @@ Texture Postfix Legend:
         
 '''
 
-import bpy, os, traceback, json, time
+import bpy, os, traceback, json, time, sys
 from pathlib import Path
-from bpy.props import StringProperty
 from .importbuttons import kklog
 from .cleanarmature import get_bone_list
 from .darkcolors import create_darktex
@@ -440,7 +439,7 @@ def get_and_load_textures(directory):
         if obj['KKBP outfit ID'] not in id_list:
             id_list.append(obj['KKBP outfit ID'])
     for outfit_id in id_list:
-        fileList = Path(directory + r'\Outfit 0' + str(outfit_id)).glob('*.*')
+        fileList = Path(directory + (r'/Outfit 0' if (sys.platform == 'linux' or sys.platform == 'darwin') else r'\Outfit 0') + str(outfit_id)).glob('*.*')
         files_to_append = [file for file in fileList if file.is_file()]
         for outfit_file in files_to_append:
             files.append(outfit_file)
