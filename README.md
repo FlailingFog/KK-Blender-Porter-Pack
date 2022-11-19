@@ -7,8 +7,8 @@ The changelog for the pack [can be found here.](https://github.com/FlailingFog/K
 The pack [also has a barebones wiki here.](https://github.com/FlailingFog/KK-Blender-Shader-Pack/wiki)
 
 ## Download
-Stable versions of KKBP are [on the release page](https://github.com/FlailingFog/KK-Blender-Porter-Pack/releases).  
-The latest version of KKBP can be downloaded by using the green CODE button on the top right of the page and choosing "Download ZIP"
+Stable versions of KKBP are [on the release page.](https://github.com/FlailingFog/KK-Blender-Porter-Pack/releases)  
+The absolute latest version of KKBP can be downloaded [here.](https://github.com/FlailingFog/KK-Blender-Porter-Pack/archive/refs/heads/master.zip)
 
 ## Usage Instructions for V6
 #### Prerequisites:
