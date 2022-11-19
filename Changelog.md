@@ -1,3 +1,22 @@
+### Changes for V6.2.0
+* Dark colors and textures for clothes and accessories are now much closer to the in-game look
+    * This uses the darkening code from [Xukumi KKShadersPlus](https://github.com/xukmi/KKShadersPlus/blob/main/Shaders/Item/)
+    * Dark colors are automatically set in the dark section of the shader
+    * Dark versions of all main textures are created and loaded automatically (files that end in _MT_CT.png will be used to generate a file that ends in _MT_DT.png)
+    * Dark colors for skin are no longer hard-coded
+    * Dark hair and dark skin colors have a different darkening process. These processes aren't used, instead they get the same darkening process as the clothes
+* KKBP Exporter updates by **MediaMoots**!
+    * Animation curve data is now exported to KK_DynamicBoneData.json
+    * SMR dataname fixes
+    * More headmods will now successfully export
+    * Eyes that have different overlays on different outfits will now be exported (Only the first outfit's eye overlays will be loaded into blender automatically)
+ * Simplified Chinese translation by **castbohea**!
+* Cards missing certain body materials will now import without an error
+* If KK shapekey creation for a headmod fails, the original shapekeys for the headmod will be preserved instead of being deleted
+* The files for clothes and hair should correctly load in on Linux and Mac now (tested on SteamOS 3.3.2, Blender 3.3.1 flatpak)
+* Transparency should work now when using Lightning Boy Shader
+* Initial placement of the Lightning Boy Shader nodes is a little cleaner than before
+
 ### Changes for V6.1.0
 * Rigify armature updates by an anonymous contributor! (Changelog copy-pasted below)
     * 'Rigified' the new rigged tongue;
