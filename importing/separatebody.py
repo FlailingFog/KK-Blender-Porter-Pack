@@ -85,6 +85,8 @@ def clean_body():
 
 def add_freestyle_faces():
     body = bpy.data.objects['Body']
+    #make sure the body is selected
+    bpy.context.view_layer.objects.active = body
     #go into edit mode and deselect everything
     bpy.ops.object.mode_set(mode = 'EDIT')
     bpy.ops.mesh.select_all(action = 'DESELECT')
