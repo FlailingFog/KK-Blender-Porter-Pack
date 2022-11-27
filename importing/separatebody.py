@@ -339,20 +339,22 @@ def fix_body_seams():
     body.select_set(True)
     bpy.context.view_layer.objects.active = body
     bpy.ops.object.mode_set(mode = 'EDIT')
-    deselect_list = [
-        'KK Eyebrows (mayuge)',
-        'KK Eyeline up',
-        'KK Eyeline Kage']
+    bpy.ops.mesh.select_all(action = 'DESELECT')
+    select_list = [
+        body['KKBP materials']['cf_O_face'],
+        body['KKBP materials']['o_body_a'],
+        ]
     bpy.context.tool_settings.mesh_select_mode = (True, False, False) #enable vertex select in edit mode
-    bpy.ops.mesh.select_non_manifold()
-    for mat in deselect_list:
+    #bpy.ops.mesh.select_non_manifold()
+    for mat in select_list:
         bpy.context.object.active_material_index = body.data.materials.find(mat)
-        bpy.ops.object.material_slot_deselect()
+        bpy.ops.object.material_slot_select()
     bpy.ops.mesh.remove_doubles(threshold=0.00001)
     #bpy.context.tool_settings.mesh_select_mode = (False, False, True) #enable face select in edit mode
 
     #This still messes with the weights. Maybe it's possible to save the 3D positions, weights, and UV positions for each duplicate vertex
     # then delete and make new vertices with saved info 
+    #The vertices on the body object seem to be consistent across imports from https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/82
 
 def make_tear_and_gag_shapekeys():
     #Create a reverse shapekey for each tear and gag material

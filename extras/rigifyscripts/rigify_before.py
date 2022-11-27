@@ -982,10 +982,11 @@ def main():
         childBone.parent = parentBone
         childBone.use_connect = connected
     
-    connectAndParentBones(metarig, koikatsuCommons.riggedTongueBone5Name, koikatsuCommons.riggedTongueBone4Name, True)
-    connectAndParentBones(metarig, koikatsuCommons.riggedTongueBone4Name, koikatsuCommons.riggedTongueBone3Name, True)
-    connectAndParentBones(metarig, koikatsuCommons.riggedTongueBone3Name, koikatsuCommons.riggedTongueBone2Name, True)
-    connectAndParentBones(metarig, koikatsuCommons.riggedTongueBone2Name, koikatsuCommons.riggedTongueBone1Name, False)
+    if metarig.pose.bones.get(koikatsuCommons.riggedTongueBone1Name):
+        connectAndParentBones(metarig, koikatsuCommons.riggedTongueBone5Name, koikatsuCommons.riggedTongueBone4Name, True)
+        connectAndParentBones(metarig, koikatsuCommons.riggedTongueBone4Name, koikatsuCommons.riggedTongueBone3Name, True)
+        connectAndParentBones(metarig, koikatsuCommons.riggedTongueBone3Name, koikatsuCommons.riggedTongueBone2Name, True)
+        connectAndParentBones(metarig, koikatsuCommons.riggedTongueBone2Name, koikatsuCommons.riggedTongueBone1Name, False)
     connectAndParentBones(metarig, koikatsuCommons.headBoneName, koikatsuCommons.neckBoneName, True)
     connectAndParentBones(metarig, koikatsuCommons.neckBoneName, koikatsuCommons.upperChestBoneName, False)
     connectAndParentBones(metarig, koikatsuCommons.upperChestBoneName, koikatsuCommons.chestBoneName, True)
@@ -1044,14 +1045,15 @@ def main():
         leftBone.length = length
         rightBone.length = length
     
-    riggedTongueBone2 = metarig.data.edit_bones[koikatsuCommons.riggedTongueBone2Name]
-    finalizeRiggedTongueSideBones(metarig, koikatsuCommons.riggedTongueLeftBone3Name, koikatsuCommons.riggedTongueRightBone3Name, riggedTongueBone2.length, 0.75)
-    finalizeRiggedTongueSideBones(metarig, koikatsuCommons.riggedTongueLeftBone4Name, koikatsuCommons.riggedTongueRightBone4Name, riggedTongueBone2.length, 0.65, 0.5, 0.5)
-    finalizeRiggedTongueSideBones(metarig, koikatsuCommons.riggedTongueLeftBone5Name, koikatsuCommons.riggedTongueRightBone5Name, riggedTongueBone2.length, 0.65, 0.2, 0.3)
-    riggedTongueBone5 = metarig.data.edit_bones[koikatsuCommons.riggedTongueBone5Name]
-    riggedTongueLeftBone5VertexGroupExtremities = koikatsuCommons.findVertexGroupExtremities(koikatsuCommons.riggedTongueLeftBone5Name, koikatsuCommons.riggedTongueName)
-    riggedTongueBone5.tail.z = riggedTongueLeftBone5VertexGroupExtremities.minZ + math.dist([riggedTongueLeftBone5VertexGroupExtremities.minZ], [riggedTongueLeftBone5VertexGroupExtremities.maxZ]) * 0.17
-    riggedTongueBone5.tail.y = riggedTongueLeftBone5VertexGroupExtremities.minY
+    if metarig.data.edit_bones.get(koikatsuCommons.riggedTongueBone2Name) and bpy.data.objects.get(koikatsuCommons.riggedTongueName):
+        riggedTongueBone2 = metarig.data.edit_bones[koikatsuCommons.riggedTongueBone2Name]
+        finalizeRiggedTongueSideBones(metarig, koikatsuCommons.riggedTongueLeftBone3Name, koikatsuCommons.riggedTongueRightBone3Name, riggedTongueBone2.length, 0.75)
+        finalizeRiggedTongueSideBones(metarig, koikatsuCommons.riggedTongueLeftBone4Name, koikatsuCommons.riggedTongueRightBone4Name, riggedTongueBone2.length, 0.65, 0.5, 0.5)
+        finalizeRiggedTongueSideBones(metarig, koikatsuCommons.riggedTongueLeftBone5Name, koikatsuCommons.riggedTongueRightBone5Name, riggedTongueBone2.length, 0.65, 0.2, 0.3)
+        riggedTongueBone5 = metarig.data.edit_bones[koikatsuCommons.riggedTongueBone5Name]
+        riggedTongueLeftBone5VertexGroupExtremities = koikatsuCommons.findVertexGroupExtremities(koikatsuCommons.riggedTongueLeftBone5Name, koikatsuCommons.riggedTongueName)
+        riggedTongueBone5.tail.z = riggedTongueLeftBone5VertexGroupExtremities.minZ + math.dist([riggedTongueLeftBone5VertexGroupExtremities.minZ], [riggedTongueLeftBone5VertexGroupExtremities.maxZ]) * 0.17
+        riggedTongueBone5.tail.y = riggedTongueLeftBone5VertexGroupExtremities.minY
     metarig.data.edit_bones[koikatsuCommons.headBoneName].tail.z = koikatsuCommons.findVertexGroupExtremities(koikatsuCommons.originalFaceUpDeformBoneName, koikatsuCommons.bodyName).maxZ
     metarig.data.edit_bones[koikatsuCommons.hipsBoneName].head = metarig.data.edit_bones[koikatsuCommons.waistBoneName].head
     leftShoulderJointCorrectionBone = metarig.data.edit_bones[koikatsuCommons.leftShoulderJointCorrectionBoneName]
@@ -1353,25 +1355,26 @@ def main():
     metarig.pose.bones[koikatsuCommons.leftEyeballBoneName].rigify_parameters.optional_widget_type = "bone"
     metarig.pose.bones[koikatsuCommons.rightEyeballBoneName].custom_shape = None
     metarig.pose.bones[koikatsuCommons.rightEyeballBoneName].rigify_parameters.optional_widget_type = "bone"   
-    metarig.pose.bones[koikatsuCommons.riggedTongueBone1Name].rigify_parameters.optional_widget_type = "jaw" 
-    metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_type = "limbs.super_finger"
-    metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_parameters.primary_rotation_axis = "-X"
-    metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_parameters.make_extra_ik_control = True
-    metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].custom_shape = None
-    metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_parameters.tweak_layers[1] = False
-    metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.eyesLayerName + koikatsuCommons.secondaryLayerSuffix)] = True
-    metarig.pose.bones[koikatsuCommons.riggedTongueBone3Name].rigify_type = ""
-    metarig.pose.bones[koikatsuCommons.riggedTongueBone3Name].custom_shape = None
-    metarig.pose.bones[koikatsuCommons.riggedTongueLeftBone3Name].rigify_parameters.optional_widget_type = "sphere"
-    metarig.pose.bones[koikatsuCommons.riggedTongueRightBone3Name].rigify_parameters.optional_widget_type = "sphere"
-    metarig.pose.bones[koikatsuCommons.riggedTongueBone4Name].rigify_type = ""
-    metarig.pose.bones[koikatsuCommons.riggedTongueBone4Name].custom_shape = None
-    metarig.pose.bones[koikatsuCommons.riggedTongueLeftBone4Name].rigify_parameters.optional_widget_type = "sphere"
-    metarig.pose.bones[koikatsuCommons.riggedTongueRightBone4Name].rigify_parameters.optional_widget_type = "sphere"
-    metarig.pose.bones[koikatsuCommons.riggedTongueBone5Name].rigify_type = ""
-    metarig.pose.bones[koikatsuCommons.riggedTongueBone5Name].custom_shape = None
-    metarig.pose.bones[koikatsuCommons.riggedTongueLeftBone5Name].rigify_parameters.optional_widget_type = "sphere"
-    metarig.pose.bones[koikatsuCommons.riggedTongueRightBone5Name].rigify_parameters.optional_widget_type = "sphere"
+    if metarig.pose.bones.get(koikatsuCommons.riggedTongueBone1Name)  and bpy.data.objects.get(koikatsuCommons.riggedTongueName):
+        metarig.pose.bones[koikatsuCommons.riggedTongueBone1Name].rigify_parameters.optional_widget_type = "jaw" 
+        metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_type = "limbs.super_finger"
+        metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_parameters.primary_rotation_axis = "-X"
+        metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_parameters.make_extra_ik_control = True
+        metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].custom_shape = None
+        metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_parameters.tweak_layers[1] = False
+        metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.eyesLayerName + koikatsuCommons.secondaryLayerSuffix)] = True
+        metarig.pose.bones[koikatsuCommons.riggedTongueBone3Name].rigify_type = ""
+        metarig.pose.bones[koikatsuCommons.riggedTongueBone3Name].custom_shape = None
+        metarig.pose.bones[koikatsuCommons.riggedTongueLeftBone3Name].rigify_parameters.optional_widget_type = "sphere"
+        metarig.pose.bones[koikatsuCommons.riggedTongueRightBone3Name].rigify_parameters.optional_widget_type = "sphere"
+        metarig.pose.bones[koikatsuCommons.riggedTongueBone4Name].rigify_type = ""
+        metarig.pose.bones[koikatsuCommons.riggedTongueBone4Name].custom_shape = None
+        metarig.pose.bones[koikatsuCommons.riggedTongueLeftBone4Name].rigify_parameters.optional_widget_type = "sphere"
+        metarig.pose.bones[koikatsuCommons.riggedTongueRightBone4Name].rigify_parameters.optional_widget_type = "sphere"
+        metarig.pose.bones[koikatsuCommons.riggedTongueBone5Name].rigify_type = ""
+        metarig.pose.bones[koikatsuCommons.riggedTongueBone5Name].custom_shape = None
+        metarig.pose.bones[koikatsuCommons.riggedTongueLeftBone5Name].rigify_parameters.optional_widget_type = "sphere"
+        metarig.pose.bones[koikatsuCommons.riggedTongueRightBone5Name].rigify_parameters.optional_widget_type = "sphere"
     metarig.pose.bones[koikatsuCommons.headBoneName].custom_shape = None
     metarig.pose.bones[koikatsuCommons.headBoneName].rigify_type = ""    
     metarig.pose.bones[koikatsuCommons.neckBoneName].custom_shape = None
