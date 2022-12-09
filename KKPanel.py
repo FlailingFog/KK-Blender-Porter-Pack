@@ -1,4 +1,3 @@
-from typing import Text
 import bpy
 from bpy.types import Panel, PropertyGroup, Scene, WindowManager
 from bpy.props import (

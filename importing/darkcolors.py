@@ -347,8 +347,10 @@ def create_darktex(maintex, shadow_color):
         darktex.pixels = dark_array.ravel()
         darktex.use_fake_user = True
         darktex_filename = maintex.filepath_raw[maintex.filepath_raw.find(maintex.name):][:-7]+ '_DT.png'
-        darktex_filepath = maintex.filepath_raw[maintex.filepath_raw.find(maintex.name):]
-        darktex.filepath_raw = darktex_filepath + 'dark_files/' + darktex_filename
+        darktex_filepath = maintex.filepath_raw[:maintex.filepath_raw.find(maintex.name)]
+        darktex.filepath_raw = darktex_filepath + 'dark_files\\' + darktex_filename
+        #kklog(maintex.filepath_raw)
+        #kklog(darktex.filepath_raw)
         darktex.pack()
         darktex.save()
         kklog('Created dark version of {} in {} seconds'.format(darktex.name, time.time() - ok))
