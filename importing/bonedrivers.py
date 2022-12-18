@@ -853,7 +853,7 @@ class bone_drivers(bpy.types.Operator):
 
             #set the viewport shading
             my_areas = bpy.context.workspace.screens[0].areas
-            my_shading = 'MATERIAL'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
+            my_shading = 'SOLID'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
 
             for area in my_areas:
                 for space in area.spaces:

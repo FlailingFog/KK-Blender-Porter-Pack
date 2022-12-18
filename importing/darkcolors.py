@@ -347,13 +347,22 @@ def create_darktex(maintex, shadow_color):
         darktex.pixels = dark_array.ravel()
         darktex.use_fake_user = True
         darktex_filename = maintex.filepath_raw[maintex.filepath_raw.find(maintex.name):][:-7]+ '_DT.png'
-        darktex_filepath = maintex.filepath_raw[:maintex.filepath_raw.find(maintex.name)]
-        darktex.filepath_raw = darktex_filepath + 'dark_files\\' + darktex_filename
+        darktex_filepath = bpy.context.scene.kkbp.import_dir + 'dark_files/' + darktex_filename
+        darktex.filepath_raw = darktex_filepath
         #kklog(maintex.filepath_raw)
         #kklog(darktex.filepath_raw)
         darktex.pack()
         darktex.save()
         kklog('Created dark version of {} in {} seconds'.format(darktex.name, time.time() - ok))
+        return darktex
+    else:
+        bpy.ops.image.open(filepath=str(bpy.context.scene.kkbp.import_dir + 'dark_files/' + maintex.name[:-6] + 'DT.png'), use_udim_detecting=False)
+        darktex = bpy.data.images[maintex.name[:-6] + 'DT.png']
+        kklog('A dark version of {} already exists'.format(darktex.name))
+        try:
+            darktex.pack()
+        except:
+            kklog('This image was not automatically loaded in because its name exceeds 64 characters: ' + darktex.name, type = 'error')
         return darktex
 
 if __name__ == '__main__':

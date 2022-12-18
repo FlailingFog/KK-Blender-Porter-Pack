@@ -4,7 +4,7 @@ bl_info = {
     "author" : "a blendlet and some blenderchads",
     "location" : "View 3D > Tool Shelf > KKBP and Image Editor > Tool Shelf > KKBP",
     "description" : "Scripts to automate cleanup of a Koikatsu export",
-    "version": (6, 2, 0),
+    "version": (6, 2, 2),
     "blender" : (3, 3, 0),
     "category" : "3D View",
     "tracker_url" : "https://github.com/FlailingFog/KK-Blender-Porter-Pack/"

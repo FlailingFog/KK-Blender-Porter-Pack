@@ -951,94 +951,73 @@ def add_outlines(single_outline_mode):
     mod.loop_mapping = 'POLYINTERP_LNORPROJ'
 
     #Give each piece of hair with an alphamask on each hair object it's own outline group
-    outlineStart = 200
+    hair_objects = [obj for obj in bpy.data.objects if 'Hair Outfit ' in obj.name]
     if not single_outline_mode:
-        hair_objects = [obj for obj in bpy.data.objects if 'Hair Outfit ' in obj.name]
-
         for ob in hair_objects:
             bpy.context.view_layer.objects.active = ob
-
             #Get the length of the material list before starting
             outlineStart = len(ob.material_slots)
-
-            for matindex in range(0, outlineStart, 1):
-                #print(matindex)
-                genMat = ob.material_slots[matindex]
-                genType = genMat.name.replace('KK ','')
-                
-                AlphaImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairAlpha'].image
-                MainImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairMainTex'].image
-
+            #link all polygons to material name
+            mats_to_gons = {}
+            for slot in ob.material_slots:
+                mats_to_gons[slot.material.name] = []
+            for gon in ob.data.polygons:
+                    mats_to_gons[ob.material_slots[gon.material_index].material.name].append(gon)
+            #find all materials that use an alpha mask or maintex
+            alpha_users = []
+            for mat in ob.material_slots:
+                AlphaImage = mat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairAlpha'].image
+                MainImage = mat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairMainTex'].image
                 if AlphaImage or MainImage:
-                    #set the material as active and move to the top of the material list
-                    ob.active_material_index = ob.data.materials.find(genMat.name)
+                    alpha_users.append(mat.material.name)
+            #reorder material_list to place alpha/maintex users first
+            new_mat_list_order = [mat_slot.material.name for mat_slot in ob.material_slots if mat_slot.material.name not in alpha_users]
+            new_mat_list_order = alpha_users + new_mat_list_order
+            #reorder mat slot list
+            for index, mat_slot in enumerate(ob.material_slots):
+                mat_slot.material = bpy.data.materials[new_mat_list_order[index]]
+            #create empty slots for new alpha user outlines
+            for mat in alpha_users:
+                ob.data.materials.append(None)
+            #fill alpha user outline materials, and fill image node
+            for index, mat in enumerate(alpha_users):
+                OutlineMat = bpy.data.materials['KK Outline'].copy()
+                OutlineMat.name = mat.replace('KK ', 'Outline ')
+                AlphaImage = ob.material_slots[mat].material.node_tree.nodes['Gentex'].node_tree.nodes['hairAlpha'].image
+                MainImage = ob.material_slots[mat].material.node_tree.nodes['Gentex'].node_tree.nodes['hairMainTex'].image
+                if AlphaImage:
+                    OutlineMat.node_tree.nodes['outlinealpha'].image = AlphaImage
+                    OutlineMat.node_tree.nodes['maintexoralpha'].inputs[0].default_value = 1.0
+                    OutlineMat.node_tree.nodes['maintexoralpha'].blend_type = 'MULTIPLY'
+                elif MainImage:
+                    OutlineMat.node_tree.nodes['outlinealpha'].image = MainImage
+                    OutlineMat.node_tree.nodes['maintexoralpha'].inputs[0].default_value = 1.0
+                OutlineMat.node_tree.nodes['outlinetransparency'].inputs[0].default_value = 1.0
+                ob.material_slots[index + outlineStart].material = OutlineMat
+            #update polygon material indexes
+            for mat in mats_to_gons:
+                for gon in mats_to_gons[mat]:
+                    gon.material_index = new_mat_list_order.index(mat)
 
-                    def moveUp():
-                        return bpy.ops.object.material_slot_move(direction='UP')
-
-                    while moveUp() != {"CANCELLED"}:
-                        pass
-
-                    OutlineMat = bpy.data.materials['KK Outline'].copy()
-                    OutlineMat.name = 'Outline ' + genType
-                    ob.data.materials.append(OutlineMat)
-
-                    #redraw UI with each material append to prevent crashing
-                    bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-
-                    #Make the new outline the first outline in the material list
-                    ob.active_material_index = ob.data.materials.find(OutlineMat.name)
-                    while ob.active_material_index > outlineStart:
-                        #print(AlphaImage)
-                        #print(ob.active_material_index)
-                        moveUp()
-
-                    #and after it's done moving...
-                        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)      
-                else:
-                    kklog(genType + ' had no alphamask or maintex')
-
-        #separate hair outline loop to prevent crashing
-        for ob in hair_objects:
-            bpy.context.view_layer.objects.active = ob
-            for OutlineMat in ob.material_slots:
-                if 'Outline ' in OutlineMat.name:
-                    genType = OutlineMat.name.replace('Outline ','')
-                    #print(genType)
-                    AlphaImage = ob.material_slots['KK ' + genType].material.node_tree.nodes['Gentex'].node_tree.nodes['hairAlpha'].image
-                    MainImage = ob.material_slots['KK ' + genType].material.node_tree.nodes['Gentex'].node_tree.nodes['hairMainTex'].image
-                    #print(genType)
-                    #print(MainImage)
-                    if AlphaImage:
-                        OutlineMat.material.node_tree.nodes['outlinealpha'].image = AlphaImage
-                        OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs[0].default_value = 1.0
-                        OutlineMat.material.node_tree.nodes['maintexoralpha'].blend_type = 'MULTIPLY'
-                    elif MainImage:
-                        OutlineMat.material.node_tree.nodes['outlinealpha'].image = MainImage
-                        OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs[0].default_value = 1.0
-                    
-                    OutlineMat.material.node_tree.nodes['outlinetransparency'].inputs[0].default_value = 1.0
-    
-        #Add a general outline that covers the rest of the materials on the hair object that don't need transparency
-        for ob in hair_objects:
-            bpy.context.view_layer.objects.active = ob
-            mod = ob.modifiers.new(
-                type='SOLIDIFY',
-                name='Outline Modifier')
-            mod.thickness = 0.0005
-            mod.offset = 1
-            mod.material_offset = outlineStart
-            mod.use_flip_normals = True
-            mod.use_rim = False
-            mod.show_expanded = False
-            hairOutlineMat = bpy.data.materials['KK Outline'].copy()
-            hairOutlineMat.name = 'KK Hair Outline'
-            ob.data.materials.append(hairOutlineMat)
-
-            #hide alts
-            if ob.name[:12] == 'Hair Outfit ' and ob.name != 'Hair Outfit 00':
-                ob.hide = True
-                ob.hide_render = True
+    #Add a general outline that covers the rest of the materials on the hair object that don't need transparency
+    for ob in hair_objects:
+        bpy.context.view_layer.objects.active = ob
+        mod = ob.modifiers.new(
+            type='SOLIDIFY',
+            name='Outline Modifier')
+        mod.thickness = 0.0005
+        mod.offset = 1
+        mod.material_offset = outlineStart if not single_outline_mode else 200
+        mod.use_flip_normals = True
+        mod.use_rim = False
+        mod.show_expanded = False
+        hairOutlineMat = bpy.data.materials['KK Outline'].copy()
+        hairOutlineMat.name = 'KK Hair Outline'
+        ob.data.materials.append(hairOutlineMat)
+        #hide alts
+        if ob.name[:12] == 'Hair Outfit ' and ob.name != 'Hair Outfit 00':
+            ob.hide = True
+            ob.hide_render = True
 
     #Add a standard outline to all other objects
     outfit_objects = [obj for obj in bpy.data.objects if obj.get('KKBP outfit ID') != None and 'Hair Outfit ' not in obj.name and obj.type == 'MESH']
@@ -1052,77 +1031,49 @@ def add_outlines(single_outline_mode):
             #Get the length of the material list before starting
             outlineStart[ob.name] = len(ob.material_slots)
             
-            #done this way because the range changes length during the loop
-            for matindex in range(0, outlineStart[ob.name],1):
-                genMat = ob.material_slots[matindex]
-                genType = genMat.name.replace('KK ','')
-                #print(genType)
-                
-                try:
-                    MainImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Maintex'].image
-                    AlphaImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Alphamask'].image
-                    
-                    if MainImage != None or AlphaImage != None:
-                        transpType = 'alpha'
-                        if AlphaImage != None:
-                            Image = AlphaImage
-                        else:
-                            transpType = 'main'
-                            Image = MainImage
-                        
-                        #set the material as active and move to the top of the material list
-                        ob.active_material_index = ob.data.materials.find(genMat.name)
+            #link all polygons to material name
+            mats_to_gons = {}
+            for slot in ob.material_slots:
+                mats_to_gons[slot.material.name] = []
+            for gon in ob.data.polygons:
+                    mats_to_gons[ob.material_slots[gon.material_index].material.name].append(gon)
+            #find all materials that use an alpha mask or maintex
+            alpha_users = []
+            for mat in ob.material_slots:
+                AlphaImage = mat.material.node_tree.nodes['Gentex'].node_tree.nodes['Alphamask'].image
+                MainImage = mat.material.node_tree.nodes['Gentex'].node_tree.nodes['Maintex'].image
+                if AlphaImage or MainImage:
+                    alpha_users.append(mat.material.name)
+            #reorder material_list to place alpha/maintex users first
+            new_mat_list_order = [mat_slot.material.name for mat_slot in ob.material_slots if mat_slot.material.name not in alpha_users]
+            new_mat_list_order = alpha_users + new_mat_list_order
+            #reorder mat slot list
+            for index, mat_slot in enumerate(ob.material_slots):
+                mat_slot.material = bpy.data.materials[new_mat_list_order[index]]
+            #create empty slots for new alpha user outlines
+            for mat in alpha_users:
+                ob.data.materials.append(None)
+            #fill alpha user outline materials, and fill image node
+            for index, mat in enumerate(alpha_users):
+                OutlineMat = bpy.data.materials['KK Outline'].copy()
+                OutlineMat.name = mat.replace('KK ', 'Outline ')
+                AlphaImage = ob.material_slots[mat].material.node_tree.nodes['Gentex'].node_tree.nodes['Alphamask'].image
+                MainImage = ob.material_slots[mat].material.node_tree.nodes['Gentex'].node_tree.nodes['Maintex'].image
+                if AlphaImage:
+                    OutlineMat.node_tree.nodes['outlinealpha'].image = AlphaImage
+                    OutlineMat.node_tree.nodes['maintexoralpha'].inputs[0].default_value = 1.0
+                    OutlineMat.node_tree.nodes['maintexoralpha'].blend_type = 'MULTIPLY'
+                elif MainImage:
+                    OutlineMat.node_tree.nodes['outlinealpha'].image = MainImage
+                    OutlineMat.node_tree.nodes['maintexoralpha'].inputs[0].default_value = 1.0
+                OutlineMat.node_tree.nodes['outlinetransparency'].inputs[0].default_value = 1.0
+                ob.material_slots[index + outlineStart[ob.name]].material = OutlineMat
+            #update polygon material indexes
+            for mat in mats_to_gons:
+                for gon in mats_to_gons[mat]:
+                    gon.material_index = new_mat_list_order.index(mat)
 
-                        def moveUp():
-                            return bpy.ops.object.material_slot_move(direction='UP')
-
-                        while moveUp() != {"CANCELLED"}:
-                            pass
-
-                        OutlineMat = bpy.data.materials['KK Outline'].copy()
-                        OutlineMat.name = 'Outline ' + genType
-                        ob.data.materials.append(OutlineMat)
-
-                        #redraw UI with each material append to prevent crashing
-                        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-
-                        #Make the new outline the first outline in the material list
-                        ob.active_material_index = ob.data.materials.find(OutlineMat.name)
-                        while ob.active_material_index > outlineStart[ob.name]:
-                            moveUp()
-                            #print(ob.active_material_index)
-
-                        #and after it's done moving...
-                            bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-                            
-                except:
-                    kklog(genType + ' had a maintex image but no transparency')
-
-    #print(outlineStart)
-    #separate loop to prevent crashing
-    for ob in outfit_objects:
-        if not single_outline_mode:
-            bpy.context.view_layer.objects.active = ob
-            for OutlineMat in ob.material_slots:
-                if 'Outline ' in OutlineMat.name:
-                    genType = OutlineMat.name.replace('Outline ','')
-                    MainImage = ob.material_slots['KK ' + genType].material.node_tree.nodes['Gentex'].node_tree.nodes['Maintex'].image
-                    AlphaImage = ob.material_slots['KK ' + genType].material.node_tree.nodes['Gentex'].node_tree.nodes['Alphamask'].image
-                    #print(genType)
-                    #print(MainImage)
-                    #print(AlphaImage)
-
-                    if AlphaImage != None:
-                        OutlineMat.material.node_tree.nodes['outlinealpha'].image = AlphaImage
-                        OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs[0].default_value = 0.0
-                    else:
-                        OutlineMat.material.node_tree.nodes['outlinealpha'].image = MainImage
-                        OutlineMat.material.node_tree.nodes['maintexoralpha'].inputs[0].default_value = 1.0
-
-                    OutlineMat.material.node_tree.nodes['outlinetransparency'].inputs[0].default_value = 1.0
-        else:
-            outlineStart[ob.name] = 200
-        
+    for ob in outfit_objects:    
         #Add a general outline that covers the rest of the materials on the object that don't need transparency
         bpy.context.view_layer.objects.active = ob
         mod = ob.modifiers.new(
@@ -1130,12 +1081,11 @@ def add_outlines(single_outline_mode):
             name='Outline Modifier')
         mod.thickness = 0.0005
         mod.offset = 1
-        mod.material_offset = outlineStart[ob.name]
+        mod.material_offset = outlineStart[ob.name] if not single_outline_mode else 200
         mod.use_flip_normals = True
         mod.use_rim = False
         mod.show_expanded = False
         ob.data.materials.append(bpy.data.materials['KK Outline'])
-
         #hide alts
         if 'Indoor shoes Outfit ' in ob.name or ' shift Outfit ' in ob.name or ' hang Outfit ' in ob.name or (ob.name[:7] == 'Outfit ' and ob.name != 'Outfit 00') or (ob.name[:12] == 'Hair Outfit ' and ob.name != 'Hair Outfit 00'):
             ob.hide = True
