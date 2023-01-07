@@ -1,0 +1,215 @@
+{
+    "rokoko_custom_names": true,
+    "version": 1,
+    "bones": {
+        "custom_bone_cf_j_hips": [
+            "cf_j_hips",
+            "torso"
+        ],
+        "custom_bone_cf_j_spine01": [
+            "cf_j_spine01",
+            "spine_fk"
+        ],
+        "custom_bone_cf_j_spine02": [
+            "cf_j_spine02",
+            "chest_fk"
+        ],
+        "custom_bone_cf_j_spine03": [
+            "cf_j_spine03",
+            "upper chest_fk"
+        ],
+        "custom_bone_cf_j_arm00_l": [
+            "cf_j_arm00_l",
+            "left arm_fk"
+        ],
+        "custom_bone_cf_j_forearm01_l": [
+            "cf_j_forearm01_l",
+            "left elbow_fk"
+        ],
+        "custom_bone_cf_j_hand_l": [
+            "cf_j_hand_l",
+            "left wrist_fk"
+        ],
+        "custom_bone_cf_j_index01_l": [
+            "cf_j_index01_l",
+            "indexfinger1_l"
+        ],
+        "custom_bone_cf_j_index02_l": [
+            "cf_j_index02_l",
+            "indexfinger2_l"
+        ],
+        "custom_bone_cf_j_index03_l": [
+            "cf_j_index03_l",
+            "indexfinger3_l"
+        ],
+        "custom_bone_cf_j_little01_l": [
+            "cf_j_little01_l",
+            "littlefinger1_l"
+        ],
+        "custom_bone_cf_j_little02_l": [
+            "cf_j_little02_l",
+            "littlefinger2_l"
+        ],
+        "custom_bone_cf_j_little03_l": [
+            "cf_j_little03_l",
+            "littlefinger3_l"
+        ],
+        "custom_bone_cf_j_middle01_l": [
+            "cf_j_middle01_l",
+            "middlefinger1_l"
+        ],
+        "custom_bone_cf_j_middle02_l": [
+            "cf_j_middle02_l",
+            "middlefinger2_l"
+        ],
+        "custom_bone_cf_j_middle03_l": [
+            "cf_j_middle03_l",
+            "middlefinger3_l"
+        ],
+        "custom_bone_cf_j_ring01_l": [
+            "cf_j_ring01_l",
+            "ringfinger1_l"
+        ],
+        "custom_bone_cf_j_ring02_l": [
+            "cf_j_ring02_l",
+            "ringfinger2_l"
+        ],
+        "custom_bone_cf_j_ring03_l": [
+            "cf_j_ring03_l",
+            "ringfinger3_l"
+        ],
+        "custom_bone_cf_j_thumb01_l": [
+            "cf_j_thumb01_l",
+            "thumb0_l"
+        ],
+        "custom_bone_cf_j_thumb02_l": [
+            "cf_j_thumb02_l",
+            "thumb1_l"
+        ],
+        "custom_bone_cf_j_thumb03_l": [
+            "cf_j_thumb03_l",
+            "thumb2_l"
+        ],
+        "custom_bone_cf_j_arm00_r": [
+            "cf_j_arm00_r",
+            "right arm_fk"
+        ],
+        "custom_bone_cf_j_forearm01_r": [
+            "cf_j_forearm01_r",
+            "right elbow_fk"
+        ],
+        "custom_bone_cf_j_hand_r": [
+            "cf_j_hand_r",
+            "right wrist_fk"
+        ],
+        "custom_bone_cf_j_index01_r": [
+            "cf_j_index01_r",
+            "indexfinger1_r"
+        ],
+        "custom_bone_cf_j_index02_r": [
+            "cf_j_index02_r",
+            "indexfinger2_r"
+        ],
+        "custom_bone_cf_j_index03_r": [
+            "cf_j_index03_r",
+            "indexfinger3_r"
+        ],
+        "custom_bone_cf_j_little01_r": [
+            "cf_j_little01_r",
+            "littlefinger1_r"
+        ],
+        "custom_bone_cf_j_little02_r": [
+            "cf_j_little02_r",
+            "littlefinger2_r"
+        ],
+        "custom_bone_cf_j_little03_r": [
+            "cf_j_little03_r",
+            "littlefinger3_r"
+        ],
+        "custom_bone_cf_j_middle01_r": [
+            "cf_j_middle01_r",
+            "middlefinger1_r"
+        ],
+        "custom_bone_cf_j_middle02_r": [
+            "cf_j_middle02_r",
+            "middlefinger2_r"
+        ],
+        "custom_bone_cf_j_middle03_r": [
+            "cf_j_middle03_r",
+            "middlefinger3_r"
+        ],
+        "custom_bone_cf_j_ring01_r": [
+            "cf_j_ring01_r",
+            "ringfinger1_r"
+        ],
+        "custom_bone_cf_j_ring02_r": [
+            "cf_j_ring02_r",
+            "ringfinger2_r"
+        ],
+        "custom_bone_cf_j_ring03_r": [
+            "cf_j_ring03_r",
+            "ringfinger3_r"
+        ],
+        "custom_bone_cf_j_thumb01_r": [
+            "cf_j_thumb01_r",
+            "thumb0_r"
+        ],
+        "custom_bone_cf_j_thumb02_r": [
+            "cf_j_thumb02_r",
+            "thumb1_r"
+        ],
+        "custom_bone_cf_j_thumb03_r": [
+            "cf_j_thumb03_r",
+            "thumb2_r"
+        ],
+        "custom_bone_cf_j_neck": [
+            "cf_j_neck",
+            "neck"
+        ],
+        "custom_bone_cf_j_head": [
+            "cf_j_head",
+            "head"
+        ],
+        "custom_bone_cf_j_waist01": [
+            "cf_j_waist01",
+            "hips_fk"
+        ],
+        "custom_bone_cf_j_thigh00_l": [
+            "cf_j_thigh00_l",
+            "left leg_fk"
+        ],
+        "custom_bone_cf_j_leg01_l": [
+            "cf_j_leg01_l",
+            "left knee_fk"
+        ],
+        "custom_bone_cf_j_foot_l": [
+            "cf_j_foot_l",
+            "left ankle_fk"
+        ],
+        "custom_bone_cf_j_toes_l": [
+            "cf_j_toes_l",
+            "left toe_fk"
+        ],
+        "custom_bone_cf_j_thigh00_r": [
+            "cf_j_thigh00_r",
+            "right leg_fk"
+        ],
+        "custom_bone_cf_j_leg01_r": [
+            "cf_j_leg01_r",
+            "right knee_fk"
+        ],
+        "custom_bone_cf_j_foot_r": [
+            "cf_j_foot_r",
+            "right ankle_fk"
+        ],
+        "custom_bone_cf_j_toes_r": [
+            "cf_j_toes_r",
+            "right toe_fk"
+        ],
+        "custom_bone_cf_j_shoulder_l": [
+            "cf_j_shoulder_l",
+            "left shoulder"
+        ]
+    },
+    "shapes": {}
+}
