@@ -1,3 +1,12 @@
+### Changes for V6.3.0
+* Blender 3.4 support
+    * Models will no longer get a [KeyError 'color'] error during import
+    * Baking with KKBP 6.3.0 will only work on Blender 3.4+ due to a change with the Mix node
+* Added a script to generate a pose asset library from ripped Koikatsu animation data
+    * Open the .py file in KKBP / extras / animationlibrary for usage instructions
+    * See [this video](https://user-images.githubusercontent.com/65811931/211217974-66e3a961-8e40-4244-b7a4-11f6d4bbcb14.mp4) for a finished example
+* Importing is slightly faster for cards that have a lot of alphamasks or maintexes
+
 ### Changes for V6.2.0
 * Dark colors and textures for clothes and accessories are now much closer to the in-game look
     * This uses the darkening code from [Xukumi KKShadersPlus](https://github.com/xukmi/KKShadersPlus/blob/main/Shaders/Item/)

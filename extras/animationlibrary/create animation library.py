@@ -1,23 +1,35 @@
 #This will take a folder full of fbx animation files ripped from the game and create a blender animation library using the current model (for thumbnails)
-#subfolder names will be used to categorize and tag them
 
-#import a character with rigify armature
-#make sure torso, torso tweak, arm fk, fingers detail, leg fk Rigify layers are visible
-#make sure all iks are toggled off in rigify settings for the four limbs
-#make sure you've got a camera pointed at the model
-#import a random koikatsu fbx animation file
-#make sure ALL rokoko remapping / naming schemes are already setup using the random file (it just needs to be done once, then you can hit the save button to use it in any other file)
-#delete the random fbx animation you imported
-#make sure the "folder" variable below is set properly
-#Run this file in the blender scripting tab
-#It will take about six hours on a good CPU to generate the library (for ~700 poses / animations which is about 2gb of fbx files)
-#remember to save the library file when it's done
-#remember to purge orphan data when it's done
+#  Usage instructions:
+#  Export koikatsu fbx animation files using https://www.youtube.com/watch?v=XFt12n7ByBI&t=465s
+#      but __don't__ export the mesh along with it. This can be avoided by closing the body 00 tab before exporting
+#      You can also export multiple animations at the same time by shift clicking them in the window 
+#  put all the fbx files you exported into one folder
+#  any subfolder names in that folder will be used to tag them
 
-import bpy, mathutils, os, time
+#  import a character with a rigify armature
+#  make sure you've got a camera and light pointed at the model
+#  Use https://www.youtube.com/watch?v=Nyxeb48mUfs&t=713s to setup the Rokoko retargeting addon with a random koikatsu fbx animation file from your folder
+#      (make sure torso, torso tweak, arm fk, fingers detail, leg fk Rigify layers are visible)
+#      (make sure all iks are toggled off in rigify settings for the four limbs)
+#      (make sure ALL rokoko remapping / naming schemes are already setup using the random file)
+#      (Alternatively, you can import the included "Rokoko custom target naming" .json file included in the /extras/animationlibrary/ directory to set it automatically)
+#      (it just needs to be done once, then you can hit the save button in the rokoko retargeting panel to use it in any other file)
+#  delete the random fbx animation you imported (setup is complete at this point)
 
+#  make sure the "folder" variable below is set properly:
 folder = r"C:\Users\you\Desktop\my folder with all fbx exports"
 
+#  Copy paste this script into the blender scripting tab and run it
+#  It will take about six hours on a good CPU to generate the library (six hours for ~700 poses / animations which is about 2gb of fbx files)
+#  You can also do it in small batches and rotate out the already imported fbx files for new ones
+#  remember to save the library file when it's done
+#  remember to purge orphan data when it's done
+
+
+
+
+import bpy, mathutils, os, time
 if __name__ == "__main__":
     start = time.time()
     rigify_armature = bpy.data.objects['RIG-Armature']

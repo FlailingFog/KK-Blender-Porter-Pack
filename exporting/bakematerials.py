@@ -190,9 +190,9 @@ def bake_pass(resolutionMultiplier, folderpath, bake_type):
     #if this is a light or dark pass, make sure the RawShade group is a constant light or dark
     if bake_type in ['light', 'dark']:
         raw = bpy.data.node_groups['Raw Shading']
-        getOut = raw.nodes['breaknode'].inputs[1].links[0]
+        getOut = raw.nodes['breaknode'].inputs[6].links[0]
         raw.links.remove(getOut)
-        raw.nodes['breaknode'].inputs[1].default_value = (1,1,1,1) if bake_type == 'light' else (0,0,0,1)
+        raw.nodes['breaknode'].inputs[6].default_value = (1,1,1,1) if bake_type == 'light' else (0,0,0,1)
 
     #go through each material slot
     for currentmaterial in object_to_bake.data.materials:
@@ -322,7 +322,7 @@ def bake_pass(resolutionMultiplier, folderpath, bake_type):
     
     #reset raw shading group state
     if bake_type in ['light', 'dark']:
-        raw.links.new(raw.nodes['breakreroute'].outputs[0], raw.nodes['breaknode'].inputs[1])
+        raw.links.new(raw.nodes['breakreroute'].outputs[0], raw.nodes['breaknode'].inputs[6])
 
 def start_baking(folderpath, resolutionMultiplier, light, dark, norm):
     #enable transparency
