@@ -7,7 +7,7 @@
 #make sure you've got a camera pointed at the model
 #import a random koikatsu fbx animation file
 #make sure ALL rokoko remapping / naming schemes are already setup using the random file (it just needs to be done once, then you can hit the save button to use it in any other file)
-#delete the random fbx animation file
+#delete the random fbx animation you imported
 #make sure the "folder" variable below is set properly
 #Run this file in the blender scripting tab
 #It will take about six hours on a good CPU to generate the library (for ~700 poses / animations which is about 2gb of fbx files)
@@ -75,12 +75,12 @@ if __name__ == "__main__":
             'suiei':'Swim',
             'tachi':'Stand',
             'manken':'Read',
-            'soine':'Sleep (2)',
+            'soine':'Lie (2)',
             'kasa':'Umbrella',
             'konbou':'Club',
             'aruki':'Walk',
             'haruki':'Run',
-            'ne_0':'Sleep_0',
+            'ne_0':'Lie_0',
             'nugi':'Undress',
         }
         for item in translation_dict:
