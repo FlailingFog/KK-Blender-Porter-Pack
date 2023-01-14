@@ -4,7 +4,7 @@ bl_info = {
     "author" : "a blendlet and some blenderchads",
     "location" : "View 3D > Tool Shelf > KKBP and Image Editor > Tool Shelf > KKBP",
     "description" : "Scripts to automate cleanup of a Koikatsu export",
-    "version": (6, 3, 0),
+    "version": (6, 3, 1),
     "blender" : (3, 4, 0),
     "category" : "3D View",
     "tracker_url" : "https://github.com/FlailingFog/KK-Blender-Porter-Pack/"
@@ -40,6 +40,8 @@ def wrap(register_bool):
     from .exporting.exportfbx import export_fbx
 
     from .extras.importstudio import import_studio
+    from .extras.animationlibrary.createmapassetlibrary import map_asset_lib
+    from .extras.animationlibrary.createanimationlibrary import anim_asset_lib
     from .extras.linkshapekeys import link_shapekeys
     from .extras.importanimation import import_animation
     from .extras.switcharmature import switch_armature
@@ -73,7 +75,9 @@ def wrap(register_bool):
         image_dark_convert,
 
         import_animation, 
-        import_studio, 
+        import_studio,
+        map_asset_lib,
+        anim_asset_lib,
         link_shapekeys,
         switch_armature,
         separate_meshes,

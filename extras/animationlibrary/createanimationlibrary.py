@@ -8,7 +8,7 @@
 #  any subfolder names in that folder will be used to tag them
 
 #  import a character with a rigify armature
-#  make sure you've got a camera and light pointed at the model
+#  make sure you've got a camera and light pointed at the model (put it at an angle for better thumbnails)
 #  Use https://www.youtube.com/watch?v=Nyxeb48mUfs&t=713s to setup the Rokoko retargeting addon with a random koikatsu fbx animation file from your folder
 #      (make sure torso, torso tweak, arm fk, fingers detail, leg fk Rigify layers are visible)
 #      (make sure all iks are toggled off in rigify settings for the four limbs)
@@ -17,10 +17,7 @@
 #      (it just needs to be done once, then you can hit the save button in the rokoko retargeting panel to use it in any other file)
 #  delete the random fbx animation you imported (setup is complete at this point)
 
-#  make sure the "folder" variable below is set properly:
-folder = r"C:\Users\you\Desktop\my folder with all fbx exports"
-
-#  Copy paste this script into the blender scripting tab and run it
+#  Run the script by pressing the button in the panel
 #  It will take about six hours on a good CPU to generate the library (six hours for ~700 poses / animations which is about 2gb of fbx files)
 #  You can also do it in small batches and rotate out the already imported fbx files for new ones
 #  remember to save the library file when it's done
@@ -29,8 +26,9 @@ folder = r"C:\Users\you\Desktop\my folder with all fbx exports"
 
 
 
-import bpy, mathutils, os, time
-if __name__ == "__main__":
+import bpy, os, time
+from bpy.props import StringProperty
+def main(folder):
     start = time.time()
     rigify_armature = bpy.data.objects['RIG-Armature']
     bpy.ops.object.mode_set(mode = 'OBJECT')
@@ -125,3 +123,30 @@ if __name__ == "__main__":
         #bpy.ops.wm.save_mainfile()
 
     print(str(time.time() - start))
+
+
+class anim_asset_lib(bpy.types.Operator):
+    bl_idname = "kkb.createanimassetlib"
+    bl_label = "Create animation asset library"
+    bl_description = "Creates an animation library using the current file and current character. Open the folder containing the animation files exported with SB3Utility"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    directory : StringProperty(maxlen=1024, default='', subtype='FILE_PATH', options={'HIDDEN'})
+    filter_glob : StringProperty(default='', options={'HIDDEN'})
+    data = None
+    mats_uv = None
+    structure = None
+    
+    def execute(self, context):        
+        main(self.directory)
+        return {'FINISHED'}
+        
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+    
+if __name__ == "__main__":
+    bpy.utils.register_class(anim_asset_lib)
+    
+    # test call
+    print((bpy.ops.kkb.importstudio('INVOKE_DEFAULT')))
