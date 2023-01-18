@@ -209,6 +209,70 @@
         "custom_bone_cf_j_shoulder_l": [
             "cf_j_shoulder_l",
             "left shoulder"
+        ],
+        "custom_bone_cf_j_waist02": [
+            "cf_j_waist02",
+            "cf_j_waist02"
+        ],
+        "custom_bone_cf_j_shoulder_r": [
+            "cf_j_shoulder_r",
+            "right shoulder"
+        ],
+        "custom_bone_cf_j_kokan": [
+            "cf_j_kokan",
+            "cf_j_kokan"
+        ],
+        "custom_bone_cf_j_ana": [
+            "cf_j_ana",
+            "cf_j_ana"
+        ],
+        "custom_bone_cf_d_bust00": [
+            "cf_d_bust00",
+            "breasts handle"
+        ],
+        "custom_bone_cf_j_bust01_l": [
+            "cf_j_bust01_l",
+            "left breast handle"
+        ],
+        "custom_bone_cf_j_bust02_l": [
+            "cf_j_bust02_l",
+            "cf_j_bust02_l"
+        ],
+        "custom_bone_cf_j_bust03_l": [
+            "cf_j_bust03_l",
+            "cf_j_bust03_l"
+        ],
+        "custom_bone_cf_j_bnip02root_l": [
+            "cf_j_bnip02root_l",
+            "cf_j_bnip02root_l"
+        ],
+        "custom_bone_cf_j_bnip02_l": [
+            "cf_j_bnip02_l",
+            "cf_j_bnip02_l"
+        ],
+        "custom_bone_cf_j_bust01_r": [
+            "cf_j_bust01_r",
+            "right breast handle"
+        ],
+        "custom_bone_cf_j_bust02_r": [
+            "cf_j_bust02_r",
+            "cf_j_bust02_r"
+        ],
+        "custom_bone_cf_j_bust03_r": [
+            "cf_j_bust03_r",
+            "cf_j_bust03_r"
+        ],
+        "custom_bone_cf_j_bnip02root_r": [
+            "cf_j_bnip02root_r",
+            "cf_j_bnip02root_r"
+        ],
+        "custom_bone_cf_j_bnip02_r": [
+            "cf_j_bnip02_r",
+            "cf_j_bnip02_r"
+        ],
+        "custom_bone_cf_j_siri_l": [
+            "cf_j_siri_l",
+            "left buttock handle"
         ]
     },
     "shapes": {}

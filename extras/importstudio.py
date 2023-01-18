@@ -115,8 +115,8 @@ def import_studio_objects(directory):
                         if node.type == 'TEX_IMAGE':
                             bpy.data.images[node.image.name].colorspace_settings.name = 'sRGB'
                             image = bpy.data.images[node.image.name]
-                            print(already_loaded_images)
-                            print(image.name.replace('.dds', '.png'))
+                            #print(already_loaded_images)
+                            #print(image.name.replace('.dds', '.png'))
                             if ('.dds' in image.name or '.DDS' in image.name) and image.name.replace('.dds', '.png') not in already_loaded_images:
                                 new_path = image.filepath.replace(".dds", ".png").replace(".DDS", ".png")
                                 new_image_name = image.name.replace(".dds", ".png").replace(".DDS", ".png")
@@ -294,9 +294,8 @@ def import_studio_objects(directory):
                             material_slot.material.node_tree.nodes['Shader'].node_tree.links.remove(getOut)
                             material_slot.material.node_tree.nodes['Shader'].node_tree.nodes['alphatoggle'].inputs['maintex alpha'].default_value = (1,1,1,1)   
                         else:
-                            #but if there is a main image, load in the darktex and enable it
-                            #then create a darktex too
-                            bpy.context.scene.kkbp.import_dir = os.path.dirname(bpy.data.filepath)
+                            #but if there is a main image, create a darktex for it and load it in
+                            bpy.context.scene.kkbp.import_dir = os.path.dirname(bpy.data.filepath) + '\\'
                             darktex = create_darktex(bpy.data.images[image.name], [.764, .880, 1]) #create the darktex now and load it in later
                             bpy.context.scene.kkbp.import_dir = ''
 

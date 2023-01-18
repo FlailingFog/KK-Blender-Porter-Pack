@@ -7,10 +7,10 @@
 
 #  Run this button from the kkbp extras section of the panel
 #  You can also do it in small batches and rotate out the already imported fbx files for new ones
+#  Or you can put a large list and kill blender when you want to pause the import process (it will resume from where it left off next time you run the script)
 #  remember to save the library file when it's done
-#  remember to purge orphan data when it's done
 
-import bpy, os, time
+import bpy, os, time, functools, numpy as np
 from bpy.props import StringProperty
 from ..importstudio import import_studio_objects
 def main(folder):
@@ -18,10 +18,16 @@ def main(folder):
     #bpy.ops.object.mode_set(mode = 'OBJECT')
 
     #import the fbx files
-    fbx_folders = [(folder + sub) for sub in os.listdir(folder)] 
+    fbx_folders = [(folder + sub) for sub in os.listdir(folder) if '.blend' not in sub] 
     for map in fbx_folders:
         category = map.replace(folder, '')
         filename = map
+        blend_filepath = map.replace(category,'') + category + '.blend'
+
+        #if a .blend file already exists, don't process this fbx file
+        if os.path.exists(blend_filepath):
+            continue
+
         collection = bpy.data.collections.new(category)
         bpy.context.scene.collection.children.link(collection)
         layer_collection = bpy.context.view_layer.layer_collection
@@ -39,12 +45,20 @@ def main(folder):
         bpy.context.view_layer.active_layer_collection = layerColl
         import_studio_objects(map)
 
-        #apply map armature rotation
-        obj = bpy.context.object
-        bpy.ops.object.select_all(action='DESELECT')
-        obj.select_set(True)
-        bpy.context.view_layer.objects.active = obj
+        #skip if this was an empty folder
+        if len(bpy.data.objects) < 2:
+            bpy.data.collections.remove(collection)
+            continue
+        
+        print('bye bye armature')
+        #apply all armature transforms
+        arm = bpy.context.object
+        bpy.ops.object.select_all(action='SELECT')
+        #arm.select_set(True)
+        bpy.context.view_layer.objects.active = arm
         bpy.ops.object.transform_apply(location=True, rotation=True, scale=False)
+        #delete armature because the asset browser sucks
+        bpy.data.objects.remove(arm)
 
         #translate names
         name = filename.replace('-p_cf_body_bone-0.fbx', '')
@@ -149,6 +163,7 @@ def main(folder):
             'o_soto_mado',
             'o_koi_map80_00_s_0',
         ]
+        #print('mark objects pls')
         for obj in collection.all_objects:
             mark_it = True
             for item in reject_list:
@@ -157,10 +172,10 @@ def main(folder):
                     break
             if mark_it:
                 #apply transform then mark as asset
-                bpy.ops.object.select_all(action='DESELECT')
-                obj.select_set(True)
-                bpy.context.view_layer.objects.active = obj
-                bpy.ops.object.transform_apply(location=True, rotation=True, scale=False)
+                #bpy.ops.object.select_all(action='DESELECT')
+                #obj.select_set(True)
+                #bpy.context.view_layer.objects.active = obj
+                #bpy.ops.object.transform_apply(location=True, rotation=True, scale=False)
                 obj.asset_mark()
                 obj.asset_data.description = filename
                 obj.asset_data.tags.new(obj.name)
@@ -168,11 +183,70 @@ def main(folder):
                 obj.asset_data.tags.new(category)
 
         #hide the collection afterwards
+        #print('go away collection')
         bpy.context.scene.view_layers[0].active_layer_collection.exclude = True
 
-        #save the file for crashes or pausing the imports
-        #bpy.ops.wm.save_mainfile()
+        #stolen script to generate thumbnails for all objects
+        # preview_generation_in_process = True
+        # tries = 0
+        # assets = [o for o in bpy.data.objects if o.asset_data]  # Select all object assets
+        # assets.extend([m for m in bpy.data.materials if m.asset_data])  # Select all material assets
 
+        # def sleep_until_previews_are_done(assets, callback):
+        #     while assets:  # Check if all previews have been generated
+        #         preview = assets[0].preview
+        #         if preview is None:            
+        #             assets[0].asset_generate_preview()
+        #             tries +=1
+        #             return 0.2
+        #         # If the preview is all black, means it was not generated :
+        #         arr = np.zeros((preview.image_size[0] * preview.image_size[1]) * 4, dtype=np.float32)
+        #         preview.image_pixels_float.foreach_get(arr)
+        #         if np.all((arr == 0)):            
+        #             assets[0].asset_generate_preview()
+        #             tries +=1
+        #             return 0.2
+        #         else:
+        #             assets.pop(0)
+        #             tries = 0
+        #         if tries > 5: #give up after five tries, sometimes it gets stuck on an entry
+        #             assets.pop(0)
+        #             tries = 0
+        #     callback()
+        #     return None
+
+        # def message_end():
+        #     preview_generation_in_process = False
+
+        # #begin asynchronous preview gen function for all objects
+        # bpy.app.timers.register(
+        #     functools.partial(
+        #         sleep_until_previews_are_done, 
+        #         assets, 
+        #         message_end
+        #     )
+        # )
+
+        #wait until previews are generated then save the file then reset the file
+        #while preview_generation_in_process:
+        #    time.sleep(10)
+        #    print('waiting for previews...')
+        print(blend_filepath)
+        bpy.ops.wm.save_as_mainfile(filepath = blend_filepath)
+        bpy.data.collections.remove(collection)
+        for block in bpy.data.objects:
+            bpy.data.objects.remove(block)
+        for block in bpy.data.meshes:
+            bpy.data.meshes.remove(block)
+        for block in bpy.data.materials:
+            bpy.data.materials.remove(block)
+        for block in bpy.data.armatures:
+            bpy.data.armatures.remove(block)
+        for block in bpy.data.images:
+            bpy.data.images.remove(block)
+        for block in bpy.data.node_groups:
+            bpy.data.node_groups.remove(block)
+        
     print(str(time.time() - start))
 
 

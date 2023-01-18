@@ -2,13 +2,16 @@
 
 #  Usage instructions:
 #  Export koikatsu fbx animation files using https://www.youtube.com/watch?v=XFt12n7ByBI&t=465s
-#      but __don't__ export the mesh along with it. This can be avoided by closing the body 00 tab before exporting
 #      You can also export multiple animations at the same time by shift clicking them in the window 
 #  put all the fbx files you exported into one folder
 #  any subfolder names in that folder will be used to tag them
 
 #  import a character with a rigify armature
 #  make sure you've got a camera and light pointed at the model (put it at an angle for better thumbnails)
+#      Suggested sun rotation [78.2739°, -40.516°, 27.3479°]
+#      Suggested camera location + rotation [-0.695381 m, -1.90263 m, 0.813071 m], [83.6°, -0°, -20°]
+#      Suggested camera resolution [100 x 100]
+#      Suggested Tpose model location + rotation [0,0,0], [0,0,0]
 #  Use https://www.youtube.com/watch?v=Nyxeb48mUfs&t=713s to setup the Rokoko retargeting addon with a random koikatsu fbx animation file from your folder
 #      (make sure torso, torso tweak, arm fk, fingers detail, leg fk Rigify layers are visible)
 #      (make sure all iks are toggled off in rigify settings for the four limbs)
@@ -16,14 +19,14 @@
 #      (Alternatively, you can import the included "Rokoko custom target naming" .json file included in the /extras/animationlibrary/ directory to set it automatically)
 #      (it just needs to be done once, then you can hit the save button in the rokoko retargeting panel to use it in any other file)
 #  delete the random fbx animation you imported (setup is complete at this point)
+#  save the file
 
 #  Run the script by pressing the button in the panel
 #  It will take about six hours on a good CPU to generate the library (six hours for ~700 poses / animations which is about 2gb of fbx files)
 #  You can also do it in small batches and rotate out the already imported fbx files for new ones
-#  remember to save the library file when it's done
-#  remember to purge orphan data when it's done
+#  Or you can put a large list and kill blender when you want to pause the import process (it will automatically save the file every 35 imports)
 
-
+#  recall that blender resets the fps to the framerate of the fbx file when importing
 
 
 import bpy, os, time
@@ -39,6 +42,9 @@ def main(folder):
         for file in files:
             if '.fbx' in file:
                 fbx_files.append((subdir, file, os.path.join(subdir, file)))
+
+    save_counter = 0
+    save_file_counter = 0
 
     for file in fbx_files:
         category = file[0].replace(folder, '')[1:]
@@ -77,21 +83,21 @@ def main(folder):
         #translate name
         name = filename.replace('-p_cf_body_bone-0.fbx', '')
         translation_dict = {
-            'isu_':'Chair_',
-            'suwari':'Sit',
+            'isu_':'Seated_',
+            'suwari':'Sitting',
             'syagami':'Squat',
             'sadou':'Tea',
             'undou':'Excercise',
-            'suiei':'Swim',
-            'tachi':'Stand',
-            'manken':'Read',
-            'soine':'Lie (2)',
+            'suiei':'Swimming',
+            'tachi':'Standing',
+            'manken':'Reading',
+            'soine':'Laying2',
             'kasa':'Umbrella',
             'konbou':'Club',
-            'aruki':'Walk',
-            'haruki':'Run',
-            'ne_0':'Lie_0',
-            'nugi':'Undress',
+            'aruki':'Walking',
+            'haruki':'Running',
+            'ne_0':'Laying_0',
+            'nugi':'Undressing',
         }
         for item in translation_dict:
             name = name.replace(item, translation_dict[item])
@@ -118,11 +124,17 @@ def main(folder):
         imported_armature.select_set(True)
         bpy.context.view_layer.objects.active=imported_armature
         bpy.ops.object.delete(use_global=False, confirm=False)
+        bpy.data.armatures.remove(imported_armature)
 
-        #save the file for crashes or pausing the imports
-        #bpy.ops.wm.save_mainfile()
+        #start from a new file every 35 imoprts because the asset seems to behave better with multiple small files vs one large file
+        if save_counter == 35:
+            save_counter = 0
+            bpy.ops.wm.save_as_mainfile(filepath = bpy.data.filepath.replace('.blend', str(save_file_counter) + '.blend'))
+        else:
+            save_counter +=1
 
     print(str(time.time() - start))
+    bpy.ops.wm.save_mainfile()
 
 
 class anim_asset_lib(bpy.types.Operator):
