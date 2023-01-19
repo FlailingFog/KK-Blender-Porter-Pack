@@ -55,6 +55,12 @@ def clean_body():
             'o_tang_rigged'
             ]
         
+        smr_postfix_map = {
+            'cf_Ohitomi_R' : '.001',
+            'cf_O_namida_M' : '.001',
+            'cf_O_namida_S' : '.002',
+        }
+        
         #fill the dictionary on the body object with nothing
         body['KKBP materials'] = {}
         for mat in body_materials:
@@ -70,6 +76,11 @@ def clean_body():
                 body['KKBP materials']['o_tang_rigged'] = body_material['SMRMaterialNames'][0] + '.001'
             else:
                 body['KKBP materials'][body_material['SMRName']] = body_material['SMRMaterialNames'][0]
+                
+            #rename some materials if in smr mode
+            if bpy.context.scene.kkbp.categorize_dropdown == 'D' and body_material['SMRName'] in smr_postfix_map:
+                mat_name = body_material['SMRMaterialNames'][0] + smr_postfix_map[body_material['SMRName']]  
+                body['KKBP materials'][body_material['SMRName']] = mat_name              
                 
         if bpy.context.scene.kkbp.categorize_dropdown != 'D' and bpy.data.materials.get(body['KKBP materials']['o_tang_rigged']):
             #Separate rigged tongue from body object, parent it to the body so it's hidden in the outliner
