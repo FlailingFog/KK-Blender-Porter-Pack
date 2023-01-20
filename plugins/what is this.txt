@@ -1,4 +1,4 @@
-KKBP_Exporter v3.99 is a plugin to export characters from KK/KKS for use with KKBP
+KKBP_Exporter v4.03 is a plugin to export characters from KK/KKS for use with KKBP
 Place it in your /Koikatsu/BepInEx/plugins/ folder, or load it with KKManager.
 
 The Plugin dll in "net3.5" is for Koikatsu / Koikatsu Party
