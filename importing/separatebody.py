@@ -16,18 +16,8 @@ def clean_body():
         body.data.uv_layers[2].name = 'uv_underhair'
         body.data.uv_layers[3].name = 'uv_eyeshadow'
 
-        #rename the extra tongue material
         bpy.ops.object.mode_set(mode = 'EDIT')
         bpy.ops.mesh.select_all(action='DESELECT')
-        def delete_material(mat_list):
-            for mat in mat_list:
-                mat_found = body.data.materials.find(mat)
-                if mat_found > -1:
-                    bpy.context.object.active_material_index = mat_found
-                    bpy.ops.object.material_slot_select()
-                else:
-                    kklog('Material wasn\'t found when deleting body materials: ' + mat, 'warn')
-            bpy.ops.mesh.delete(type='VERT')
 
         #save body material listing to the body object using the SMR data
         json_file = open(bpy.context.scene.kkbp.import_dir + 'KK_SMRData.json')
@@ -184,6 +174,17 @@ def separate_everything(context):
             bpy.ops.object.mode_set(mode = 'EDIT')
             bpy.ops.mesh.select_all(action = 'DESELECT')
 
+            #delete the mask material if not in smr mode
+            bpy.ops.mesh.delete(type='VERT')
+            if bpy.context.scene.kkbp.categorize_dropdown != 'D':
+                for mat in outfit.material_slots:
+                    if 'm_Mask ' in mat.material.name:
+                        if mat.material.name[7:].isnumeric():
+                            bpy.context.object.active_material_index = outfit.data.materials.find(mat.material.name)
+                            bpy.ops.object.material_slot_select()
+                            bpy.ops.mesh.delete(type='VERT')
+            bpy.ops.mesh.select_all(action = 'DESELECT')
+
             outfit['KKBP outfit ID'] = int(outfit.name[-1:])
 
             #make uv names match body's names
@@ -206,6 +207,7 @@ def separate_everything(context):
                     #don't reparent hair if Categorize by SMR
                     if context.scene.kkbp.categorize_dropdown not in ['D']:
                         bpy.data.objects['Hair ' + outfit.name].parent = outfit
+
     bpy.context.view_layer.objects.active = body
     
     #Select any clothes pieces that are normally supposed to be hidden and hide them

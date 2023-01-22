@@ -4,6 +4,13 @@ from bpy.props import StringProperty
 
 from ..interface.dictionary_en import t
 
+def toggle_console():
+    #show the console so you can see some kind of progression
+    try:
+        bpy.ops.wm.console_toggle()
+    except:
+        return #only available on windows so it might error out for other platforms
+
 def kklog(log_text, type = 'standard'):
     if not bpy.data.texts.get('KKBP Log'):
         bpy.data.texts.new(name='KKBP Log')
@@ -79,6 +86,7 @@ class quick_import(bpy.types.Operator):
         #run commands based on selection
         if context.scene.kkbp.categorize_dropdown == 'A': #Automatic separation
             commands = [
+                toggle_console(),
                 import_pmx_models(context.scene.kkbp.import_dir),
                 bpy.ops.kkb.finalizepmx('INVOKE_DEFAULT'),
                 bpy.ops.kkb.shapekeys('INVOKE_DEFAULT'),
@@ -87,6 +95,7 @@ class quick_import(bpy.types.Operator):
                 bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT'),
                 bpy.ops.kkb.importeverything('INVOKE_DEFAULT'),
                 bpy.ops.kkb.importcolors('EXEC_DEFAULT'),
+                toggle_console(),
             ]
         elif context.scene.kkbp.categorize_dropdown == 'B': #Manual separation
             commands = [
@@ -99,6 +108,7 @@ class quick_import(bpy.types.Operator):
             ]
         elif context.scene.kkbp.categorize_dropdown == 'C': #Separate every piece
             commands = [
+                toggle_console(),
                 import_pmx_models(context.scene.kkbp.import_dir),
                 bpy.ops.kkb.finalizepmx('INVOKE_DEFAULT'),
                 bpy.ops.kkb.shapekeys('INVOKE_DEFAULT'),
@@ -108,6 +118,7 @@ class quick_import(bpy.types.Operator):
                 bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT'),
                 bpy.ops.kkb.importeverything('INVOKE_DEFAULT'),
                 bpy.ops.kkb.importcolors('EXEC_DEFAULT'),
+                toggle_console(),
             ]
         else: #SMR pipeline
             commands = [

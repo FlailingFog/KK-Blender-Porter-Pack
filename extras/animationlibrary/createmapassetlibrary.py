@@ -13,7 +13,9 @@
 import bpy, os, time, functools, numpy as np
 from bpy.props import StringProperty
 from ..importstudio import import_studio_objects
+from...importing.importbuttons import kklog, toggle_console
 def main(folder):
+    toggle_console()
     start = time.time()
     #bpy.ops.object.mode_set(mode = 'OBJECT')
 
@@ -248,6 +250,7 @@ def main(folder):
             bpy.data.node_groups.remove(block)
         
     print(str(time.time() - start))
+    toggle_console()
 
 
 class map_asset_lib(bpy.types.Operator):
