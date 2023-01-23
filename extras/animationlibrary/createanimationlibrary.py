@@ -8,8 +8,11 @@
 
 #  import a character with a rigify armature
 #  make sure you've got a camera and light pointed at the model (put it at an angle for better thumbnails)
-#      Suggested sun rotation [78.2739°, -40.516°, 27.3479°]
-#      Suggested camera location + rotation [-0.695381 m, -1.90263 m, 0.813071 m], [83.6°, -0°, -20°]
+#  make sure you've disabled the armature visibility (in the 3d view settings on the top bar, not in the outliner)
+#      Suggested X and Y axis lines: ON
+#      Suggested sun location and rotation [-0.958331 m, 0 m, 0 m] , [78.2739°, -40.516°, 27.3479°]
+#      Suggested world color [0,0,0]
+#      Suggested camera location + rotation [-0.695381 m, -1.90263 m, 0.813071 m] , [83.6°, -0°, -20°]
 #      Suggested camera resolution [150 x 150]
 #      Suggested Tpose model location + rotation [0,0,0], [0°,0°,0°]
 #  Use https://www.youtube.com/watch?v=Nyxeb48mUfs&t=713s to setup the Rokoko retargeting addon with a random koikatsu fbx animation file from your folder
@@ -21,12 +24,15 @@
 #  delete the random fbx animation you imported (setup is complete at this point)
 #  save the file
 
+#  enter rendered view
 #  Run the script by pressing the button in the panel
-#  It will take about twelve hours on a good CPU to generate the library (one hour per 35 poses, or twelve hours for ~700 poses / animations which adds up to about 2gb of fbx files)
-#  You can also do it in small batches and rotate out the already imported fbx files for new ones
-#  Or you can put a large list and kill blender when you want to pause the import process (it will automatically save the file every hour / every 35 imports)
-#  It does NOT pick up where it left off, so remove any animations that were already imported when you restart the import process
+#  It will take about two hours on a good CPU to generate the library (three minutes per 11 poses, or 2 hours for ~440 poses / animations which adds up to about 1.2gb of fbx files)
+#  You can also do it in small batches and rotate out the already imported fbx files for new ones (change your filename after each batch or the previous batches will be overwritten)
+#  Or you can put a large list and kill blender when you want to pause the import process (it will automatically save the file every 35 imports)
+#  It does NOT pick up where it left off, so remove any animations that were already imported when you restart the import process. Also change your filename or the batch generated before the pause will be overwritten
 
+#  when finished, open every asset file and run the script on the bottom of this file to reduce the filesize 
+#      (You can also copy paste the script into a text editor before running the script so you can have it automatically loaded on every asset file that will be produced)
 #  also recall that blender resets the fps to the framerate of the fbx file when importing
 
 
@@ -57,7 +63,8 @@ def main(folder):
     actions_from_set = []
 
     for file in fbx_files:
-        category = file[0].replace(folder, '')[1:]
+        original_file_number = file[0].replace(folder, '')[1:file[0].replace(folder, '')[1:].find('\\')]
+        category = file[0].replace(folder, '')[file[0].replace(folder, '')[1:].find('\\') + 2:]
         filename = file[1]
 
         #skip this file if the animation is for larger characters, or is a partial animation
@@ -92,6 +99,11 @@ def main(folder):
         current_action_name = imported_armature.animation_data.action.name
 
         #setup rokoko remapping
+        my_areas = bpy.context.workspace.screens[0].areas
+        for area in my_areas:
+                for space in area.spaces:
+                    if space.type == 'VIEW_3D':
+                        space.show_object_viewport_armature = True 
         bpy.context.scene.rsl_retargeting_armature_source = imported_armature
         bpy.ops.rsl.build_bone_list()
         bpy.ops.rsl.retarget_animation()
@@ -138,6 +150,8 @@ def main(folder):
             '_S_Loop':'Butt grope',
             '_S_Touch':'Butt grope start',
 
+            '_Idle': 'Idling',
+            '_Stop_Idle': 'Idling stop',
             '_OLoop':'Idling',
             '_OUT_Start':'Climax outside start',
             '_OUT_Loop':'Climax outside',
@@ -166,14 +180,25 @@ def main(folder):
         #render the first frame of the animation and set it as the preview
         bpy.context.scene.render.filepath = folder + r"\preview.png"
         print(file[2])
-        bpy.ops.render.render(write_still = True)
+        my_areas = bpy.context.workspace.screens[0].areas
+        for area in my_areas:
+                for space in area.spaces:
+                    if space.type == 'VIEW_3D':
+                        space.show_object_viewport_armature = False 
+        bpy.ops.render.opengl(write_still = True)
         with bpy.context.temp_override(id=action):
             bpy.ops.ed.lib_id_load_custom_preview(filepath=folder + r"\preview.png")
+        my_areas = bpy.context.workspace.screens[0].areas
+        for area in my_areas:
+                for space in area.spaces:
+                    if space.type == 'VIEW_3D':
+                        space.show_object_viewport_armature = True 
         action.name = name
         print(file[2]) #print the filename again so it gets through console spam
         #bpy.ops.poselib.create_pose_asset(activate_new_action=True, pose_name = name) #for pose assets instead
         action.asset_data.tags.new(filename)
         action.asset_data.tags.new(category)
+        action.asset_data.tags.new(original_file_number)
         #action.asset_data.tags.new('NSFW')
         action.asset_data.description = filename
         actions_from_set.append(action.name)
