@@ -10,14 +10,13 @@
 #  make sure you've got a camera and light pointed at the model (put it at an angle for better thumbnails)
 #  make sure you've disabled the armature visibility (in the 3d view settings on the top bar, not in the outliner)
 #      Suggested X and Y axis lines: ON
-#      Suggested sun location and rotation [-0.958331 m, 0 m, 0 m] , [78.2739°, -40.516°, 27.3479°]
+#      Suggested sun location and rotation [-1 m, 0 m, 0 m] , [78°, -40°, 27°]
 #      Suggested world color [0,0,0]
-#      Suggested camera location + rotation [-0.695381 m, -1.90263 m, 0.813071 m] , [83.6°, -0°, -20°]
+#      Suggested camera location + rotation [-0.7 m, -1.9 m, 0.8 m] , [83.6°, -0°, -20°]
 #      Suggested camera resolution [150 x 150]
 #      Suggested Tpose model location + rotation [0,0,0], [0°,0°,0°]
 #  Use https://www.youtube.com/watch?v=Nyxeb48mUfs&t=713s to setup the Rokoko retargeting addon with a random koikatsu fbx animation file from your folder
 #      (make sure torso, torso tweak, arm fk, fingers detail, leg fk Rigify layers are visible)
-#      (make sure all iks are toggled off in rigify settings for the four limbs)
 #      (make sure ALL rokoko remapping / naming schemes are already setup using the random file)
 #      (Alternatively, you can import the included "Rokoko custom target naming" .json file included in the /extras/animationlibrary/ directory to set it automatically)
 #      (it just needs to be done once, then you can hit the save button in the rokoko retargeting panel to use it in any other file)
@@ -35,11 +34,11 @@
 #      (You can also copy paste the script into a text editor before running the script so you can have it automatically loaded on every asset file that will be produced)
 #  also recall that blender resets the fps to the framerate of the fbx file when importing
 
-
-import bpy, os, time
+import bpy, os, time, mathutils
 from bpy.props import StringProperty
 from...importing.importbuttons import kklog, toggle_console
 def main(folder):
+
     #delete the armature before starting to reduce console spam
     if bpy.data.objects.get('Armature'):
         n = bpy.data.objects['Armature'].data.name
@@ -50,6 +49,16 @@ def main(folder):
     rigify_armature = bpy.data.objects['RIG-Armature']
     bpy.context.view_layer.objects.active=rigify_armature
     bpy.ops.object.mode_set(mode = 'OBJECT')
+
+    #disable IKs
+    rigify_armature.pose.bones["Right arm_parent"]["IK_FK"] = 1
+    rigify_armature.pose.bones["Left arm_parent"]["IK_FK"] = 1
+    rigify_armature.pose.bones["Right leg_parent"]["IK_FK"] = 1
+    rigify_armature.pose.bones["Left leg_parent"]["IK_FK"] = 1
+
+    #disable head follow
+    rigify_armature.pose.bones['torso']['neck_follow'] = 0.0
+    rigify_armature.pose.bones['torso']['head_follow'] = 0.0
 
     #import the fbx files
     fbx_files = []
@@ -103,10 +112,89 @@ def main(folder):
         for area in my_areas:
                 for space in area.spaces:
                     if space.type == 'VIEW_3D':
-                        space.show_object_viewport_armature = True 
+                        space.show_object_viewport_armature = True
         bpy.context.scene.rsl_retargeting_armature_source = imported_armature
         bpy.ops.rsl.build_bone_list()
         bpy.ops.rsl.retarget_animation()
+
+        # then remove the fcurves of the retargeted bones that were not present in the retargeting list.
+        # A lot of popping and fluctuation is present if these aren't removed
+        retargeting_list = [
+            'torso',
+             'Spine_fk',
+             'Chest_fk',
+             'Upper Chest_fk',
+             'Left arm_fk',
+             'Left elbow_fk',
+            'Left wrist_fk',
+            'IndexFinger1_L',
+            'IndexFinger2_L',
+            'IndexFinger3_L',
+             'LittleFinger1_L',
+             'LittleFinger2_L',
+             'LittleFinger3_L',
+             'MiddleFinger1_L',
+             'MiddleFinger2_L',
+             'MiddleFinger3_L',
+           'RingFinger1_L',
+           'RingFinger2_L',
+           'RingFinger3_L',
+            'Thumb0_L',
+            'Thumb1_L',
+            'Thumb2_L',
+             'Right arm_fk',
+             'Right elbow_fk',
+             'Right wrist_fk',
+            'IndexFinger1_R',
+            'IndexFinger2_R',
+            'IndexFinger3_R',
+            'LittleFinger1_R',
+            'LittleFinger2_R',
+            'LittleFinger3_R',
+            'MiddleFinger1_R',
+            'MiddleFinger2_R',
+            'MiddleFinger3_R',
+            'RingFinger1_R',
+            'RingFinger2_R',
+            'RingFinger3_R',
+            'Thumb0_R',
+            'Thumb1_R',
+            'Thumb2_R',
+            'neck',
+            'head',
+            'Hips_fk',
+            'Left leg_fk',
+            'Left knee_fk',
+            'Left ankle_fk',
+            'Left toe_fk',
+             'Right leg_fk',
+             'Right knee_fk',
+             'Right ankle_fk',
+             'Right toe_fk',
+             'Left shoulder',
+             'cf_j_waist02',
+             'Right shoulder',
+             'cf_j_kokan',
+            #'cf_j_ana',
+             'Breasts handle',
+             'Left Breast handle',
+             'cf_j_bust02_l',
+             'cf_j_bust03_l',
+             'cf_j_bnip02root_l',
+             'cf_j_bnip02_l',
+             'Right Breast handle',
+             'cf_j_bust02_r',
+             'cf_j_bust03_r',
+             'cf_j_bnip02root_r',
+              'cf_j_bnip02_r',
+             #'Left Buttock handle',
+             #'Right Buttock handle',
+        ]
+        for action in rigify_armature.animation_data.action.fcurves:
+            bone_name = action.data_path[action.data_path.find('[')+2:action.data_path.find('].')-1]
+            if bone_name not in retargeting_list:
+                rigify_armature.animation_data.action.fcurves.remove(action) #remove keyframes
+                rigify_armature.pose.bones[bone_name].matrix_basis = mathutils.Matrix()
 
         #select all rigify armature bones and create pose asset
         bpy.ops.object.select_all(action='DESELECT')

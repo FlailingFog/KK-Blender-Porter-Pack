@@ -9,7 +9,6 @@ import statistics
 from mathutils import Matrix, Vector, Euler
 import traceback
 import sys
-
 from . import commons as koikatsuCommons
     
 def main():
@@ -43,6 +42,9 @@ def main():
                     hasSkirt = False
                     break
     
+    hasRiggedTongue = metarig.pose.bones.get(koikatsuCommons.riggedTongueBone1Name) and bpy.data.objects.get(koikatsuCommons.riggedTongueName)
+    hasBetterPenetrationMod = metarig.pose.bones.get(koikatsuCommons.betterPenetrationRootCrotchBoneName)
+    hasHeadMod = koikatsuCommons.isVertexGroupEmpty(koikatsuCommons.originalFaceUpDeformBoneName, koikatsuCommons.bodyName)
     isMale = koikatsuCommons.isVertexGroupEmpty(koikatsuCommons.leftNippleDeformBone1Name, koikatsuCommons.bodyName)
 
     def objToBone(obj, rig, boneName):
@@ -982,7 +984,7 @@ def main():
         childBone.parent = parentBone
         childBone.use_connect = connected
     
-    if metarig.pose.bones.get(koikatsuCommons.riggedTongueBone1Name):
+    if hasRiggedTongue:
         connectAndParentBones(metarig, koikatsuCommons.riggedTongueBone5Name, koikatsuCommons.riggedTongueBone4Name, True)
         connectAndParentBones(metarig, koikatsuCommons.riggedTongueBone4Name, koikatsuCommons.riggedTongueBone3Name, True)
         connectAndParentBones(metarig, koikatsuCommons.riggedTongueBone3Name, koikatsuCommons.riggedTongueBone2Name, True)
@@ -1045,7 +1047,7 @@ def main():
         leftBone.length = length
         rightBone.length = length
     
-    if metarig.data.edit_bones.get(koikatsuCommons.riggedTongueBone2Name) and bpy.data.objects.get(koikatsuCommons.riggedTongueName):
+    if hasRiggedTongue:
         riggedTongueBone2 = metarig.data.edit_bones[koikatsuCommons.riggedTongueBone2Name]
         finalizeRiggedTongueSideBones(metarig, koikatsuCommons.riggedTongueLeftBone3Name, koikatsuCommons.riggedTongueRightBone3Name, riggedTongueBone2.length, 0.75)
         finalizeRiggedTongueSideBones(metarig, koikatsuCommons.riggedTongueLeftBone4Name, koikatsuCommons.riggedTongueRightBone4Name, riggedTongueBone2.length, 0.65, 0.5, 0.5)
@@ -1054,7 +1056,10 @@ def main():
         riggedTongueLeftBone5VertexGroupExtremities = koikatsuCommons.findVertexGroupExtremities(koikatsuCommons.riggedTongueLeftBone5Name, koikatsuCommons.riggedTongueName)
         riggedTongueBone5.tail.z = riggedTongueLeftBone5VertexGroupExtremities.minZ + math.dist([riggedTongueLeftBone5VertexGroupExtremities.minZ], [riggedTongueLeftBone5VertexGroupExtremities.maxZ]) * 0.17
         riggedTongueBone5.tail.y = riggedTongueLeftBone5VertexGroupExtremities.minY
-    metarig.data.edit_bones[koikatsuCommons.headBoneName].tail.z = koikatsuCommons.findVertexGroupExtremities(koikatsuCommons.originalFaceUpDeformBoneName, koikatsuCommons.bodyName).maxZ
+    if not hasHeadMod:
+        metarig.data.edit_bones[koikatsuCommons.headBoneName].tail.z = koikatsuCommons.findVertexGroupExtremities(koikatsuCommons.originalFaceUpDeformBoneName, koikatsuCommons.bodyName).maxZ
+    else:
+        metarig.data.edit_bones[koikatsuCommons.headBoneName].tail.z = koikatsuCommons.findVertexGroupExtremities(koikatsuCommons.originalFaceBaseDeformBoneName, koikatsuCommons.bodyName).maxZ
     metarig.data.edit_bones[koikatsuCommons.hipsBoneName].head = metarig.data.edit_bones[koikatsuCommons.waistBoneName].head
     leftShoulderJointCorrectionBone = metarig.data.edit_bones[koikatsuCommons.leftShoulderJointCorrectionBoneName]
     rightShoulderJointCorrectionBone = metarig.data.edit_bones[koikatsuCommons.rightShoulderJointCorrectionBoneName]
@@ -1355,7 +1360,7 @@ def main():
     metarig.pose.bones[koikatsuCommons.leftEyeballBoneName].rigify_parameters.optional_widget_type = "bone"
     metarig.pose.bones[koikatsuCommons.rightEyeballBoneName].custom_shape = None
     metarig.pose.bones[koikatsuCommons.rightEyeballBoneName].rigify_parameters.optional_widget_type = "bone"   
-    if metarig.pose.bones.get(koikatsuCommons.riggedTongueBone1Name)  and bpy.data.objects.get(koikatsuCommons.riggedTongueName):
+    if hasRiggedTongue:
         metarig.pose.bones[koikatsuCommons.riggedTongueBone1Name].rigify_parameters.optional_widget_type = "jaw" 
         metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_type = "limbs.super_finger"
         metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_parameters.primary_rotation_axis = "-X"
@@ -1397,8 +1402,37 @@ def main():
     metarig.pose.bones[koikatsuCommons.hipsBoneName].rigify_parameters.fk_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.torsoLayerName + koikatsuCommons.tweakLayerSuffix)] = True
     metarig.pose.bones[koikatsuCommons.waistBoneName].custom_shape = None
     metarig.pose.bones[koikatsuCommons.waistBoneName].rigify_parameters.optional_widget_type = "diamond"
+    metarig.pose.bones[koikatsuCommons.crotchBoneName].custom_shape = None
+    metarig.pose.bones[koikatsuCommons.crotchBoneName].rigify_parameters.optional_widget_type = "sphere"
     metarig.pose.bones[koikatsuCommons.anusBoneName].custom_shape = None
     metarig.pose.bones[koikatsuCommons.anusBoneName].rigify_parameters.optional_widget_type = "sphere"
+    if hasBetterPenetrationMod:
+        metarig.pose.bones[koikatsuCommons.betterPenetrationRootCrotchBoneName].custom_shape = None
+        metarig.pose.bones[koikatsuCommons.betterPenetrationRootCrotchBoneName].rigify_parameters.optional_widget_type = "circle"
+        metarig.pose.bones[koikatsuCommons.betterPenetrationFrontCrotchBoneName].custom_shape = None
+        metarig.pose.bones[koikatsuCommons.betterPenetrationFrontCrotchBoneName].rigify_parameters.optional_widget_type = "circle"
+        metarig.pose.bones[koikatsuCommons.betterPenetrationLeftCrotchBone1Name].custom_shape = None
+        metarig.pose.bones[koikatsuCommons.betterPenetrationLeftCrotchBone1Name].rigify_parameters.optional_widget_type = "circle"
+        metarig.pose.bones[koikatsuCommons.betterPenetrationRightCrotchBone1Name].custom_shape = None
+        metarig.pose.bones[koikatsuCommons.betterPenetrationRightCrotchBone1Name].rigify_parameters.optional_widget_type = "circle"
+        metarig.pose.bones[koikatsuCommons.betterPenetrationLeftCrotchBone2Name].custom_shape = None
+        metarig.pose.bones[koikatsuCommons.betterPenetrationLeftCrotchBone2Name].rigify_parameters.optional_widget_type = "circle"
+        metarig.pose.bones[koikatsuCommons.betterPenetrationRightCrotchBone2Name].custom_shape = None
+        metarig.pose.bones[koikatsuCommons.betterPenetrationRightCrotchBone2Name].rigify_parameters.optional_widget_type = "circle"
+        metarig.pose.bones[koikatsuCommons.betterPenetrationLeftCrotchBone3Name].custom_shape = None
+        metarig.pose.bones[koikatsuCommons.betterPenetrationLeftCrotchBone3Name].rigify_parameters.optional_widget_type = "circle"
+        metarig.pose.bones[koikatsuCommons.betterPenetrationRightCrotchBone3Name].custom_shape = None
+        metarig.pose.bones[koikatsuCommons.betterPenetrationRightCrotchBone3Name].rigify_parameters.optional_widget_type = "circle"
+        metarig.pose.bones[koikatsuCommons.betterPenetrationLeftCrotchBone4Name].custom_shape = None
+        metarig.pose.bones[koikatsuCommons.betterPenetrationLeftCrotchBone4Name].rigify_parameters.optional_widget_type = "circle"
+        metarig.pose.bones[koikatsuCommons.betterPenetrationRightCrotchBone4Name].custom_shape = None
+        metarig.pose.bones[koikatsuCommons.betterPenetrationRightCrotchBone4Name].rigify_parameters.optional_widget_type = "circle"
+        metarig.pose.bones[koikatsuCommons.betterPenetrationLeftCrotchBone5Name].custom_shape = None
+        metarig.pose.bones[koikatsuCommons.betterPenetrationLeftCrotchBone5Name].rigify_parameters.optional_widget_type = "circle"
+        metarig.pose.bones[koikatsuCommons.betterPenetrationRightCrotchBone5Name].custom_shape = None
+        metarig.pose.bones[koikatsuCommons.betterPenetrationRightCrotchBone5Name].rigify_parameters.optional_widget_type = "circle"
+        metarig.pose.bones[koikatsuCommons.betterPenetrationBackCrotchBoneName].custom_shape = None
+        metarig.pose.bones[koikatsuCommons.betterPenetrationBackCrotchBoneName].rigify_parameters.optional_widget_type = "circle"   
     metarig.pose.bones[koikatsuCommons.leftBreastDeformBone1Name].rigify_parameters.optional_widget_type = "sphere"
     metarig.pose.bones[koikatsuCommons.rightBreastDeformBone1Name].rigify_parameters.optional_widget_type = "sphere"
     widgetFace = bpy.data.objects[koikatsuCommons.widgetFaceName]
@@ -1562,7 +1596,7 @@ def main():
         koikatsuCommons.torsoLayerBoneNames.remove(koikatsuCommons.leftBreastHandleBoneName)
         koikatsuCommons.torsoLayerBoneNames.remove(koikatsuCommons.rightBreastHandleBoneName) 
                
-    if not metarig.pose.bones.get(koikatsuCommons.betterPenetrationRootCrotchBoneName):
+    if not hasBetterPenetrationMod:
         try:
             koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationRootCrotchBoneName)
             koikatsuCommons.torsoTweakLayerBoneNames.remove(koikatsuCommons.betterPenetrationFrontCrotchBoneName)

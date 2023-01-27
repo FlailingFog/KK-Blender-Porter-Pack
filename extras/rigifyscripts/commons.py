@@ -334,6 +334,7 @@ def getSkirtDeformBoneName(primaryIndex, secondaryIndex):
     return deformBonePrefix + getSkirtBoneName(False, primaryIndex, secondaryIndex)
 
 originalFaceUpDeformBoneName = "cf_J_FaceUp_ty"
+originalFaceBaseDeformBoneName = "cf_J_FaceBase"
 originalHeadDeformBoneName = "cf_s_head"
 originalNeckDeformBoneName = "cf_s_neck"
 originalUpperChestDeformBoneName = "cf_s_spine03"
@@ -610,6 +611,20 @@ useX, invertX, useY, invertY, useZ, invertZ):
     copyRotationConstraint.use_z = useZ
     copyRotationConstraint.invert_z = invertZ
     return copyRotationConstraint
+
+def addCopyScaleConstraint(rig, boneName, targetRig, subTargetBoneName, space, constraintName, 
+useX, useY, useZ):
+    removeContraint(rig, boneName, constraintName)
+    copyRotationConstraint = rig.pose.bones[boneName].constraints.new('COPY_SCALE')
+    copyRotationConstraint.name = constraintName
+    copyRotationConstraint.target = targetRig
+    copyRotationConstraint.subtarget = subTargetBoneName
+    copyRotationConstraint.owner_space = space
+    copyRotationConstraint.target_space = space
+    copyRotationConstraint.use_x = useX
+    copyRotationConstraint.use_y = useY
+    copyRotationConstraint.use_z = useZ
+    return copyRotationConstraint
         
 def addTransformationConstraint(rig, boneName, subTargetBoneName, mixMode, space, constraintName, 
 mapFrom, fromMinX, fromMaxX, fromMinY, fromMaxY, fromMinZ, fromMaxZ, 
@@ -761,11 +776,12 @@ def removeAllConstraints(rig, boneName):
             boneToMute.constraints.remove(constraint)
             
 def removeAllDrivers(rig, boneName):
-    for driver in rig.animation_data.drivers:
-        if driver.data_path.startswith("pose.bones"):
-            ownerName = driver.data_path.split('"')[1]
-            if ownerName == boneName:
-                rig.animation_data.drivers.remove(driver)
+    if rig.animation_data:
+        for driver in rig.animation_data.drivers:
+            if driver.data_path.startswith("pose.bones"):
+                ownerName = driver.data_path.split('"')[1]
+                if ownerName == boneName:
+                    rig.animation_data.drivers.remove(driver)
             
 def createBone(rig, newBoneName):
     newBone = rig.data.edit_bones.new(newBoneName)
@@ -777,7 +793,7 @@ def deleteBone(rig, boneName):
     bone = rig.data.edit_bones.get(boneName)
     removeAllConstraints(rig, boneName)
     removeAllDrivers(rig, boneName)
-    rig.data.edit_bones.remove(bone) 
+    rig.data.edit_bones.remove(bone)
 
 def copyBone(rig, sourceBoneName, newBoneName):
     newBone = rig.data.edit_bones.get(newBoneName)
@@ -886,7 +902,7 @@ ikLayerSuffix = " IK"
 fkLayerSuffix = " FK"
 
 hairLayerName = "Hair/Accessories"
-eyesLayerName = "Eyes/Rig_Tongue"
+eyesLayerName = "Eyes/Rig.Tongue"
 faceLayerName = "Face"
 torsoLayerName = "Torso"
 leftArmLayerName = "Arm.L"
@@ -1024,6 +1040,53 @@ BoneManagerLayer("", 28)
 def getMmdBoneManagerLayerIndexByName(mmdBoneManagerLayerName):
     for index, mmdBoneManagerLayer in enumerate(mmdBoneManagerLayers):
         if mmdBoneManagerLayer.name == mmdBoneManagerLayerName:
+            return index
+        
+koikatsuOriginalBoneLayerName = "Original bones"
+koikatsuRetargetingBonesLayerName = "Retargeting bones"
+koikatsuNonRetargetingBonesLayerName = "Non-retargeting bones"
+koikatsuHiddenBonesLayerName = "Hidden bones"
+koikatsuDeformBonesLayerName = "Deform bones"
+koikatsuUsefulBonesLayerName = "Useful bones"
+koikatsuUselessBonesLayerName = "Useless bones"
+
+koikatsuBoneManagerLayers = [
+BoneManagerLayer(koikatsuOriginalBoneLayerName, 0),
+BoneManagerLayer(koikatsuRetargetingBonesLayerName, 1),
+BoneManagerLayer(koikatsuNonRetargetingBonesLayerName, 2),
+BoneManagerLayer(koikatsuHiddenBonesLayerName, 3),
+BoneManagerLayer(koikatsuDeformBonesLayerName, 4),
+BoneManagerLayer(koikatsuUsefulBonesLayerName, 5),
+BoneManagerLayer(koikatsuUselessBonesLayerName, 6),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28),
+BoneManagerLayer("", 28)
+]
+
+def getKoikatsuBoneManagerLayerIndexByName(koikatsuBoneManagerLayerName):
+    for index, koikatsuBoneManagerLayer in enumerate(koikatsuBoneManagerLayers):
+        if koikatsuBoneManagerLayer.name == koikatsuBoneManagerLayerName:
             return index
     
 def setBoneManagerLayer(rig, layer, boneManagerLayer):
@@ -1240,3 +1303,77 @@ japCharactersRegex = u'[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e
 
 def getContainedJapCharacters(string):
     return re.findall(japCharactersRegex, string)
+
+koikatsuRetargetingBoneNames = [
+"cf_j_hips",
+"cf_j_spine01",
+"cf_j_spine02",
+"cf_j_spine03",
+"cf_j_arm00_L",
+"cf_j_forearm01_L",
+"cf_j_hand_L",
+"cf_j_index01_L",
+"cf_j_index02_L",
+"cf_j_index03_L",
+"cf_j_little01_L",
+"cf_j_little02_L",
+"cf_j_little03_L",
+"cf_j_middle01_L",
+"cf_j_middle02_L",
+"cf_j_middle03_L",
+"cf_j_ring01_L",
+"cf_j_ring02_L",
+"cf_j_ring03_L",
+"cf_j_thumb01_L",
+"cf_j_thumb02_L",
+"cf_j_thumb03_L",
+"cf_j_arm00_R",
+"cf_j_forearm01_R",
+"cf_j_hand_R",
+"cf_j_index01_R",
+"cf_j_index02_R",
+"cf_j_index03_R",
+"cf_j_little01_R",
+"cf_j_little02_R",
+"cf_j_little03_R",
+"cf_j_middle01_R",
+"cf_j_middle02_R",
+"cf_j_middle03_R",
+"cf_j_ring01_R",
+"cf_j_ring02_R",
+"cf_j_ring03_R",
+"cf_j_thumb01_R",
+"cf_j_thumb02_R",
+"cf_j_thumb03_R",
+"cf_j_neck",
+"cf_j_head",
+"cf_j_waist01",
+"cf_j_thigh00_L",
+"cf_j_leg01_L",
+"cf_j_foot_L",
+"cf_j_toes_L",
+"cf_j_thigh00_R",
+"cf_j_leg01_R",
+"cf_j_foot_R",
+"cf_j_toes_R",
+"cf_j_shoulder_L",
+"cf_j_shoulder_R",
+"cf_j_kokan",
+"cf_j_ana",
+"cf_j_waist02",
+"cf_j_siri_L",
+"cf_j_siri_R",
+"cf_j_bust01_L",
+"cf_j_bust01_R",
+"cf_j_bust02_L",
+"cf_j_bust02_R",
+"cf_j_bust03_L",
+"cf_j_bust03_R",
+"cf_j_bnip02root_L",
+"cf_j_bnip02root_R",
+"cf_j_bnip02_L",
+"cf_j_bnip02_R"
+]
+
+autoRigProCopyRotationConstraintName = "Copy RotationREMAP"
+autoRigProCopyScaleConstraintName = "Copy ScaleREMAP"

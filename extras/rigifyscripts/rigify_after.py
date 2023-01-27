@@ -4,7 +4,6 @@
 import bpy
 import traceback
 import sys
-
 from . import commons as koikatsuCommons
 
 def main():
@@ -36,6 +35,8 @@ def main():
         else:
             generatedRig.data.layers[i] = False
     """
+    
+    hasBetterPenetrationMod = generatedRig.pose.bones.get(koikatsuCommons.betterPenetrationRootCrotchBoneName)
     
     metarig = None
     for bone in generatedRig.pose.bones:
@@ -78,9 +79,22 @@ def main():
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.riggedTongueLeftBone5Name, 0.25)
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.riggedTongueRightBone5Name, 0.25)
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.headTweakBoneName, 1.1)
-    koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.crotchBoneName, 25)
+    koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.crotchBoneName, 2)
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.anusBoneName, 0.25)
-    koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.anusBoneName, 3.5)
+    if hasBetterPenetrationMod:
+        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationRootCrotchBoneName, 0.09)
+        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationFrontCrotchBoneName, 0.09)
+        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationLeftCrotchBone1Name, 0.09)
+        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationRightCrotchBone1Name, 0.09)
+        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationLeftCrotchBone2Name, 0.09)
+        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationRightCrotchBone2Name, 0.09)
+        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationLeftCrotchBone3Name, 0.09)
+        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationRightCrotchBone3Name, 0.09)
+        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationLeftCrotchBone4Name, 0.09)
+        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationRightCrotchBone4Name, 0.09)
+        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationLeftCrotchBone5Name, 0.09)
+        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationRightCrotchBone5Name, 0.09)
+        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationBackCrotchBoneName, 0.09)    
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.leftBreastDeformBone1Name, 0.4)
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.rightBreastDeformBone1Name, 0.4)
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.leftBreastBone2Name, 3)
