@@ -365,12 +365,10 @@ def cleanup():
     bpy.ops.object.select_all(action='DESELECT')
     #Select the camera
     for camera in [o for o in bpy.data.objects if o.type == 'CAMERA']:
-        camera.select_set(True)
+        bpy.data.objects.remove(camera)
     #Select fillerplane
     for fillerplane in [o for o in bpy.data.objects if 'fillerplane' in o.name]:
-        fillerplane.select_set(True)
-    #delete them
-    bpy.ops.object.delete()
+        bpy.data.objects.remove(fillerplane)
     #delete orphan data
     for block in bpy.data.meshes:
         if block.users == 0:
