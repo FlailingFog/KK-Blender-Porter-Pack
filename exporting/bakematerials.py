@@ -15,7 +15,7 @@ Notes:
 
 import bpy, os, traceback, time
 from pathlib import Path, WindowsPath
-from ..importing.importbuttons import kklog
+from ..importing.importbuttons import kklog, toggle_console
 from bpy.props import StringProperty, BoolProperty
 from bpy_extras.io_utils import ImportHelper
 from bpy.types import Operator
@@ -404,6 +404,7 @@ class bake_materials(bpy.types.Operator):
     def execute(self, context):
         try:
             last_step = time.time()
+            toggle_console()
             kklog('Switching to EEVEE for material baking...')
             bpy.context.scene.render.engine = 'BLENDER_EEVEE'
             #set viewport shading to wireframe for better performance
@@ -443,6 +444,7 @@ class bake_materials(bpy.types.Operator):
             scene.import_dir = folderpath #use import dir as a temp directory holder
             bpy.ops.kkb.applymaterials('EXEC_DEFAULT')
             kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
+            toggle_console()
             #reset viewport shading back to material preview
             my_areas = bpy.context.workspace.screens[0].areas
             my_shading = 'MATERIAL'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'

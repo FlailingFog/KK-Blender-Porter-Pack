@@ -260,7 +260,7 @@ def main(folder):
             name = name.replace(item, translation_dict_normal[item])
         for item in translation_dict_h:
             if item in name:
-                name = category + ' ' + name[1:] #add the description onto it because h animations don't have names, remove the S at the beginning of the name
+                name = category + ' ' + name[1:] #add the description onto it because h animations don't have names, remove the S at the beginning of the name because all of them start with that
                 name = name.replace(item, translation_dict_h[item])
         
         action = rigify_armature.animation_data.action
@@ -298,7 +298,7 @@ def main(folder):
         bpy.data.armatures.remove(bpy.data.armatures[imported_armature_armaturename])
         print(file[2]) #print the filename AGAIN so it gets through console spam
         
-        #start from a new file every 35 imoprts because the asset seems to behave better with multiple small files vs one large file
+        #start from a new file every 35 imoprts because the asset browser seems to behave better with multiple small files vs one large file
         if save_counter == 34:
             save_counter = 0
             this_one = bpy.data.filepath.replace('.blend', str(0) + '.blend') if save_file_counter == 0  else bpy.data.filepath.replace(str(save_file_counter-1) + '.blend', str(save_file_counter) + '.blend')
@@ -310,6 +310,34 @@ def main(folder):
             actions_from_set = []
         else:
             save_counter +=1
+
+    #load a script into the layout tab
+    if bpy.data.screens.get('Layout'):
+        for area in bpy.data.screens['Layout'].areas:
+            if area.type == 'DOPESHEET_EDITOR':
+                area.ui_type = 'TEXT_EDITOR'
+                area.spaces[0].text = bpy.data.texts.new(name='Generate previews, save and close')
+                area.spaces[0].text.write(
+'''#stolen script to generate thumbnails for all objects
+#this script reduces the filesize of the library file to just the action data
+import bpy, time
+for obj in bpy.data.objects:
+    bpy.data.objects.remove(obj)
+for arm in bpy.data.armatures:
+    bpy.data.armatures.remove(arm)
+for mesh in bpy.data.meshes:
+    bpy.data.meshes.remove(mesh)
+for mat in bpy.data.materials:
+    bpy.data.materials.remove(mat)
+for img in bpy.data.images:
+    bpy.data.images.remove(img)
+for node in bpy.data.node_groups:
+    bpy.data.node_groups.remove(node)
+bpy.ops.wm.save_as_mainfile(filepath=bpy.data.filepath)
+time.sleep(3)
+bpy.ops.wm.quit_blender()
+
+''')
 
     print(str(time.time() - start))
     that_one = bpy.data.filepath.replace('.blend', str(0) + '.blend') if save_file_counter == 0  else bpy.data.filepath.replace(str(save_file_counter-1) + '.blend', str(save_file_counter) + '.blend')
@@ -342,27 +370,3 @@ if __name__ == "__main__":
     
     # test call
     print((bpy.ops.kkb.importstudio('INVOKE_DEFAULT')))
-
-
-'''
-
-#this script reduces the filesize of the library file to just the action data
-import bpy, time
-for obj in bpy.data.objects:
-    bpy.data.objects.remove(obj)
-for arm in bpy.data.armatures:
-    bpy.data.armatures.remove(arm)
-for mesh in bpy.data.meshes:
-    bpy.data.meshes.remove(mesh)
-for mat in bpy.data.materials:
-    bpy.data.materials.remove(mat)
-for img in bpy.data.images:
-    bpy.data.images.remove(img)
-for node in bpy.data.node_groups:
-    bpy.data.node_groups.remove(node)
-bpy.ops.wm.save_as_mainfile(filepath=bpy.data.filepath)
-time.sleep(3)
-bpy.ops.wm.quit_blender()
-
-
-'''

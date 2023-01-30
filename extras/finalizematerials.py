@@ -7,7 +7,14 @@ class update_bones(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
+        #bake the light and dark versions of each material
+        bpy.context.scene.kkbp.bake_dark_bool = True
+        bpy.context.scene.kkbp.bake_light_bool = True
+        bpy.context.scene.kkbp.bake_norm_bool = False
+        bpy.ops.kkb.bakematerials('INVOKE_DEFAULT')
+
         
+
         rigify_armature = [ob for ob in bpy.data.objects if ob.type == 'ARMATURE' and ob.get('rig_ui')]
         arm = rigify_armature[0] if len(rigify_armature) else bpy.data.objects['Armature']
         arm = bpy.data.armatures[arm.data.name]
