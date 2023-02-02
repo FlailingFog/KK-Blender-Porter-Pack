@@ -51,6 +51,7 @@ def wrap(register_bool):
     from .extras.updatebones import update_bones
     from .extras.imageconvert import image_convert
     from .extras.imageconvert import image_dark_convert
+    from .extras.finalizematerials import finalize_materials
     from .extras.rigifywrapper import rigify_convert
     from .extras.rigifyscripts.rigify_before import rigify_before
     from .extras.rigifyscripts.rigify_after import rigify_after
@@ -84,6 +85,7 @@ def wrap(register_bool):
         export_separate_meshes,
         toggle_ik,
         update_bones,
+        finalize_materials,
         rigify_convert,
         rigify_before,
         rigify_after,

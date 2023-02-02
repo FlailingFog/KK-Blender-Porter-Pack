@@ -66,11 +66,11 @@ def clean_body():
                 body['KKBP materials']['o_tang_rigged'] = body_material['SMRMaterialNames'][0] + '.001'
             else:
                 body['KKBP materials'][body_material['SMRName']] = body_material['SMRMaterialNames'][0]
-                
+            
             #rename some materials if in smr mode
-            if bpy.context.scene.kkbp.categorize_dropdown == 'D' and body_material['SMRName'] in smr_postfix_map:
+            if body_material['SMRName'] in smr_postfix_map and (bpy.context.scene.kkbp.categorize_dropdown == 'D' or 'cf_Ohitomi_R' not in body_material['SMRName']):
                 mat_name = body_material['SMRMaterialNames'][0] + smr_postfix_map[body_material['SMRName']]  
-                body['KKBP materials'][body_material['SMRName']] = mat_name              
+                body['KKBP materials'][body_material['SMRName']] = mat_name
                 
         if bpy.context.scene.kkbp.categorize_dropdown != 'D' and bpy.data.materials.get(body['KKBP materials']['o_tang_rigged']):
             #Separate rigged tongue from body object, parent it to the body so it's hidden in the outliner
@@ -377,12 +377,12 @@ def make_tear_and_gag_shapekeys():
     
     #Move tears and gag backwards on the basis shapekey
     tear_mats = {
-        body['KKBP materials']['cf_O_namida_S']:   'Tears small',
-        body['KKBP materials']['cf_O_namida_M']:   "Tears med",
         body['KKBP materials']['cf_O_namida_L']:   "Tears big",
+        body['KKBP materials']['cf_O_namida_M']:   "Tears med",
+        body['KKBP materials']['cf_O_namida_S']:   'Tears small',
         body['KKBP materials']['cf_O_gag_eye_00']:     "Gag eye 00",
         body['KKBP materials']['cf_O_gag_eye_01']:     "Gag eye 01",
-        body['KKBP materials']['cf_O_gag_eye_02']:     "Gag eye 02"
+        body['KKBP materials']['cf_O_gag_eye_02']:     "Gag eye 02",
     }
     bpy.ops.object.mode_set(mode = 'EDIT')
     bpy.ops.mesh.select_all(action='DESELECT')
@@ -406,14 +406,40 @@ def make_tear_and_gag_shapekeys():
         bpy.ops.object.mode_set(mode = 'EDIT')
         bpy.ops.mesh.select_all(action='DESELECT')
         bpy.context.object.active_material_index = body.data.materials.find(mat)
+        if body.data.materials.find(mat) == -1:
+            bpy.context.object.active_material_index += 1
+        else:
+            bpy.context.object.active_material_index = body.data.materials.find(mat)
         bpy.ops.object.material_slot_select()
         #find a random vertex location of the tear and move it forwards
         bpy.ops.object.mode_set(mode = 'OBJECT')
         selected_verts = [v for v in body.data.vertices if v.select]
         bpy.ops.object.mode_set(mode = 'EDIT')
         bpy.ops.transform.translate(value=(0, -1 * abs(amount_to_move_tears_back), 0))
+        bpy.ops.mesh.select_all(action='DESELECT')
         bpy.ops.object.mode_set(mode = 'OBJECT')
         bpy.ops.object.shape_key_move(type='TOP' if body['KKBP materials']['cf_O_namida_L'] in mat else 'BOTTOM')
+
+    #Move the Eye, eyewhite and eyeline materials back on the KK gageye shapekey
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    bpy.context.object.active_shape_key_index = bpy.context.object.data.shape_keys.key_blocks.find('KK Eyes_gageye')
+    bpy.ops.object.mode_set(mode = 'EDIT')
+    bpy.ops.mesh.select_all(action='DESELECT')
+    for mat in [
+        body['KKBP materials']['cf_Ohitomi_L'],
+        body['KKBP materials']['cf_Ohitomi_R'], 
+        body['KKBP materials']['cf_Ohitomi_L02'] + '_' + 'cf_Ohitomi_L02',
+        body['KKBP materials']['cf_Ohitomi_R02'] + '_' + 'cf_Ohitomi_R02',
+        body['KKBP materials']['cf_O_eyeline'],
+        body['KKBP materials']['cf_O_eyeline_low']]:
+        bpy.context.object.active_material_index = body.data.materials.find(mat)
+        bpy.ops.object.material_slot_select()
+    #find a random vertex location of the eye and move it backwards
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    selected_verts = [v for v in body.data.vertices if v.select]
+    bpy.ops.object.mode_set(mode = 'EDIT')
+    bpy.ops.transform.translate(value=(0, 2 * abs(amount_to_move_tears_back), 0))
+    bpy.ops.object.mode_set(mode = 'OBJECT')
 
     #Merge the tear materials
     bpy.ops.object.mode_set(mode = 'EDIT')
@@ -666,16 +692,14 @@ class separate_body(bpy.types.Operator):
             kklog('\nSeparating body, clothes, hair, hitboxes and shadowcast, then removing duplicate materials...')
             
             clean_body()
+            #make tear and gageye shapekeys if shapekey modifications are enabled
+            if context.scene.kkbp.shapekeys_dropdown != 'C':
+                make_tear_and_gag_shapekeys()
             add_freestyle_faces()
             remove_duplicate_slots()
             separate_everything(context)
             if context.scene.kkbp.fix_seams:
                 fix_body_seams()
-            
-            #make tear and gageye shapekeys if shapekey modifications are enabled
-            if context.scene.kkbp.shapekeys_dropdown != 'C':
-                make_tear_and_gag_shapekeys()
-                
             cleanup()
 
             kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')

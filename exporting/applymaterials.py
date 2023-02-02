@@ -23,7 +23,6 @@ from ..interface.dictionary_en import t
 def create_atlas_helpers():
     object = bpy.context.active_object
     for matslot in object.material_slots:
-        
         material = matslot.material
         nodes = material.node_tree.nodes
         links = material.node_tree.links
@@ -144,7 +143,7 @@ class apply_materials(bpy.types.Operator):
             folderpath = scene.import_dir if scene.import_dir != 'cleared' else self.directory #if applymaterials is run right after bake, use import dir as a temp directory holder
             scene.import_dir == 'cleared'
 
-            for ob in [obj for obj in bpy.context.view_layer.objects if obj.type == 'MESH']:
+            for ob in [obj for obj in bpy.context.view_layer.objects if obj.type == 'MESH' and obj.hide == False]:
                 bpy.ops.object.select_all(action='DESELECT')
                 bpy.context.view_layer.objects.active = ob
                 ob.select_set(True)

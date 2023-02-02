@@ -27,8 +27,7 @@
 #  Run the script by pressing the button in the panel
 #  It will take about two hours on a good CPU to generate the library (three minutes per 11 poses, or 2 hours for ~440 poses / animations which adds up to about 1.2gb of fbx files)
 #  You can also do it in small batches and rotate out the already imported fbx files for new ones (change your filename after each batch or the previous batches will be overwritten)
-#  Or you can put a large list and kill blender when you want to pause the import process (it will automatically save the file every 35 imports)
-#  It does NOT pick up where it left off, so remove any animations that were already imported when you restart the import process. Also change your filename or the batch generated before the pause will be overwritten
+#  Or you can put a large list and kill blender when you want to pause the import process (it will automatically save a new file for every subfolder, and pick up from the previous subfolder)
 
 #  when finished, open every asset file and run the script on the bottom of this file to reduce the filesize 
 #      (You can also copy paste the script into a text editor before running the script so you can have it automatically loaded on every asset file that will be produced)
@@ -57,8 +56,13 @@ def main(folder):
     rigify_armature.pose.bones["Left leg_parent"]["IK_FK"] = 1
 
     #disable head follow
-    rigify_armature.pose.bones['torso']['neck_follow'] = 0.0
-    rigify_armature.pose.bones['torso']['head_follow'] = 0.0
+    rigify_armature.pose.bones['torso']['neck_follow'] = 1.0
+    rigify_armature.pose.bones['torso']['head_follow'] = 1.0
+
+    '''#reset all bone transforms
+    for pb in bpy.context.selected_pose_bones_from_active_object:
+        pb.matrix_basis = mathutils.Matrix() #  == Matrix.Identity(4)
+    '''
 
     #import the fbx files
     fbx_files = []
@@ -67,12 +71,12 @@ def main(folder):
             if '.fbx' in file:
                 fbx_files.append((subdir, file, os.path.join(subdir, file)))
 
-    save_counter = 0
-    save_file_counter = 0
     actions_from_set = []
+    last_category = ''
+    original_file_name = bpy.data.filepath
 
     for file in fbx_files:
-        original_file_number = file[0].replace(folder, '')[1:file[0].replace(folder, '')[1:].find('\\')]
+        original_file_number = file[0].replace(folder, '')[1:file[0].replace(folder, '')[1:].find('\\') + 1]
         category = file[0].replace(folder, '')[file[0].replace(folder, '')[1:].find('\\') + 2:]
         filename = file[1]
 
@@ -84,6 +88,50 @@ def main(folder):
                 skip = True
         if skip:
             continue
+
+        #also skip if this a file for this category already exists
+        if os.path.exists(bpy.data.filepath.replace('.blend', ' ' + category + '.blend')):
+            continue
+
+        #create a new file for every category because the asset browser seems to behave better with multiple small files vs one large file
+        if last_category != category:
+            #save, then create new file
+            if last_category: #skip save for first file
+                bpy.ops.wm.save_as_mainfile(filepath = bpy.data.filepath)
+            bpy.ops.wm.save_as_mainfile(filepath = original_file_name.replace('.blend', ' ' + category + '.blend'))
+            last_category = category
+
+            #new file, so delete the previous imported asset animations 
+            for act in actions_from_set:
+                bpy.data.actions.remove(bpy.data.actions[act])
+            actions_from_set = []
+
+            #load a script into the layout tab
+            if bpy.data.screens.get('Layout'):
+                for area in bpy.data.screens['Layout'].areas:
+                    if area.type == 'DOPESHEET_EDITOR':
+                        area.ui_type = 'TEXT_EDITOR'
+                        area.spaces[0].text = bpy.data.texts.new(name='Generate previews, save and close')
+                        area.spaces[0].text.write(
+'''#this script reduces the filesize of the library file to just the action data
+import bpy, time
+for obj in bpy.data.objects:
+    bpy.data.objects.remove(obj)
+for arm in bpy.data.armatures:
+    bpy.data.armatures.remove(arm)
+for mesh in bpy.data.meshes:
+    bpy.data.meshes.remove(mesh)
+for mat in bpy.data.materials:
+    bpy.data.materials.remove(mat)
+for img in bpy.data.images:
+    bpy.data.images.remove(img)
+for node in bpy.data.node_groups:
+    bpy.data.node_groups.remove(node)
+bpy.ops.wm.save_as_mainfile(filepath=bpy.data.filepath)
+time.sleep(3)
+bpy.ops.wm.quit_blender()
+
+''')
 
         bpy.ops.import_scene.fbx(filepath=str(file[2]), global_scale=96)
 
@@ -258,16 +306,18 @@ def main(folder):
 
         for item in translation_dict_normal:
             name = name.replace(item, translation_dict_normal[item])
+        h_dict_used = False
         for item in translation_dict_h:
             if item in name:
                 name = category + ' ' + name[1:] #add the description onto it because h animations don't have names, remove the S at the beginning of the name because all of them start with that
                 name = name.replace(item, translation_dict_h[item])
+                h_dict_used = True
         
         action = rigify_armature.animation_data.action
         action.asset_mark()
         #render the first frame of the animation and set it as the preview
         bpy.context.scene.render.filepath = folder + r"\preview.png"
-        print(file[2])
+        #print(file[2])
         my_areas = bpy.context.workspace.screens[0].areas
         for area in my_areas:
                 for space in area.spaces:
@@ -282,12 +332,12 @@ def main(folder):
                     if space.type == 'VIEW_3D':
                         space.show_object_viewport_armature = True 
         action.name = name
-        print(file[2]) #print the filename again so it gets through console spam
         #bpy.ops.poselib.create_pose_asset(activate_new_action=True, pose_name = name) #for pose assets instead
         action.asset_data.tags.new(filename)
         action.asset_data.tags.new(category)
         action.asset_data.tags.new(original_file_number)
-        #action.asset_data.tags.new('NSFW')
+        if h_dict_used:
+            action.asset_data.tags.new('NSFW')
         action.asset_data.description = filename
         actions_from_set.append(action.name)
 
@@ -296,54 +346,11 @@ def main(folder):
         imported_armature_armaturename = imported_armature.data.name
         bpy.data.objects.remove(imported_armature)
         bpy.data.armatures.remove(bpy.data.armatures[imported_armature_armaturename])
-        print(file[2]) #print the filename AGAIN so it gets through console spam
-        
-        #start from a new file every 35 imoprts because the asset browser seems to behave better with multiple small files vs one large file
-        if save_counter == 34:
-            save_counter = 0
-            this_one = bpy.data.filepath.replace('.blend', str(0) + '.blend') if save_file_counter == 0  else bpy.data.filepath.replace(str(save_file_counter-1) + '.blend', str(save_file_counter) + '.blend')
-            bpy.ops.wm.save_as_mainfile(filepath = this_one)
-            save_file_counter+=1
-            #After the file is saved, delete the previous 35 imported asset animations 
-            for act in actions_from_set:
-                bpy.data.actions.remove(bpy.data.actions[act])
-            actions_from_set = []
-        else:
-            save_counter +=1
-
-    #load a script into the layout tab
-    if bpy.data.screens.get('Layout'):
-        for area in bpy.data.screens['Layout'].areas:
-            if area.type == 'DOPESHEET_EDITOR':
-                area.ui_type = 'TEXT_EDITOR'
-                area.spaces[0].text = bpy.data.texts.new(name='Generate previews, save and close')
-                area.spaces[0].text.write(
-'''#stolen script to generate thumbnails for all objects
-#this script reduces the filesize of the library file to just the action data
-import bpy, time
-for obj in bpy.data.objects:
-    bpy.data.objects.remove(obj)
-for arm in bpy.data.armatures:
-    bpy.data.armatures.remove(arm)
-for mesh in bpy.data.meshes:
-    bpy.data.meshes.remove(mesh)
-for mat in bpy.data.materials:
-    bpy.data.materials.remove(mat)
-for img in bpy.data.images:
-    bpy.data.images.remove(img)
-for node in bpy.data.node_groups:
-    bpy.data.node_groups.remove(node)
-bpy.ops.wm.save_as_mainfile(filepath=bpy.data.filepath)
-time.sleep(3)
-bpy.ops.wm.quit_blender()
-
-''')
+        print(file[2])
 
     print(str(time.time() - start))
-    that_one = bpy.data.filepath.replace('.blend', str(0) + '.blend') if save_file_counter == 0  else bpy.data.filepath.replace(str(save_file_counter-1) + '.blend', str(save_file_counter) + '.blend')
-    bpy.ops.wm.save_as_mainfile(filepath = that_one)
+    bpy.ops.wm.save_as_mainfile(filepath = bpy.data.filepath.replace('.blend', ' ' + category + '.blend'))
     toggle_console() #close console
-
 
 class anim_asset_lib(bpy.types.Operator):
     bl_idname = "kkb.createanimassetlib"
@@ -370,3 +377,44 @@ if __name__ == "__main__":
     
     # test call
     print((bpy.ops.kkb.importstudio('INVOKE_DEFAULT')))
+
+
+"""
+import bpy, json
+
+
+file = r"ARP retargeting list (koikatsu fbx to KKBP Rigify).json"
+
+rigify_armature = bpy.data.objects['RIG-Armature']
+
+rigify_armature.pose.bones["Right arm_parent"]["IK_FK"] = 1
+rigify_armature.pose.bones["Left arm_parent"]["IK_FK"] = 1
+rigify_armature.pose.bones["Right leg_parent"]["IK_FK"] = 1
+rigify_armature.pose.bones["Left leg_parent"]["IK_FK"] = 1
+
+#disable head follow
+rigify_armature.pose.bones['torso']['neck_follow'] = 1.0
+rigify_armature.pose.bones['torso']['head_follow'] = 1.0
+    
+#bpy.context.object.pose.bones["Left leg_parent"]["pole_vector"] = 1
+#bpy.context.object.pose.bones["Right leg_parent"]["pole_vector"] = 1
+#bpy.context.object.pose.bones["Left arm_parent"]["pole_vector"] = 1
+#bpy.context.object.pose.bones["Right arm_parent"]["pole_vector"] = 1
+json_file = open(file)
+data = json.load(json_file)
+bpy.context.scene.bones_map_index = 1
+for row in bpy.context.scene.bones_map:
+    row.name = "None"
+
+for bone in data['bones']:
+    for row in bpy.context.scene.bones_map:
+        if row.source_bone == data['bones'][bone][0]:
+            row.name = data['bones'][bone][1]
+        if row.name == 'torso':
+            row.set_as_root = True
+        #if '_ik' in row.name:
+        #    row.ik = True
+        #    if ' wrist' in row.name:
+        #        row.ik_pole = (('Left' if 'Left' in row.name else 'Right') + " arm_ik_target")
+        #    else:
+        #        row.ik_pole = (('Left' if 'Left' in row.name else 'Right') + " leg_ik_target")"""

@@ -884,8 +884,8 @@ def get_and_load_textures(directory):
             newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
         skey_driver.driver.expression = 'CartoonyCrying or CartoonyWink or FieryEyes'
 
-        #make the eyes and eyeline transparent when the gag shapekey is activated
-        skey_driver = bpy.data.materials['KK EyeR (hitomi)'].node_tree.nodes['Shader'].node_tree.nodes['Gagtoggle'].inputs[0].driver_add('default_value')
+        #make the eyes and eyeline shrink into the face when the gag shapekey is activated
+        '''skey_driver = bpy.data.materials['KK EyeR (hitomi)'].node_tree.nodes['Shader'].node_tree.nodes['Gagtoggle'].inputs[0].driver_add('default_value')
         newVar = skey_driver.driver.variables.new()
         newVar.name = 'gag'
         newVar.type = 'SINGLE_PROP'
@@ -911,6 +911,7 @@ def get_and_load_textures(directory):
         newVar.targets[0].id = body.data.shape_keys
         newVar.targets[0].data_path = 'key_blocks["KK Eyes_gageye"].value' 
         skey_driver.driver.expression = 'gag'
+        '''
 
 def add_outlines(single_outline_mode):
     #Add face and body outlines, then load in the clothes transparency mask to body outline

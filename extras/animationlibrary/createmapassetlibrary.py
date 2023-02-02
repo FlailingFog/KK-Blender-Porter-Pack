@@ -54,14 +54,14 @@ def better_fbx_map_import(directory):
             kklog('Material already exists: ' + obj.material_slots[0].material.name)
         except:
             try:
-                template = bpy.data.materials['KK Map'].copy()
+                template = bpy.data.materials['KK Simple'].copy()
             except:
                 script_dir=pathlib.Path(__file__).parent.parent
                 template_path=(script_dir / '../KK Shader V6.0.blend').resolve()
                 filepath = str(template_path)
 
                 innerpath = 'Material'
-                templateList = ['KK Map']
+                templateList = ['KK Simple']
 
                 for template in templateList:
                     bpy.ops.wm.append(
@@ -70,7 +70,7 @@ def better_fbx_map_import(directory):
                         filename=template,
                         set_fake=False
                         )
-                template = bpy.data.materials['KK Map'].copy()
+                template = bpy.data.materials['KK Simple'].copy()
             if obj.material_slots[0].material:
                 template.name = 'KK ' + obj.material_slots[0].material.name
                 new_node = template.node_tree.nodes['Gentex'].node_tree.copy()

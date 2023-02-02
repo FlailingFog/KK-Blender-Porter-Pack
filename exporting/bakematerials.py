@@ -336,7 +336,7 @@ def start_baking(folderpath, resolutionMultiplier, light, dark, norm):
             bpy.data.lights.remove(block)
 
     #Make a new sun object
-    bpy.ops.object.light_add(type='SUN', radius=1, align='WORLD', location=(0, 0, 0))
+    #bpy.ops.object.light_add(type='SUN', radius=1, align='WORLD', location=(0, 0, 0)) #no longer need the sun object
 
     #Make the originally selected object active again
     bpy.ops.object.select_all(action='DESELECT')
@@ -407,13 +407,21 @@ class bake_materials(bpy.types.Operator):
             toggle_console()
             kklog('Switching to EEVEE for material baking...')
             bpy.context.scene.render.engine = 'BLENDER_EEVEE'
-            #set viewport shading to wireframe for better performance
+            #set viewport shading to solid for better performance
             my_areas = bpy.context.workspace.screens[0].areas
-            my_shading = 'WIREFRAME'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
+            my_shading = 'SOLID'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
             for area in my_areas:
                 for space in area.spaces:
                     if space.type == 'VIEW_3D':
-                        space.shading.type = my_shading 
+                        space.shading.type = my_shading
+            #reset LBS node group to "Rim: None" if used
+            for mat in bpy.data.materials:
+                if mat.node_tree:
+                    if mat.node_tree.nodes.get('Rim'):
+                        if mat.node_tree.nodes['Rim'].node_tree == bpy.data.node_groups['LBS']:
+                            mat.node_tree.nodes['Rim'].node_tree = bpy.data.node_groups['Rim: None']
+                            links = mat.node_tree.links
+                            links.new(mat.node_tree.nodes['Shader'].outputs[0], mat.node_tree.nodes['Rim'].inputs[0]) #connect color out to rim input
             print(self.directory)
             folderpath =  self.directory
             scene = context.scene.kkbp
@@ -440,11 +448,11 @@ class bake_materials(bpy.types.Operator):
                     obj.hide_render = False
                     ob.hide_viewport = False
                 cleanup()
+            toggle_console()
             #run the apply materials script right after baking
             scene.import_dir = folderpath #use import dir as a temp directory holder
             bpy.ops.kkb.applymaterials('EXEC_DEFAULT')
             kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
-            toggle_console()
             #reset viewport shading back to material preview
             my_areas = bpy.context.workspace.screens[0].areas
             my_shading = 'MATERIAL'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
