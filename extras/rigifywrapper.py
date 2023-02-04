@@ -40,42 +40,6 @@ class rigify_convert(bpy.types.Operator):
             bpy.ops.pose.rigify_generate()
             
             bpy.ops.kkb.rigafter('INVOKE_DEFAULT')
-            
-            '''#make sure things are parented correctly and hide original armature
-            
-            armature = bpy.data.objects['Armature']
-            for child in armature.children:
-                if child.name in ['Body'] or 'Outfit ' in child.name:
-                    print(child.name)
-                    #do for children first
-                    for ob in child.children:
-                        if ob.name in ['Tears', 'Gag Eyes', 'Tongue (rigged)'] or 'Outfit ' in ob.name:
-                            print(ob.name)
-                            hidden = ob.hide
-                            parent = ob.parent
-                            ob.hide = False 
-                            bpy.ops.object.select_all(action='DESELECT')
-                            ob.parent = None
-                            ob.select_set(True)
-                            rig.select_set(True)
-                            bpy.context.view_layer.objects.active=rig
-                            bpy.ops.object.parent_set(type='ARMATURE_NAME')
-                            ob.hide = hidden
-                            ob.parent = parent
-                    hidden = child.hide
-                    child.hide = False 
-                    bpy.ops.object.select_all(action='DESELECT')
-                    child.parent = None
-                    child.select_set(True)
-                    rig.select_set(True)
-                    bpy.context.view_layer.objects.active=rig
-                    bpy.ops.object.parent_set(type='ARMATURE_NAME')
-                    child.hide = hidden
-
-                    #find the last created armature modifier, replace it with the existing one
-                    child.modifiers[0].object = child.modifiers[-1].object
-                    child.modifiers.remove(child.modifiers[-1])
-                    child.modifiers[0].name = 'Rigify Armature' '''
 
             #make sure the new bones on the generated rig retain the KKBP outfit id entry
             rig = bpy.context.active_object

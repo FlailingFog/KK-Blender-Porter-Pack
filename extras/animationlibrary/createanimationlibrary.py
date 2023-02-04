@@ -38,8 +38,12 @@ from bpy.props import StringProperty
 from...importing.importbuttons import kklog, toggle_console
 def main(folder):
 
+    kkbp_character = False
     #delete the armature before starting to reduce console spam
-    if bpy.data.objects.get('Armature'):
+    if bpy.data.objects.get('Body'):
+        if bpy.data.objects['Body'].get('KKBP materials'):
+            kkbp_character = True
+    if bpy.data.objects.get('Armature') and kkbp_character:
         n = bpy.data.objects['Armature'].data.name
         bpy.data.objects.remove(bpy.data.objects['Armature'])
         bpy.data.armatures.remove(bpy.data.armatures[n])
@@ -49,15 +53,16 @@ def main(folder):
     bpy.context.view_layer.objects.active=rigify_armature
     bpy.ops.object.mode_set(mode = 'OBJECT')
 
-    #disable IKs
-    rigify_armature.pose.bones["Right arm_parent"]["IK_FK"] = 1
-    rigify_armature.pose.bones["Left arm_parent"]["IK_FK"] = 1
-    rigify_armature.pose.bones["Right leg_parent"]["IK_FK"] = 1
-    rigify_armature.pose.bones["Left leg_parent"]["IK_FK"] = 1
+    if kkbp_character:
+        #disable IKs
+        rigify_armature.pose.bones["Right arm_parent"]["IK_FK"] = 1
+        rigify_armature.pose.bones["Left arm_parent"]["IK_FK"] = 1
+        rigify_armature.pose.bones["Right leg_parent"]["IK_FK"] = 1
+        rigify_armature.pose.bones["Left leg_parent"]["IK_FK"] = 1
 
-    #disable head follow
-    rigify_armature.pose.bones['torso']['neck_follow'] = 1.0
-    rigify_armature.pose.bones['torso']['head_follow'] = 1.0
+        #disable head follow
+        rigify_armature.pose.bones['torso']['neck_follow'] = 1.0
+        rigify_armature.pose.bones['torso']['head_follow'] = 1.0
 
     '''#reset all bone transforms
     for pb in bpy.context.selected_pose_bones_from_active_object:
@@ -238,11 +243,12 @@ bpy.ops.wm.quit_blender()
              #'Left Buttock handle',
              #'Right Buttock handle',
         ]
-        for action in rigify_armature.animation_data.action.fcurves:
-            bone_name = action.data_path[action.data_path.find('[')+2:action.data_path.find('].')-1]
-            if bone_name not in retargeting_list:
-                rigify_armature.animation_data.action.fcurves.remove(action) #remove keyframes
-                rigify_armature.pose.bones[bone_name].matrix_basis = mathutils.Matrix()
+        if kkbp_character:
+            for action in rigify_armature.animation_data.action.fcurves:
+                bone_name = action.data_path[action.data_path.find('[')+2:action.data_path.find('].')-1]
+                if bone_name not in retargeting_list:
+                    rigify_armature.animation_data.action.fcurves.remove(action) #remove keyframes
+                    rigify_armature.pose.bones[bone_name].matrix_basis = mathutils.Matrix()
 
         #select all rigify armature bones and create pose asset
         bpy.ops.object.select_all(action='DESELECT')

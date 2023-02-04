@@ -27,7 +27,7 @@ def better_fbx_map_import(directory):
         if '.fbx' in str(item):
             obj_list.append(str(item))
     for obj in obj_list:
-        bpy.ops.better_import.fbx(filepath = obj, my_scale = 1.2)
+        bpy.ops.better_import.fbx(filepath = obj, my_scale = 1.0)
     
     #if nothing was imported, skip
     if len(bpy.data.objects) < 2:

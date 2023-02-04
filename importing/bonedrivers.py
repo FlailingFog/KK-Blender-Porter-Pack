@@ -164,7 +164,6 @@ def setup_iks():
         heelIK.parent = masterbone
         heelIK.tail.y *= .5
 
-        
         #parent footIK to heel controller
         armatureData.edit_bones[footIK].parent = heelIK
         
@@ -275,13 +274,13 @@ def setup_joints():
     bpy.ops.object.mode_set(mode='POSE')
 
     #generic function to set a copy rotation modifier
-    def set_copy(bone, bonetarget, influence, axis = 'all', mix = 'replace'):
+    def set_copy(bone, bonetarget, influence, axis = 'all', mix = 'replace', space = 'LOCAL'):
         constraint = bpy.data.objects['Armature'].pose.bones[bone].constraints.new("COPY_ROTATION")
         constraint.target = bpy.data.objects['Armature']
         constraint.subtarget = bonetarget
         constraint.influence = influence
-        constraint.target_space = 'LOCAL'
-        constraint.owner_space = 'LOCAL'
+        constraint.target_space = space
+        constraint.owner_space = space
 
         if axis == 'X':
             constraint.use_y = False
@@ -322,8 +321,8 @@ def setup_joints():
     set_copy('cf_d_wrist_L', 'cf_j_hand_L', 0.33, axis = 'X', )
     set_copy('cf_d_wrist_R', 'cf_j_hand_R', 0.33, axis = 'X')
 
-    #set_copy('cf_s_leg_L', 'cf_j_thigh00_L', 0.25, axis = 'X', mix = 'add')
-    #set_copy('cf_s_leg_R', 'cf_j_thigh00_R', 0.25, axis = 'X', mix = 'add')
+    set_copy('cf_d_kneeF_L', 'cf_j_leg01_L', 0.5, axis = 'antiX', mix = 'add')
+    set_copy('cf_d_kneeF_R', 'cf_j_leg01_R', 0.5, axis = 'antiX', mix = 'add')
 
     set_copy('cf_d_siri_L', 'cf_j_thigh00_L', 0.33)
     set_copy('cf_d_siri_R', 'cf_j_thigh00_R', 0.33)
@@ -360,6 +359,7 @@ def setup_joints():
         #drivertypeselect is the component of the bone you want the driver to be applied to
         # for location it's (0 is x component, y is 1, z is 2)
         # for rotation it's (0 is w, 1 is x, etc)
+        # for scale it's (0 is x, 1 is y, 2 is z)
         driver = bpy.data.objects['Armature'].pose.bones[bone].driver_add(drivertype, drivertypeselect)
 
         #add driver variable
@@ -377,14 +377,13 @@ def setup_joints():
 
         #set the transform space. can be world space too
         target.transform_space = 'LOCAL_SPACE'
-
-        target.rotation_mode = 'AUTO' #or QUATERNION
+        target.rotation_mode = 'QUATERNION' if expresstype in ['scale', 'quat'] else 'AUTO'
 
         #use the distance to the target bone's parent to make results consistent for different sized bones
         targetbonelength = str(round((bpy.data.objects['Armature'].pose.bones[drivertarget].head - bpy.data.objects['Armature'].pose.bones[drivertarget].parent.head).length,3))
         
         #driver expression is the rotation value of the target bone multiplied by a percentage of the driver target bone's length
-        if expresstype == 'move':
+        if expresstype in ['move', 'quat']:
             driver.driver.expression = vari.name + '*' + targetbonelength + '*' + drivermult 
         
         #move but only during positive rotations
@@ -406,9 +405,14 @@ def setup_joints():
         #move but exponentially
         elif expresstype == 'moveexp':
             driver.driver.expression = vari.name + '*' + vari.name + '*' + targetbonelength + '*' + drivermult
+        
+        elif expresstype == 'scale':
+            driver.driver.expression = '1 + ' + vari.name + '*' + targetbonelength + '*' + drivermult
+        
+        elif expresstype == 'rotation':
+            driver.driver.expression = vari.name + '*' + targetbonelength + '*' + drivermult
 
     #Set the remaining joint correction drivers
-    #bone directions change based on the PMX vs FBX origin because the Y and Z axis for each bone are swapped
     #set knee joint corrections. These go in toward the body and down toward the foot at an exponential rate
     setDriver('cf_s_kneeB_R', 'location', 1, 'cf_j_leg01_R', 'ROT_X',  '-0.2', expresstype = 'moveexp')
     setDriver('cf_s_kneeB_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '-0.08')
@@ -416,12 +420,23 @@ def setup_joints():
     setDriver('cf_s_kneeB_L', 'location', 1, 'cf_j_leg01_L', 'ROT_X',  '-0.2', expresstype = 'moveexp')
     setDriver('cf_s_kneeB_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '-0.08')
 
-    #knee tip corrections go up toward the waist and in toward the body
+    #knee correction to thicken the knee in a kneeling pose
+    setDriver('cf_s_leg01_R', 'scale', 2, 'cf_j_leg01_R', 'ROT_X',  '1',  expresstype = 'scale')
+    setDriver('cf_s_leg01_R', 'scale', 0, 'cf_j_leg01_R', 'ROT_X',  '-2', expresstype = 'scale')
+    setDriver('cf_s_leg01_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '0.05', expresstype='quat')
+    setDriver('cf_d_thigh03_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',   '.015')
+
+    setDriver('cf_s_leg01_L', 'scale', 2, 'cf_j_leg01_L', 'ROT_X',  '1', expresstype = 'scale')
+    setDriver('cf_s_leg01_L', 'scale', 0, 'cf_j_leg01_L', 'ROT_X',  '-2', expresstype = 'scale')
+    setDriver('cf_s_leg01_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '0.05', expresstype='quat')
+    setDriver('cf_d_thigh03_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '-.015')
+
+    #knee tip corrections go up toward the waist and in toward the body, also rotate a bit
     setDriver('cf_d_kneeF_R', 'location', 1, 'cf_j_leg01_R', 'ROT_X',  '0.02')
-    setDriver('cf_d_kneeF_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '-0.02')
+    setDriver('cf_d_kneeF_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '-0.04')
 
     setDriver('cf_d_kneeF_L', 'location', 1, 'cf_j_leg01_L', 'ROT_X',  '0.02')
-    setDriver('cf_d_kneeF_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '-0.02')
+    setDriver('cf_d_kneeF_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '-0.04')
 
     #butt corrections go slightly up to the spine and in to the waist 
     setDriver('cf_d_siri_R', 'location', 1, 'cf_j_thigh00_R', 'ROT_X',  '0.02')
