@@ -22,6 +22,14 @@
             "cf_j_hand_L",
             "Left wrist_fk"
         ],
+        "custom_bone_cf_j_arm_L": [
+            "cf_j_arm00_L",
+            "Left arm_fk"
+        ],
+        "custom_bone_cf_j_elbow_L": [
+            "cf_j_forearm01_L",
+            "Left elbow_fk"
+        ],
         "custom_bone_cf_j_index01_L": [
             "cf_j_index01_L",
             "IndexFinger1_L"
@@ -35,15 +43,15 @@
             "IndexFinger3_L"
         ],
         "custom_bone_cf_j_Little01_L": [
-            "cf_j_Little01_L",
+            "cf_j_little01_L",
             "LittleFinger1_L"
         ],
         "custom_bone_cf_j_Little02_L": [
-            "cf_j_Little02_L",
+            "cf_j_little02_L",
             "LittleFinger2_L"
         ],
         "custom_bone_cf_j_Little03_L": [
-            "cf_j_Little03_L",
+            "cf_j_little03_L",
             "LittleFinger3_L"
         ],
         "custom_bone_cf_j_middle01_L": [
@@ -82,6 +90,14 @@
             "cf_j_thumb03_L",
             "Thumb2_L"
         ],
+        "custom_bone_cf_j_arm_R": [
+            "cf_j_arm00_R",
+            "Right arm_fk"
+        ],
+        "custom_bone_cf_j_elbow": [
+            "cf_j_forearm01_R",
+            "Right elbow_fk"
+        ],
         "custom_bone_cf_j_hand_R": [
             "cf_j_hand_R",
             "Right wrist_fk"
@@ -99,15 +115,15 @@
             "IndexFinger3_R"
         ],
         "custom_bone_cf_j_Little01_R": [
-            "cf_j_Little01_R",
+            "cf_j_little01_R",
             "LittleFinger1_R"
         ],
         "custom_bone_cf_j_Little02_R": [
-            "cf_j_Little02_R",
+            "cf_j_little02_R",
             "LittleFinger2_R"
         ],
         "custom_bone_cf_j_Little03_R": [
-            "cf_j_Little03_R",
+            "cf_j_little03_R",
             "LittleFinger3_R"
         ],
         "custom_bone_cf_j_middle01_R": [

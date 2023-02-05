@@ -33,7 +33,7 @@
 #      (You can also copy paste the script into a text editor before running the script so you can have it automatically loaded on every asset file that will be produced)
 #  also recall that blender resets the fps to the framerate of the fbx file when importing
 
-import bpy, os, time, mathutils
+import bpy, os, time, mathutils, json, pathlib
 from bpy.props import StringProperty
 from...importing.importbuttons import kklog, toggle_console
 def main(folder):
@@ -78,6 +78,7 @@ def main(folder):
 
     actions_from_set = []
     last_category = ''
+    first_import = True
     original_file_name = bpy.data.filepath
 
     for file in fbx_files:
@@ -168,6 +169,19 @@ bpy.ops.wm.quit_blender()
                         space.show_object_viewport_armature = True
         bpy.context.scene.rsl_retargeting_armature_source = imported_armature
         bpy.ops.rsl.build_bone_list()
+        #setup all remapping stuff if this is the first imported animation
+        if first_import and kkbp_character:
+            first_import = False
+            script_dir=pathlib.Path(__file__).parent
+            file = (script_dir / "ARP retargeting list (koikatsu fbx to KKBP Rigify).json").resolve()
+            json_file = open(file)
+            data = json.load(json_file)
+            for row in bpy.context.scene.rsl_retargeting_bone_list:
+                row.bone_name_target = "" #clear all bones
+            for bone in data['bones']:
+                for row in bpy.context.scene.rsl_retargeting_bone_list:
+                    if row.bone_name_source == data['bones'][bone][0]:
+                        row.bone_name_target = data['bones'][bone][1]
         bpy.ops.rsl.retarget_animation()
 
         # then remove the fcurves of the retargeted bones that were not present in the retargeting list.
