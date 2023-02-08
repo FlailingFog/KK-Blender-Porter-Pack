@@ -77,10 +77,11 @@ def main(prep_type, simp_type):
 
         #Move pupil bones to layer 1
         armature = bpy.data.objects['Armature']
-        armature.data.bones['Left Eye'].layers[0] = True
-        armature.data.bones['Left Eye'].layers[10] = False
-        armature.data.bones['Right Eye'].layers[0] = True
-        armature.data.bones['Right Eye'].layers[10] = False
+        if armature.data.bones.get('Left Eye'):
+            armature.data.bones['Left Eye'].layers[0] = True
+            armature.data.bones['Left Eye'].layers[10] = False
+            armature.data.bones['Right Eye'].layers[0] = True
+            armature.data.bones['Right Eye'].layers[10] = False
 
         #Select bones on layer 11
         for bone in armature.data.bones:

@@ -438,7 +438,7 @@ def make_tear_and_gag_shapekeys():
     bpy.ops.object.mode_set(mode = 'OBJECT')
     selected_verts = [v for v in body.data.vertices if v.select]
     bpy.ops.object.mode_set(mode = 'EDIT')
-    bpy.ops.transform.translate(value=(0, 2 * abs(amount_to_move_tears_back), 0))
+    bpy.ops.transform.translate(value=(0, 2.5 * abs(amount_to_move_tears_back), 0))
     bpy.ops.object.mode_set(mode = 'OBJECT')
 
     #Merge the tear materials

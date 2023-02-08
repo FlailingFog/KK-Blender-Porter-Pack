@@ -168,6 +168,7 @@ bpy.ops.wm.quit_blender()
                     if space.type == 'VIEW_3D':
                         space.show_object_viewport_armature = True
         bpy.context.scene.rsl_retargeting_armature_source = imported_armature
+        bpy.context.scene.rsl_retargeting_armature_target = rigify_armature
         bpy.ops.rsl.build_bone_list()
         #setup all remapping stuff if this is the first imported animation
         if first_import and kkbp_character:
@@ -366,7 +367,7 @@ bpy.ops.wm.quit_blender()
         imported_armature_armaturename = imported_armature.data.name
         bpy.data.objects.remove(imported_armature)
         bpy.data.armatures.remove(bpy.data.armatures[imported_armature_armaturename])
-        print(file[2])
+        print(file)
 
     print(str(time.time() - start))
     bpy.ops.wm.save_as_mainfile(filepath = bpy.data.filepath.replace('.blend', ' ' + category + '.blend'))
