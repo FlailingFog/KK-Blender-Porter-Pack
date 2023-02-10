@@ -1,3 +1,28 @@
+### Changes for V6.4.0
+* KKBP Exporter improvements by **MediaMoots**!
+    * [The exporter is up to 400% faster now!](https://github.com/FlailingFog/KK-Blender-Porter-Pack/pull/362)
+    * Skirt bone structures will now be correct if you're exporting multiple outfits with differently sized skirts
+    * [MeshFilter accessories will now export from the game](https://github.com/FlailingFog/KK-Blender-Porter-Pack/pull/344)
+    * Models can now be exported without the physics deformations applied, allowing you to apply your own physics to accessory / skirt bones later on
+    * ShapeInfo values are now exported to KK_CharacterInfoData.json
+* Added a button for creating a Blender Pose Asset Library from exported Koikatsu animation files
+* Added a button for creating a Blender Map Asset Library from exported Koikatsu map files
+    * This will only work properly if the [Better FBX Importer](https://www.blendermarket.com/products/better-fbx-importer--exporter) is installed and enabled
+    * If this addon isn't installed, maps and objects will still import, but their orientations and locations may be incorrect
+* Added a button to "Finalize" a material
+    * Finalizing materials will improve viewport performance during animation playback
+    * This will replace the heavy KKBP node groups with a simple texture + toon shader
+    * You need to bake light and dark versions of the model to a folder, then use the "Switch baked templates" button for the Light and the Dark selection before attempting to use the "Finalize materials" button
+    * The original materials are saved as "material_name-ORG" if you need to go back to edit or bake them again
+* Updated Rigify scripts (January 24th)
+* The KKBP and Rigify armatures now have slight knee deformation drivers to smooth out the knee in kneeling poses
+* On Windows, the console will now show during long operations (importing characters, baking, importing animations, etc)
+    * This will help the user more easily identify errors as the console will stay open if an error occurs during the operation
+* Dark textures are now created when the Import Studio Object button is used
+* Only new textures will be saturated when the Import Studio Object button is used
+* Baking materials should work on Linux and Mac now
+
+
 ### Changes for V6.3.0
 * Blender 3.4 support
     * Models will no longer get a [KeyError 'color'] error during import
