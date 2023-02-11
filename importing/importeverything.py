@@ -1195,6 +1195,8 @@ def apply_cycles():
     
     bpy.context.scene.render.engine = 'CYCLES'
     bpy.context.scene.cycles.preview_samples = 10
+    mesh.select_all(action='DESELECT')
+    obj.mode_set(mode='OBJECT')
 
 def apply_lbs():
     kklog('Applying Lightning Boy Shader adjustments...')
