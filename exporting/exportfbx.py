@@ -45,4 +45,4 @@ if __name__ == "__main__":
     bpy.utils.register_class(export_fbx)
 
     # test call
-    print((bpy.ops.kkb.selectbones('INVOKE_DEFAULT')))
+    print((bpy.ops.kkb.exportfbx('INVOKE_DEFAULT')))

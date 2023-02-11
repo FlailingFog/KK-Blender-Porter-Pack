@@ -247,7 +247,7 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         box = layout.box()
         col = box.column(align=True)
         row = col.row(align=True)
-        row.operator('kkb.selectbones', text = t('prep'), icon = 'GROUP')
+        row.operator('kkb.exportprep', text = t('prep'), icon = 'GROUP')
         row.enabled = not context.scene.kkbp.is_prepped
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)

@@ -120,7 +120,8 @@ def get_templates_and_apply(directory, use_fake_user):
         'KK Nose',
         'KK Shadowcast',
         'KK Teeth (tooth)',
-        'KK Fangs (tooth.001)'
+        'KK Fangs (tooth.001)',
+        'KK Simple'
     ]
 
     for template in templateList:

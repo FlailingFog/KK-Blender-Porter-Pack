@@ -37,16 +37,21 @@ def main(prep_type, simp_type):
         except:
             #maybe the collection is already hidden, or doesn't exist
             pass
-    bpy.ops.object.select_all(action='DESELECT')
-    body = bpy.data.objects['Body']
-    bpy.context.view_layer.objects.active=body
-    body.select_set(True)
     
     kklog('Removing object outline modifier...')
     for ob in bpy.data.objects:
         if ob.modifiers.get('Outline Modifier'):
             ob.modifiers['Outline Modifier'].show_render = False
             ob.modifiers['Outline Modifier'].show_viewport = False
+        #remove the outline materials because they won't be baked
+        if ob.type == 'MESH' and ob in bpy.context.view_layer.objects:
+            ob.select_set(True)
+            bpy.context.view_layer.objects.active=ob
+            bpy.ops.object.material_slot_remove_unused()
+    bpy.ops.object.select_all(action='DESELECT')
+    body = bpy.data.objects['Body']
+    bpy.context.view_layer.objects.active=body
+    body.select_set(True)
 
     #remove the second Template Eyewhite slot if there are two of the same name in a row
     eye_index = 0
@@ -232,7 +237,7 @@ def main(prep_type, simp_type):
     bpy.ops.object.mode_set(mode='OBJECT')
 
 class export_prep(bpy.types.Operator):
-    bl_idname = "kkb.selectbones"
+    bl_idname = "kkb.exportprep"
     bl_label = "Prep for target application"
     bl_description = t('export_prep_tt')
     bl_options = {'REGISTER', 'UNDO'}
@@ -258,4 +263,4 @@ if __name__ == "__main__":
     bpy.utils.register_class(export_prep)
 
     # test call
-    print((bpy.ops.kkb.selectbones('INVOKE_DEFAULT')))
+    print((bpy.ops.kkb.exportprep('INVOKE_DEFAULT')))

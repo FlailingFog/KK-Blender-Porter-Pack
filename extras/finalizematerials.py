@@ -17,7 +17,8 @@ Replaces the KKBP node groups with a simple mix node to increase animation playb
 
         #now all needed images are loaded into the file. Match each material to it's image textures
         for mat in bpy.data.materials:
-            if 'KK ' in mat.name:
+            finalize_this_mat = 'KK ' in mat.name and 'Outline ' not in mat.name and ' Outline' not in mat.name
+            if finalize_this_mat:
                 if mat.node_tree.nodes.get('Image Texture'):
                     if ' light.png' in mat.node_tree.nodes['Image Texture'].image.name:
                         light_image = mat.node_tree.nodes['Image Texture'].image.name

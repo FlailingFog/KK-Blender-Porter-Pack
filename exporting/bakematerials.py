@@ -437,8 +437,6 @@ class bake_materials(bpy.types.Operator):
                 ob.select_set(True)
                 setup_geometry_nodes_and_fillerplane(camera)
                 bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-                #remove the outline materials because they won't be baked
-                bpy.ops.object.material_slot_remove_unused()
                 #remove the object itself for the old baking system
                 if bpy.context.scene.kkbp.old_bake_bool:
                     ob.hide_render = True
