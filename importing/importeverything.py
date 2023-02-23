@@ -475,7 +475,16 @@ def get_and_load_textures(directory):
                 shadow_color = [body['KKBP shadow colors'][material_name]['r'], body['KKBP shadow colors'][material_name]['g'], body['KKBP shadow colors'][material_name]['b']]
                 darktex = create_darktex(bpy.data.images[image.name], shadow_color) #create the darktex now and load it in later
         except:
-            kklog('Tried to create a dark version of {} but something went wrong. It won\'t be loaded in.'.format(image.name), type='warn')
+            kklog('Tried to create a dark version of {} but it was missing a shadow color. Defaulting to shadow color of [.764, .880, 1].'.format(image.name), type='warn')
+            skip_list = ['cf_m_gageye', 'cf_m_eyeline', 'cf_m_mayuge', 'cf_m_namida_00', 'cf_m_noseline_00', 'cf_m_sirome_00', 'cf_m_tooth', '_cf_Ohitomi_', 'cf_m_emblem']
+            convert_this = True
+            for item in skip_list:
+                if item in image.name:
+                    convert_this = False
+            if '_MT_CT' in image.name and convert_this:
+                #kklog(image.name)
+                material_name = image.name[:-10]
+                darktex = create_darktex(bpy.data.images[image.name], [.764, .880, 1]) #create the darktex now and load it in later
     
     #Get texture data for offset and scale
     for file in files:

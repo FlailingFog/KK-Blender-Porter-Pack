@@ -44,7 +44,7 @@ def main(prep_type, simp_type):
             ob.modifiers['Outline Modifier'].show_render = False
             ob.modifiers['Outline Modifier'].show_viewport = False
         #remove the outline materials because they won't be baked
-        if ob.type == 'MESH' and ob in bpy.context.view_layer.objects:
+        if ob in [obj for obj in bpy.context.view_layer.objects if obj.type == 'MESH']:
             ob.select_set(True)
             bpy.context.view_layer.objects.active=ob
             bpy.ops.object.material_slot_remove_unused()
