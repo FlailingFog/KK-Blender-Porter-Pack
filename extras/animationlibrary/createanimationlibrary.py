@@ -306,6 +306,8 @@ bpy.ops.wm.quit_blender()
             '_S_idle':'Butt grope idle',
             '_S_Loop':'Butt grope',
             '_S_Touch':'Butt grope start',
+            '_Back_Dislikes':'Embarrassed back',
+            '_Front_Dislikes':'Embarrassed front',
 
             '_Idle': 'Idling',
             '_Stop_Idle': 'Idling stop',
