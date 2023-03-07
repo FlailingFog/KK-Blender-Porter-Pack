@@ -96,7 +96,7 @@ def main(folder):
             continue
 
         #also skip if this a file for this category already exists
-        if os.path.exists(bpy.data.filepath.replace('.blend', ' ' + category + '.blend')):
+        if os.path.exists(bpy.data.filepath.replace('.blend', ' ' + category + ' ' + str(original_file_number) + '.blend')):
             continue
 
         #create a new file for every category because the asset browser seems to behave better with multiple small files vs one large file
