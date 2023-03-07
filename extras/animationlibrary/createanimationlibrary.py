@@ -104,7 +104,7 @@ def main(folder):
             #save, then create new file
             if last_category: #skip save for first file
                 bpy.ops.wm.save_as_mainfile(filepath = bpy.data.filepath)
-            bpy.ops.wm.save_as_mainfile(filepath = original_file_name.replace('.blend', ' ' + category + '.blend'))
+            bpy.ops.wm.save_as_mainfile(filepath = original_file_name.replace('.blend', ' ' + category + ' ' + str(original_file_number) + '.blend'))
             last_category = category
 
             #new file, so delete the previous imported asset animations 
@@ -117,7 +117,7 @@ def main(folder):
                 for area in bpy.data.screens['Layout'].areas:
                     if area.type == 'DOPESHEET_EDITOR':
                         area.ui_type = 'TEXT_EDITOR'
-                        area.spaces[0].text = bpy.data.texts.new(name='Generate previews, save and close')
+                        area.spaces[0].text = bpy.data.texts.new(name='Reduce filesize, save and close')
                         area.spaces[0].text.write(
 '''#this script reduces the filesize of the library file to just the action data
 import bpy, time
@@ -138,7 +138,7 @@ time.sleep(3)
 bpy.ops.wm.quit_blender()
 
 ''')
-
+        bpy.context.scene.frame_end = 40
         bpy.ops.import_scene.fbx(filepath=str(file[2]), global_scale=96)
 
         imported_armature = bpy.context.object
@@ -274,6 +274,7 @@ bpy.ops.wm.quit_blender()
         bpy.data.workspaces["Layout"].asset_library_ref = 'LOCAL'
         #translate name
         name = filename.replace('-p_cf_body_bone-0.fbx', '')
+        name = filename.replace('-p_cf_body_bone-1.fbx', '')
         translation_dict_normal = {
             'isu_':'Seated_',
             'suwari':'Sitting',
@@ -292,39 +293,61 @@ bpy.ops.wm.quit_blender()
             'nugi':'Undressing',
         }
         translation_dict_h = {
-            '_A_idle':'Crotch grope idle',
+            '_A_Idle':'Crotch grope idle',
             '_A_Loop':'Crotch grope',
             '_A_Touch':'Crotch grope start',
             '_K_Loop':'Kiss',
             '_K_Touch':'Kiss start',
-            '_M_idle':'Breast grope idle',
+            '_M_Idle':'Breast grope idle',
             '_M_Loop':'Breast grope',
             '_M_Touch':'Breast grope start',
+            '_MLoop1': 'Masturbate',
+            '_MLoop2': 'Masturbate2',
+            '_Orgasm-': 'Climax-',
             '_Orgasm_A':'Climax end',
+            '_Orgasm_B':'Climax end',
             '_Orgasm_Loop':'Climax',
             '_Orgasm_Start':'Climax start',
-            '_S_idle':'Butt grope idle',
+            '_S_Idle':'Butt grope idle',
             '_S_Loop':'Butt grope',
             '_S_Touch':'Butt grope start',
             '_Back_Dislikes':'Embarrassed back',
             '_Front_Dislikes':'Embarrassed front',
 
-            '_Idle': 'Idling',
-            '_Stop_Idle': 'Idling stop',
-            '_OLoop':'Idling',
+            '_Idle-':  'Idling-',
+            '_Stop_Idle':  'Idling stop',
+            '_InsertIdle': 'Insert idle',
+            '_Insert': 'Insert',
+            '_M_IN_Start':'Climax inside start',
+            '_SF_IN_Start':'Climax inside start',
+            '_SS_IN_Start':'Climax inside start',
+            '_WF_IN_Start':'Climax inside start',
+            '_WS_IN_Start':'Climax inside start',
+            '_IN_Start':'Climax inside start',
+            '_M_IN_Loop':'Climax inside',
+            '_SF_IN_Loop':'Climax inside',
+            '_SS_IN_Loop':'Climax inside',
+            '_WF_IN_Loop':'Climax inside',
+            '_WS_IN_Loop':'Climax inside',
+            '_IN_Loop':'Climax inside',
+            '_SS_IN_A':'Climax inside end',
+            '_WS_IN_A':'Climax inside end',
+            '_IN_A':'Climax inside end',
+            '_Pull':'Pull out',
             '_OUT_Start':'Climax outside start',
             '_OUT_Loop':'Climax outside',
             '_OUT_A':'Climax outside end',
+            '_OLoop': 'Loop',
             '_SLoop':'Fast loop',
             '_WLoop':'Slow loop',
+            '_Oral_Idle_IN': 'Cum in mouth start',
             '_Oral_Idle': 'Cum in mouth',
-            '_Oral_idle_IN': 'Cum in mouth start',
             '_Drink_IN':'Swallow cum start',
-            '_Drink':'Swallow cum',
             '_Drink_A':'Swallow cum end',
+            '_Drink':'Swallow cum',
             '_Vomit_IN': 'Spit out cum start',
-            '_Vomit': 'Spit out cum',
             '_Vomit_A': 'Spit out cum end',
+            '_Vomit': 'Spit out cum',
         }
 
         for item in translation_dict_normal:
@@ -335,6 +358,7 @@ bpy.ops.wm.quit_blender()
                 name = category + ' ' + name[1:] #add the description onto it because h animations don't have names, remove the S at the beginning of the name because all of them start with that
                 name = name.replace(item, translation_dict_h[item])
                 h_dict_used = True
+                break
         
         action = rigify_armature.animation_data.action
         action.asset_mark()
@@ -372,7 +396,7 @@ bpy.ops.wm.quit_blender()
         print(file)
 
     print(str(time.time() - start))
-    bpy.ops.wm.save_as_mainfile(filepath = bpy.data.filepath.replace('.blend', ' ' + category + '.blend'))
+    bpy.ops.wm.save_as_mainfile(filepath = original_file_name.replace('.blend', ' ' + category + ' ' + str(original_file_number) + '.blend'))
     toggle_console() #close console
 
 class anim_asset_lib(bpy.types.Operator):
