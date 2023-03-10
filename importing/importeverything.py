@@ -158,8 +158,8 @@ def get_templates_and_apply(directory, use_fake_user):
     swap_body_material('Eyeline_Over','KK Eyeline Kage')
     swap_body_material(body['KKBP materials']['cf_Ohitomi_L'],'KK Eyewhites (sirome)')
     swap_body_material(body['KKBP materials']['cf_Ohitomi_R'],'KK Eyewhites (sirome)')
-    swap_body_material(body['KKBP materials']['cf_Ohitomi_L02'] + '_' + 'cf_Ohitomi_L02','KK EyeL (hitomi)')
-    swap_body_material(body['KKBP materials']['cf_Ohitomi_R02'] + '_' + 'cf_Ohitomi_R02','KK EyeR (hitomi)')
+    swap_body_material(body['KKBP materials']['cf_Ohitomi_L02'],'KK EyeL (hitomi)')
+    swap_body_material(body['KKBP materials']['cf_Ohitomi_R02'],'KK EyeR (hitomi)')
     swap_body_material(body['KKBP materials']['o_body_a'],'KK Body') #female
     swap_body_material(body['KKBP materials']['cf_O_tooth'],'KK Teeth (tooth)')
     swap_body_material(body['KKBP materials']['cf_O_tooth'] + '.001','KK Fangs (tooth.001)')
@@ -613,15 +613,15 @@ def get_and_load_textures(directory):
     image_load('KK Eyeline up', 'Gentex', 'EyelineKage', 'cf_m_eyeline_kage_MT.png')
     image_load('KK Eyeline up', 'Gentex', 'EyelineKage', 'Eyeline_Over_MT_CT.png')
     
-    image_load('KK EyeR (hitomi)', 'Gentex', 'eyeAlpha', body['KKBP materials']['cf_Ohitomi_R02'] + '_' + 'cf_Ohitomi_R02' + '_MT_CT.png')
-    image_load('KK EyeR (hitomi)', 'Gentex', 'EyeHU', body['KKBP materials']['cf_Ohitomi_R02'] + '_' + 'cf_Ohitomi_R02' + '_ot1.png')
-    image_load('KK EyeR (hitomi)', 'Gentex', 'EyeHD', body['KKBP materials']['cf_Ohitomi_R02'] + '_' + 'cf_Ohitomi_R02' + '_ot2.png')
+    image_load('KK EyeR (hitomi)', 'Gentex', 'eyeAlpha', body['KKBP materials']['cf_Ohitomi_R02'] + '_MT_CT.png')
+    image_load('KK EyeR (hitomi)', 'Gentex', 'EyeHU', body['KKBP materials']['cf_Ohitomi_R02'] + '_ot1.png')
+    image_load('KK EyeR (hitomi)', 'Gentex', 'EyeHD', body['KKBP materials']['cf_Ohitomi_R02'] + '_ot2.png')
     image_load('KK EyeR (hitomi)', 'Gentex', 'expression0', body['KKBP materials']['cf_Ohitomi_R'] + '_cf_t_expression_00_EXPR.png')
     image_load('KK EyeR (hitomi)', 'Gentex', 'expression1', body['KKBP materials']['cf_Ohitomi_R'] + '_cf_t_expression_01_EXPR.png')
 
-    image_load('KK EyeL (hitomi)', 'Gentex', 'eyeAlpha', body['KKBP materials']['cf_Ohitomi_L02'] + '_' + 'cf_Ohitomi_L02' + '_MT_CT.png')
-    image_load('KK EyeL (hitomi)', 'Gentex', 'EyeHU', body['KKBP materials']['cf_Ohitomi_L02'] + '_' + 'cf_Ohitomi_L02' + '_ot1.png')
-    image_load('KK EyeL (hitomi)', 'Gentex', 'EyeHD', body['KKBP materials']['cf_Ohitomi_L02'] + '_' + 'cf_Ohitomi_L02' + '_ot2.png')
+    image_load('KK EyeL (hitomi)', 'Gentex', 'eyeAlpha', body['KKBP materials']['cf_Ohitomi_L02'] + '_MT_CT.png')
+    image_load('KK EyeL (hitomi)', 'Gentex', 'EyeHU', body['KKBP materials']['cf_Ohitomi_L02'] + '_ot1.png')
+    image_load('KK EyeL (hitomi)', 'Gentex', 'EyeHD', body['KKBP materials']['cf_Ohitomi_L02'] + '_ot2.png')
     image_load('KK EyeL (hitomi)', 'Gentex', 'expression0', body['KKBP materials']['cf_Ohitomi_L02'] + '_cf_t_expression_00_EXPR.png')
     image_load('KK EyeL (hitomi)', 'Gentex', 'expression1', body['KKBP materials']['cf_Ohitomi_L02'] + '_cf_t_expression_01_EXPR.png')
     
