@@ -274,7 +274,7 @@ bpy.ops.wm.quit_blender()
         bpy.data.workspaces["Layout"].asset_library_ref = 'LOCAL'
         #translate name
         name = filename.replace('-p_cf_body_bone-0.fbx', '')
-        name = filename.replace('-p_cf_body_bone-1.fbx', '')
+        name = name.replace('-p_cf_body_bone-1.fbx', '')
         translation_dict_normal = {
             'isu_':'Seated_',
             'suwari':'Sitting',
@@ -314,14 +314,20 @@ bpy.ops.wm.quit_blender()
             '_Back_Dislikes':'Embarrassed back',
             '_Front_Dislikes':'Embarrassed front',
 
-            '_Idle-':  'Idling-',
+            '_Oral_Idle_IN': 'Cum in mouth start',
+            '_Oral_Idle': 'Cum in mouth',
             '_Stop_Idle':  'Idling stop',
             '_InsertIdle': 'Insert idle',
-            '_Insert': 'Insert',
+            '_Idle-':  'Idling-',
+            '_Insert-': 'Insert-',
             '_M_IN_Start':'Climax inside start',
             '_SF_IN_Start':'Climax inside start',
+            '_A_SS_IN_Start':'Climax inside start',
             '_SS_IN_Start':'Climax inside start',
+            '_A_WF_IN_Start':'Climax inside start',
+            '_A_WS_IN_Start':'Climax inside start',
             '_WF_IN_Start':'Climax inside start',
+            '_A_M_IN_Start':'Climax inside start',
             '_WS_IN_Start':'Climax inside start',
             '_IN_Start':'Climax inside start',
             '_M_IN_Loop':'Climax inside',
@@ -330,18 +336,19 @@ bpy.ops.wm.quit_blender()
             '_WF_IN_Loop':'Climax inside',
             '_WS_IN_Loop':'Climax inside',
             '_IN_Loop':'Climax inside',
+            '_A_IN_A':'Climax inside end',
             '_SS_IN_A':'Climax inside end',
+            '_A_WS_IN_A':'Climax inside end',
             '_WS_IN_A':'Climax inside end',
             '_IN_A':'Climax inside end',
             '_Pull':'Pull out',
             '_OUT_Start':'Climax outside start',
+            '_M_OUT_Loop':'Climax outside',
             '_OUT_Loop':'Climax outside',
             '_OUT_A':'Climax outside end',
             '_OLoop': 'Loop',
             '_SLoop':'Fast loop',
             '_WLoop':'Slow loop',
-            '_Oral_Idle_IN': 'Cum in mouth start',
-            '_Oral_Idle': 'Cum in mouth',
             '_Drink_IN':'Swallow cum start',
             '_Drink_A':'Swallow cum end',
             '_Drink':'Swallow cum',
