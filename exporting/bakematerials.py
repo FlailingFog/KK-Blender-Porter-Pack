@@ -118,15 +118,6 @@ def setup_geometry_nodes_and_fillerplane(camera):
     #give the object a geometry node modifier
     geonodes = object_to_bake.modifiers.new('Flattener', 'NODES')
 
-    #create the node group from scratch in 3.2.0
-    geonodename = 'Flat geo group'
-    bpy.data.node_groups.new(geonodename, type = 'GeometryNodeTree')
-    object_to_bake.modifiers['Flattener'].node_group = bpy.data.node_groups[geonodename]
-    nodes = bpy.data.node_groups[geonodename].nodes
-    links = bpy.data.node_groups[geonodename].links
-    input = nodes.new('NodeGroupInput')
-    output = nodes.new('NodeGroupOutput')
-
     #import the premade flattener node to unwrap the mesh into the UV structure
     script_dir=Path(__file__).parent
     template_path=(script_dir / '../KK Shader V6.0.blend').resolve()
@@ -138,20 +129,30 @@ def setup_geometry_nodes_and_fillerplane(camera):
             directory=os.path.join(filepath, innerpath),
             filename=node
             )
-    
-    #place UV group
+
+    #create the node group from scratch in 3.5.0
+    geonodename = 'Flat geo group'
+    bpy.data.node_groups.new(geonodename, type = 'GeometryNodeTree')
+    object_to_bake.modifiers['Flattener'].node_group = bpy.data.node_groups[geonodename]
+    nodes = bpy.data.node_groups[geonodename].nodes
+    links = bpy.data.node_groups[geonodename].links
+    #add input node
+    input = nodes.new('NodeGroupInput')
+    bpy.data.node_groups[geonodename].inputs.new(name= "Geometry input", type = 'NodeSocketGeometry')
+    bpy.data.node_groups[geonodename].inputs.new(name= "UVMap input", type = 'NodeSocketVector')
+    #add output node
+    output = nodes.new('NodeGroupOutput')
+    bpy.data.node_groups[geonodename].outputs.new(name= "Flat output", type = 'NodeSocketGeometry')
+    #add flattener group
     nodes = bpy.data.node_groups[geonodename].nodes
     group = nodes.new('GeometryNodeGroup')
     group.node_tree = bpy.data.node_groups['Flatten to UV map']
-
-    #connect group and make new input
+    #connect input to group
     links = bpy.data.node_groups[geonodename].links
+    links.new(input.outputs['Geometry input'], group.inputs[0])
+    links.new(input.outputs['UVMap input'], group.inputs[1])
+    #connect group to output
     links.new(group.outputs[0], output.inputs[0])
-    links.new(input.outputs[0], group.inputs[0])
-
-    #connect new input to group
-    bpy.data.node_groups[geonodename].inputs.new('NodeSocketVector', 'UVMap input')
-    links.new(input.outputs[1], group.inputs[1])
     identifier = geonodes.node_group.inputs[1].identifier
     geonodes[identifier+'_attribute_name'] = 'uv_main'
     geonodes[identifier+'_use_attribute'] = True
