@@ -11,7 +11,7 @@ Stable versions of KKBP are [on the release page.](https://github.com/FlailingFo
 The absolute latest version of KKBP can be downloaded [here.](https://github.com/FlailingFog/KK-Blender-Porter-Pack/archive/refs/heads/master.zip)
 
 ## Usage Instructions for V6
-#### Prerequisites:
+#### Required software:
 |    Software   | Version | 
 | ----------- | ----------- | 
 | HF Patch      | Install [HF Patch v3.16 or later](https://github.com/ManlyMarco/KK-HF_Patch) for Koikatsu<br /> Install [HF Patch v1.7 or later](https://github.com/ManlyMarco/KKS-HF_Patch) for Koikatsu Sunshine      | 
@@ -19,7 +19,7 @@ The absolute latest version of KKBP can be downloaded [here.](https://github.com
 | PMX Importer | Install either [CATS](https://github.com/GiveMeAllYourCats/cats-blender-plugin) or [mmd_tools](https://github.com/UuuNyaa/blender_mmd_tools) to Blender <br />(it doesn't matter which)
 
 #### Exporting from Koikatsu and importing to Blender
-<details><summary>Click to expand</summary> 
+<details><summary>Click to expand!</summary> 
 
 Install KKBP for Koikatsu by copying the KKBP_Exporter.DLL into the plugins folder: C:/Koikatsu install directory/BepInEx/plugins/  
 <sub>**(Don't mix KKBP Exporters and KKBP Blender Plugins from different releases. For example, if you are using KKBP release 6.4.2, you must use KK-Blender-Porter-Pack-V6.4.2.zip with KKBP_Exporter_V4.21.zip)**<sub/>
@@ -39,7 +39,7 @@ Install KKBP for Koikatsu by copying the KKBP_Exporter.DLL into the plugins fold
 
 #### Exporting from Blender
 
-<details><summary>Click to expand</summary> 
+<details><summary>Click to expand!</summary> 
 
 1. Save a backup file of your finished model
 1. Choose which export type you want in the KKBP panel. There's currently a targeted export type for Unity (VRM), and a generic fbx type for everything else
@@ -58,7 +58,8 @@ Install KKBP for Koikatsu by copying the KKBP_Exporter.DLL into the plugins fold
 
 ## Similar Projects
 
-* [Koikatsu Pmx Exporter (Reverse Engineered & updated)](https://github.com/Snittern/KoikatsuPmxExporterReverseEngineered)
-* [KKPMX](https://github.com/CazzoPMX/KKPMX)
-* [Grey's mesh exporter for Koikatsu](https://www.google.com/search?q=koikatsu+discord)
 * [SKLX-creator](https://sklx.gumroad.com/l/sklx-creator)
+* [KKPMX](https://github.com/CazzoPMX/KKPMX)
+* [Koikatsu Pmx Exporter (Reverse Engineered & updated)](https://github.com/Snittern/KoikatsuPmxExporterReverseEngineered)
+* [Grey's mesh exporter for Koikatsu](https://www.google.com/search?q=koikatsu+discord)
+
