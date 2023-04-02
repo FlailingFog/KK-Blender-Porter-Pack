@@ -15,7 +15,7 @@ The absolute latest version of KKBP can be downloaded [here.](https://github.com
 |    Software   | Version | 
 | ----------- | ----------- | 
 | HF Patch      | Install [HF Patch v3.16 or later](https://github.com/ManlyMarco/KK-HF_Patch) for Koikatsu<br /> Install [HF Patch v1.7 or later](https://github.com/ManlyMarco/KKS-HF_Patch) for Koikatsu Sunshine      | 
-| Blender   | Install [latest version of KKBP](https://github.com/FlailingFog/KK-Blender-Porter-Pack/releases) for Blender 3.5 or 3.4 <br />Install [KKBP 6.2.1](https://github.com/FlailingFog/KK-Blender-Porter-Pack/releases/tag/V6.2.0) for Blender 3.3 | 
+| Blender   | Install [latest version of KKBP](https://github.com/FlailingFog/KK-Blender-Porter-Pack/releases) for Blender 3.5<br /> Install [KKBP 6.4.2](https://github.com/FlailingFog/KK-Blender-Porter-Pack/releases/tag/V6.4.2) for Blender 3.4 <br />Install [KKBP 6.2.1](https://github.com/FlailingFog/KK-Blender-Porter-Pack/releases/tag/V6.2.0) for Blender 3.3 | 
 | PMX Importer | Install either [CATS](https://github.com/GiveMeAllYourCats/cats-blender-plugin) or [mmd_tools](https://github.com/UuuNyaa/blender_mmd_tools) to Blender <br />(it doesn't matter which)
 
 #### Exporting from Koikatsu and importing to Blender
