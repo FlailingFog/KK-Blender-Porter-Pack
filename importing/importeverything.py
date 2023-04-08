@@ -1179,29 +1179,34 @@ def apply_cycles():
         mesh.delete(type='VERT')
     mesh.select_all(action='DESELECT')
 
-    #add principled bsdf
+    #add cycles node group
     for tree in [mat.node_tree for mat in bpy.data.materials if 'KK ' in mat.name]:
         nodes = tree.nodes
         links = tree.links
         if nodes.get('Rim') and nodes.get('Shader'):
             nodes['Rim'].node_tree = bpy.data.node_groups['Cycles']
             links.new(nodes['Shader'].outputs['Color out light'], nodes['Rim'].inputs[0])
+            links.new(nodes['Shader'].outputs['Color out dark'], nodes['Rim'].inputs[1])
             links.new(nodes['Shader'].outputs[3], nodes['Rim'].inputs[2])
-            #if nodes['Shader'].node_tree.name != 'Body Shader':
-            #    links.new(nodes['RawShade'].outputs['Normal passthrough'], nodes['Rim'].inputs[3])
+        #disable detail shine color too
+        if nodes.get('Shader'):
+            if nodes['Shader'].node_tree.nodes.get('colorsLight'):
+                if nodes['Shader'].node_tree.nodes['colorsLight'].inputs.get('Detail intensity (shine)'):
+                    nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Detail intensity (shine)'].default_value = 0
+                    nodes['Shader'].node_tree.nodes['colorsDark']. inputs['Detail intensity (shine)'].default_value = 0
     #remove linemask and blush on face material
-    bpy.data.node_groups['Face Shader'].nodes['colorsLight'].inputs['Linemask intensity'].default_value = 0
-    bpy.data.node_groups['Face Shader'].nodes['colorsLight'].inputs['Blush intensity'].default_value = 0
+    for type in ['colorsLight', 'colorsDark']:
+        bpy.data.node_groups['Face Shader'].nodes[type].inputs['Linemask intensity'].default_value = 0
+        bpy.data.node_groups['Face Shader'].nodes[type].inputs['Blush intensity'].default_value = 0
     #set eyeline up and eyebrows as shadowless
     for mat in [bpy.data.materials['KK Eyebrows (mayuge)'], bpy.data.materials['KK Eyeline up']]:
         mat.node_tree.nodes['Rim'].node_tree = bpy.data.node_groups['Cycles no shadows']
     
     #put face's color out in a mix shader with the cycles face mask
-    #nipples already work in cycles without any changes?
     #mute shader to rgb nodes for clothing items
     for node in [n for n in bpy.data.node_groups['General overlays'].nodes if 'Shader to RGB' in n.name]:
         node.mute = True
-    
+
     bpy.context.scene.render.engine = 'CYCLES'
     bpy.context.scene.cycles.preview_samples = 10
     mesh.select_all(action='DESELECT')
