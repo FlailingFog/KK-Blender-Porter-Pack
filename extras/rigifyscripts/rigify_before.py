@@ -9,7 +9,7 @@ import statistics
 from mathutils import Matrix, Vector, Euler
 import traceback
 import sys
-from . import commons as koikatsuCommons
+from . import commons as koikatsuCommons	
     
 def main():
     metarig = bpy.context.active_object
@@ -19,6 +19,30 @@ def main():
     
     metarig.show_in_front = True
     metarig.display_type = 'TEXTURED'
+    metarig.data.display_type = 'OCTAHEDRAL'
+    
+    reservedBoneNames = [koikatsuCommons.rootBoneName, koikatsuCommons.torsoBoneName, koikatsuCommons.headTweakBoneName]
+    
+    def fixReservedBoneName(rig, boneName):
+        bone = metarig.pose.bones.get(koikatsuCommons.rootBoneName)
+        if bone is not None:
+            bone.name = bone.name + koikatsuCommons.renamedNameSuffix
+    
+    for boneName in reservedBoneNames:
+        fixReservedBoneName(metarig, boneName)
+                
+    def fixDuplicateBoneName(rig, boneName, childBoneName):
+        childBone = metarig.pose.bones.get(childBoneName)
+        if childBone.parent.name != boneName:
+            metarig.pose.bones.get(boneName).name = boneName + koikatsuCommons.renamedNameSuffix
+            metarig.pose.bones.get(childBone.parent.name).name = boneName
+    
+    fixDuplicateBoneName(metarig, koikatsuCommons.headBoneName, koikatsuCommons.originalEyesBoneName)
+    fixDuplicateBoneName(metarig, koikatsuCommons.neckBoneName, koikatsuCommons.headBoneName)
+    fixDuplicateBoneName(metarig, koikatsuCommons.upperChestBoneName, koikatsuCommons.neckBoneName)
+    fixDuplicateBoneName(metarig, koikatsuCommons.chestBoneName, koikatsuCommons.upperChestBoneName)
+    fixDuplicateBoneName(metarig, koikatsuCommons.spineBoneName, koikatsuCommons.chestBoneName)
+    fixDuplicateBoneName(metarig, koikatsuCommons.hipsBoneName, koikatsuCommons.spineBoneName)
     
     selectedLayers = []
     for i in range(32):
@@ -448,7 +472,22 @@ def main():
     rightHeadMarkerZBone.head.x = headBone.head.x
     leftHeadMarkerZBone.tail.x = headBone.head.x
     rightHeadMarkerZBone.tail.x = headBone.head.x
-    
+    headTrackTargetBone = koikatsuCommons.copyBone(metarig, koikatsuCommons.eyesHandleBoneName, koikatsuCommons.headTrackTargetBoneName)
+    headTrackTargetBone.length = headBone.length
+    headTrackTargetParentBone = koikatsuCommons.copyBone(metarig, koikatsuCommons.headTrackTargetBoneName, koikatsuCommons.headTrackTargetParentBoneName)
+    headTrackTargetBone.parent = headTrackTargetParentBone
+    headTrackTargetParentBone.parent = None
+    headTrackBone = koikatsuCommons.copyBone(metarig, koikatsuCommons.eyeballsBoneName, koikatsuCommons.headTrackBoneName)
+    headTrackBone.parent = None
+    headTrackBone.head.y = headBone.head.y
+    placeholderHeadTweakBone = koikatsuCommons.createBone(metarig, koikatsuCommons.headTweakBoneName + koikatsuCommons.placeholderBoneSuffix)
+    placeholderTorsoBone = koikatsuCommons.createBone(metarig, koikatsuCommons.torsoBoneName + koikatsuCommons.placeholderBoneSuffix)
+    placeholderRootBone = koikatsuCommons.createBone(metarig, koikatsuCommons.rootBoneName + koikatsuCommons.placeholderBoneSuffix)
+        
+    placeholderHeadTweakBoneName = placeholderHeadTweakBone.name
+    placeholderTorsoBoneName = placeholderTorsoBone.name
+    placeholderRootBoneName = placeholderRootBone.name
+        
     leftHeadDistX = leftHeadMarkerXBone.head.x - headBone.head.x
     rightHeadDistX = rightHeadMarkerXBone.head.x - headBone.head.x
     leftHeadDistZ = leftHeadMarkerZBone.head.z - headBone.head.z
@@ -504,62 +543,73 @@ def main():
     eyeballsTrackSpeedFactorDataPath = koikatsuCommons.addBoneCustomProperty(metarig, koikatsuCommons.eyeballsBoneName, "02B) Eyeballs track speed factor", "Determines how fast the eyes will move when the eyeballs are tracking their target", 0.04, 0.0, 1.0)
     eyeballsNearbyTargetTrackCorrectionDataPath = koikatsuCommons.addBoneCustomProperty(metarig, koikatsuCommons.eyeballsBoneName, "02C) Nearby target track correction", "When tracking a target that moves closer to the middle of the face than its original location, the individual eyes will gradually point towards it instead of keeping the original distance between them", 0.0, 0.0, 1.0)
     eyeballsNearbyTargetSizeFactorDataPath = koikatsuCommons.addBoneCustomProperty(metarig, koikatsuCommons.eyeballsBoneName, "02D) Nearby target track size factor", "Factors into the nearby target track correction, if the character is scaled up or down after running the first Rigify script this value should be changed proportionally", rightEyeballTrackCorrectionRightEyeHandleDistY / rightEyeballTrackCorrectionRightEyeHandleDistYReference, eyesSizeFactor * -10, eyesSizeFactor * 10)
-    
+    headTrackTargetLimitRotationDataPath = koikatsuCommons.addBoneCustomProperty(metarig, koikatsuCommons.headTrackTargetBoneName, "01A) Limit rotation", "Limits the maximum reachable rotation of the head based on the settings below", 0.0, 0.0, 1.0)
+    headTrackTargetMinXRotationDataPath = koikatsuCommons.addBoneCustomProperty(metarig, koikatsuCommons.headTrackTargetBoneName, "01B) Min X rotation", "Minimum reachable X angle limit", -40.0, -180.0, 0.0)
+    headTrackTargetMaxXRotationDataPath = koikatsuCommons.addBoneCustomProperty(metarig, koikatsuCommons.headTrackTargetBoneName, "01C) Max X rotation", "Maximum reachable X angle limit", 50.0, 0.0, 180.0)
+    headTrackTargetMinYRotationDataPath = koikatsuCommons.addBoneCustomProperty(metarig, koikatsuCommons.headTrackTargetBoneName, "01D) Min Y rotation", "Minimum reachable Y angle limit", -80.0, -180.0, 0.0)
+    headTrackTargetMaxYRotationDataPath = koikatsuCommons.addBoneCustomProperty(metarig, koikatsuCommons.headTrackTargetBoneName, "01E) Max Y rotation", "Maximum reachable Y angle limit", 80.0, 0.0, 180.0)
+    headTrackTargetMinZRotationDataPath = koikatsuCommons.addBoneCustomProperty(metarig, koikatsuCommons.headTrackTargetBoneName, "01F) Min Z rotation", "Minimum reachable Z angle limit", -50.0, -180.0, 0.0)
+    headTrackTargetMaxZRotationDataPath = koikatsuCommons.addBoneCustomProperty(metarig, koikatsuCommons.headTrackTargetBoneName, "01G) Max Z rotation", "Maximum reachable Z angle limit", 50.0, 0.0, 180.0)
+    headTrackTargetTrackTargetDataPath = koikatsuCommons.addBoneCustomProperty(metarig, koikatsuCommons.headTrackTargetBoneName, "02A) Track target", "Enables tracking of the head track target bone", 0.0, 0.0, 1.0)
+    headTrackTargetParentToHeadDataPath = koikatsuCommons.addBoneCustomProperty(metarig, koikatsuCommons.headTrackTargetBoneName, "03A) Parent to head", "The bone will act as if it was parented to the head bone", 1, 0, 1)
+    headTrackTargetParentToTorsoDataPath = koikatsuCommons.addBoneCustomProperty(metarig, koikatsuCommons.headTrackTargetBoneName, "03B) Parent to torso", "The bone will act as if it was parented to the torso bone", 0, 0, 1)
+    headTrackTargetParentToRootDataPath = koikatsuCommons.addBoneCustomProperty(metarig, koikatsuCommons.headTrackTargetBoneName, "03C) Parent to root", "The bone will act as if it was parented to the root bone", 0, 0, 1)
+        
     eyesHandleTransformationConstraintEyeballLocation = koikatsuCommons.addTransformationConstraint(metarig, koikatsuCommons.eyesHandleBoneName, koikatsuCommons.eyeballsBoneName, 'ADD', 'LOCAL', koikatsuCommons.transformationConstraintBaseName + koikatsuCommons.eyeballConstraintSuffix + koikatsuCommons.locationConstraintSuffix, 
-    'ROTATION', math.radians(-180), math.radians(180), math.radians(0), math.radians(0), math.radians(-180), math.radians(180), 
-    'LOCATION', eyesSizeFactor / -10, eyesSizeFactor / 10, 0, 0, eyesSizeFactor / -10, eyesSizeFactor / 10)    
+    'ROTATION', 'AUTO', math.radians(-180), math.radians(180), math.radians(0), math.radians(0), math.radians(-180), math.radians(180), 
+    'LOCATION', None, eyesSizeFactor / -10, eyesSizeFactor / 10, 0, 0, eyesSizeFactor / -10, eyesSizeFactor / 10)    
     eyesHandleCopyRotationConstraintEyeball = koikatsuCommons.addCopyRotationConstraint(metarig, koikatsuCommons.eyesHandleBoneName, koikatsuCommons.eyeballsBoneName, 'AFTER', 'LOCAL', koikatsuCommons.copyRotationConstraintBaseName + koikatsuCommons.eyeballConstraintSuffix, 
     False, False, True, False, False, False)
     eyesHandleTransformationContraintEyeballScale = koikatsuCommons.addTransformationConstraint(metarig, koikatsuCommons.eyesHandleBoneName, koikatsuCommons.eyeballsBoneName, 'MULTIPLY', 'LOCAL', koikatsuCommons.transformationConstraintBaseName + koikatsuCommons.eyeballConstraintSuffix + koikatsuCommons.scaleConstraintSuffix, 
-    'SCALE', 0.0, 100.0, 1.0, 1.0, 0.0, 100.0, 
-    'SCALE', 0.0, 100.0, 1.0, 1.0, 0.0, 100.0)
+    'SCALE', None, 0.0, 100.0, 1.0, 1.0, 0.0, 100.0, 
+    'SCALE', None, 0.0, 100.0, 1.0, 1.0, 0.0, 100.0)
     eyesHandleLimitLocationConstraint = koikatsuCommons.addLimitLocationConstraint(metarig, koikatsuCommons.eyesHandleBoneName, koikatsuCommons.headBoneName, 'CUSTOM', koikatsuCommons.limitLocationConstraintBaseName + koikatsuCommons.handleConstraintSuffix, 
     True, -eyesSizeFactor, True, eyesSizeFactor, True, -eyesSizeFactor, True, eyesSizeFactor, False, 0.0, False, 0.0)
     leftEyeHandleTransformationConstraintEyeballLocation = koikatsuCommons.addTransformationConstraint(metarig, koikatsuCommons.leftEyeHandleBoneName, koikatsuCommons.leftEyeballBoneName, 'ADD', 'LOCAL', koikatsuCommons.transformationConstraintBaseName + koikatsuCommons.eyeballConstraintSuffix + koikatsuCommons.locationConstraintSuffix, 
-    'ROTATION', math.radians(-180), math.radians(180), math.radians(0), math.radians(0), math.radians(-180), math.radians(180), 
-    'LOCATION', eyesSizeFactor / -10, eyesSizeFactor / 10, 0, 0, eyesSizeFactor / -10, eyesSizeFactor / 10)    
+    'ROTATION', 'AUTO', math.radians(-180), math.radians(180), math.radians(0), math.radians(0), math.radians(-180), math.radians(180), 
+    'LOCATION', None, eyesSizeFactor / -10, eyesSizeFactor / 10, 0, 0, eyesSizeFactor / -10, eyesSizeFactor / 10)    
     leftEyeHandleTransformationConstraintEyeballLocationCorrectionMin = koikatsuCommons.addTransformationConstraint(metarig, koikatsuCommons.leftEyeHandleBoneName, koikatsuCommons.leftEyeballBoneName, 'ADD', 'LOCAL', koikatsuCommons.transformationConstraintBaseName + koikatsuCommons.eyeballConstraintSuffix + koikatsuCommons.locationConstraintSuffix + koikatsuCommons.correctionConstraintSuffix + koikatsuCommons.minConstraintSuffix, 
-    'ROTATION', math.radians(0), math.radians(0), math.radians(0), math.radians(0), math.radians(0), math.radians(0), 
-    'LOCATION', 0, 0, 0, 0, 0, 0)
+    'ROTATION', 'AUTO', math.radians(0), math.radians(0), math.radians(0), math.radians(0), math.radians(0), math.radians(0), 
+    'LOCATION', None, 0, 0, 0, 0, 0, 0)
     leftEyeHandleTransformationConstraintEyeballLocationCorrectionMax = koikatsuCommons.addTransformationConstraint(metarig, koikatsuCommons.leftEyeHandleBoneName, koikatsuCommons.leftEyeballBoneName, 'ADD', 'LOCAL', koikatsuCommons.transformationConstraintBaseName + koikatsuCommons.eyeballConstraintSuffix + koikatsuCommons.locationConstraintSuffix + koikatsuCommons.correctionConstraintSuffix + koikatsuCommons.maxConstraintSuffix, 
-    'ROTATION', math.radians(0), math.radians(0), math.radians(0), math.radians(0), math.radians(0), math.radians(0), 
-    'LOCATION', 0, 0, 0, 0, 0, 0)
+    'ROTATION', 'AUTO', math.radians(0), math.radians(0), math.radians(0), math.radians(0), math.radians(0), math.radians(0), 
+    'LOCATION', None, 0, 0, 0, 0, 0, 0)
     leftEyeHandleCopyRotationConstraintEyeball = koikatsuCommons.addCopyRotationConstraint(metarig, koikatsuCommons.leftEyeHandleBoneName, koikatsuCommons.leftEyeballBoneName, 'AFTER', 'LOCAL', koikatsuCommons.copyRotationConstraintBaseName + koikatsuCommons.eyeballConstraintSuffix, 
     False, False, True, False, False, False)
     leftEyeHandleTransformationConstraintEyeballScale = koikatsuCommons.addTransformationConstraint(metarig, koikatsuCommons.leftEyeHandleBoneName, koikatsuCommons.leftEyeballBoneName, 'MULTIPLY', 'LOCAL', koikatsuCommons.transformationConstraintBaseName + koikatsuCommons.eyeballConstraintSuffix + koikatsuCommons.scaleConstraintSuffix, 
-    'SCALE', 0.0, 100.0, 1.0, 1.0, 0.0, 100.0, 
-    'SCALE', 0.0, 100.0, 1.0, 1.0, 0.0, 100.0)
+    'SCALE', None, 0.0, 100.0, 1.0, 1.0, 0.0, 100.0, 
+    'SCALE', None, 0.0, 100.0, 1.0, 1.0, 0.0, 100.0)
     leftEyeHandleTransformationConstraintHandleLocationCorrectionMin = koikatsuCommons.addTransformationConstraint(metarig, koikatsuCommons.leftEyeHandleBoneName, koikatsuCommons.eyesHandleBoneName, 'ADD', 'LOCAL', koikatsuCommons.transformationConstraintBaseName + koikatsuCommons.handleConstraintSuffix + koikatsuCommons.locationConstraintSuffix + koikatsuCommons.correctionConstraintSuffix + koikatsuCommons.minConstraintSuffix, 
-    'LOCATION', 0, 0, 0, 0, 0, 0, 
-    'LOCATION', 0, 0, 0, 0, 0, 0)
+    'LOCATION', None, 0, 0, 0, 0, 0, 0, 
+    'LOCATION', None, 0, 0, 0, 0, 0, 0)
     leftEyeHandleTransformationConstraintHandleLocationCorrectionMax = koikatsuCommons.addTransformationConstraint(metarig, koikatsuCommons.leftEyeHandleBoneName, koikatsuCommons.eyesHandleBoneName, 'ADD', 'LOCAL', koikatsuCommons.transformationConstraintBaseName + koikatsuCommons.handleConstraintSuffix + koikatsuCommons.locationConstraintSuffix + koikatsuCommons.correctionConstraintSuffix + koikatsuCommons.maxConstraintSuffix, 
-    'LOCATION', 0, 0, 0, 0, 0, 0, 
-    'LOCATION', 0, 0, 0, 0, 0, 0)
+    'LOCATION', None, 0, 0, 0, 0, 0, 0, 
+    'LOCATION', None, 0, 0, 0, 0, 0, 0)
     leftEyeHandleLimitLocationConstraint = koikatsuCommons.addLimitLocationConstraint(metarig, koikatsuCommons.leftEyeHandleBoneName, koikatsuCommons.headBoneName, 'CUSTOM', koikatsuCommons.limitLocationConstraintBaseName + koikatsuCommons.handleConstraintSuffix, 
     True, -eyesSizeFactor, True, eyesSizeFactor, True, -eyesSizeFactor, True, eyesSizeFactor, False, 0.0, False, 0.0)
     rightEyeHandleTransformationConstraintEyeballLocation = koikatsuCommons.addTransformationConstraint(metarig, koikatsuCommons.rightEyeHandleBoneName, koikatsuCommons.rightEyeballBoneName, 'ADD', 'LOCAL', koikatsuCommons.transformationConstraintBaseName + koikatsuCommons.eyeballConstraintSuffix + koikatsuCommons.locationConstraintSuffix, 
-    'ROTATION', math.radians(-180), math.radians(180), math.radians(0), math.radians(0), math.radians(-180), math.radians(180), 
-    'LOCATION', eyesSizeFactor / -10, eyesSizeFactor / 10, 0, 0, eyesSizeFactor / -10, eyesSizeFactor / 10)    
+    'ROTATION', 'AUTO', math.radians(-180), math.radians(180), math.radians(0), math.radians(0), math.radians(-180), math.radians(180), 
+    'LOCATION', None, eyesSizeFactor / -10, eyesSizeFactor / 10, 0, 0, eyesSizeFactor / -10, eyesSizeFactor / 10)    
     rightEyeHandleTransformationConstraintEyeballLocationCorrectionMin = koikatsuCommons.addTransformationConstraint(metarig, koikatsuCommons.rightEyeHandleBoneName, koikatsuCommons.rightEyeballBoneName, 'ADD', 'LOCAL', koikatsuCommons.transformationConstraintBaseName + koikatsuCommons.eyeballConstraintSuffix + koikatsuCommons.locationConstraintSuffix + koikatsuCommons.correctionConstraintSuffix + koikatsuCommons.minConstraintSuffix, 
-    'ROTATION', math.radians(0), math.radians(0), math.radians(0), math.radians(0), math.radians(0), math.radians(0), 
-    'LOCATION', 0, 0, 0, 0, 0, 0)
+    'ROTATION', 'AUTO', math.radians(0), math.radians(0), math.radians(0), math.radians(0), math.radians(0), math.radians(0), 
+    'LOCATION', None, 0, 0, 0, 0, 0, 0)
     rightEyeHandleTransformationConstraintEyeballLocationCorrectionMax = koikatsuCommons.addTransformationConstraint(metarig, koikatsuCommons.rightEyeHandleBoneName, koikatsuCommons.rightEyeballBoneName, 'ADD', 'LOCAL', koikatsuCommons.transformationConstraintBaseName + koikatsuCommons.eyeballConstraintSuffix + koikatsuCommons.locationConstraintSuffix + koikatsuCommons.correctionConstraintSuffix + koikatsuCommons.maxConstraintSuffix, 
-    'ROTATION', math.radians(0), math.radians(0), math.radians(0), math.radians(0), math.radians(0), math.radians(0), 
-    'LOCATION', 0, 0, 0, 0, 0, 0)
+    'ROTATION', 'AUTO', math.radians(0), math.radians(0), math.radians(0), math.radians(0), math.radians(0), math.radians(0), 
+    'LOCATION', None, 0, 0, 0, 0, 0, 0)
     rightEyeHandleCopyRotationConstraintEyeball = koikatsuCommons.addCopyRotationConstraint(metarig, koikatsuCommons.rightEyeHandleBoneName, koikatsuCommons.rightEyeballBoneName, 'AFTER', 'LOCAL', koikatsuCommons.copyRotationConstraintBaseName + koikatsuCommons.eyeballConstraintSuffix, 
     False, False, True, False, False, False)
     rightEyeHandleTransformationConstraintEyeballScale = koikatsuCommons.addTransformationConstraint(metarig, koikatsuCommons.rightEyeHandleBoneName, koikatsuCommons.rightEyeballBoneName, 'MULTIPLY', 'LOCAL', koikatsuCommons.transformationConstraintBaseName + koikatsuCommons.eyeballConstraintSuffix + koikatsuCommons.scaleConstraintSuffix, 
-    'SCALE', 0.0, 100.0, 1.0, 1.0, 0.0, 100.0, 
-    'SCALE', 0.0, 100.0, 1.0, 1.0, 0.0, 100.0)
+    'SCALE', None, 0.0, 100.0, 1.0, 1.0, 0.0, 100.0, 
+    'SCALE', None, 0.0, 100.0, 1.0, 1.0, 0.0, 100.0)
     rightEyeHandleTransformationConstraintHandleLocationCorrectionMin = koikatsuCommons.addTransformationConstraint(metarig, koikatsuCommons.rightEyeHandleBoneName, koikatsuCommons.eyesHandleBoneName, 'ADD', 'LOCAL', koikatsuCommons.transformationConstraintBaseName + koikatsuCommons.handleConstraintSuffix + koikatsuCommons.locationConstraintSuffix + koikatsuCommons.correctionConstraintSuffix + koikatsuCommons.minConstraintSuffix, 
-    'LOCATION', 0, 0, 0, 0, 0, 0, 
-    'LOCATION', 0, 0, 0, 0, 0, 0)
+    'LOCATION', None, 0, 0, 0, 0, 0, 0, 
+    'LOCATION', None, 0, 0, 0, 0, 0, 0)
     rightEyeHandleTransformationConstraintHandleLocationCorrectionMax = koikatsuCommons.addTransformationConstraint(metarig, koikatsuCommons.rightEyeHandleBoneName, koikatsuCommons.eyesHandleBoneName, 'ADD', 'LOCAL', koikatsuCommons.transformationConstraintBaseName + koikatsuCommons.handleConstraintSuffix + koikatsuCommons.locationConstraintSuffix + koikatsuCommons.correctionConstraintSuffix + koikatsuCommons.maxConstraintSuffix, 
-    'LOCATION', 0, 0, 0, 0, 0, 0, 
-    'LOCATION', 0, 0, 0, 0, 0, 0)
+    'LOCATION', None, 0, 0, 0, 0, 0, 0, 
+    'LOCATION', None, 0, 0, 0, 0, 0, 0)
     rightEyeHandleLimitLocationConstraint = koikatsuCommons.addLimitLocationConstraint(metarig, koikatsuCommons.rightEyeHandleBoneName, koikatsuCommons.headBoneName, 'CUSTOM', koikatsuCommons.limitLocationConstraintBaseName + koikatsuCommons.handleConstraintSuffix, 
     True, -eyesSizeFactor, True, eyesSizeFactor, True, -eyesSizeFactor, True, eyesSizeFactor, False, 0.0, False, 0.0)
-    eyesTrackTargetArmatureConstraint = koikatsuCommons.addArmatureConstraint(metarig, koikatsuCommons.eyesTrackTargetParentBoneName, [koikatsuCommons.headBoneName, koikatsuCommons.torsoBoneName, koikatsuCommons.rootBoneName], koikatsuCommons.armatureConstraintBaseName + koikatsuCommons.parentConstraintSuffix) 
+    eyesTrackTargetParentArmatureConstraint = koikatsuCommons.addArmatureConstraint(metarig, koikatsuCommons.eyesTrackTargetParentBoneName, [koikatsuCommons.headBoneName, placeholderTorsoBoneName, placeholderRootBoneName], koikatsuCommons.armatureConstraintBaseName + koikatsuCommons.parentConstraintSuffix) 
     eyeballsCopyRotationConstraintTrack = koikatsuCommons.addCopyRotationConstraint(metarig, koikatsuCommons.eyeballsBoneName, koikatsuCommons.eyeballsTrackBoneName, 'REPLACE', 'LOCAL', koikatsuCommons.copyRotationConstraintBaseName + koikatsuCommons.trackConstraintSuffix, 
     True, False, False, False, True, False)
     leftEyeballCopyRotationConstraintTrack = koikatsuCommons.addCopyRotationConstraint(metarig, koikatsuCommons.leftEyeballBoneName, koikatsuCommons.leftEyeballTrackCorrectionBoneName, 'REPLACE', 'LOCAL', koikatsuCommons.copyRotationConstraintBaseName + koikatsuCommons.trackConstraintSuffix + koikatsuCommons.correctionConstraintSuffix, 
@@ -569,45 +619,53 @@ def main():
     eyeballsTrackDampedTrackConstraint = koikatsuCommons.addDampedTrackConstraint(metarig, koikatsuCommons.eyeballsTrackBoneName, koikatsuCommons.eyesTrackTargetBoneName, koikatsuCommons.dampedTrackConstraintBaseName + koikatsuCommons.trackConstraintSuffix)
     leftEyeballTrackDampedTrackConstraint = koikatsuCommons.addDampedTrackConstraint(metarig, koikatsuCommons.leftEyeballTrackBoneName, koikatsuCommons.eyesTrackTargetBoneName, koikatsuCommons.dampedTrackConstraintBaseName + koikatsuCommons.trackConstraintSuffix)
     rightEyeballTrackDampedTrackConstraint = koikatsuCommons.addDampedTrackConstraint(metarig, koikatsuCommons.rightEyeballTrackBoneName, koikatsuCommons.eyesTrackTargetBoneName, koikatsuCommons.dampedTrackConstraintBaseName + koikatsuCommons.trackConstraintSuffix)
-
+    headTransformationConstraintHeadRotation = koikatsuCommons.addTransformationConstraint(metarig, koikatsuCommons.headBoneName, koikatsuCommons.headTrackBoneName, 'REPLACE', 'LOCAL_WITH_PARENT', koikatsuCommons.transformationConstraintBaseName + koikatsuCommons.headConstraintSuffix + koikatsuCommons.rotationConstraintSuffix, 
+    'ROTATION', 'QUATERNION', math.radians(-180), math.radians(180), math.radians(-180), math.radians(180), math.radians(-180), math.radians(180), 
+    'ROTATION', 'AUTO', math.radians(180), math.radians(-180), math.radians(-180), math.radians(180), math.radians(-180), math.radians(180), 
+    'X', 'Z', 'Y')
+    headLimitRotationConstraint = koikatsuCommons.addLimitRotationConstraint(metarig, koikatsuCommons.headBoneName, None, 'LOCAL', koikatsuCommons.limitRotationConstraintBaseName + koikatsuCommons.headConstraintSuffix, 
+    True, math.radians(-180), math.radians(180), True, math.radians(-180), math.radians(180), True, math.radians(-180), math.radians(180))
+    headTrackTargetParentArmatureConstraint = koikatsuCommons.addArmatureConstraint(metarig, koikatsuCommons.headTrackTargetParentBoneName, [placeholderHeadTweakBoneName, placeholderTorsoBoneName, placeholderRootBoneName], koikatsuCommons.armatureConstraintBaseName + koikatsuCommons.parentConstraintSuffix) 
+    headTrackDampedTrackConstraint = koikatsuCommons.addDampedTrackConstraint(metarig, koikatsuCommons.headTrackBoneName, koikatsuCommons.headTrackTargetBoneName, koikatsuCommons.dampedTrackConstraintBaseName + koikatsuCommons.trackConstraintSuffix)
+    
     eyelidsShapeKeyCopy = koikatsuCommons.duplicateShapeKey(koikatsuCommons.bodyName, koikatsuCommons.eyelidsShapeKeyName, koikatsuCommons.eyelidsShapeKeyCopyName)
     
     eyesHandleLocationXDriverVariable = koikatsuCommons.DriverVariable("locX", 'TRANSFORMS', metarig, koikatsuCommons.eyesHandleBoneName, 'LOCAL_SPACE', None, None, None, None, 'LOC_X', None)
-    eyesHandleDefaultEyelidsValueDriverVariable = koikatsuCommons.DriverVariable("default", 'SINGLE_PROP', metarig, koikatsuCommons.eyesHandleBoneName, None, None, None, None, eyesHandleDefaultEyelidsValueDataPath, None, None)
-    eyesHandleMinEyelidsValueDriverVariable = koikatsuCommons.DriverVariable("min", 'SINGLE_PROP', metarig, koikatsuCommons.eyesHandleBoneName, None, None, None, None, eyesHandleMinEyelidsValueDataPath, None, None)
-    eyesHandleMaxEyelidsValueDriverVariable = koikatsuCommons.DriverVariable("max", 'SINGLE_PROP', metarig, koikatsuCommons.eyesHandleBoneName, None, None, None, None, eyesHandleMaxEyelidsValueDataPath, None, None)
-    eyesHandleEyelidsSpeedFactorDriverVariable = koikatsuCommons.DriverVariable("speed", 'SINGLE_PROP', metarig, koikatsuCommons.eyesHandleBoneName, None, None, None, None, eyesHandleEyelidsSpeedFactorDataPath, None, None)
-    eyesHandleEyelidsAutomationDriverVariable = koikatsuCommons.DriverVariable("enabled", 'SINGLE_PROP', metarig, koikatsuCommons.eyesHandleBoneName, None, None, None, None, eyesHandleEyelidsAutomationDataPath, None, None)
-    eyesHandleLimitLocationDriverVariable = koikatsuCommons.DriverVariable("limit", 'SINGLE_PROP', metarig, koikatsuCommons.eyesHandleBoneName, None, None, None, None, eyesHandleLimitLocationDataPath, None, None)
-    eyesHandleEyesSizeFactorDriverVariable = koikatsuCommons.DriverVariable("sizeFactor", 'SINGLE_PROP', metarig, koikatsuCommons.eyesHandleBoneName, None, None, None, None, eyesHandleEyesSizeFactorDataPath, None, None)
-    leftEyeHandleLimitLocationDriverVariable = koikatsuCommons.DriverVariable("limit_L", 'SINGLE_PROP', metarig, koikatsuCommons.leftEyeHandleBoneName, None, None, None, None, leftEyeHandleLimitLocationDataPath, None, None)
-    leftEyeHandleMinXLocationDriverVariable = koikatsuCommons.DriverVariable("minX_L", 'SINGLE_PROP', metarig, koikatsuCommons.leftEyeHandleBoneName, None, None, None, None, leftEyeHandleMinXLocationDataPath, None, None)
-    leftEyeHandleMaxXLocationDriverVariable = koikatsuCommons.DriverVariable("maxX_L", 'SINGLE_PROP', metarig, koikatsuCommons.leftEyeHandleBoneName, None, None, None, None, leftEyeHandleMaxXLocationDataPath, None, None)
-    leftEyeHandleMinYLocationDriverVariable = koikatsuCommons.DriverVariable("minY_L", 'SINGLE_PROP', metarig, koikatsuCommons.leftEyeHandleBoneName, None, None, None, None, leftEyeHandleMinYLocationDataPath, None, None)
-    leftEyeHandleMaxYLocationDriverVariable = koikatsuCommons.DriverVariable("maxY_L", 'SINGLE_PROP', metarig, koikatsuCommons.leftEyeHandleBoneName, None, None, None, None, leftEyeHandleMaxYLocationDataPath, None, None)
-    leftEyeHandleSpeedCorrectionDriverVariable = koikatsuCommons.DriverVariable("corr_L", 'SINGLE_PROP', metarig, koikatsuCommons.leftEyeHandleBoneName, None, None, None, None, leftEyeHandleSpeedCorrectionDataPath, None, None)
+    eyesHandleDefaultEyelidsValueDriverVariable = koikatsuCommons.DriverVariable("default", 'SINGLE_PROP', metarig, None, None, None, None, None, eyesHandleDefaultEyelidsValueDataPath, None, None)
+    eyesHandleMinEyelidsValueDriverVariable = koikatsuCommons.DriverVariable("min", 'SINGLE_PROP', metarig, None, None, None, None, None, eyesHandleMinEyelidsValueDataPath, None, None)
+    eyesHandleMaxEyelidsValueDriverVariable = koikatsuCommons.DriverVariable("max", 'SINGLE_PROP', metarig, None, None, None, None, None, eyesHandleMaxEyelidsValueDataPath, None, None)
+    eyesHandleEyelidsSpeedFactorDriverVariable = koikatsuCommons.DriverVariable("speed", 'SINGLE_PROP', metarig, None, None, None, None, None, eyesHandleEyelidsSpeedFactorDataPath, None, None)
+    eyesHandleEyelidsAutomationDriverVariable = koikatsuCommons.DriverVariable("enabled", 'SINGLE_PROP', metarig, None, None, None, None, None, eyesHandleEyelidsAutomationDataPath, None, None)
+    eyesHandleLimitLocationDriverVariable = koikatsuCommons.DriverVariable("limit", 'SINGLE_PROP', metarig, None, None, None, None, None, eyesHandleLimitLocationDataPath, None, None)
+    eyesHandleEyesSizeFactorDriverVariable = koikatsuCommons.DriverVariable("sizeFactor", 'SINGLE_PROP', metarig, None, None, None, None, None, eyesHandleEyesSizeFactorDataPath, None, None)
+    leftEyeHandleLimitLocationDriverVariable = koikatsuCommons.DriverVariable("limit_L", 'SINGLE_PROP', metarig, None, None, None, None, None, leftEyeHandleLimitLocationDataPath, None, None)
+    leftEyeHandleMinXLocationDriverVariable = koikatsuCommons.DriverVariable("minX_L", 'SINGLE_PROP', metarig, None, None, None, None, None, leftEyeHandleMinXLocationDataPath, None, None)
+    leftEyeHandleMaxXLocationDriverVariable = koikatsuCommons.DriverVariable("maxX_L", 'SINGLE_PROP', metarig, None, None, None, None, None, leftEyeHandleMaxXLocationDataPath, None, None)
+    leftEyeHandleMinYLocationDriverVariable = koikatsuCommons.DriverVariable("minY_L", 'SINGLE_PROP', metarig, None, None, None, None, None, leftEyeHandleMinYLocationDataPath, None, None)
+    leftEyeHandleMaxYLocationDriverVariable = koikatsuCommons.DriverVariable("maxY_L", 'SINGLE_PROP', metarig, None, None, None, None, None, leftEyeHandleMaxYLocationDataPath, None, None)
+    leftEyeHandleSpeedCorrectionDriverVariable = koikatsuCommons.DriverVariable("corr_L", 'SINGLE_PROP', metarig, None, None, None, None, None, leftEyeHandleSpeedCorrectionDataPath, None, None)
     leftEyeHandleEyesHandleDistanceXDriverVariable = koikatsuCommons.DriverVariable("distX_L", 'LOC_DIFF', metarig, koikatsuCommons.eyesHandleMarkerBoneName, 'WORLD_SPACE', metarig, koikatsuCommons.leftEyeHandleMarkerXBoneName, 'WORLD_SPACE', None, None, None)
     leftEyeHandleEyesHandleDistanceYDriverVariable = koikatsuCommons.DriverVariable("distY_L", 'LOC_DIFF', metarig, koikatsuCommons.eyesHandleMarkerBoneName, 'WORLD_SPACE', metarig, koikatsuCommons.leftEyeHandleMarkerZBoneName, 'WORLD_SPACE', None, None, None)
     leftEyeHandleHeadDistanceXDriverVariable = koikatsuCommons.DriverVariable("headDistX_L", 'LOC_DIFF', metarig, koikatsuCommons.headBoneName, 'WORLD_SPACE', metarig, koikatsuCommons.leftHeadMarkerXBoneName, 'WORLD_SPACE', None, None, None)
     leftEyeHandleHeadDistanceYDriverVariable = koikatsuCommons.DriverVariable("headDistY_L", 'LOC_DIFF', metarig, koikatsuCommons.headBoneName, 'WORLD_SPACE', metarig, koikatsuCommons.leftHeadMarkerZBoneName, 'WORLD_SPACE', None, None, None)
-    rightEyeHandleLimitLocationDriverVariable = koikatsuCommons.DriverVariable("limit_R", 'SINGLE_PROP', metarig, koikatsuCommons.rightEyeHandleBoneName, None, None, None, None, rightEyeHandleLimitLocationDataPath, None, None)
-    rightEyeHandleMinXLocationDriverVariable = koikatsuCommons.DriverVariable("minX_R", 'SINGLE_PROP', metarig, koikatsuCommons.rightEyeHandleBoneName, None, None, None, None, rightEyeHandleMinXLocationDataPath, None, None)
-    rightEyeHandleMaxXLocationDriverVariable = koikatsuCommons.DriverVariable("maxX_R", 'SINGLE_PROP', metarig, koikatsuCommons.rightEyeHandleBoneName, None, None, None, None, rightEyeHandleMaxXLocationDataPath, None, None)
-    rightEyeHandleMinYLocationDriverVariable = koikatsuCommons.DriverVariable("minY_R", 'SINGLE_PROP', metarig, koikatsuCommons.rightEyeHandleBoneName, None, None, None, None, rightEyeHandleMinYLocationDataPath, None, None)
-    rightEyeHandleMaxYLocationDriverVariable = koikatsuCommons.DriverVariable("maxY_R", 'SINGLE_PROP', metarig, koikatsuCommons.rightEyeHandleBoneName, None, None, None, None, rightEyeHandleMaxYLocationDataPath, None, None)
-    rightEyeHandleSpeedCorrectionDriverVariable = koikatsuCommons.DriverVariable("corr_R", 'SINGLE_PROP', metarig, koikatsuCommons.rightEyeHandleBoneName, None, None, None, None, rightEyeHandleSpeedCorrectionDataPath, None, None)
+    rightEyeHandleLimitLocationDriverVariable = koikatsuCommons.DriverVariable("limit_R", 'SINGLE_PROP', metarig, None, None, None, None, None, rightEyeHandleLimitLocationDataPath, None, None)
+    rightEyeHandleMinXLocationDriverVariable = koikatsuCommons.DriverVariable("minX_R", 'SINGLE_PROP', metarig, None, None, None, None, None, rightEyeHandleMinXLocationDataPath, None, None)
+    rightEyeHandleMaxXLocationDriverVariable = koikatsuCommons.DriverVariable("maxX_R", 'SINGLE_PROP', metarig, None, None, None, None, None, rightEyeHandleMaxXLocationDataPath, None, None)
+    rightEyeHandleMinYLocationDriverVariable = koikatsuCommons.DriverVariable("minY_R", 'SINGLE_PROP', metarig, None, None, None, None, None, rightEyeHandleMinYLocationDataPath, None, None)
+    rightEyeHandleMaxYLocationDriverVariable = koikatsuCommons.DriverVariable("maxY_R", 'SINGLE_PROP', metarig, None, None, None, None, None, rightEyeHandleMaxYLocationDataPath, None, None)
+    rightEyeHandleSpeedCorrectionDriverVariable = koikatsuCommons.DriverVariable("corr_R", 'SINGLE_PROP', metarig, None, None, None, None, None, rightEyeHandleSpeedCorrectionDataPath, None, None)
     rightEyeHandleEyesHandleDistanceXDriverVariable = koikatsuCommons.DriverVariable("distX_R", 'LOC_DIFF', metarig, koikatsuCommons.eyesHandleMarkerBoneName, 'WORLD_SPACE', metarig, koikatsuCommons.rightEyeHandleMarkerXBoneName, 'WORLD_SPACE', None, None, None)
     rightEyeHandleEyesHandleDistanceYDriverVariable = koikatsuCommons.DriverVariable("distY_R", 'LOC_DIFF', metarig, koikatsuCommons.eyesHandleMarkerBoneName, 'WORLD_SPACE', metarig, koikatsuCommons.rightEyeHandleMarkerZBoneName, 'WORLD_SPACE', None, None, None)
     rightEyeHandleHeadDistanceXDriverVariable = koikatsuCommons.DriverVariable("headdDistX_R", 'LOC_DIFF', metarig, koikatsuCommons.headBoneName, 'WORLD_SPACE', metarig, koikatsuCommons.rightHeadMarkerXBoneName, 'WORLD_SPACE', None, None, None)
     rightEyeHandleHeadDistanceYDriverVariable = koikatsuCommons.DriverVariable("headDistY_R", 'LOC_DIFF', metarig, koikatsuCommons.headBoneName, 'WORLD_SPACE', metarig, koikatsuCommons.rightHeadMarkerZBoneName, 'WORLD_SPACE', None, None, None)
-    eyesTrackTargetParentToHeadDriverVariable = koikatsuCommons.DriverVariable("parentHead", 'SINGLE_PROP', metarig, koikatsuCommons.eyesTrackTargetBoneName, None, None, None, None, eyesTrackTargetParentToHeadDataPath, None, None)
-    eyesTrackTargetParentToTorsoDriverVariable = koikatsuCommons.DriverVariable("parentTorso", 'SINGLE_PROP', metarig, koikatsuCommons.eyesTrackTargetBoneName, None, None, None, None, eyesTrackTargetParentToTorsoDataPath, None, None)
-    eyesTrackTargetParentToRootDriverVariable = koikatsuCommons.DriverVariable("parentRoot", 'SINGLE_PROP', metarig, koikatsuCommons.eyesTrackTargetBoneName, None, None, None, None, eyesTrackTargetParentToRootDataPath, None, None)
-    eyeballsSpeedFactorDriverVariable = koikatsuCommons.DriverVariable("rotSpeed", 'SINGLE_PROP', metarig, koikatsuCommons.eyeballsBoneName, None, None, None, None, eyeballsSpeedFactorDataPath, None, None)
-    eyeballsTrackTargetDriverVariable = koikatsuCommons.DriverVariable("track", 'SINGLE_PROP', metarig, koikatsuCommons.eyeballsBoneName, None, None, None, None, eyeballsTrackTargetDataPath, None, None)
-    eyeballsTrackSpeedFactorDriverVariable = koikatsuCommons.DriverVariable("trackSpeed", 'SINGLE_PROP', metarig, koikatsuCommons.eyeballsBoneName, None, None, None, None, eyeballsTrackSpeedFactorDataPath, None, None)
-    eyeballsNearbyTargetTrackCorrectionDriverVariable = koikatsuCommons.DriverVariable("trackCorr", 'SINGLE_PROP', metarig, koikatsuCommons.eyeballsBoneName, None, None, None, None, eyeballsNearbyTargetTrackCorrectionDataPath, None, None)
-    eyeballsNearbyTargetSizeFactorDriverVariable = koikatsuCommons.DriverVariable("factor", 'SINGLE_PROP', metarig, koikatsuCommons.eyeballsBoneName, None, None, None, None, eyeballsNearbyTargetSizeFactorDataPath, None, None)
+    eyesTrackTargetParentToHeadDriverVariable = koikatsuCommons.DriverVariable("parentHead", 'SINGLE_PROP', metarig, None, None, None, None, None, eyesTrackTargetParentToHeadDataPath, None, None)
+    eyesTrackTargetParentToTorsoDriverVariable = koikatsuCommons.DriverVariable("parentTorso", 'SINGLE_PROP', metarig, None, None, None, None, None, eyesTrackTargetParentToTorsoDataPath, None, None)
+    eyesTrackTargetParentToRootDriverVariable = koikatsuCommons.DriverVariable("parentRoot", 'SINGLE_PROP', metarig, None, None, None, None, None, eyesTrackTargetParentToRootDataPath, None, None)
+    eyeballsSpeedFactorDriverVariable = koikatsuCommons.DriverVariable("rotSpeed", 'SINGLE_PROP', metarig, None, None, None, None, None, eyeballsSpeedFactorDataPath, None, None)
+    eyeballsTrackTargetDriverVariable = koikatsuCommons.DriverVariable("track", 'SINGLE_PROP', metarig, None, None, None, None, None, eyeballsTrackTargetDataPath, None, None)
+    eyeballsTrackSpeedFactorDriverVariable = koikatsuCommons.DriverVariable("trackSpeed", 'SINGLE_PROP', metarig, None, None, None, None, None, eyeballsTrackSpeedFactorDataPath, None, None)
+    eyeballsNearbyTargetTrackCorrectionDriverVariable = koikatsuCommons.DriverVariable("trackCorr", 'SINGLE_PROP', metarig, None, None, None, None, None, eyeballsNearbyTargetTrackCorrectionDataPath, None, None)
+    eyeballsNearbyTargetSizeFactorDriverVariable = koikatsuCommons.DriverVariable("factor", 'SINGLE_PROP', metarig, None, None, None, None, None, eyeballsNearbyTargetSizeFactorDataPath, None, None)
     leftEyeballRightEyeHandleMarkerDistanceDriverVariable = koikatsuCommons.DriverVariable("orgDist_L", 'LOC_DIFF', metarig, koikatsuCommons.leftEyeballTrackCorrectionBoneName, 'WORLD_SPACE', metarig, koikatsuCommons.leftEyeHandleMarkerBoneName, 'WORLD_SPACE', None, None, None)
     rightEyeballRightEyeHandleMarkerDistanceDriverVariable = koikatsuCommons.DriverVariable("orgDist_R", 'LOC_DIFF', metarig, koikatsuCommons.rightEyeballTrackCorrectionBoneName, 'WORLD_SPACE', metarig, koikatsuCommons.rightEyeHandleMarkerBoneName, 'WORLD_SPACE', None, None, None)
     leftEyeballEyesTrackTargetDistanceDriverVariable = koikatsuCommons.DriverVariable("currDist_L", 'LOC_DIFF', metarig, koikatsuCommons.leftEyeballTrackCorrectionBoneName, 'WORLD_SPACE', metarig, koikatsuCommons.eyesTrackTargetBoneName, 'WORLD_SPACE', None, None, None)
@@ -615,6 +673,17 @@ def main():
     eyeballsTrackBoneRotationZDriverVariable = koikatsuCommons.DriverVariable("rotZ", 'TRANSFORMS', metarig, koikatsuCommons.eyeballsTrackBoneName, 'LOCAL_SPACE', None, None, None, None, 'ROT_Z', 'QUATERNION')
     leftEyeballTrackBoneRotationZDriverVariable = koikatsuCommons.DriverVariable("rotZ_L", 'TRANSFORMS', metarig, koikatsuCommons.leftEyeballTrackBoneName, 'LOCAL_SPACE', None, None, None, None, 'ROT_Z', 'QUATERNION')
     rightEyeballTrackBoneRotationZDriverVariable = koikatsuCommons.DriverVariable("rotZ_R", 'TRANSFORMS', metarig, koikatsuCommons.rightEyeballTrackBoneName, 'LOCAL_SPACE', None, None, None, None, 'ROT_Z', 'QUATERNION')
+    headTrackTargetLimitRotationDriverVariable = koikatsuCommons.DriverVariable("limit", 'SINGLE_PROP', metarig, None, None, None, None, None, headTrackTargetLimitRotationDataPath, None, None)
+    headTrackTargetMinXRotationDriverVariable = koikatsuCommons.DriverVariable("minX", 'SINGLE_PROP', metarig, None, None, None, None, None, headTrackTargetMinXRotationDataPath, None, None)
+    headTrackTargetMaxXRotationDriverVariable = koikatsuCommons.DriverVariable("maxX", 'SINGLE_PROP', metarig, None, None, None, None, None, headTrackTargetMaxXRotationDataPath, None, None)
+    headTrackTargetMinYRotationDriverVariable = koikatsuCommons.DriverVariable("minY", 'SINGLE_PROP', metarig, None, None, None, None, None, headTrackTargetMinYRotationDataPath, None, None)
+    headTrackTargetMaxYRotationDriverVariable = koikatsuCommons.DriverVariable("maxY", 'SINGLE_PROP', metarig, None, None, None, None, None, headTrackTargetMaxYRotationDataPath, None, None)
+    headTrackTargetMinZRotationDriverVariable = koikatsuCommons.DriverVariable("minZ", 'SINGLE_PROP', metarig, None, None, None, None, None, headTrackTargetMinZRotationDataPath, None, None)
+    headTrackTargetMaxZRotationDriverVariable = koikatsuCommons.DriverVariable("maxZ", 'SINGLE_PROP', metarig, None, None, None, None, None, headTrackTargetMaxZRotationDataPath, None, None)
+    headTrackTargetParentToHeadDriverVariable = koikatsuCommons.DriverVariable("parentHead", 'SINGLE_PROP', metarig, None, None, None, None, None, headTrackTargetParentToHeadDataPath, None, None)
+    headTrackTargetParentToTorsoDriverVariable = koikatsuCommons.DriverVariable("parentTorso", 'SINGLE_PROP', metarig, None, None, None, None, None, headTrackTargetParentToTorsoDataPath, None, None)
+    headTrackTargetParentToRootDriverVariable = koikatsuCommons.DriverVariable("parentRoot", 'SINGLE_PROP', metarig, None, None, None, None, None, headTrackTargetParentToRootDataPath, None, None)
+    headTrackTargetDriverVariable = koikatsuCommons.DriverVariable("track", 'SINGLE_PROP', metarig, None, None, None, None, None, headTrackTargetTrackTargetDataPath, None, None)
     
     koikatsuCommons.addDriver(eyelidsShapeKeyCopy, "value", None, 'SCRIPTED', [eyesHandleLocationXDriverVariable, eyesHandleDefaultEyelidsValueDriverVariable, eyesHandleMinEyelidsValueDriverVariable, eyesHandleMaxEyelidsValueDriverVariable, eyesHandleEyelidsSpeedFactorDriverVariable, eyesHandleEyelidsAutomationDriverVariable], 
     eyesHandleEyelidsAutomationDriverVariable.name + " * (" + eyesHandleMinEyelidsValueDriverVariable.name + " if (" + eyesHandleDefaultEyelidsValueDriverVariable.name + " + " + eyesHandleLocationXDriverVariable.name + " * -" + eyesHandleEyelidsSpeedFactorDriverVariable.name + " if " + eyesHandleLocationXDriverVariable.name + " < 0 else " + eyesHandleDefaultEyelidsValueDriverVariable.name + " - " + eyesHandleLocationXDriverVariable.name + " * " + eyesHandleEyelidsSpeedFactorDriverVariable.name + ") < " + eyesHandleMinEyelidsValueDriverVariable.name + " else " + eyesHandleMaxEyelidsValueDriverVariable.name + " if (" + eyesHandleDefaultEyelidsValueDriverVariable.name + " + " + eyesHandleLocationXDriverVariable.name + " * -" + eyesHandleEyelidsSpeedFactorDriverVariable.name + " if " + eyesHandleLocationXDriverVariable.name + " < 0 else " + eyesHandleDefaultEyelidsValueDriverVariable.name + " - " + eyesHandleLocationXDriverVariable.name + " * " + eyesHandleEyelidsSpeedFactorDriverVariable.name + ") > " + eyesHandleMaxEyelidsValueDriverVariable.name + " else (" + eyesHandleDefaultEyelidsValueDriverVariable.name + " + " + eyesHandleLocationXDriverVariable.name + " * -" + eyesHandleEyelidsSpeedFactorDriverVariable.name + " if " + eyesHandleLocationXDriverVariable.name + " < 0 else " + eyesHandleDefaultEyelidsValueDriverVariable.name + " - " + eyesHandleLocationXDriverVariable.name + " * " + eyesHandleEyelidsSpeedFactorDriverVariable.name + "))")
@@ -758,11 +827,11 @@ def main():
     "-" + eyesHandleEyesSizeFactorDriverVariable.name + " / 10")
     koikatsuCommons.addDriver(rightEyeHandleTransformationConstraintEyeballLocation, "to_max_z", None, 'SCRIPTED', [eyesHandleEyesSizeFactorDriverVariable], 
     eyesHandleEyesSizeFactorDriverVariable.name + " / 10")
-    koikatsuCommons.addDriver(eyesTrackTargetArmatureConstraint.targets[0], "weight", None, 'AVERAGE', [eyesTrackTargetParentToHeadDriverVariable], 
+    koikatsuCommons.addDriver(eyesTrackTargetParentArmatureConstraint.targets[0], "weight", None, 'AVERAGE', [eyesTrackTargetParentToHeadDriverVariable], 
     None)
-    koikatsuCommons.addDriver(eyesTrackTargetArmatureConstraint.targets[1], "weight", None, 'AVERAGE', [eyesTrackTargetParentToTorsoDriverVariable], 
+    koikatsuCommons.addDriver(eyesTrackTargetParentArmatureConstraint.targets[1], "weight", None, 'AVERAGE', [eyesTrackTargetParentToTorsoDriverVariable], 
     None)
-    koikatsuCommons.addDriver(eyesTrackTargetArmatureConstraint.targets[2], "weight", None, 'AVERAGE', [eyesTrackTargetParentToRootDriverVariable], 
+    koikatsuCommons.addDriver(eyesTrackTargetParentArmatureConstraint.targets[2], "weight", None, 'AVERAGE', [eyesTrackTargetParentToRootDriverVariable], 
     None)
     koikatsuCommons.addDriver(eyeballsCopyRotationConstraintTrack, "influence", None, 'AVERAGE', [eyeballsTrackTargetDriverVariable], 
     None)
@@ -780,6 +849,28 @@ def main():
     "0 if " + leftEyeballRightEyeHandleMarkerDistanceDriverVariable.name + "-" + leftEyeballEyesTrackTargetDistanceDriverVariable.name + "<=0 else (radians(-45)+" + leftEyeballTrackBoneRotationZDriverVariable.name + ")*(" + leftEyeballRightEyeHandleMarkerDistanceDriverVariable.name + "-" + leftEyeballEyesTrackTargetDistanceDriverVariable.name + ")/" + eyeballsNearbyTargetSizeFactorDriverVariable.name + "*(" + eyeballsTrackBoneRotationZDriverVariable.name + "-" + leftEyeballTrackBoneRotationZDriverVariable.name + ")*20*(1 if (" + leftEyeHandleMaxXLocationDriverVariable.name + "-" + leftEyeHandleHeadDistanceXDriverVariable.name + ")-(" + rightEyeHandleMaxXLocationDriverVariable.name + "+" + rightEyeHandleHeadDistanceXDriverVariable.name + ")<=0.000001 else 1+" + leftEyeHandleSpeedCorrectionDriverVariable.name + "*(" + leftEyeHandleMaxXLocationDriverVariable.name + "-" + leftEyeHandleHeadDistanceXDriverVariable.name + ")/(" + rightEyeHandleMaxXLocationDriverVariable.name + "+" + rightEyeHandleHeadDistanceXDriverVariable.name + "))")
     koikatsuCommons.addDriver(metarig.pose.bones[koikatsuCommons.rightEyeballTrackCorrectionBoneName], "rotation_quaternion", 3, 'SCRIPTED', [rightEyeballRightEyeHandleMarkerDistanceDriverVariable, rightEyeballEyesTrackTargetDistanceDriverVariable, eyeballsTrackBoneRotationZDriverVariable, rightEyeballTrackBoneRotationZDriverVariable, rightEyeHandleSpeedCorrectionDriverVariable, rightEyeHandleMinXLocationDriverVariable, leftEyeHandleMinXLocationDriverVariable, rightEyeHandleHeadDistanceXDriverVariable, leftEyeHandleHeadDistanceXDriverVariable, eyeballsNearbyTargetSizeFactorDriverVariable], 
     "0 if " + rightEyeballRightEyeHandleMarkerDistanceDriverVariable.name + "-" + rightEyeballEyesTrackTargetDistanceDriverVariable.name + "<=0 else (radians(45)+" + rightEyeballTrackBoneRotationZDriverVariable.name + ")*(" + rightEyeballRightEyeHandleMarkerDistanceDriverVariable.name + "-" + rightEyeballEyesTrackTargetDistanceDriverVariable.name + ")/" + eyeballsNearbyTargetSizeFactorDriverVariable.name + "*(" + rightEyeballTrackBoneRotationZDriverVariable.name + "-" + eyeballsTrackBoneRotationZDriverVariable.name + ")*20*(1 if (" + rightEyeHandleMinXLocationDriverVariable.name + "+" + rightEyeHandleHeadDistanceXDriverVariable.name + ")-(" + leftEyeHandleMinXLocationDriverVariable.name + "-" + leftEyeHandleHeadDistanceXDriverVariable.name + ")>=-0.000001 else 1+" + rightEyeHandleSpeedCorrectionDriverVariable.name + "*(" + rightEyeHandleMinXLocationDriverVariable.name + "+" + rightEyeHandleHeadDistanceXDriverVariable.name + ")/(" + leftEyeHandleMinXLocationDriverVariable.name + "-" + leftEyeHandleHeadDistanceXDriverVariable.name + "))")
+    koikatsuCommons.addDriver(headTransformationConstraintHeadRotation, "influence", None, 'AVERAGE', [headTrackTargetDriverVariable], 
+    None)
+    koikatsuCommons.addDriver(headLimitRotationConstraint, "influence", None, 'AVERAGE', [headTrackTargetLimitRotationDriverVariable], 
+    None)
+    koikatsuCommons.addDriver(headLimitRotationConstraint, "min_x", None, 'SCRIPTED', [headTrackTargetMinXRotationDriverVariable], 
+    "radians(" + headTrackTargetMinXRotationDriverVariable.name + ")")
+    koikatsuCommons.addDriver(headLimitRotationConstraint, "max_x", None, 'SCRIPTED', [headTrackTargetMaxXRotationDriverVariable], 
+    "radians(" + headTrackTargetMaxXRotationDriverVariable.name + ")")
+    koikatsuCommons.addDriver(headLimitRotationConstraint, "min_y", None, 'SCRIPTED', [headTrackTargetMinYRotationDriverVariable], 
+    "radians(" + headTrackTargetMinYRotationDriverVariable.name + ")")
+    koikatsuCommons.addDriver(headLimitRotationConstraint, "max_y", None, 'SCRIPTED', [headTrackTargetMaxYRotationDriverVariable], 
+    "radians(" + headTrackTargetMaxYRotationDriverVariable.name + ")")
+    koikatsuCommons.addDriver(headLimitRotationConstraint, "min_z", None, 'SCRIPTED', [headTrackTargetMinZRotationDriverVariable], 
+    "radians(" + headTrackTargetMinZRotationDriverVariable.name + ")")
+    koikatsuCommons.addDriver(headLimitRotationConstraint, "max_z", None, 'SCRIPTED', [headTrackTargetMaxZRotationDriverVariable], 
+    "radians(" + headTrackTargetMaxZRotationDriverVariable.name + ")")    
+    koikatsuCommons.addDriver(headTrackTargetParentArmatureConstraint.targets[0], "weight", None, 'AVERAGE', [headTrackTargetParentToHeadDriverVariable], 
+    None)
+    koikatsuCommons.addDriver(headTrackTargetParentArmatureConstraint.targets[1], "weight", None, 'AVERAGE', [headTrackTargetParentToTorsoDriverVariable], 
+    None)
+    koikatsuCommons.addDriver(headTrackTargetParentArmatureConstraint.targets[2], "weight", None, 'AVERAGE', [headTrackTargetParentToRootDriverVariable], 
+    None)
     
     def finalizeEyeballBone(rig, boneName):
         rig.pose.bones[boneName].lock_location[0] = True
@@ -794,23 +885,6 @@ def main():
     Begin Rigifying
     """
         
-    rootBone = metarig.pose.bones.get(koikatsuCommons.rootBoneName)
-    if rootBone is not None:
-        rootBone.name = koikatsuCommons.rootBoneName + koikatsuCommons.renamedNameSuffix
-        
-    def fixDuplicateBoneName(rig, boneName, childBoneName):
-        childBone = metarig.pose.bones.get(childBoneName)
-        if childBone.parent.name != boneName:
-            metarig.pose.bones.get(boneName).name = boneName + koikatsuCommons.renamedNameSuffix
-            metarig.pose.bones.get(childBone.parent.name).name = boneName
-    
-    fixDuplicateBoneName(metarig, koikatsuCommons.headBoneName, koikatsuCommons.originalEyesBoneName)
-    fixDuplicateBoneName(metarig, koikatsuCommons.neckBoneName, koikatsuCommons.headBoneName)
-    fixDuplicateBoneName(metarig, koikatsuCommons.upperChestBoneName, koikatsuCommons.neckBoneName)
-    fixDuplicateBoneName(metarig, koikatsuCommons.chestBoneName, koikatsuCommons.upperChestBoneName)
-    fixDuplicateBoneName(metarig, koikatsuCommons.spineBoneName, koikatsuCommons.chestBoneName)
-    fixDuplicateBoneName(metarig, koikatsuCommons.hipsBoneName, koikatsuCommons.spineBoneName)
-        
     bpy.ops.pose.rigify_layer_init()
     bpy.ops.armature.rigify_add_bone_groups()
         
@@ -820,21 +894,21 @@ def main():
 
     bpy.ops.object.mode_set(mode='EDIT')
     
-    def muteAllConstraints(rig, boneName):
-        boneToMute = rig.pose.bones[boneName]
-        for constraint in boneToMute.constraints:
-            constraint.mute = True
+    def removeAllConstraints(rig, boneName):
+        boneToEmpty = rig.pose.bones[boneName]
+        for constraint in boneToEmpty.constraints:
+            koikatsuCommons.removeConstraint(rig, boneName, constraint.name)
 
-    muteAllConstraints(metarig, koikatsuCommons.leftElbowBoneName)
-    muteAllConstraints(metarig, koikatsuCommons.rightElbowBoneName)
-    muteAllConstraints(metarig, koikatsuCommons.leftWristBoneName)
-    muteAllConstraints(metarig, koikatsuCommons.rightWristBoneName)
-    muteAllConstraints(metarig, koikatsuCommons.leftToeBoneName)
-    muteAllConstraints(metarig, koikatsuCommons.rightToeBoneName)
-    muteAllConstraints(metarig, koikatsuCommons.leftAnkleBoneName)
-    muteAllConstraints(metarig, koikatsuCommons.rightAnkleBoneName)
-    muteAllConstraints(metarig, koikatsuCommons.leftKneeBoneName)
-    muteAllConstraints(metarig, koikatsuCommons.rightKneeBoneName)
+    removeAllConstraints(metarig, koikatsuCommons.leftElbowBoneName)
+    removeAllConstraints(metarig, koikatsuCommons.rightElbowBoneName)
+    removeAllConstraints(metarig, koikatsuCommons.leftWristBoneName)
+    removeAllConstraints(metarig, koikatsuCommons.rightWristBoneName)
+    removeAllConstraints(metarig, koikatsuCommons.leftToeBoneName)
+    removeAllConstraints(metarig, koikatsuCommons.rightToeBoneName)
+    removeAllConstraints(metarig, koikatsuCommons.leftAnkleBoneName)
+    removeAllConstraints(metarig, koikatsuCommons.rightAnkleBoneName)
+    removeAllConstraints(metarig, koikatsuCommons.leftKneeBoneName)
+    removeAllConstraints(metarig, koikatsuCommons.rightKneeBoneName)
 
     def renameAllVertexGroups(vertexGroupNameOld, vertexGroupNameNew):
         for obj in bpy.context.scene.objects: 
@@ -861,7 +935,7 @@ def main():
     renameAllVertexGroups(koikatsuCommons.originalRightElbowDeformBone2Name, koikatsuCommons.rightElbowDeformBone2Name)
     renameAllVertexGroups(koikatsuCommons.originalLeftElbowDeformBone3Name, koikatsuCommons.leftElbowDeformBone3Name)
     renameAllVertexGroups(koikatsuCommons.originalRightElbowDeformBone3Name, koikatsuCommons.rightElbowDeformBone3Name)
-    renameAllVertexGroups(koikatsuCommons.originalLeftWristDeformBoneName, koikatsuCommons.leftWristDeformBoneName)
+    renameAllVertexGroups(koikatsuCommons.originalLeftWristDeformBoneName, koikatsuCommons.leftWristDeformBoneName)    
     renameAllVertexGroups(koikatsuCommons.originalRightWristDeformBoneName, koikatsuCommons.rightWristDeformBoneName)
     renameAllVertexGroups(koikatsuCommons.originalLeftThumbDeformBone1Name, koikatsuCommons.leftThumbDeformBone1Name)  
     renameAllVertexGroups(koikatsuCommons.originalRightThumbDeformBone1Name, koikatsuCommons.rightThumbDeformBone1Name)
@@ -1144,7 +1218,7 @@ def main():
     leftAnkleBone.head.y = originalLeftLegDeformBone3.head.y + math.dist([originalLeftLegDeformBone3.head.y], [leftHeelBone.head.y]) * 0.2
     rightAnkleBone.head.y = originalRightLegDeformBone3.head.y + math.dist([originalRightLegDeformBone3.head.y], [rightHeelBone.head.y]) * 0.2
     
-    def createPalmVertexGroups(wristVertexGroupName, palmVertexGroupName, palmMinX, palmMidY, lowerPalmMidY, higherPalmMidY):
+    def createPalmVertexGroups(wristVertexGroupName, palmVertexGroupName, rightSide, palmMinX, palmMaxX, palmMidY, lowerPalmMidY, higherPalmMidY):
         for object in bpy.context.scene.objects: 
             if object.type == 'MESH':
                 wristVertexGroup = object.vertex_groups.get(wristVertexGroupName)
@@ -1154,7 +1228,7 @@ def main():
                     if palmVertexGroup is None:
                         palmVertexGroup = object.vertex_groups.new(name = palmVertexGroupName)
                     for vertex in wristVertexGroupExtremities.vertices:
-                        if wristVertexGroupExtremities.coordinates[vertex.index][0] > palmMinX:
+                        if (not rightSide and wristVertexGroupExtremities.coordinates[vertex.index][0] > palmMinX) or (rightSide and wristVertexGroupExtremities.coordinates[vertex.index][0] < palmMaxX):
                             if lowerPalmMidY is None or math.dist([wristVertexGroupExtremities.coordinates[vertex.index][1]], [palmMidY]) < math.dist([wristVertexGroupExtremities.coordinates[vertex.index][1]], [lowerPalmMidY]):
                                 if higherPalmMidY is None or math.dist([wristVertexGroupExtremities.coordinates[vertex.index][1]], [palmMidY]) < math.dist([wristVertexGroupExtremities.coordinates[vertex.index][1]], [higherPalmMidY]):
                                     palmVertexGroup.add([vertex.index], wristVertexGroup.weight(vertex.index), 'REPLACE')
@@ -1169,15 +1243,15 @@ def main():
     leftLittleFingerBone1 = metarig.data.edit_bones[koikatsuCommons.leftLittleFingerBone1Name]
     rightLittleFingerBone1 = metarig.data.edit_bones[koikatsuCommons.rightLittleFingerBone1Name]
     leftPalmMinX = leftWristBone.tail.x - math.dist([leftWristBone.head.x], [leftWristBone.tail.x]) * 0.85
-    rightPalmMinX = rightWristBone.tail.x - math.dist([rightWristBone.head.x], [rightWristBone.tail.x]) * 0.85
-    createPalmVertexGroups(koikatsuCommons.leftWristDeformBoneName, koikatsuCommons.leftIndexFingerPalmDeformBoneName, leftPalmMinX, leftIndexFingerBone1.head.y, None, leftMiddleFingerBone1.head.y)
-    createPalmVertexGroups(koikatsuCommons.rightWristDeformBoneName, koikatsuCommons.rightIndexFingerPalmDeformBoneName, rightPalmMinX, rightIndexFingerBone1.head.y, None, rightMiddleFingerBone1.head.y)
-    createPalmVertexGroups(koikatsuCommons.leftWristDeformBoneName, koikatsuCommons.leftMiddleFingerPalmDeformBoneName, leftPalmMinX, leftMiddleFingerBone1.head.y, None, leftRingFingerBone1.head.y)
-    createPalmVertexGroups(koikatsuCommons.rightWristDeformBoneName, koikatsuCommons.rightMiddleFingerPalmDeformBoneName, rightPalmMinX, rightMiddleFingerBone1.head.y, None, rightRingFingerBone1.head.y)
-    createPalmVertexGroups(koikatsuCommons.leftWristDeformBoneName, koikatsuCommons.leftRingFingerPalmDeformBoneName, leftPalmMinX, leftRingFingerBone1.head.y, None, leftLittleFingerBone1.head.y)
-    createPalmVertexGroups(koikatsuCommons.rightWristDeformBoneName, koikatsuCommons.rightRingFingerPalmDeformBoneName, rightPalmMinX, rightRingFingerBone1.head.y, None, rightLittleFingerBone1.head.y)
-    createPalmVertexGroups(koikatsuCommons.leftWristDeformBoneName, koikatsuCommons.leftLittleFingerPalmDeformBoneName, leftPalmMinX, leftLittleFingerBone1.head.y, None, None)
-    createPalmVertexGroups(koikatsuCommons.rightWristDeformBoneName, koikatsuCommons.rightLittleFingerPalmDeformBoneName, rightPalmMinX, rightLittleFingerBone1.head.y, None, None)
+    rightPalmMaxX = rightWristBone.tail.x + math.dist([rightWristBone.head.x], [rightWristBone.tail.x]) * 0.85
+    createPalmVertexGroups(koikatsuCommons.leftWristDeformBoneName, koikatsuCommons.leftIndexFingerPalmDeformBoneName, False, leftPalmMinX, None, leftIndexFingerBone1.head.y, None, leftMiddleFingerBone1.head.y)
+    createPalmVertexGroups(koikatsuCommons.rightWristDeformBoneName, koikatsuCommons.rightIndexFingerPalmDeformBoneName, True, None, rightPalmMaxX, rightIndexFingerBone1.head.y, None, rightMiddleFingerBone1.head.y)
+    createPalmVertexGroups(koikatsuCommons.leftWristDeformBoneName, koikatsuCommons.leftMiddleFingerPalmDeformBoneName, False, leftPalmMinX, None, leftMiddleFingerBone1.head.y, None, leftRingFingerBone1.head.y)
+    createPalmVertexGroups(koikatsuCommons.rightWristDeformBoneName, koikatsuCommons.rightMiddleFingerPalmDeformBoneName, True, None, rightPalmMaxX, rightMiddleFingerBone1.head.y, None, rightRingFingerBone1.head.y)
+    createPalmVertexGroups(koikatsuCommons.leftWristDeformBoneName, koikatsuCommons.leftRingFingerPalmDeformBoneName, False, leftPalmMinX, None, leftRingFingerBone1.head.y, None, leftLittleFingerBone1.head.y)
+    createPalmVertexGroups(koikatsuCommons.rightWristDeformBoneName, koikatsuCommons.rightRingFingerPalmDeformBoneName, True, None, rightPalmMaxX, rightRingFingerBone1.head.y, None, rightLittleFingerBone1.head.y)
+    createPalmVertexGroups(koikatsuCommons.leftWristDeformBoneName, koikatsuCommons.leftLittleFingerPalmDeformBoneName, False, leftPalmMinX, None, leftLittleFingerBone1.head.y, None, None)
+    createPalmVertexGroups(koikatsuCommons.rightWristDeformBoneName, koikatsuCommons.rightLittleFingerPalmDeformBoneName, True, None, rightPalmMaxX, rightLittleFingerBone1.head.y, None, None)
     
     def finalizeFingerBones(leftSide, rig, wristBoneName, fingerPalmBoneName, fingerBone1Name, fingerBone2Name, fingerBone3Name, fingerDeformBone1Name, fingerDeformBone2Name, fingerDeformBone3Name, objectName, palmBoneRoll, fingerBone1Roll, fingerBone2Roll, fingerBone3Roll, middle = False, thumb = False):
         fingerBone1 = rig.data.edit_bones[fingerBone1Name]
@@ -1381,7 +1455,11 @@ def main():
         metarig.pose.bones[koikatsuCommons.riggedTongueLeftBone5Name].rigify_parameters.optional_widget_type = "sphere"
         metarig.pose.bones[koikatsuCommons.riggedTongueRightBone5Name].rigify_parameters.optional_widget_type = "sphere"
     metarig.pose.bones[koikatsuCommons.headBoneName].custom_shape = None
-    metarig.pose.bones[koikatsuCommons.headBoneName].rigify_type = ""    
+    metarig.pose.bones[koikatsuCommons.headBoneName].rigify_type = ""
+    metarig.pose.bones[koikatsuCommons.headTrackBoneName].rigify_parameters.relink_constraints = True
+    metarig.pose.bones[koikatsuCommons.headTrackBoneName].rigify_parameters.parent_bone = koikatsuCommons.headTweakBoneName
+    metarig.pose.bones[koikatsuCommons.headTrackTargetBoneName].custom_shape = None
+    metarig.pose.bones[koikatsuCommons.headTrackTargetBoneName].rigify_parameters.optional_widget_type = "pivot_cross"  
     metarig.pose.bones[koikatsuCommons.neckBoneName].custom_shape = None
     metarig.pose.bones[koikatsuCommons.neckBoneName].rigify_type = "spines.super_head"
     metarig.pose.bones[koikatsuCommons.neckBoneName].rigify_parameters.connect_chain = True
@@ -1595,6 +1673,22 @@ def main():
         koikatsuCommons.torsoLayerBoneNames.remove(koikatsuCommons.breastsHandleBoneName)
         koikatsuCommons.torsoLayerBoneNames.remove(koikatsuCommons.leftBreastHandleBoneName)
         koikatsuCommons.torsoLayerBoneNames.remove(koikatsuCommons.rightBreastHandleBoneName) 
+        
+    if not hasRiggedTongue:
+        try:
+            koikatsuCommons.eyesPrimaryLayerBoneNames.remove(koikatsuCommons.riggedTongueBone1Name)
+            koikatsuCommons.eyesPrimaryLayerBoneNames.remove(koikatsuCommons.riggedTongueBone2Name)
+            koikatsuCommons.eyesPrimaryLayerBoneNames.remove(koikatsuCommons.riggedTongueBone3Name)
+            koikatsuCommons.eyesPrimaryLayerBoneNames.remove(koikatsuCommons.riggedTongueBone4Name)
+            koikatsuCommons.eyesPrimaryLayerBoneNames.remove(koikatsuCommons.riggedTongueBone5Name)
+            koikatsuCommons.eyesSecondaryLayerBoneNames.remove(koikatsuCommons.riggedTongueLeftBone3Name)
+            koikatsuCommons.eyesSecondaryLayerBoneNames.remove(koikatsuCommons.riggedTongueRightBone3Name)
+            koikatsuCommons.eyesSecondaryLayerBoneNames.remove(koikatsuCommons.riggedTongueLeftBone4Name)
+            koikatsuCommons.eyesSecondaryLayerBoneNames.remove(koikatsuCommons.riggedTongueRightBone4Name)
+            koikatsuCommons.eyesSecondaryLayerBoneNames.remove(koikatsuCommons.riggedTongueLeftBone5Name)
+            koikatsuCommons.eyesSecondaryLayerBoneNames.remove(koikatsuCommons.riggedTongueRightBone5Name)
+        except:
+            pass
                
     if not hasBetterPenetrationMod:
         try:
@@ -1643,7 +1737,11 @@ def main():
     koikatsuCommons.assignSingleBoneLayerToList(metarig, koikatsuCommons.leftLegIkLayerBoneNames, koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.leftLegLayerName + koikatsuCommons.ikLayerSuffix))
     koikatsuCommons.assignSingleBoneLayerToList(metarig, koikatsuCommons.rightLegIkLayerBoneNames, koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.rightLegLayerName + koikatsuCommons.ikLayerSuffix))
     
-    usefulBoneNames = [metarigIdBoneName, koikatsuCommons.eyesXBoneName, koikatsuCommons.eyesBoneName, koikatsuCommons.leftEyeBoneName, koikatsuCommons.rightEyeBoneName, koikatsuCommons.eyesTrackTargetParentBoneName, koikatsuCommons.eyesHandleMarkerBoneName, koikatsuCommons.leftEyeHandleMarkerBoneName, koikatsuCommons.rightEyeHandleMarkerBoneName, koikatsuCommons.leftEyeHandleMarkerXBoneName, koikatsuCommons.rightEyeHandleMarkerXBoneName, koikatsuCommons.leftEyeHandleMarkerZBoneName, koikatsuCommons.rightEyeHandleMarkerZBoneName, koikatsuCommons.eyeballsTrackBoneName, koikatsuCommons.leftEyeballTrackBoneName, koikatsuCommons.rightEyeballTrackBoneName, koikatsuCommons.leftEyeballTrackCorrectionBoneName, koikatsuCommons.rightEyeballTrackCorrectionBoneName, koikatsuCommons.leftHeadMarkerXBoneName, koikatsuCommons.rightHeadMarkerXBoneName, koikatsuCommons.leftHeadMarkerZBoneName, koikatsuCommons.rightHeadMarkerZBoneName]
+    usefulBoneNames = [metarigIdBoneName, koikatsuCommons.eyesXBoneName, koikatsuCommons.eyesBoneName, koikatsuCommons.leftEyeBoneName, koikatsuCommons.rightEyeBoneName, koikatsuCommons.eyesTrackTargetParentBoneName, 
+    koikatsuCommons.eyesHandleMarkerBoneName, koikatsuCommons.leftEyeHandleMarkerBoneName, koikatsuCommons.rightEyeHandleMarkerBoneName, koikatsuCommons.leftEyeHandleMarkerXBoneName, koikatsuCommons.rightEyeHandleMarkerXBoneName, 
+    koikatsuCommons.leftEyeHandleMarkerZBoneName, koikatsuCommons.rightEyeHandleMarkerZBoneName, koikatsuCommons.eyeballsTrackBoneName, koikatsuCommons.leftEyeballTrackBoneName, koikatsuCommons.rightEyeballTrackBoneName, 
+    koikatsuCommons.leftEyeballTrackCorrectionBoneName, koikatsuCommons.rightEyeballTrackCorrectionBoneName, koikatsuCommons.leftHeadMarkerXBoneName, koikatsuCommons.rightHeadMarkerXBoneName, koikatsuCommons.leftHeadMarkerZBoneName, 
+    koikatsuCommons.rightHeadMarkerZBoneName, koikatsuCommons.headTrackBoneName, koikatsuCommons.headTrackTargetParentBoneName]
     usefulBoneNames.extend(ctrlBoneNames)
     
     defBoneNames = koikatsuCommons.getDeformBoneNames(metarig)
@@ -1826,7 +1924,7 @@ def main():
 class rigify_before(bpy.types.Operator):
     bl_idname = "kkb.rigbefore"
     bl_label = "Before First Rigify Generate - Public"
-    bl_description = 'why is the context wrong'
+    bl_description = 'Converts the KKBP armature to a Rigify metarig'
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):

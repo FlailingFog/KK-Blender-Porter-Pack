@@ -36,6 +36,7 @@
 import bpy, os, time, mathutils, json, pathlib
 from bpy.props import StringProperty
 from...importing.importbuttons import kklog, toggle_console
+from...interface.dictionary_en import t
 def main(folder):
 
     kkbp_character = False
@@ -264,6 +265,21 @@ bpy.ops.wm.quit_blender()
                 if bone_name not in retargeting_list:
                     rigify_armature.animation_data.action.fcurves.remove(action) #remove keyframes
                     rigify_armature.pose.bones[bone_name].matrix_basis = mathutils.Matrix()
+        
+        if bpy.context.scene.kkbp.animation_library_scale:
+            #also scale the arms on the y axis by 5% because it makes the animation more accurate to the in-game one for some poses
+            already_got_both_arms = False
+            if kkbp_character:
+                for y_scale_curve in [curve for curve in rigify_armature.animation_data.action.fcurves if (curve.array_index == 1) and ('scale' in curve.data_path)]:
+                    bone_name = y_scale_curve.data_path[y_scale_curve.data_path.find('[')+2:y_scale_curve.data_path.find('].')-1]
+                    if bone_name in ['Left arm_fk', 'Right arm_fk']:
+                        keyframe_limits = [int(y_scale_curve.keyframe_points[0].co.x), int(y_scale_curve.keyframe_points[-1].co.x)]
+                        for frame_number in range(keyframe_limits[0], keyframe_limits[1]+1):
+                            original_scale = y_scale_curve.evaluate(frame_number)
+                            y_scale_curve.keyframe_points.insert(frame_number, original_scale * 1.05)
+                        if already_got_both_arms:
+                            break #skip the rest
+                        already_got_both_arms = True
 
         #select all rigify armature bones and create pose asset
         bpy.ops.object.select_all(action='DESELECT')
@@ -409,7 +425,7 @@ bpy.ops.wm.quit_blender()
 class anim_asset_lib(bpy.types.Operator):
     bl_idname = "kkb.createanimassetlib"
     bl_label = "Create animation asset library"
-    bl_description = "Creates an animation library using the current file and current character. Will not save over the current file in case you want to reuse it. Open the folder containing the animation files exported with SB3Utility"
+    bl_description = t('animation_library_tt')
     bl_options = {'REGISTER', 'UNDO'}
     
     directory : StringProperty(maxlen=1024, default='', subtype='FILE_PATH', options={'HIDDEN'})

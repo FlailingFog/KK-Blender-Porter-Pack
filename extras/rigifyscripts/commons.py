@@ -58,6 +58,8 @@ widgetButtockRightName = "WidgetButtockRight"
 handleBoneSuffix = " handle"
 trackBoneSuffix = " track"
 markerBoneSuffix = " marker"
+parentBoneSuffix = " parent"
+placeholderBoneSuffix = " placeholder"
 xBoneSuffix = " x"
 yBoneSuffix = " y"
 zBoneSuffix = " z"
@@ -67,14 +69,14 @@ originalRootUpperBoneName = "cf_pv_root_upper"
 rootBoneName = "root"
 eyesXBoneName = "Eyesx"
 originalEyesBoneName = "Eye Controller"
-eyesBoneName = "Eyes target";
+eyesBoneName = "Eyes target"
 leftEyeBoneName = "Left eye target"
 rightEyeBoneName = leftNameToRightName(leftEyeBoneName)
 eyesHandleBoneName = "Eyes" + handleBoneSuffix
 leftEyeHandleBoneName = "Left eye" + handleBoneSuffix
 rightEyeHandleBoneName = leftNameToRightName(leftEyeHandleBoneName)
 eyesTrackTargetBoneName = "Eyes track target"
-eyesTrackTargetParentBoneName = eyesTrackTargetBoneName + " parent"
+eyesTrackTargetParentBoneName = eyesTrackTargetBoneName + parentBoneSuffix
 eyesHandleMarkerBoneName = eyesHandleBoneName + markerBoneSuffix
 leftEyeHandleMarkerBoneName = leftEyeHandleBoneName + markerBoneSuffix
 rightEyeHandleMarkerBoneName = leftNameToRightName(leftEyeHandleMarkerBoneName)
@@ -108,6 +110,9 @@ leftHeadMarkerXBoneName = leftNamePrefix + headBoneName + markerBoneSuffix + xBo
 rightHeadMarkerXBoneName = leftNameToRightName(leftHeadMarkerXBoneName)
 leftHeadMarkerZBoneName = leftNamePrefix + headBoneName + markerBoneSuffix + zBoneSuffix
 rightHeadMarkerZBoneName = leftNameToRightName(leftHeadMarkerZBoneName)
+headTrackTargetBoneName = "Head track target"
+headTrackTargetParentBoneName = headTrackTargetBoneName + parentBoneSuffix
+headTrackBoneName = "Head" + trackBoneSuffix
 neckBoneName = "Neck"
 torsoBoneName = "torso"
 upperChestBoneName = "Upper Chest"
@@ -564,11 +569,13 @@ copyTransformsConstraintBaseName = "Copy Transforms"
 copyRotationConstraintBaseName = "Copy Rotation"
 transformationConstraintBaseName = "Transformation"
 limitLocationConstraintBaseName = "Limit Location"
+limitRotationConstraintBaseName = "Limit Rotation"
 armatureConstraintBaseName = "Armature"
 dampedTrackConstraintBaseName = "Damped Track"
 handleConstraintSuffix = "_Handle"
 jointConstraintSuffix = "_Joint"
 eyeballConstraintSuffix = "_Eyeball"
+headConstraintSuffix = "_Head"
 parentConstraintSuffix = "_Parent"
 trackConstraintSuffix = "_Track"
 locationConstraintSuffix = " Location"
@@ -578,13 +585,20 @@ correctionConstraintSuffix = " Correction"
 minConstraintSuffix = " Min"
 maxConstraintSuffix = " Max"
 
-def removeContraint(rig, boneName, constraintName):
+def removeConstraint(rig, boneName, constraintName):
     constraint = rig.pose.bones[boneName].constraints.get(constraintName)
     if constraint:
         rig.pose.bones[boneName].constraints.remove(constraint)
+        
+def changeConstraintIndex(rig, boneName, constraintName, newIndex):
+    bone = rig.pose.bones[boneName]
+    for index, constraint in enumerate(bone.constraints):
+        if constraint.name == constraintName:
+            bone.constraints.move(index, newIndex)
+            break
 
 def addCopyTransformsConstraint(rig, boneName, subTargetBoneName, mixMode, space, constraintName):
-    removeContraint(rig, boneName, constraintName)
+    removeConstraint(rig, boneName, constraintName)
     copyTransformsConstraint = rig.pose.bones[boneName].constraints.new('COPY_TRANSFORMS')
     copyTransformsConstraint.name = constraintName
     copyTransformsConstraint.target = rig
@@ -596,7 +610,7 @@ def addCopyTransformsConstraint(rig, boneName, subTargetBoneName, mixMode, space
     
 def addCopyRotationConstraint(rig, boneName, subTargetBoneName, mixMode, space, constraintName, 
 useX, invertX, useY, invertY, useZ, invertZ):
-    removeContraint(rig, boneName, constraintName)
+    removeConstraint(rig, boneName, constraintName)
     copyRotationConstraint = rig.pose.bones[boneName].constraints.new('COPY_ROTATION')
     copyRotationConstraint.name = constraintName
     copyRotationConstraint.target = rig
@@ -614,7 +628,7 @@ useX, invertX, useY, invertY, useZ, invertZ):
 
 def addCopyScaleConstraint(rig, boneName, targetRig, subTargetBoneName, space, constraintName, 
 useX, useY, useZ):
-    removeContraint(rig, boneName, constraintName)
+    removeConstraint(rig, boneName, constraintName)
     copyRotationConstraint = rig.pose.bones[boneName].constraints.new('COPY_SCALE')
     copyRotationConstraint.name = constraintName
     copyRotationConstraint.target = targetRig
@@ -627,9 +641,10 @@ useX, useY, useZ):
     return copyRotationConstraint
         
 def addTransformationConstraint(rig, boneName, subTargetBoneName, mixMode, space, constraintName, 
-mapFrom, fromMinX, fromMaxX, fromMinY, fromMaxY, fromMinZ, fromMaxZ, 
-mapTo, toMinX, toMaxX, toMinY, toMaxY, toMinZ, toMaxZ):
-    removeContraint(rig, boneName, constraintName)
+mapFrom, fromRotationMode, fromMinX, fromMaxX, fromMinY, fromMaxY, fromMinZ, fromMaxZ, 
+mapTo, toEulerOrder, toMinX, toMaxX, toMinY, toMaxY, toMinZ, toMaxZ, 
+mapToXFrom = 'X', mapToYFrom = 'Y', mapToZFrom = 'Z'):
+    removeConstraint(rig, boneName, constraintName)
     transformationConstraint = rig.pose.bones[boneName].constraints.new('TRANSFORM')
     transformationConstraint.name = constraintName
     transformationConstraint.target = rig
@@ -645,6 +660,7 @@ mapTo, toMinX, toMaxX, toMinY, toMaxY, toMinZ, toMaxZ):
         transformationConstraint.from_min_z = fromMinZ
         transformationConstraint.from_max_z = fromMaxZ
     elif mapFrom == 'ROTATION':
+        transformationConstraint.from_rotation_mode = fromRotationMode
         transformationConstraint.from_min_x_rot = fromMinX
         transformationConstraint.from_max_x_rot = fromMaxX
         transformationConstraint.from_min_y_rot = fromMinY
@@ -668,6 +684,7 @@ mapTo, toMinX, toMaxX, toMinY, toMaxY, toMinZ, toMaxZ):
         transformationConstraint.to_max_z = toMaxZ
         transformationConstraint.mix_mode = mixMode
     elif mapFrom == 'ROTATION':
+        transformationConstraint.to_euler_order = toEulerOrder
         transformationConstraint.to_min_x_rot = toMinX
         transformationConstraint.to_max_x_rot = toMaxX
         transformationConstraint.to_min_y_rot = toMinY
@@ -683,11 +700,14 @@ mapTo, toMinX, toMaxX, toMinY, toMaxY, toMinZ, toMaxZ):
         transformationConstraint.to_min_z_scale = toMinZ
         transformationConstraint.to_max_z_scale = toMaxZ
         transformationConstraint.mix_mode_scale = mixMode
+    transformationConstraint.map_to_x_from = mapToXFrom
+    transformationConstraint.map_to_y_from = mapToYFrom
+    transformationConstraint.map_to_z_from = mapToZFrom
     return transformationConstraint
         
 def addLimitLocationConstraint(rig, boneName, subTargetBoneName, space, constraintName, 
 useMinX, minX, useMaxX, maxX, useMinY, minY, useMaxY, maxY, useMinZ, minZ, useMaxZ, maxZ):
-    removeContraint(rig, boneName, constraintName)
+    removeConstraint(rig, boneName, constraintName)
     limitLocationConstraint = rig.pose.bones[boneName].constraints.new('LIMIT_LOCATION')
     limitLocationConstraint.name = constraintName
     limitLocationConstraint.owner_space = space
@@ -707,9 +727,29 @@ useMinX, minX, useMaxX, maxX, useMinY, minY, useMaxY, maxY, useMinZ, minZ, useMa
     limitLocationConstraint.use_max_z = useMaxZ
     limitLocationConstraint.max_z = maxZ
     return limitLocationConstraint
+
+def addLimitRotationConstraint(rig, boneName, subTargetBoneName, space, constraintName, 
+useX, minX, maxX, useY, minY, maxY, useZ, minZ, maxZ):
+    removeConstraint(rig, boneName, constraintName)
+    limitRotationConstraint = rig.pose.bones[boneName].constraints.new('LIMIT_ROTATION')
+    limitRotationConstraint.name = constraintName
+    limitRotationConstraint.owner_space = space
+    if space == 'CUSTOM':
+        limitRotationConstraint.space_object = rig
+        limitRotationConstraint.space_subtarget = subTargetBoneName
+    limitRotationConstraint.use_limit_x = useX
+    limitRotationConstraint.min_x = minX
+    limitRotationConstraint.max_x = maxX
+    limitRotationConstraint.use_limit_y = useY
+    limitRotationConstraint.min_y = minY
+    limitRotationConstraint.max_y = maxY
+    limitRotationConstraint.use_limit_z = useZ
+    limitRotationConstraint.min_z = minZ
+    limitRotationConstraint.max_z = maxZ
+    return limitRotationConstraint
     
 def addArmatureConstraint(rig, boneName, subTargetBoneNames, constraintName):
-    removeContraint(rig, boneName, constraintName)
+    removeConstraint(rig, boneName, constraintName)
     armatureConstraint = rig.pose.bones[boneName].constraints.new('ARMATURE')
     armatureConstraint.name = constraintName
     for index, subTargetBoneName in enumerate(subTargetBoneNames):
@@ -719,7 +759,7 @@ def addArmatureConstraint(rig, boneName, subTargetBoneNames, constraintName):
     return armatureConstraint
         
 def addDampedTrackConstraint(rig, boneName, subTargetBoneName, constraintName):
-    removeContraint(rig, boneName, constraintName)
+    removeConstraint(rig, boneName, constraintName)
     dampedTrackConstraint = rig.pose.bones[boneName].constraints.new('DAMPED_TRACK')
     dampedTrackConstraint.name = constraintName
     dampedTrackConstraint.target = rig
@@ -852,7 +892,7 @@ eyesPrimaryLayerBoneNames = [eyesHandleBoneName, leftEyeHandleBoneName, rightEye
 riggedTongueBone3Name, riggedTongueBone4Name, riggedTongueBone5Name]
 eyesSecondaryLayerBoneNames = [eyesTrackTargetBoneName, eyeballsBoneName, leftEyeballBoneName, rightEyeballBoneName, riggedTongueLeftBone3Name, 
 riggedTongueRightBone3Name, riggedTongueLeftBone4Name, riggedTongueRightBone4Name, riggedTongueLeftBone5Name, riggedTongueRightBone5Name]
-torsoLayerBoneNames = [headBoneName, neckBoneName, upperChestBoneName, chestBoneName, spineBoneName, 
+torsoLayerBoneNames = [headBoneName, headTrackTargetBoneName, neckBoneName, upperChestBoneName, chestBoneName, spineBoneName, 
 hipsBoneName, pelvisBoneName, waistBoneName, buttocksHandleBoneName, leftButtockHandleBoneName, rightButtockHandleBoneName,
 breastsHandleBoneName, leftBreastHandleBoneName, rightBreastHandleBoneName, leftShoulderBoneName, rightShoulderBoneName]
 torsoTweakLayerBoneNames = [crotchBoneName, anusBoneName, leftBreastBone2Name, rightBreastBone2Name, leftBreastBone3Name,

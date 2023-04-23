@@ -17,6 +17,7 @@ from ..importstudio import import_studio_objects
 from ...importing.importbuttons import kklog, toggle_console
 from ...importing.importcolors import load_luts, image_to_KK
 from ...importing.darkcolors import create_darktex
+from ...interface.dictionary_en import t
 
 def better_fbx_map_import(directory):
     already_loaded_images = [image.name for image in bpy.data.images]
@@ -331,7 +332,7 @@ def main(folder):
 class map_asset_lib(bpy.types.Operator):
     bl_idname = "kkb.createmapassetlib"
     bl_label = "Create map asset library"
-    bl_description = "Creates an asset library using ripped map data. Open the folder containing the map files exported with SB3Utility. Takes 40 to 500 seconds per map"
+    bl_description = t('map_library_tt')
     bl_options = {'REGISTER', 'UNDO'}
     
     directory : StringProperty(maxlen=1024, default='', subtype='FILE_PATH', options={'HIDDEN'})

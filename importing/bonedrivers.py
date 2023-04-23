@@ -420,16 +420,17 @@ def setup_joints():
     setDriver('cf_s_kneeB_L', 'location', 1, 'cf_j_leg01_L', 'ROT_X',  '-0.2', expresstype = 'moveexp')
     setDriver('cf_s_kneeB_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '-0.08')
 
-    #knee correction to thicken the knee in a kneeling pose
-    setDriver('cf_s_leg01_R', 'scale', 2, 'cf_j_leg01_R', 'ROT_X',  '1',  expresstype = 'scale')
-    setDriver('cf_s_leg01_R', 'scale', 0, 'cf_j_leg01_R', 'ROT_X',  '-2', expresstype = 'scale')
-    setDriver('cf_s_leg01_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '0.05', expresstype='quat')
-    setDriver('cf_d_thigh03_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',   '.015')
+    #knee correction to thicken the knee in a kneeling pose if the rigify armature is being used
+    if bpy.context.scene.kkbp.armature_dropdown == 'B' and bpy.context.scene.kkbp.categorize_dropdown in ['A', 'B', 'C']:
+        setDriver('cf_s_leg01_R', 'scale', 2, 'cf_j_leg01_R', 'ROT_X',  '1',  expresstype = 'scale')
+        setDriver('cf_s_leg01_R', 'scale', 0, 'cf_j_leg01_R', 'ROT_X',  '-2', expresstype = 'scale')
+        setDriver('cf_s_leg01_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '0.05', expresstype='quat')
+        setDriver('cf_d_thigh03_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',   '.015')
 
-    setDriver('cf_s_leg01_L', 'scale', 2, 'cf_j_leg01_L', 'ROT_X',  '1', expresstype = 'scale')
-    setDriver('cf_s_leg01_L', 'scale', 0, 'cf_j_leg01_L', 'ROT_X',  '-2', expresstype = 'scale')
-    setDriver('cf_s_leg01_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '0.05', expresstype='quat')
-    setDriver('cf_d_thigh03_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '-.015')
+        setDriver('cf_s_leg01_L', 'scale', 2, 'cf_j_leg01_L', 'ROT_X',  '1', expresstype = 'scale')
+        setDriver('cf_s_leg01_L', 'scale', 0, 'cf_j_leg01_L', 'ROT_X',  '-2', expresstype = 'scale')
+        setDriver('cf_s_leg01_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '0.05', expresstype='quat')
+        setDriver('cf_d_thigh03_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '-.015')
 
     #knee tip corrections go up toward the waist and in toward the body, also rotate a bit
     setDriver('cf_d_kneeF_R', 'location', 1, 'cf_j_leg01_R', 'ROT_X',  '0.02')

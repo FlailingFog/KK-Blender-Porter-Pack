@@ -1,10 +1,10 @@
 import bpy, pathlib, os
+from ..interface.dictionary_en import t
 
 class finalize_materials(bpy.types.Operator):
     bl_idname = "kkb.finalizematerials"
-    bl_label = "Finalize KKBP Materials"
-    bl_description = """!! Bake your materials, then use the 'Switch baked' button for 'Light' and 'Dark' before using this button !!
-Replaces the KKBP node groups with a simple mix node to increase animation playback performance. Backups are saved as '-ORG'"""
+    bl_label = "Optimize KKBP Materials"
+    bl_description = t('finalize_materials_tt')
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):

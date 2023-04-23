@@ -97,6 +97,10 @@ class PlaceholderProperties(PropertyGroup):
     description=t('bake_norm_tt'),
     default = False)
 
+    animation_library_scale : BoolProperty(
+    description=t('animation_library_scale_tt'),
+    default = True)
+
     shapekeys_dropdown : EnumProperty(
         items=(
             ("A", t('shape_A'), t('shape_A_tt')),
@@ -145,7 +149,7 @@ class PlaceholderProperties(PropertyGroup):
     studio_lut_bool : BoolProperty(
         name="Enable or Disable",
         description="""Enable this if you want the plugin to saturate the item's textures using the in-game LUT""",
-        default = False)
+        default = True)
 
     rokoko_bool : BoolProperty(
         name="Enable or Disable",
@@ -295,13 +299,13 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
-        split.label(text="Import studio object")
+        split.label(text=t('studio_object'))
         split.operator('kkb.importstudio', text = '', icon = 'MATCUBE')
         row = col.row(align=True)
         split = row.split(align=True)
         split.label(text="Shader")
-        split.label(text="Shadow type")
-        split.label(text="Blend mode")
+        split.label(text="Shadow Mode")
+        split.label(text="Blend Mode")
         split.label(text="")
         row = col.row(align=True)
         split = row.split(align=True)
@@ -313,19 +317,24 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
-        split.label(text="Create animation library")
+        split.label(text=t('animation_library'))
         split.operator('kkb.createanimassetlib', text = '', icon = 'ARMATURE_DATA')
+        row = col.row(align=True)
+        split = row.split(align=True, factor=splitfac)
+        split.label(text="")
+        split.prop(context.scene.kkbp, "animation_library_scale", toggle=True, text = t('animation_library_scale'))
+
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
-        split.label(text="Create map asset library")
+        split.label(text=t('map_library'))
         split.operator('kkb.createmapassetlib', text = '', icon = 'WORLD')
 
         box = layout.box()
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
-        split.label(text='Finalize materials')
+        split.label(text=t('finalize_materials'))
         split.operator('kkb.finalizematerials', text = '', icon='SHADERFX')
 
         box = layout.box()

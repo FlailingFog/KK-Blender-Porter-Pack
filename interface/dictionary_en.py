@@ -108,6 +108,17 @@ translation_dictionary = {
     'prep'          : 'Prep for target application',
     'apply_temp'    : 'Switch baked templates',
 
+    'studio_object'             : 'Import studio object',
+    'animation_library'         : 'Create animation library',
+    'animation_library_tt'      : "Creates an animation library using the current file and current character. Will not save over the current file in case you want to reuse it. Open the folder containing the animation files exported with SB3Utility",
+    'animation_library_scale'   : 'Scale arms',
+    'animation_library_scale_tt': 'Check this to scale the arms on the y axis by 5%. This will make certain poses more accurate to the in-game one',
+    'map_library'               : 'Create map asset library',
+    'map_library_tt'            : "Creates an asset library using ripped map data. Open the folder containing the map files exported with SB3Utility. Takes 40 to 500 seconds per map",
+    'finalize_materials'        : 'Optimize materials',
+    'finalize_materials_tt'     : """!! Bake your materials, then use the 'Switch baked' button for 'Light' and 'Dark' before using this button !!
+    Replaces the KKBP node groups with a simple mix node to increase animation playback performance. Backups are saved as '-ORG'""",
+
     'rigify_convert': "Convert for Rigify",
     'sep_eye'       : "Separate Eyes and Eyebrows",
 
@@ -130,6 +141,9 @@ def t(text_entry):
             return zh_translation[text_entry]
         else:
             return translation_dictionary[text_entry]
-    except:
-        return text_entry
+    except KeyError:
+        if translation_dictionary.get(text_entry):
+            return translation_dictionary[text_entry] 
+        else:
+            return text_entry
 

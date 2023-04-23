@@ -103,6 +103,17 @@ translation_dictionary = {
     'prep'          : 'ターゲットアプリのために準備する',
     'apply_temp'    : 'ベークしたテンプレートをチェンジ',
 
+    'studio_object'             : 'スタジオオブジェクトをインポート',
+    'animation_library'         : 'アニメーションライブラリをジェネレートする',
+    'animation_library_tt'      : "現行ファイルとキャラクタでアニメーションライブラリをジェネレートする。SB3Utilityでエクスポートした.fbxファイルのフォルダを選択して",
+    'animation_library_scale'   : '腕をスケール',
+    'animation_library_scale_tt': 'このオプションにしたら腕のYスケールを5%で掛けられる。（ポースの精度は高める）',
+    'map_library'               : 'マップアセットライブラリをジェネレートする',
+    'map_library_tt'            : "現行ファイルでマップアセットライブラリをジェネレートする。SB3Utilityでエクスポートした.fbxファイルのフォルダを選択して。マップ一つにつき500秒まで掛かれる",
+    'finalize_materials'        : 'マテリアルをオプティマイズ',
+    'finalize_materials_tt'     : """!! まず　マテリアルをべーくして、 「ベークしたテンプレートをチェンジ」の「ライト」と「ダーク」の選択をつかって !!
+    KKBPのノードグループはミックスノードで換えられる（プレイバックのスピードは高める）。'-ORG'のマテリアルはバックアップ""",
+
     'rigify_convert': "Rigifyアーマチュアに変えて",
     'sep_eye'       : "EyesやEyebrowsやBodyのオブジェクトから別々になって",
 
