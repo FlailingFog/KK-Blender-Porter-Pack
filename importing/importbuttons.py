@@ -1,6 +1,6 @@
-import bpy, time, traceback
-import os
+import bpy, time, traceback, os, json
 from bpy.props import StringProperty
+from pathlib import Path
 
 from ..interface.dictionary_en import t
 
@@ -63,6 +63,7 @@ class quick_import(bpy.types.Operator):
     filter_glob : StringProperty(default='*.pmx', options={'HIDDEN'})
     
     def execute(self, context):
+        
         #do this thing because cats does it
         if hasattr(context.scene, 'layers'):
             context.scene.layers[0] = True
@@ -82,6 +83,19 @@ class quick_import(bpy.types.Operator):
 
         #save filepath for later
         context.scene.kkbp.import_dir = str(self.filepath)[:-9]
+
+        #force pmx armature if exportCurrentPose is true
+        directory = context.scene.kkbp.import_dir
+        fileList = Path(directory).glob('*.*')
+        files = [file for file in fileList if file.is_file()]
+        for file in files:
+            if 'KK_KKBPExporterConfig.json' in str(file):
+                json_file_path = str(file)
+                json_file = open(json_file_path)
+                json_import_options = json.load(json_file)
+                force_current_pose = json_import_options['exportCurrentPose']
+                if force_current_pose:
+                    context.scene.kkbp.armature_dropdown = 'D'
 
         #run commands based on selection
         if context.scene.kkbp.categorize_dropdown == 'A': #Automatic separation
