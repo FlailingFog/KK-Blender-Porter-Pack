@@ -447,13 +447,27 @@ def get_and_load_textures(directory):
 
     #get shadow colors for each material and store the dictionary on the body object
     for file in files:
-        if 'KK_CharacterColors.json' in str(file):
+        if 'KK_MaterialData.json' in str(file):
             json_file_path = str(file)
             json_file = open(json_file_path)
-            json_color_data = json.load(json_file)
+            json_material_data = json.load(json_file)
             color_dict = {}
-            for line in json_color_data:
-                color_dict[line['materialName']] = line['shadowColor']
+            supporting_entries = ['Shader Forge/create_body', 'Shader Forge/create_head', 'Shader Forge/create_eyewhite', 'Shader Forge/create_eye', 'Shader Forge/create_topN']
+            for line in json_material_data:
+                if line['MaterialName'] in supporting_entries:
+                    line['MaterialName'] = line['MaterialName'].replace('create_','').replace('_create','')
+                labels = line['ShaderPropNames']
+                data = line['ShaderPropTextures']
+                data.extend(line['ShaderPropTextureValues'])
+                data.extend(line['ShaderPropColorValues'])
+                data.extend(line['ShaderPropFloatValues'])
+                data = dict(zip(labels, data))
+                for entry in data:
+                    if '_ShadowColor ' in entry:
+                        color_dict[line['MaterialName']] = data[entry]
+                        break
+                    #default to [.764, .880, 1] if shadow color is not available for the material
+                    color_dict[line['MaterialName']] = {"r":0.764,"g":0.880,"b":1,"a":1}
     body['KKBP shadow colors'] = color_dict
 
     #open all images into blender and create dark variants if the image is a maintex

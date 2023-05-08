@@ -227,6 +227,9 @@ def image_to_KK(image, lut_name):
     return pixels, width, height
 
 def color_to_KK(color, lut_name):
+    '''Accepts an 8bit int rgba color, returns a 1.0 float rgba'''
+    #print(color)
+    color = color[:3] #drop alpha
     width = 1
     height = 1
 
@@ -309,7 +312,6 @@ def color_to_KK(color, lut_name):
         # Bind the shader object. Required to be able to change uniforms of this shader.
         shader.bind()
         
-        
         try:
             # Specify the value of a uniform variable for the current program object. 
             # In this case, a color tuple.
@@ -340,7 +342,6 @@ def color_to_KK(color, lut_name):
         except ValueError: 
             pass
         
-        
         # Run the drawing program with the parameters assigned to the batch.
         batch.draw(shader)
 
@@ -359,7 +360,7 @@ def color_to_KK(color, lut_name):
     # Get and return the pixels from the final buffer
     final_color = [v for v in buffer]
     final_color = np.array(final_color).reshape(width, height, -1)
-    return final_color[0][0]
+    return [final_color[0][0][0] / 255, final_color[0][0][1]/ 255, final_color[0][0][2]/ 255, 1] #set alpha to 1, returning rgba
 
 
     
@@ -497,7 +498,7 @@ def checks(directory):
 
     json_file_missing = True
     for file in files:
-        if 'KK_CharacterColors.json' in str(file):
+        if 'KK_MaterialData.json' in str(file):
             json_file_path = str(file)
             json_file = open(json_file_path)
             json_file_missing = False
@@ -550,7 +551,7 @@ def load_json_colors(directory, lut_light, lut_dark, lut_selection):
     filtered_files = []
 
     for file in files:
-        if 'KK_CharacterColors.json' in str(file):
+        if 'KK_MaterialData.json' in str(file):
             json_file_path = str(file)
             json_file = open(json_file_path)
             json_color_data = json.load(json_file)
@@ -561,13 +562,14 @@ def load_json_colors(directory, lut_light, lut_dark, lut_selection):
     set_color_management()
 
 def update_shaders(json, lut_selection, active_lut, light):
-    
-    def to_rgba(rgb):
-        rgba = [rgb[0], rgb[1], rgb[2], 1]
-        return rgba
 
-    def json_to_color(color):
-        rgb = [color['r'], color['g'], color['b']]
+    def to_255(color):
+        '''converts a 1.0 float rgba dict to a 8bit int rgb'''
+        try:
+            rgb = [color['r']*255, color['g']*255, color['b']*255]
+        except:
+            rgb = [color[0], color[1], color[2]] #rgb is already an 8bit int
+        #print(color)
         return rgb
 
     node_groups = bpy.data.node_groups
@@ -585,68 +587,189 @@ def update_shaders(json, lut_selection, active_lut, light):
 
     ## Eyeline
     eyeline_shader_node_group = node_groups['Eyeline Shader']
+    kage_color = [1, 1, 1, 1]
 
     ## Tongue
     tongue_shader_node_group = node_groups['Tongue Shader']
-    tongue_color = []
+    tongue_color1 = to_255({"r":1,"g":1,"b":1,"a":1})
+    tongue_color2 = to_255({"r":1,"g":1,"b":1,"a":1})
+    tongue_color3 = to_255({"r":1,"g":1,"b":1,"a":1})
 
     ## Hair
     hair_shader_node_group = node_groups['Hair Shader']
-    hair_base_color = [1, 1, 1, 1]
-    hair_root_color = [1, 1, 1, 1]
-    hair_tip_color = [1, 1, 1, 1]
+    hair_base_color   = {"r":1,"g":1,"b":1,"a":1}
+    hair_root_color   = to_255({"r":1,"g":1,"b":1,"a":1})
+    hair_tip_color    = to_255({"r":1,"g":1,"b":1,"a":1})
+    hair_shadow_color = {"r":1,"g":1,"b":1,"a":1}
     
     ## All Other Items
     item_data = []
     item_shader_node_groups = []
     
+    def entry_exists(material_name):
+        for idx, line in enumerate(json):
+            if line["MaterialName"] == material_name:
+                return idx
+        return -1
+    
+    ### Get json groups based on shader type, and reformat them to work with the existing script
+    supporting_entries = ['Shader Forge/create_body', 'Shader Forge/create_head', 'Shader Forge/create_eyewhite', 'Shader Forge/create_eye', 'Shader Forge/create_topN']
+    body = bpy.data.objects['Body']
+    body_material_name = body['KKBP materials']['o_body_a']
+    face_material_name = body['KKBP materials']['cf_O_face']
+    brow_material_name = body['KKBP materials']['cf_O_mayuge']
+    eyeline_material_name = body['KKBP materials']['cf_O_eyeline']
+    kage_material_name = 'cf_m_eyeline_kage'
+    tongue_material_names = [body['KKBP materials']['o_tang'], body['KKBP materials']['o_tang_rigged']]
+    hair_material_names = []
+    for ob in bpy.data.objects:
+        if 'Hair Outfit ' in ob.name:
+            hair_material_names.extend([mat.material.name.replace('KK ','') for mat in ob.material_slots])
+    
+    for idx, line in enumerate(json):
+            #Skip supporting entries for now
+            if line in supporting_entries:
+                continue
+            
+            labels = line['ShaderPropNames']
+            data = line['ShaderPropTextures']
+            data.extend(line['ShaderPropTextureValues'])
+            data.extend(line['ShaderPropColorValues'])
+            data.extend(line['ShaderPropFloatValues'])
+            colors = dict(zip(labels, data))
+            for entry in colors:
+                if '_ShadowColor ' in entry:
+                    shadow_color = colors[entry]
+                    break
+                shadow_color = {"r":0.764,"g":0.880,"b":1,"a":1}
+            
+            #This is a face entry
+            if line['MaterialName'] == face_material_name:
+                face_colors.append(color_to_KK(to_255(colors["_overcolor1 Color 1"]), active_lut)) #lipstick
+                face_colors.append(color_to_KK(to_255(colors["_overcolor2 Color 2"]), active_lut)) #Light blush color
+                #print('face colors: ' + str(face_colors))
+                continue
 
-    ### Get json groups
-    for idx, item in enumerate(json):
-        if idx > 4:
-            shader_name = item['materialName'] + ' Shader'
-            if shader_name in node_groups:
-                item_data.append(item)
-                item_shader_node_groups.append(node_groups[shader_name])
+            #This is a body entry
+            if line['MaterialName'] == body_material_name:
+                nip_base  = to_255(colors["_overcolor1 Color 1"])
+                nip_1     = to_255(colors["_overcolor2 Color 2"])
+                nip_2     = to_255(colors["_overcolor3 Color 3"])
+                underhair = to_255({"r":0,"g":0,"b":0,"a":1})
 
-    ### Get body/face/hair colors
-    body_colors.append(to_rgba(color_to_KK(json_to_color(json[0]['colorInfo'][0]), active_lut) / 255)) #light body color
-    body_colors.append(to_rgba(color_to_KK(json_to_color(json[0]['colorInfo'][1]), active_lut) / 255))
-    body_colors.append(to_rgba(color_to_KK(json_to_color(json[0]['colorInfo'][2]), active_lut) / 255))
-    body_colors.append(to_rgba(color_to_KK(json_to_color(json[0]['colorInfo'][3]), active_lut) / 255))
-    body_colors.append(to_rgba(color_to_KK(json_to_color(json[0]['colorInfo'][4]), active_lut) / 255))
-    body_colors.append(to_rgba(color_to_KK(json_to_color(json[0]['colorInfo'][5]), active_lut) / 255))
-    body_colors.append(to_rgba(color_to_KK(skin_dark_color(json_to_color(json[0]['colorInfo'][0])), active_lut) / 255)) #dark body color
+                #if this entry has a "create" equivalent, get additional colors from it
+                existing_index = entry_exists(line['MaterialName'] + '_create')
+                if existing_index == -1:
+                    body_light = {"r":1,"g":1,"b":1,"a":1}
+                    skin_type  = to_255({"r":1,"g":1,"b":1,"a":1})
+                    nail_color = to_255({"r":1,"g":1,"b":1,"a":1})
+                else:
+                    labels =    json[existing_index]['ShaderPropNames']
+                    data   =    json[existing_index]['ShaderPropTextures']
+                    data.extend(json[existing_index]['ShaderPropTextureValues'])
+                    data.extend(json[existing_index]['ShaderPropColorValues'])
+                    data.extend(json[existing_index]['ShaderPropFloatValues'])
+                    colors = dict(zip(labels, data))
+                    body_light = colors["_Color Color 0"]
+                    skin_type  = to_255(colors["_Color2 Color 1"])
+                    nail_color = to_255(colors["_Color5 Color 4"])
 
-    face_colors.append(to_rgba(color_to_KK(json_to_color(json[1]['colorInfo'][0]), active_lut) / 255)) #light face color
-    face_colors.append(to_rgba(color_to_KK(json_to_color(json[1]['colorInfo'][1]), active_lut) / 255))
-    face_colors.append(to_rgba(color_to_KK(json_to_color(json[1]['colorInfo'][2]), active_lut) / 255))
-    face_colors.append(to_rgba(color_to_KK(json_to_color(json[1]['colorInfo'][3]), active_lut) / 255))
-    face_colors.append(to_rgba(color_to_KK(json_to_color(json[1]['colorInfo'][4]), active_lut) / 255))
-    face_colors.append(to_rgba(color_to_KK(json_to_color(json[1]['colorInfo'][5]), active_lut) / 255))
-    face_colors.append(to_rgba(color_to_KK(json_to_color(json[1]['colorInfo'][6]), active_lut) / 255))
-    face_colors.append(to_rgba(color_to_KK(skin_dark_color(json_to_color(json[1]['colorInfo'][0])), active_lut) / 255)) #dark body color
+                body_colors.append(color_to_KK(to_255(body_light), active_lut))            # light body color
+                body_colors.append(color_to_KK(skin_type,  active_lut))            # skin type color
+                body_colors.append(color_to_KK(nail_color, active_lut))            # nail color
+                body_colors.append(color_to_KK(nip_base,   active_lut))            # nip base
+                body_colors.append(color_to_KK(underhair,  active_lut))            # under hair color
+                body_colors.append(color_to_KK(to_255(skin_dark_color(body_light)), active_lut)) # dark body color
+                #print('Body colors: ' + str(body_colors))
+                continue
 
-    kage_color = to_rgba(color_to_KK(json_to_color(json[2]['colorInfo'][0]), active_lut) / 255)
+            #This is hair
+            if line['MaterialName'] in hair_material_names:
+                hair_base_color   = colors["_Color Color 0"]
+                hair_shadow_color = shadow_color
+                hair_root_color   = to_255(colors["_Color2 Color 1"])
+                hair_tip_color    = to_255(colors["_Color3 Color 2"])
+                #print('hair colors: ' + str(hair_base_color))
+            
+            #This is eyeline
+            if line['MaterialName'] == eyeline_material_name:
+                eyeline_color = to_255(colors["_Color Color 0"])
+                continue
 
-    tongue_color = to_rgba(color_to_KK(json_to_color(json[4]['colorInfo'][0]), active_lut) / 255)
+            #This is an eyebrow
+            if line['MaterialName'] == brow_material_name:
+                brow_color = to_255(colors["_Color Color 0"])
+                continue
+            
+            #This is the tongue
+            if line['MaterialName'] in tongue_material_names:
+                tongue_color1 = to_255(colors["_Color Color 0"])
+                tongue_color2 = to_255(colors["_Color2 Color 1"])
+                tongue_color3 = to_255(colors["_Color3 Color 2"])
+            
+            #This is the kage
+            if line['MaterialName'] == kage_material_name:
+                kage_color = to_255(colors["_Color Color 0"])
 
-    hair_base_color = to_rgba(color_to_KK(json_to_color(json[5]['colorInfo'][0]), active_lut) / 255)
-    hair_shadow_color = ([el / 255 for el in json_to_color(json[5]['shadowColor'])])
-    dcolor = ([el / 255 for el in json_to_color(json[5]['colorInfo'][0])])
-    dshadow_color = hair_shadow_color
-    hair_dark = [el/255 for el in to_rgba(color_to_KK([255*el for el in clothes_dark_color(color = dcolor, shadow_color = dshadow_color)], 'Lut_TimeDay.png'))]
-    #kklog(dcolor)
-    #kklog(dshadow_color)
-    #kklog(hair_dark)
-    hair_root_color = to_rgba(color_to_KK(json_to_color(json[5]['colorInfo'][1]), active_lut) / 255)
-    hair_tip_color = to_rgba(color_to_KK(json_to_color(json[5]['colorInfo'][2]), active_lut) / 255)
-    #hair_outline_color = to_rgba(color_to_KK(json_to_color(json[5]['colorInfo'][3]), active_lut) / 255)
+            #This is an item
+            shader_name = line['MaterialName']
+            if (shader_name + ' Shader') in node_groups:
+                
+                #if this entry has a "create" equivalent, get the rgb colors from it
+                existing_index = entry_exists('create_' + shader_name)
+                if existing_index == -1:
+                    color1 = {"r":0,"g":1,"b":1,"a":1}
+                    color2 = {"r":0,"g":1,"b":1,"a":1}
+                    color3 = {"r":0,"g":1,"b":1,"a":1}
+                    pater1 = {"r":0,"g":1,"b":1,"a":1}
+                    pater2 = {"r":0,"g":1,"b":1,"a":1}
+                    pater3 = {"r":0,"g":1,"b":1,"a":1}
+                else:
+                    labels =    json[existing_index]['ShaderPropNames']
+                    data   =    json[existing_index]['ShaderPropTextures']
+                    data.extend(json[existing_index]['ShaderPropTextureValues'])
+                    data.extend(json[existing_index]['ShaderPropColorValues'])
+                    data.extend(json[existing_index]['ShaderPropFloatValues'])
+                    colors = dict(zip(labels, data))
+                    color1 = colors["_Color Color 0"]
+                    color2 = colors["_Color2 Color 2"]
+                    color3 = colors["_Color3 Color 4"]
+                    pater1 = colors["_Color1_2 Color 1"]
+                    pater2 = colors["_Color2_2 Color 3"]
+                    pater3 = colors["_Color3_2 Color 5"]
+
+                reformatted_data = {
+                    "MaterialName":
+                        shader_name,
+                    "colorInfo":[
+                        color1,
+                        color2,
+                        color3],
+                    "patternColors":[
+                        pater1,
+                        pater2,
+                        pater3],
+                    'shadowColor':
+                        shadow_color}
+                #print(existing_index)
+                #print(reformatted_data)
+                item_data.append(reformatted_data)
+                item_shader_node_groups.append(node_groups[(shader_name + ' Shader')])
+                continue
+
+    tongue_color1 = color_to_KK(tongue_color1, active_lut)
+    tongue_color2 = color_to_KK(tongue_color2, active_lut)
+    tongue_color3 = color_to_KK(tongue_color3, active_lut)
+
+    hair_light      = color_to_KK(to_255(hair_base_color), active_lut)
+    hair_dark       = color_to_KK(to_255(clothes_dark_color(color = hair_base_color, shadow_color = hair_shadow_color)), 'Lut_TimeDay.png')
+    hair_root_color = color_to_KK(hair_root_color, active_lut)
+    hair_tip_color  = color_to_KK(hair_tip_color, active_lut)
 
     ### Set shader colors
     ## Body Shader
     shader_inputs = body_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
-    shader_inputs['Skin color'].default_value = body_colors[0] if light else body_colors[6]
+    shader_inputs['Skin color'].default_value = body_colors[0] if light else body_colors[5]
     shader_inputs['Skin type color'].default_value = body_colors[1]
     shader_inputs['Skin type intensity (Base)'].default_value = 0.5
     shader_inputs['Skin type intensity'].default_value = 1
@@ -664,21 +787,21 @@ def update_shaders(json, lut_selection, active_lut, light):
 
     ## Face Shader
     shader_inputs = face_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
-    shader_inputs['Skin color'].default_value = body_colors[0] if light else body_colors[6]
+    shader_inputs['Skin color'].default_value = body_colors[0] if light else body_colors[5]
     shader_inputs['Skin detail color'].default_value = body_colors[1]
-    shader_inputs['Light blush color'].default_value = face_colors[5]
+    shader_inputs['Light blush color'].default_value = face_colors[1]
     shader_inputs['Mouth interior multiplier'].default_value = [1, 1, 1, 1]
-    shader_inputs['Lipstick multiplier'].default_value = face_colors[6]
+    shader_inputs['Lipstick multiplier'].default_value = face_colors[0]
 
     ## Eyebrow Shader
     shader_inputs = eyebrows_shader_node_group.nodes['colorsLight'].inputs
-    shader_inputs['Light Eyebrow color' if light else 'Dark Eyebrow color'].default_value = face_colors[0]
+    shader_inputs['Light Eyebrow color' if light else 'Dark Eyebrow color'].default_value =  color_to_KK(brow_color, active_lut)
 
     ## Eyeline Shader
     shader_inputs = eyeline_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
-    shader_inputs['Eyeline base color'].default_value = [0, 0, 0, 1]
-    shader_inputs['Eyeline fade color'].default_value = face_colors[1]
-    shader_inputs['Eyeline shadow color'].default_value = kage_color
+    shader_inputs['Eyeline base color'].default_value   = [0, 0, 0, 1]
+    shader_inputs['Eyeline fade color'].default_value   = color_to_KK(eyeline_color, active_lut)
+    shader_inputs['Eyeline shadow color'].default_value = color_to_KK(kage_color, active_lut)
 
     ## Tongue Shader
     shader_inputs = tongue_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
@@ -687,18 +810,18 @@ def update_shaders(json, lut_selection, active_lut, light):
     shader_inputs['Maintex Saturation'].default_value = 0.6
     shader_inputs['Detail intensity (green)'].default_value = 0.01
     shader_inputs['Color mask color (base)'].default_value = [1, 1, 1, 1]
-    shader_inputs['Color mask color (red)'].default_value = tongue_color
-    shader_inputs['Color mask color (green)'].default_value = tongue_color
-    shader_inputs['Color mask color (blue)'].default_value = tongue_color
+    shader_inputs['Color mask color (red)'].default_value = tongue_color1
+    shader_inputs['Color mask color (green)'].default_value = tongue_color2
+    shader_inputs['Color mask color (blue)'].default_value = tongue_color3
 
     ## Hair Shader
     shader_inputs = hair_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
     if lut_selection == 'F' and not light:
         shader_inputs['Dark Hair color'].default_value = hair_dark
     else:
-        shader_inputs['Light Hair color' if light else 'Dark Hair color'].default_value = hair_base_color
+        shader_inputs['Light Hair color' if light else 'Dark Hair color'].default_value = hair_light
     shader_inputs['Light Hair rim color' if light else 'Dark Hair rim color'].default_value = hair_root_color
-    shader_inputs['Dark fade color'].default_value = hair_root_color
+    shader_inputs['Dark fade color'].default_value  = hair_root_color
     shader_inputs['Light fade color'].default_value = hair_tip_color
     shader_inputs['Manually set the hair color detail? (1 = yes)'].default_value = 0
     shader_inputs['Use fade mask? (1 = yes)'].default_value = 0.5
@@ -738,21 +861,23 @@ def update_shaders(json, lut_selection, active_lut, light):
         else:
             shader_inputs['Color mask color (base)'].default_value = [1, 1, 1, 1]
         
-        if lut_selection == 'F' and not light:
+        if lut_selection == 'F' and not light: #automatic dark color replication
             for i, colorItem in enumerate(item['colorInfo']):
                 if i < len(color_input_names):
-                    color = ([el / 255 for el in json_to_color(colorItem)])
-                    shadow_color = ([el / 255 for el in json_to_color(item['shadowColor'])])
-                    color_channel = [el/255 for el in to_rgba(color_to_KK([255*el for el in clothes_dark_color(color = color, shadow_color = shadow_color)], 'Lut_TimeDay.png'))]
+                    color = colorItem
+                    shadow_color = item['shadowColor']
+                    #print(color)
+                    #print(shadow_color)
+                    color_channel = color_to_KK(to_255(clothes_dark_color(color = color, shadow_color = shadow_color)), 'Lut_TimeDay.png')
                     shader_inputs[color_input_names[i]].default_value = color_channel
             shader_inputs['Use colored maintex?'].default_value = 0
             shader_inputs['Ignore colormask?'].default_value = shader_inputs['Use dark maintex?'].default_value #these should match up
             #doesn't work?
-            #shader_inputs['Color mask color (base)'].default_value = [el/255 for el in to_rgba(color_to_KK([255*el for el in clothes_dark_color(color = [255, 255, 255], shadow_color = shadow_color)], 'Lut_TimeDay.png'))]
+            #shader_inputs['Color mask color (base)'].default_value = [el/255 for el in color_to_KK([255*el for el in clothes_dark_color(color = [255, 255, 255], shadow_color = shadow_color)], 'Lut_TimeDay.png'))]
         else:
             for i, colorItem in enumerate(item['colorInfo']):
                 if i < len(color_input_names):
-                    color_channel = to_rgba(color_to_KK(json_to_color(colorItem), active_lut) / 255)
+                    color_channel = color_to_KK(to_255(colorItem), active_lut)
                     if not light and lut_selection == 'E':
                         color_channel = [x * .3 for x in color_channel]
                     shader_inputs[color_input_names[i]].default_value = color_channel
@@ -765,12 +890,11 @@ def update_shaders(json, lut_selection, active_lut, light):
 
         for i, patternColor in enumerate(item['patternColors']):
             if i < len(pattern_input_names):
-                color_channel = to_rgba(color_to_KK(json_to_color(patternColor), active_lut) / 255)
+                color_channel = color_to_KK(to_255(patternColor), active_lut)
                 if not light and lut_selection == 'E':
                     color_channel = [x * .3 for x in color_channel]
                 shader_inputs[pattern_input_names[i]].default_value = color_channel
         
-
 def set_color_management():
     bpy.data.scenes[0].display_settings.display_device = 'sRGB'
     bpy.data.scenes[0].view_settings.view_transform = 'Standard'
