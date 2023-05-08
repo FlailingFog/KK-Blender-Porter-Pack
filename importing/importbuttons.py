@@ -95,7 +95,7 @@ class quick_import(bpy.types.Operator):
                 json_import_options = json.load(json_file)
                 force_current_pose = json_import_options['exportCurrentPose']
                 if force_current_pose:
-                    context.scene.kkbp.armature_dropdown = 'D'
+                    context.scene.kkbp.armature_dropdown = 'C'
 
         #run commands based on selection
         if context.scene.kkbp.categorize_dropdown == 'A': #Automatic separation
