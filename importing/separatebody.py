@@ -103,8 +103,8 @@ def add_freestyle_faces():
                     kklog('Material wasn\'t found when freestyling body materials: ' + mat, 'warn')
         bpy.ops.mesh.mark_freestyle_face(clear=False)
     freestyle_list = [
-        body['KKBP materials']['cf_Ohitomi_L02'] + '_' + 'cf_Ohitomi_L02',
-        body['KKBP materials']['cf_Ohitomi_R02'] + '_' + 'cf_Ohitomi_R02',
+        body['KKBP materials']['cf_Ohitomi_L02'],
+        body['KKBP materials']['cf_Ohitomi_R02'],
         body['KKBP materials']['cf_Ohitomi_L'],
         body['KKBP materials']['cf_Ohitomi_R'],
         body['KKBP materials']['cf_O_eyeline_low'],
@@ -428,8 +428,8 @@ def make_tear_and_gag_shapekeys():
     for mat in [
         body['KKBP materials']['cf_Ohitomi_L'],
         body['KKBP materials']['cf_Ohitomi_R'], 
-        body['KKBP materials']['cf_Ohitomi_L02'] + '_' + 'cf_Ohitomi_L02',
-        body['KKBP materials']['cf_Ohitomi_R02'] + '_' + 'cf_Ohitomi_R02',
+        body['KKBP materials']['cf_Ohitomi_L02'],
+        body['KKBP materials']['cf_Ohitomi_R02'],
         body['KKBP materials']['cf_O_eyeline'],
         body['KKBP materials']['cf_O_eyeline_low']]:
         bpy.context.object.active_material_index = body.data.materials.find(mat)
@@ -580,8 +580,8 @@ def remove_duplicate_slots():
             material_list = mesh.data.materials
             for mat in material_list:
                 mat_name_list = [
-                    body['KKBP materials']['cf_Ohitomi_L02'] + '_' + 'cf_Ohitomi_L02',
-                    body['KKBP materials']['cf_Ohitomi_R02'] + '_' + 'cf_Ohitomi_R02',
+                    body['KKBP materials']['cf_Ohitomi_L02'],
+                    body['KKBP materials']['cf_Ohitomi_R02'],
                     body['KKBP materials']['cf_Ohitomi_L'],
                     body['KKBP materials']['cf_Ohitomi_R'],
                     body['KKBP materials']['cf_O_namida_L'],

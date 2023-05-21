@@ -158,8 +158,8 @@ def get_templates_and_apply(directory, use_fake_user):
     swap_body_material('Eyeline_Over','KK Eyeline Kage')
     swap_body_material(body['KKBP materials']['cf_Ohitomi_L'],'KK Eyewhites (sirome)')
     swap_body_material(body['KKBP materials']['cf_Ohitomi_R'],'KK Eyewhites (sirome)')
-    swap_body_material(body['KKBP materials']['cf_Ohitomi_L02'] + '_' + 'cf_Ohitomi_L02','KK EyeL (hitomi)')
-    swap_body_material(body['KKBP materials']['cf_Ohitomi_R02'] + '_' + 'cf_Ohitomi_R02','KK EyeR (hitomi)')
+    swap_body_material(body['KKBP materials']['cf_Ohitomi_L02'],'KK EyeL (hitomi)')
+    swap_body_material(body['KKBP materials']['cf_Ohitomi_R02'],'KK EyeR (hitomi)')
     swap_body_material(body['KKBP materials']['o_body_a'],'KK Body') #female
     swap_body_material(body['KKBP materials']['cf_O_tooth'],'KK Teeth (tooth)')
     swap_body_material(body['KKBP materials']['cf_O_tooth'] + '.001','KK Fangs (tooth.001)')
@@ -447,13 +447,27 @@ def get_and_load_textures(directory):
 
     #get shadow colors for each material and store the dictionary on the body object
     for file in files:
-        if 'KK_CharacterColors.json' in str(file):
+        if 'KK_MaterialData.json' in str(file):
             json_file_path = str(file)
             json_file = open(json_file_path)
-            json_color_data = json.load(json_file)
+            json_material_data = json.load(json_file)
             color_dict = {}
-            for line in json_color_data:
-                color_dict[line['materialName']] = line['shadowColor']
+            supporting_entries = ['Shader Forge/create_body', 'Shader Forge/create_head', 'Shader Forge/create_eyewhite', 'Shader Forge/create_eye', 'Shader Forge/create_topN']
+            for line in json_material_data:
+                if line['MaterialName'] in supporting_entries:
+                    line['MaterialName'] = line['MaterialName'].replace('create_','').replace('_create','')
+                labels = line['ShaderPropNames']
+                data = line['ShaderPropTextures']
+                data.extend(line['ShaderPropTextureValues'])
+                data.extend(line['ShaderPropColorValues'])
+                data.extend(line['ShaderPropFloatValues'])
+                data = dict(zip(labels, data))
+                for entry in data:
+                    if '_ShadowColor ' in entry:
+                        color_dict[line['MaterialName']] = data[entry]
+                        break
+                    #default to [.764, .880, 1] if shadow color is not available for the material
+                    color_dict[line['MaterialName']] = {"r":0.764,"g":0.880,"b":1,"a":1}
     body['KKBP shadow colors'] = color_dict
 
     #open all images into blender and create dark variants if the image is a maintex
@@ -613,15 +627,15 @@ def get_and_load_textures(directory):
     image_load('KK Eyeline up', 'Gentex', 'EyelineKage', 'cf_m_eyeline_kage_MT.png')
     image_load('KK Eyeline up', 'Gentex', 'EyelineKage', 'Eyeline_Over_MT_CT.png')
     
-    image_load('KK EyeR (hitomi)', 'Gentex', 'eyeAlpha', body['KKBP materials']['cf_Ohitomi_R02'] + '_' + 'cf_Ohitomi_R02' + '_MT_CT.png')
-    image_load('KK EyeR (hitomi)', 'Gentex', 'EyeHU', body['KKBP materials']['cf_Ohitomi_R02'] + '_' + 'cf_Ohitomi_R02' + '_ot1.png')
-    image_load('KK EyeR (hitomi)', 'Gentex', 'EyeHD', body['KKBP materials']['cf_Ohitomi_R02'] + '_' + 'cf_Ohitomi_R02' + '_ot2.png')
+    image_load('KK EyeR (hitomi)', 'Gentex', 'eyeAlpha', body['KKBP materials']['cf_Ohitomi_R02'] + '_MT_CT.png')
+    image_load('KK EyeR (hitomi)', 'Gentex', 'EyeHU', body['KKBP materials']['cf_Ohitomi_R02'] + '_ot1.png')
+    image_load('KK EyeR (hitomi)', 'Gentex', 'EyeHD', body['KKBP materials']['cf_Ohitomi_R02'] + '_ot2.png')
     image_load('KK EyeR (hitomi)', 'Gentex', 'expression0', body['KKBP materials']['cf_Ohitomi_R'] + '_cf_t_expression_00_EXPR.png')
     image_load('KK EyeR (hitomi)', 'Gentex', 'expression1', body['KKBP materials']['cf_Ohitomi_R'] + '_cf_t_expression_01_EXPR.png')
 
-    image_load('KK EyeL (hitomi)', 'Gentex', 'eyeAlpha', body['KKBP materials']['cf_Ohitomi_L02'] + '_' + 'cf_Ohitomi_L02' + '_MT_CT.png')
-    image_load('KK EyeL (hitomi)', 'Gentex', 'EyeHU', body['KKBP materials']['cf_Ohitomi_L02'] + '_' + 'cf_Ohitomi_L02' + '_ot1.png')
-    image_load('KK EyeL (hitomi)', 'Gentex', 'EyeHD', body['KKBP materials']['cf_Ohitomi_L02'] + '_' + 'cf_Ohitomi_L02' + '_ot2.png')
+    image_load('KK EyeL (hitomi)', 'Gentex', 'eyeAlpha', body['KKBP materials']['cf_Ohitomi_L02'] + '_MT_CT.png')
+    image_load('KK EyeL (hitomi)', 'Gentex', 'EyeHU', body['KKBP materials']['cf_Ohitomi_L02'] + '_ot1.png')
+    image_load('KK EyeL (hitomi)', 'Gentex', 'EyeHD', body['KKBP materials']['cf_Ohitomi_L02'] + '_ot2.png')
     image_load('KK EyeL (hitomi)', 'Gentex', 'expression0', body['KKBP materials']['cf_Ohitomi_L02'] + '_cf_t_expression_00_EXPR.png')
     image_load('KK EyeL (hitomi)', 'Gentex', 'expression1', body['KKBP materials']['cf_Ohitomi_L02'] + '_cf_t_expression_01_EXPR.png')
     

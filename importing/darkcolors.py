@@ -94,7 +94,7 @@ class float4:
 #something is wrong with this one
 def hair_dark_color(color, shadow_color):
     diffuse = float4(color[0], color[1], color[2], 1)
-    _ShadowColor = float4(shadow_color[0], shadow_color[1], shadow_color[2], 1)
+    _ShadowColor = float4(shadow_color['r'], shadow_color['g'], shadow_color['b'], 1)
 
     finalAmbientShadow = 0.7225; #constant
     invertFinalAmbientShadow = finalAmbientShadow #this shouldn't be equal to this but it works so whatever
@@ -163,7 +163,8 @@ def MapValuesMain(color):
 
 #skin is from https://github.com/xukmi/KKShadersPlus/blob/main/Shaders/Skin/KKPSkinFrag.cginc 
 def skin_dark_color(color, shadow_color = None):
-    diffuse = float4(color[0], color[1], color[2], 1)
+    '''Takes a 1.0 max rgba dict and returns a 1.0 max rgba dict'''
+    diffuse = float4(color['r'], color['g'], color['b'], 1)
     shadingAdjustment = MapValuesMain(diffuse);
 
     diffuseShaded = shadingAdjustment * 0.899999976 - 0.5;
@@ -187,7 +188,7 @@ def skin_dark_color(color, shadow_color = None):
     fudge_factor = float4(0.02, 0.05, 0, 0) #result is slightly off but it looks consistently off so add a fudge factor
     finalDiffuse += fudge_factor
 
-    return [finalDiffuse.x, finalDiffuse.y, finalDiffuse.z]
+    return {'r':finalDiffuse.x, 'g':finalDiffuse.y, 'b':finalDiffuse.z, 'a':1}
 
 #shadeadjust function is from https://github.com/xukmi/KKShadersPlus/blob/main/Shaders/Item/KKPItemDiffuse.cginc
 #lines without comments at the end have been copied verbatim from the C# source
@@ -231,10 +232,13 @@ def ShadeAdjustItem(col, _ShadowColor):
 #clothes is from https://github.com/xukmi/KKShadersPlus/blob/main/Shaders/Item/MainItemPlus.shader
 #This was stripped down to just the shadow portion, and to remove all constants
 def clothes_dark_color(color, shadow_color):
+    '''Takes a 1.0 max rgba dict and returns a 1.0 max rgba dict'''
+    #print(color)
+    #print(shadow_color)
     ################### variable setup
     _ambientshadowG = float4(0.15, 0.15, 0.15, 0.15) #constant from experimentation
-    diffuse = float4(color[0],color[1],color[2],1) #maintex color
-    _ShadowColor = float4(shadow_color[0],shadow_color[1],shadow_color[2],1) #the shadow color from material editor
+    diffuse = float4(color['r'],color['g'],color['b'],1) #maintex color
+    _ShadowColor = float4(shadow_color['r'],shadow_color['g'],shadow_color['b'],1) #the shadow color from material editor
     ##########################
     
     #start at line 344 because the other one is for outlines
@@ -261,7 +265,7 @@ def clothes_dark_color(color, shadow_color):
     ambientCol = float4(1.0656, 1.0656, 1.0656, 1);
     diffuseShadow = diffuseShadow * ambientCol;
     
-    return [diffuseShadow.x, diffuseShadow.y, diffuseShadow.z]
+    return {'r':diffuseShadow.x, 'g':diffuseShadow.y, 'b':diffuseShadow.z, 'a':1}
 
 #accepts a bpy image and creates a dark alternate using a modified version of the darkening code above. Returns a new bpy image
 def create_darktex(maintex, shadow_color):
