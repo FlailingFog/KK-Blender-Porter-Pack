@@ -6,7 +6,7 @@ from ..importing.finalizegrey import modify_fbx_armature
 from ..importing.importeverything import apply_bone_widgets
 
 class switch_armature(bpy.types.Operator):
-    bl_idname = "kkb.switcharmature"
+    bl_idname = "kkbp.switcharmature"
     bl_label = "Switch koikatsu armature type"
     bl_description = "Click this to switch between the vanilla koikatsu armature structure and the modified KKBP armature. Using this after you have animated a character will ruin the animation"
     bl_options = {'REGISTER', 'UNDO'}
@@ -134,7 +134,7 @@ class switch_armature(bpy.types.Operator):
             armature.hide = False
             scene = context.scene.kkbp
             scene.armature_edit_bool = True
-            bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT')
+            bpy.ops.kkbp.bonedrivers('INVOKE_DEFAULT')
             bpy.ops.object.mode_set(mode='OBJECT')
             apply_bone_widgets()
         

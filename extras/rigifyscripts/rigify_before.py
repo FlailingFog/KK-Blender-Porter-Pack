@@ -1922,7 +1922,7 @@ def main():
     #koikatsuCommons.setBoneManagerLayersFromRigifyLayers(metarig)
 
 class rigify_before(bpy.types.Operator):
-    bl_idname = "kkb.rigbefore"
+    bl_idname = "kkbp.rigbefore"
     bl_label = "Before First Rigify Generate - Public"
     bl_description = 'Converts the KKBP armature to a Rigify metarig'
     bl_options = {'REGISTER', 'UNDO'}
@@ -1935,4 +1935,4 @@ if __name__ == "__main__":
     bpy.utils.register_class(rigify_before)
 
     # test call
-    print((bpy.ops.kkb.rigbefore('INVOKE_DEFAULT')))
+    print((bpy.ops.kkbp.rigbefore('INVOKE_DEFAULT')))

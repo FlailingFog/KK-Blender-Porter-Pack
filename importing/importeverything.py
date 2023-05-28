@@ -36,7 +36,7 @@ Texture Postfix Legend:
 
 import bpy, os, traceback, json, time, sys
 from pathlib import Path
-from .importbuttons import kklog
+from .. import common as c
 from .cleanarmature import get_bone_list
 from .darkcolors import create_darktex
 
@@ -51,13 +51,10 @@ def missing_texture_error(self, context):
 #Stop if lightning boy shader is not installed
 def missing_lbs(self, context):
     text = "An error occured when adding a Lightning Boy Shader node. Make sure it's installed."
-    kklog(text, 'error')
+    c.kklog(text, 'error')
     self.layout.label(text=text)
 
 def get_templates_and_apply(directory, use_fake_user):
-    #if a single thing was separated but the user forgot to rename it, it's probably the hair object
-    #if bpy.data.objects.get('Clothes.001') and len(bpy.data.objects) == 6:
-    #    bpy.data.objects['Clothes.001'].name = 'Hair'
     
     #Clean material list
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -147,23 +144,23 @@ def get_templates_and_apply(directory, use_fake_user):
         try:
             body.material_slots[original].material = bpy.data.materials[template]
         except:
-            kklog('material or template wasn\'t found: ' + original + ' / ' + template, 'warn')
+            c.kklog('material or template wasn\'t found: ' + original + ' / ' + template, 'warn')
     
-    swap_body_material(body['KKBP materials']['cf_O_face'],'KK Face')
-    swap_body_material(body['KKBP materials']['cf_O_mayuge'],'KK Eyebrows (mayuge)')
-    swap_body_material(body['KKBP materials']['cf_O_noseline'],'KK Nose')
-    swap_body_material(body['KKBP materials']['cf_O_eyeline'],'KK Eyeline up')
-    swap_body_material(body['KKBP materials']['cf_O_eyeline_low'],'KK Eyeline down')
+    swap_body_material(body['SMR materials']['cf_O_face'],'KK Face')
+    swap_body_material(body['SMR materials']['cf_O_mayuge'],'KK Eyebrows (mayuge)')
+    swap_body_material(body['SMR materials']['cf_O_noseline'],'KK Nose')
+    swap_body_material(body['SMR materials']['cf_O_eyeline'],'KK Eyeline up')
+    swap_body_material(body['SMR materials']['cf_O_eyeline_low'],'KK Eyeline down')
     swap_body_material('cf_m_eyeline_kage','KK Eyeline Kage')
     swap_body_material('Eyeline_Over','KK Eyeline Kage')
-    swap_body_material(body['KKBP materials']['cf_Ohitomi_L'],'KK Eyewhites (sirome)')
-    swap_body_material(body['KKBP materials']['cf_Ohitomi_R'],'KK Eyewhites (sirome)')
-    swap_body_material(body['KKBP materials']['cf_Ohitomi_L02'],'KK EyeL (hitomi)')
-    swap_body_material(body['KKBP materials']['cf_Ohitomi_R02'],'KK EyeR (hitomi)')
-    swap_body_material(body['KKBP materials']['o_body_a'],'KK Body') #female
-    swap_body_material(body['KKBP materials']['cf_O_tooth'],'KK Teeth (tooth)')
-    swap_body_material(body['KKBP materials']['cf_O_tooth'] + '.001','KK Fangs (tooth.001)')
-    swap_body_material(body['KKBP materials']['o_tang'],'KK General')
+    swap_body_material(body['SMR materials']['cf_Ohitomi_L'],'KK Eyewhites (sirome)')
+    swap_body_material(body['SMR materials']['cf_Ohitomi_R'],'KK Eyewhites (sirome)')
+    swap_body_material(body['SMR materials']['cf_Ohitomi_L02'],'KK EyeL (hitomi)')
+    swap_body_material(body['SMR materials']['cf_Ohitomi_R02'],'KK EyeR (hitomi)')
+    swap_body_material(body['SMR materials']['o_body_a'],'KK Body') #female
+    swap_body_material(body['SMR materials']['cf_O_tooth'],'KK Teeth (tooth)')
+    swap_body_material(body['SMR materials']['cf_O_tooth'] + '.001','KK Fangs (tooth.001)')
+    swap_body_material(body['SMR materials']['o_tang'],'KK General')
     
     #Make the tongue material unique so parts of the General Template aren't overwritten
     tongue_template = bpy.data.materials['KK General'].copy()
@@ -226,9 +223,9 @@ def get_templates_and_apply(directory, use_fake_user):
     #give the gag eyes a material template if they exist and have shapekeys setup
     if bpy.data.objects.get('Gag Eyes'):
         gag = bpy.data.objects['Gag Eyes']
-        gag.material_slots[body['KKBP materials']['cf_O_gag_eye_00']].material = bpy.data.materials['KK Gag00']
-        gag.material_slots[body['KKBP materials']['cf_O_gag_eye_01']].material = bpy.data.materials['KK Gag01']
-        gag.material_slots[body['KKBP materials']['cf_O_gag_eye_02']].material = bpy.data.materials['KK Gag02']
+        gag.material_slots[body['SMR materials']['cf_O_gag_eye_00']].material = bpy.data.materials['KK Gag00']
+        gag.material_slots[body['SMR materials']['cf_O_gag_eye_01']].material = bpy.data.materials['KK Gag01']
+        gag.material_slots[body['SMR materials']['cf_O_gag_eye_02']].material = bpy.data.materials['KK Gag02']
 
     # Get rid of the duplicate node groups cause there's a lot
     #stolen from somewhere
@@ -428,7 +425,7 @@ def get_and_load_textures(directory):
         print_directory =  directory[directory.find('/', 7):]
     else:
         print_directory = directory
-    kklog('Getting textures from: ' + print_directory)
+    c.kklog('Getting textures from: ' + print_directory)
 
     #get images for body object
     fileList = Path(directory).glob('*.*')
@@ -476,7 +473,7 @@ def get_and_load_textures(directory):
         try:
             bpy.data.images[image.name].pack()
         except:
-            kklog('This image was not automatically loaded in because its name exceeds 64 characters: ' + image.name, type = 'error')
+            c.kklog('This image was not automatically loaded in because its name exceeds 64 characters: ' + image.name, type = 'error')
         try:
             skip_list = ['cf_m_gageye', 'cf_m_eyeline', 'cf_m_mayuge', 'cf_m_namida_00', 'cf_m_noseline_00', 'cf_m_sirome_00', 'cf_m_tooth', '_cf_Ohitomi_', 'cf_m_emblem']
             convert_this = True
@@ -484,19 +481,19 @@ def get_and_load_textures(directory):
                 if item in image.name:
                     convert_this = False
             if '_MT_CT' in image.name and convert_this:
-                #kklog(image.name)
+                #c.kklog(image.name)
                 material_name = image.name[:-10]
                 shadow_color = [body['KKBP shadow colors'][material_name]['r'], body['KKBP shadow colors'][material_name]['g'], body['KKBP shadow colors'][material_name]['b']]
                 darktex = create_darktex(bpy.data.images[image.name], shadow_color) #create the darktex now and load it in later
         except:
-            kklog('Tried to create a dark version of {} but it was missing a shadow color. Defaulting to shadow color of [.764, .880, 1].'.format(image.name), type='warn')
+            c.kklog('Tried to create a dark version of {} but it was missing a shadow color. Defaulting to shadow color of [.764, .880, 1].'.format(image.name), type='warn')
             skip_list = ['cf_m_gageye', 'cf_m_eyeline', 'cf_m_mayuge', 'cf_m_namida_00', 'cf_m_noseline_00', 'cf_m_sirome_00', 'cf_m_tooth', '_cf_Ohitomi_', 'cf_m_emblem']
             convert_this = True
             for item in skip_list:
                 if item in image.name:
                     convert_this = False
             if '_MT_CT' in image.name and convert_this:
-                #kklog(image.name)
+                #c.kklog(image.name)
                 material_name = image.name[:-10]
                 darktex = create_darktex(bpy.data.images[image.name], [.764, .880, 1]) #create the darktex now and load it in later
     
@@ -517,9 +514,9 @@ def get_and_load_textures(directory):
         elif 'MainCol' in image:
             if bpy.data.images[image[0:len(image)-4] + '.dds']:
                 current_obj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].image = bpy.data.images[image[0:len(image)-4] + '.dds']
-            kklog('.dds and .png files not found, skipping: ' + image[0:len(image)-4] + '.dds')
+            c.kklog('.dds and .png files not found, skipping: ' + image[0:len(image)-4] + '.dds')
         else:
-            kklog('File not found, skipping: ' + image)
+            c.kklog('File not found, skipping: ' + image)
     
     def set_uv_type(mat, group, uvnode, uvtype):
         current_obj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[uvnode].uv_map = uvtype
@@ -542,43 +539,43 @@ def get_and_load_textures(directory):
                 break
     
     current_obj = bpy.data.objects['Body']
-    image_load('KK Body', 'Gentex', 'BodyMain', body['KKBP materials']['o_body_a'] + '_MT_CT.png')
-    image_load('KK Body', 'Gentex', 'Darktex', body['KKBP materials']['o_body_a'] + '_MT_DT.png')
+    image_load('KK Body', 'Gentex', 'BodyMain', body['SMR materials']['o_body_a'] + '_MT_CT.png')
+    image_load('KK Body', 'Gentex', 'Darktex', body['SMR materials']['o_body_a'] + '_MT_DT.png')
     #check there's a maintex, if not there fallback to colors
     if not current_obj.material_slots['KK Body'].material.node_tree.nodes['Gentex'].node_tree.nodes['BodyMain'].image:
         current_obj.material_slots['KK Body'].material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use maintex instead?'].default_value = 0
     #but if it is, make sure the body darktex is being used as default
     else:
         current_obj.material_slots['KK Body'].material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use maintex instead?'].default_value = 1
-    image_load('KK Body', 'Gentex', 'BodyMC', body['KKBP materials']['o_body_a'] + '_CM.png')
-    image_load('KK Body', 'Gentex', 'BodyMD', body['KKBP materials']['o_body_a'] + '_DM.png') #cfm female
-    image_load('KK Body', 'Gentex', 'BodyLine', body['KKBP materials']['o_body_a'] + '_LM.png')
-    image_load('KK Body', 'Gentex', 'BodyNorm', body['KKBP materials']['o_body_a'] + '_NMP_CNV.png')
-    image_load('KK Body', 'Gentex', 'BodyNormDetail', body['KKBP materials']['o_body_a'] + '_NMPD_CNV.png')
+    image_load('KK Body', 'Gentex', 'BodyMC', body['SMR materials']['o_body_a'] + '_CM.png')
+    image_load('KK Body', 'Gentex', 'BodyMD', body['SMR materials']['o_body_a'] + '_DM.png') #cfm female
+    image_load('KK Body', 'Gentex', 'BodyLine', body['SMR materials']['o_body_a'] + '_LM.png')
+    image_load('KK Body', 'Gentex', 'BodyNorm', body['SMR materials']['o_body_a'] + '_NMP_CNV.png')
+    image_load('KK Body', 'Gentex', 'BodyNormDetail', body['SMR materials']['o_body_a'] + '_NMPD_CNV.png')
 
     image_load('KK Body', 'Gentex', 'BodyMD', 'cm_m_body_DM.png') #cmm male
     image_load('KK Body', 'Gentex', 'BodyLine', 'cm_m_body_LM.png')
     
-    image_load('KK Body', 'NSFWTextures', 'Genital', body['KKBP materials']['o_body_a'] + '_MT.png') #chara main texture
-    image_load('KK Body', 'NSFWTextures', 'Underhair', body['KKBP materials']['o_body_a'] + '_ot2.png') #pubic hair
+    image_load('KK Body', 'NSFWTextures', 'Genital', body['SMR materials']['o_body_a'] + '_MT.png') #chara main texture
+    image_load('KK Body', 'NSFWTextures', 'Underhair', body['SMR materials']['o_body_a'] + '_ot2.png') #pubic hair
 
-    image_load('KK Body', 'NSFWTextures', 'NipR', body['KKBP materials']['o_body_a'] + '_ot1.png') #cfm female
-    image_load('KK Body', 'NSFWTextures', 'NipL', body['KKBP materials']['o_body_a'] + '_ot1.png')
+    image_load('KK Body', 'NSFWTextures', 'NipR', body['SMR materials']['o_body_a'] + '_ot1.png') #cfm female
+    image_load('KK Body', 'NSFWTextures', 'NipL', body['SMR materials']['o_body_a'] + '_ot1.png')
     image_load('KK Body', 'NSFWTextures', 'NipR', 'cm_m_body_ot1.png') #cmm male
     image_load('KK Body', 'NSFWTextures', 'NipL', 'cm_m_body_ot1.png')
 
-    image_load('KK Body', 'Gentex', 'overone', body['KKBP materials']['o_body_a'] + '_T3.png') #body overlays
-    image_load('KK Body', 'Gentex', 'overtwo', body['KKBP materials']['o_body_a'] + '_T4.png')
+    image_load('KK Body', 'Gentex', 'overone', body['SMR materials']['o_body_a'] + '_T3.png') #body overlays
+    image_load('KK Body', 'Gentex', 'overtwo', body['SMR materials']['o_body_a'] + '_T4.png')
     
     set_uv_type('KK Body', 'NSFWpos', 'nippleuv', 'uv_nipple_and_shine')
     set_uv_type('KK Body', 'NSFWpos', 'underuv', 'uv_underhair')
 
     #find the appropriate alpha mask
     alpha_mask = None
-    if bpy.data.images.get(body['KKBP materials']['o_body_a'] + '_AM.png'):
-        alpha_mask = bpy.data.images.get(body['KKBP materials']['o_body_a'] + '_AM.png')
-    elif bpy.data.images.get(body['KKBP materials']['o_body_a'] + '_AM_00.png'):
-        alpha_mask = bpy.data.images.get(body['KKBP materials']['o_body_a'] + '_AM_00.png')
+    if bpy.data.images.get(body['SMR materials']['o_body_a'] + '_AM.png'):
+        alpha_mask = bpy.data.images.get(body['SMR materials']['o_body_a'] + '_AM.png')
+    elif bpy.data.images.get(body['SMR materials']['o_body_a'] + '_AM_00.png'):
+        alpha_mask = bpy.data.images.get(body['SMR materials']['o_body_a'] + '_AM_00.png')
     else:
         #check the other alpha mask numbers
         for image in bpy.data.images:
@@ -592,80 +589,80 @@ def get_and_load_textures(directory):
         #disable transparency if no alpha mask is present
         current_obj.material_slots['KK Body'].material.node_tree.nodes['Shader'].node_tree.nodes['BodyTransp'].inputs['Built in transparency toggle'].default_value = 0
 
-    image_load('KK Face', 'Gentex', 'FaceMain', body['KKBP materials']['cf_O_face'] + '_MT_CT.png')
-    image_load('KK Face', 'Gentex', 'Darktex', body['KKBP materials']['cf_O_face'] + '_MT_DT.png')
+    image_load('KK Face', 'Gentex', 'FaceMain', body['SMR materials']['cf_O_face'] + '_MT_CT.png')
+    image_load('KK Face', 'Gentex', 'Darktex', body['SMR materials']['cf_O_face'] + '_MT_DT.png')
     #default to colors if there's no face maintex
     if not current_obj.material_slots['KK Face'].material.node_tree.nodes['Gentex'].node_tree.nodes['FaceMain'].image:
         current_obj.material_slots['KK Face'].material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use maintex instead?'].default_value = 0
     else:
         current_obj.material_slots['KK Face'].material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use maintex instead?'].default_value = 1        
-    image_load('KK Face', 'Gentex', 'FaceMC', body['KKBP materials']['cf_O_face'] + '_CM.png')
-    image_load('KK Face', 'Gentex', 'FaceMD', body['KKBP materials']['cf_O_face'] + '_DM.png')
-    image_load('KK Face', 'Gentex', 'BlushMask', body['KKBP materials']['cf_O_face'] + '_T4.png')
-    image_load('KK Face', 'Gentex', 'FaceTongue', body['KKBP materials']['cf_O_face'] + '_MT.png') #face main texture
+    image_load('KK Face', 'Gentex', 'FaceMC', body['SMR materials']['cf_O_face'] + '_CM.png')
+    image_load('KK Face', 'Gentex', 'FaceMD', body['SMR materials']['cf_O_face'] + '_DM.png')
+    image_load('KK Face', 'Gentex', 'BlushMask', body['SMR materials']['cf_O_face'] + '_T4.png')
+    image_load('KK Face', 'Gentex', 'FaceTongue', body['SMR materials']['cf_O_face'] + '_MT.png') #face main texture
     
-    image_load('KK Face', 'Gentex', 'linemask', body['KKBP materials']['cf_O_face'] + '_LM.png')
-    image_load('KK Face', 'Gentex', 'lowerlip', body['KKBP materials']['cf_O_face'] + '_T5.png')
+    image_load('KK Face', 'Gentex', 'linemask', body['SMR materials']['cf_O_face'] + '_LM.png')
+    image_load('KK Face', 'Gentex', 'lowerlip', body['SMR materials']['cf_O_face'] + '_T5.png')
 
-    image_load('KK Face', 'Gentex', 'lipstick', body['KKBP materials']['cf_O_face'] + '_ot1.png')
-    image_load('KK Face', 'Gentex', 'flush', body['KKBP materials']['cf_O_face'] + '_ot2.png')
-    image_load('KK Face', 'Gentex', 'overlay1', body['KKBP materials']['cf_O_face'] + '_T6.png')
-    image_load('KK Face', 'Gentex', 'overlay2', body['KKBP materials']['cf_O_face'] + '_T7.png')
-    image_load('KK Face', 'Gentex', 'overlay3', body['KKBP materials']['cf_O_face'] + '_T8.png')
-    image_load('KK Face', 'Gentex', 'EyeshadowMask', body['KKBP materials']['cf_O_face'] + '_ot3.png')
+    image_load('KK Face', 'Gentex', 'lipstick', body['SMR materials']['cf_O_face'] + '_ot1.png')
+    image_load('KK Face', 'Gentex', 'flush', body['SMR materials']['cf_O_face'] + '_ot2.png')
+    image_load('KK Face', 'Gentex', 'overlay1', body['SMR materials']['cf_O_face'] + '_T6.png')
+    image_load('KK Face', 'Gentex', 'overlay2', body['SMR materials']['cf_O_face'] + '_T7.png')
+    image_load('KK Face', 'Gentex', 'overlay3', body['SMR materials']['cf_O_face'] + '_T8.png')
+    image_load('KK Face', 'Gentex', 'EyeshadowMask', body['SMR materials']['cf_O_face'] + '_ot3.png')
     set_uv_type('KK Face', 'Facepos', 'eyeshadowuv', 'uv_eyeshadow')  #face extra texture
     
-    image_load('KK Eyebrows (mayuge)', 'Gentex', 'Eyebrow', body['KKBP materials']['cf_O_mayuge'] + '_MT_CT.png')
-    image_load('KK Nose', 'Gentex', 'Nose', body['KKBP materials']['cf_O_noseline'] + '_MT_CT.png')
-    image_load('KK Teeth (tooth)', 'Gentex', 'Teeth', body['KKBP materials']['cf_O_tooth'] + '_MT_CT.png')
-    image_load('KK Eyewhites (sirome)', 'Gentex', 'Eyewhite', body['KKBP materials']['cf_Ohitomi_R'] + '_MT_CT.png')
+    image_load('KK Eyebrows (mayuge)', 'Gentex', 'Eyebrow', body['SMR materials']['cf_O_mayuge'] + '_MT_CT.png')
+    image_load('KK Nose', 'Gentex', 'Nose', body['SMR materials']['cf_O_noseline'] + '_MT_CT.png')
+    image_load('KK Teeth (tooth)', 'Gentex', 'Teeth', body['SMR materials']['cf_O_tooth'] + '_MT_CT.png')
+    image_load('KK Eyewhites (sirome)', 'Gentex', 'Eyewhite', body['SMR materials']['cf_Ohitomi_R'] + '_MT_CT.png')
     
-    image_load('KK Eyeline up', 'Gentex', 'EyelineUp', body['KKBP materials']['cf_O_eyeline'] + '_MT_CT.png')
-    image_load('KK Eyeline up', 'Gentex', 'EyelineUp.001', body['KKBP materials']['cf_O_eyeline'] + '_MT_CT.png')
-    image_load('KK Eyeline up', 'Gentex', 'EyelineDown', body['KKBP materials']['cf_O_eyeline_low'] + '_MT_CT.png')
-    image_load('KK Eyeline up', 'Gentex', 'EyelineDown.001', body['KKBP materials']['cf_O_eyeline_low'] + '_MT_CT.png')
+    image_load('KK Eyeline up', 'Gentex', 'EyelineUp', body['SMR materials']['cf_O_eyeline'] + '_MT_CT.png')
+    image_load('KK Eyeline up', 'Gentex', 'EyelineUp.001', body['SMR materials']['cf_O_eyeline'] + '_MT_CT.png')
+    image_load('KK Eyeline up', 'Gentex', 'EyelineDown', body['SMR materials']['cf_O_eyeline_low'] + '_MT_CT.png')
+    image_load('KK Eyeline up', 'Gentex', 'EyelineDown.001', body['SMR materials']['cf_O_eyeline_low'] + '_MT_CT.png')
     image_load('KK Eyeline up', 'Gentex', 'EyelineKage', 'cf_m_eyeline_kage_MT.png')
     image_load('KK Eyeline up', 'Gentex', 'EyelineKage', 'Eyeline_Over_MT_CT.png')
     
-    image_load('KK EyeR (hitomi)', 'Gentex', 'eyeAlpha', body['KKBP materials']['cf_Ohitomi_R02'] + '_MT_CT.png')
-    image_load('KK EyeR (hitomi)', 'Gentex', 'EyeHU', body['KKBP materials']['cf_Ohitomi_R02'] + '_ot1.png')
-    image_load('KK EyeR (hitomi)', 'Gentex', 'EyeHD', body['KKBP materials']['cf_Ohitomi_R02'] + '_ot2.png')
-    image_load('KK EyeR (hitomi)', 'Gentex', 'expression0', body['KKBP materials']['cf_Ohitomi_R'] + '_cf_t_expression_00_EXPR.png')
-    image_load('KK EyeR (hitomi)', 'Gentex', 'expression1', body['KKBP materials']['cf_Ohitomi_R'] + '_cf_t_expression_01_EXPR.png')
+    image_load('KK EyeR (hitomi)', 'Gentex', 'eyeAlpha', body['SMR materials']['cf_Ohitomi_R02'] + '_MT_CT.png')
+    image_load('KK EyeR (hitomi)', 'Gentex', 'EyeHU', body['SMR materials']['cf_Ohitomi_R02'] + '_ot1.png')
+    image_load('KK EyeR (hitomi)', 'Gentex', 'EyeHD', body['SMR materials']['cf_Ohitomi_R02'] + '_ot2.png')
+    image_load('KK EyeR (hitomi)', 'Gentex', 'expression0', body['SMR materials']['cf_Ohitomi_R'] + '_cf_t_expression_00_EXPR.png')
+    image_load('KK EyeR (hitomi)', 'Gentex', 'expression1', body['SMR materials']['cf_Ohitomi_R'] + '_cf_t_expression_01_EXPR.png')
 
-    image_load('KK EyeL (hitomi)', 'Gentex', 'eyeAlpha', body['KKBP materials']['cf_Ohitomi_L02'] + '_MT_CT.png')
-    image_load('KK EyeL (hitomi)', 'Gentex', 'EyeHU', body['KKBP materials']['cf_Ohitomi_L02'] + '_ot1.png')
-    image_load('KK EyeL (hitomi)', 'Gentex', 'EyeHD', body['KKBP materials']['cf_Ohitomi_L02'] + '_ot2.png')
-    image_load('KK EyeL (hitomi)', 'Gentex', 'expression0', body['KKBP materials']['cf_Ohitomi_L02'] + '_cf_t_expression_00_EXPR.png')
-    image_load('KK EyeL (hitomi)', 'Gentex', 'expression1', body['KKBP materials']['cf_Ohitomi_L02'] + '_cf_t_expression_01_EXPR.png')
+    image_load('KK EyeL (hitomi)', 'Gentex', 'eyeAlpha', body['SMR materials']['cf_Ohitomi_L02'] + '_MT_CT.png')
+    image_load('KK EyeL (hitomi)', 'Gentex', 'EyeHU', body['SMR materials']['cf_Ohitomi_L02'] + '_ot1.png')
+    image_load('KK EyeL (hitomi)', 'Gentex', 'EyeHD', body['SMR materials']['cf_Ohitomi_L02'] + '_ot2.png')
+    image_load('KK EyeL (hitomi)', 'Gentex', 'expression0', body['SMR materials']['cf_Ohitomi_L02'] + '_cf_t_expression_00_EXPR.png')
+    image_load('KK EyeL (hitomi)', 'Gentex', 'expression1', body['SMR materials']['cf_Ohitomi_L02'] + '_cf_t_expression_01_EXPR.png')
     
-    image_load('KK Tongue', 'Gentex', 'Maintex', body['KKBP materials']['o_tang'] + '_CM.png') #done on purpose
-    image_load('KK Tongue', 'Gentex', 'MainCol', body['KKBP materials']['o_tang'] + '_CM.png')
-    image_load('KK Tongue', 'Gentex', 'MainDet', body['KKBP materials']['o_tang'] + '_DM.png')
-    image_load('KK Tongue', 'Gentex', 'MainNorm', body['KKBP materials']['o_tang'] + '_NMP.png')
-    image_load('KK Tongue', 'Gentex', 'MainNormDetail', body['KKBP materials']['o_tang'] + '_NMP_CNV.png') #load regular map by default
-    image_load('KK Tongue', 'Gentex', 'MainNormDetail', body['KKBP materials']['o_tang'] + '_NMPD_CNV.png') #then the detail map if it's there
+    image_load('KK Tongue', 'Gentex', 'Maintex', body['SMR materials']['o_tang'] + '_CM.png') #done on purpose
+    image_load('KK Tongue', 'Gentex', 'MainCol', body['SMR materials']['o_tang'] + '_CM.png')
+    image_load('KK Tongue', 'Gentex', 'MainDet', body['SMR materials']['o_tang'] + '_DM.png')
+    image_load('KK Tongue', 'Gentex', 'MainNorm', body['SMR materials']['o_tang'] + '_NMP.png')
+    image_load('KK Tongue', 'Gentex', 'MainNormDetail', body['SMR materials']['o_tang'] + '_NMP_CNV.png') #load regular map by default
+    image_load('KK Tongue', 'Gentex', 'MainNormDetail', body['SMR materials']['o_tang'] + '_NMPD_CNV.png') #then the detail map if it's there
 
     #load all gag eyes in if it exists
     if bpy.data.objects.get('Gag Eyes'):
         current_obj = bpy.data.objects['Gag Eyes']
-        image_load('KK Gag00', 'Gentex', '00gag00', body['KKBP materials']['cf_O_gag_eye_00'] + '_cf_t_gageye_00_MT_CT.png')
-        image_load('KK Gag00', 'Gentex', '00gag02', body['KKBP materials']['cf_O_gag_eye_00'] + '_cf_t_gageye_02_MT_CT.png')
-        image_load('KK Gag00', 'Gentex', '00gag04', body['KKBP materials']['cf_O_gag_eye_00'] + '_cf_t_gageye_04_MT_CT.png')
-        image_load('KK Gag00', 'Gentex', '00gag05', body['KKBP materials']['cf_O_gag_eye_00'] + '_cf_t_gageye_05_MT_CT.png')
-        image_load('KK Gag00', 'Gentex', '00gag06', body['KKBP materials']['cf_O_gag_eye_00'] + '_cf_t_gageye_06_MT_CT.png')
+        image_load('KK Gag00', 'Gentex', '00gag00', body['SMR materials']['cf_O_gag_eye_00'] + '_cf_t_gageye_00_MT_CT.png')
+        image_load('KK Gag00', 'Gentex', '00gag02', body['SMR materials']['cf_O_gag_eye_00'] + '_cf_t_gageye_02_MT_CT.png')
+        image_load('KK Gag00', 'Gentex', '00gag04', body['SMR materials']['cf_O_gag_eye_00'] + '_cf_t_gageye_04_MT_CT.png')
+        image_load('KK Gag00', 'Gentex', '00gag05', body['SMR materials']['cf_O_gag_eye_00'] + '_cf_t_gageye_05_MT_CT.png')
+        image_load('KK Gag00', 'Gentex', '00gag06', body['SMR materials']['cf_O_gag_eye_00'] + '_cf_t_gageye_06_MT_CT.png')
 
-        image_load('KK Gag01', 'Gentex', '01gag03', body['KKBP materials']['cf_O_gag_eye_01'] + '_cf_t_gageye_03_MT_CT.png')
-        image_load('KK Gag01', 'Gentex', '01gag01', body['KKBP materials']['cf_O_gag_eye_01'] + '_cf_t_gageye_01_MT_CT.png')
+        image_load('KK Gag01', 'Gentex', '01gag03', body['SMR materials']['cf_O_gag_eye_01'] + '_cf_t_gageye_03_MT_CT.png')
+        image_load('KK Gag01', 'Gentex', '01gag01', body['SMR materials']['cf_O_gag_eye_01'] + '_cf_t_gageye_01_MT_CT.png')
 
-        image_load('KK Gag02', 'Gentex', '02gag07', body['KKBP materials']['cf_O_gag_eye_02'] + '_cf_t_gageye_07_MT_CT.png')
-        image_load('KK Gag02', 'Gentex', '02gag08', body['KKBP materials']['cf_O_gag_eye_02'] + '_cf_t_gageye_08_MT_CT.png')
-        image_load('KK Gag02', 'Gentex', '02gag09', body['KKBP materials']['cf_O_gag_eye_02'] + '_cf_t_gageye_09_MT_CT.png')
+        image_load('KK Gag02', 'Gentex', '02gag07', body['SMR materials']['cf_O_gag_eye_02'] + '_cf_t_gageye_07_MT_CT.png')
+        image_load('KK Gag02', 'Gentex', '02gag08', body['SMR materials']['cf_O_gag_eye_02'] + '_cf_t_gageye_08_MT_CT.png')
+        image_load('KK Gag02', 'Gentex', '02gag09', body['SMR materials']['cf_O_gag_eye_02'] + '_cf_t_gageye_09_MT_CT.png')
 
     #load the tears texture in
     if bpy.data.objects.get('Tears'):
         current_obj = bpy.data.objects['Tears']
-        image_load('KK Tears', 'Gentex', 'Maintex', body['KKBP materials']['cf_O_namida_L'] + '_MT_CT.png')
+        image_load('KK Tears', 'Gentex', 'Maintex', body['SMR materials']['cf_O_namida_L'] + '_MT_CT.png')
 
     #for each material slot in each hair object, load in the hair detail mask, colormask
     hair_objects = [obj for obj in bpy.data.objects if 'Hair Outfit ' in obj.name]
@@ -793,7 +790,7 @@ def get_and_load_textures(directory):
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.armature.select_all(action='DESELECT')
         head_location = (armature.data.edit_bones['Head'].tail.x+1, armature.data.edit_bones['Head'].tail.y+1, armature.data.edit_bones['Head'].tail.z+1)
-        #kklog(head_location)
+        #c.kklog(head_location)
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.empty_add(type='CUBE', align='WORLD', location=head_location)
         empty = bpy.context.view_layer.objects.active
@@ -826,7 +823,7 @@ def get_and_load_textures(directory):
         empty.hide_render = True
     except:
         #i don't feel like dealing with any errors related to this
-        kklog('The GFN empty wasnt setup correctly. Oh well.', 'warn')
+        c.kklog('The GFN empty wasnt setup correctly. Oh well.', 'warn')
         pass
     
     #setup gag eye drivers
@@ -908,35 +905,6 @@ def get_and_load_textures(directory):
             newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
         skey_driver.driver.expression = 'CartoonyCrying or CartoonyWink or FieryEyes'
 
-        #make the eyes and eyeline shrink into the face when the gag shapekey is activated
-        '''skey_driver = bpy.data.materials['KK EyeR (hitomi)'].node_tree.nodes['Shader'].node_tree.nodes['Gagtoggle'].inputs[0].driver_add('default_value')
-        newVar = skey_driver.driver.variables.new()
-        newVar.name = 'gag'
-        newVar.type = 'SINGLE_PROP'
-        newVar.targets[0].id_type = 'KEY'
-        newVar.targets[0].id = body.data.shape_keys
-        newVar.targets[0].data_path = 'key_blocks["KK Eyes_gageye"].value' 
-        skey_driver.driver.expression = 'gag'
-
-        skey_driver = bpy.data.materials['KK Eyewhites (sirome)'].node_tree.nodes['Shader'].node_tree.nodes['Gagtoggle'].inputs[0].driver_add('default_value')
-        newVar = skey_driver.driver.variables.new()
-        newVar.name = 'gag'
-        newVar.type = 'SINGLE_PROP'
-        newVar.targets[0].id_type = 'KEY'
-        newVar.targets[0].id = body.data.shape_keys
-        newVar.targets[0].data_path = 'key_blocks["KK Eyes_gageye"].value' 
-        skey_driver.driver.expression = 'gag'
-
-        skey_driver = bpy.data.materials['KK Eyeline up'].node_tree.nodes['Shader'].node_tree.nodes['Gagtoggle'].inputs[0].driver_add('default_value')
-        newVar = skey_driver.driver.variables.new()
-        newVar.name = 'gag'
-        newVar.type = 'SINGLE_PROP'
-        newVar.targets[0].id_type = 'KEY'
-        newVar.targets[0].id = body.data.shape_keys
-        newVar.targets[0].data_path = 'key_blocks["KK Eyes_gageye"].value' 
-        skey_driver.driver.expression = 'gag'
-        '''
-
 def add_outlines(single_outline_mode):
     #Add face and body outlines, then load in the clothes transparency mask to body outline
     ob = bpy.context.view_layer.objects['Body']
@@ -947,8 +915,6 @@ def add_outlines(single_outline_mode):
     mod.material_offset = len(ob.material_slots)
     mod.use_flip_normals = True
     mod.use_rim = False
-    #mod.vertex_group = 'Body without Tears'
-    #mod.invert_vertex_group = True
     mod.name = 'Outline Modifier'
     mod.show_expanded = False
     
@@ -964,16 +930,7 @@ def add_outlines(single_outline_mode):
         #An alpha mask for the clothing wasn't present in the Textures folder
         bpy.data.materials['KK Body Outline'].node_tree.nodes['Clipping prevention toggle'].inputs[0].default_value = 0            
 
-    #And give the body an inactive data transfer modifier for the shading proxy
-    mod = ob.modifiers.new(type='DATA_TRANSFER', name = 'Shadowcast shading proxy')
-    mod.show_expanded = False
-    mod.show_viewport = False
-    mod.show_render = False
-    if bpy.data.objects.get('Shadowcast'):
-        mod.object = bpy.data.objects['Shadowcast']
-    mod.use_loop_data = True
-    mod.data_types_loops = {'CUSTOM_NORMAL'}
-    mod.loop_mapping = 'POLYINTERP_LNORPROJ'
+
 
     #Give each piece of hair with an alphamask on each hair object it's own outline group
     hair_objects = [obj for obj in bpy.data.objects if 'Hair Outfit ' in obj.name]
@@ -1154,7 +1111,7 @@ def clean_orphan_data():
             bpy.data.node_groups.remove(block)
 
 def apply_cycles():
-    kklog('Applying Cycles adjustments...')
+    c.kklog('Applying Cycles adjustments...')
     #taken from https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/234
     #remove outline modifier
     for o in bpy.context.view_layer.objects:
@@ -1227,7 +1184,7 @@ def apply_cycles():
     obj.mode_set(mode='OBJECT')
 
 def apply_lbs():
-    kklog('Applying Lightning Boy Shader adjustments...')
+    c.kklog('Applying Lightning Boy Shader adjustments...')
     #Import lbs node group and replace rim group with the lbs group
     keep_list = ['KK Eyebrows (mayuge)', 'KK EyeL (hitomi)', 'KK EyeR (hitomi)', 'KK Eyeline up']
     for tree in [mat.node_tree for mat in bpy.data.materials if ('KK ' in mat.name and mat.name not in keep_list)]:
@@ -1342,7 +1299,7 @@ def apply_sfw():
                 bpy.context.object.active_material_index = group_found
                 bpy.ops.object.vertex_group_select()
             else:
-                kklog('Group wasn\'t found when freestyling vertex groups: ' + group, 'warn')
+                c.kklog('Group wasn\'t found when freestyling vertex groups: ' + group, 'warn')
         bpy.ops.mesh.mark_freestyle_face(clear=False)
     freestyle_list = [
         'cf_j_bnip02_L', 'cf_j_bnip02_R',
@@ -1359,7 +1316,7 @@ def apply_sfw():
                 bpy.context.object.vertex_groups.active_index = group_found
                 bpy.ops.object.vertex_group_select()
             else:
-                kklog('Group wasn\'t found when deleting vertex groups: ' + group, 'warn')
+                c.kklog('Group wasn\'t found when deleting vertex groups: ' + group, 'warn')
         bpy.ops.mesh.delete(type='VERT')
         bpy.ops.mesh.select_all(action = 'DESELECT')
         bpy.ops.object.mode_set(mode = 'OBJECT')
@@ -1407,7 +1364,7 @@ def apply_sfw():
     bpy.data.materials['KK Body Outline'].node_tree.nodes['customToggle'].inputs[0].hide = True
 
 class import_everything(bpy.types.Operator):
-    bl_idname = "kkb.importeverything"
+    bl_idname = "kkbp.importeverything"
     bl_label = "Finish separating objects"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -1416,7 +1373,7 @@ class import_everything(bpy.types.Operator):
             last_step = time.time()
             directory = context.scene.kkbp.import_dir
             
-            kklog('\nApplying material templates and textures...')
+            c.kklog('\nApplying material templates and textures...')
 
             scene = context.scene.kkbp
             use_fake_user = scene.templates_bool
@@ -1439,8 +1396,8 @@ class import_everything(bpy.types.Operator):
             
             add_outlines(single_outline_mode)
             if modify_armature and bpy.data.objects['Armature'].pose.bones["Spine"].custom_shape == None:
-                #kklog(str(time.time() - last_step))
-                kklog('Adding bone widgets...')
+                #c.kklog(str(time.time() - last_step))
+                c.kklog('Adding bone widgets...')
                 apply_bone_widgets()
             hide_widgets()
 
@@ -1477,13 +1434,16 @@ class import_everything(bpy.types.Operator):
 
             #set to face select mode for easy material switching
             bpy.context.tool_settings.mesh_select_mode = (False, False, True)
+            
+            if context.scene.kkbp.categorize_dropdown in ['A', 'B', 'C']:
+                c.set_viewport_shading('MATERIAL')
 
-            kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
+            c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             return {'FINISHED'}
 
         except:
-            kklog('Unknown python error occurred', type = 'error')
-            kklog(traceback.format_exc())
+            c.kklog('Unknown python error occurred', type = 'error')
+            c.kklog(traceback.format_exc())
             self.report({'ERROR'}, traceback.format_exc())
             return {"CANCELLED"}
     
@@ -1491,4 +1451,4 @@ if __name__ == "__main__":
     bpy.utils.register_class(import_everything)
 
     # test call
-    print((bpy.ops.kkb.importeverything('INVOKE_DEFAULT')))
+    print((bpy.ops.kkbp.importeverything('INVOKE_DEFAULT')))

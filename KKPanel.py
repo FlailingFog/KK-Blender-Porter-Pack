@@ -1,7 +1,8 @@
 import bpy
-from bpy.types import Panel, PropertyGroup, Scene, WindowManager
+from bpy.types import PropertyGroup
 from bpy.props import (
     IntProperty,
+    FloatProperty,
     EnumProperty,
     BoolProperty,
     StringProperty
@@ -10,19 +11,19 @@ from bpy.props import (
 from .interface.dictionary_en import t
 
 class PlaceholderProperties(PropertyGroup):
-    # A property used by the plugin to keep track of the user's pmx directory during the import process.
-    # This string is automatically cleared after the Import Colors script is run.
-    import_dir: StringProperty(
-        default='')
+    #this will let the plugin know where to look for texture / json data
+    import_dir: StringProperty(default='') 
+    
+    #this will let the plugin know where the user is in the import / export process
+    plugin_state:StringProperty(default='')
+
+    #this lets the plugin time various actions
+    timer : FloatProperty(default=0)
 
     bake_mult: IntProperty(
         min=1, max = 6,
         default=1,
         description=t('bake_mult_tt'))
-
-    #A property used to let the plugin know if the model has been prepped for export or not
-    is_prepped : BoolProperty(
-    default = False)
 
     sfw_mode : BoolProperty(
     description=t('sfw_mode_tt'),
@@ -190,7 +191,7 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         col = box.column(align=True)
         
         row = col.row(align=True)
-        row.operator('kkb.quickimport', text = t('import_model'), icon='MODIFIER')
+        row.operator('kkbp.kkbpimport', text = t('import_model'), icon='MODIFIER')
         row.enabled = not scene.import_dir == 'cleared' and not scene.is_prepped
         
         row = col.row(align=True)
@@ -202,7 +203,7 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         
         if scene.categorize_dropdown in ['B']:
             row = col.row(align=True)
-            row.operator('kkb.matimport', text = t('finish_cat'), icon='BRUSHES_ALL')
+            row.operator('kkbp.matimport', text = t('finish_cat'), icon='BRUSHES_ALL')
             row.enabled = not scene.import_dir == 'cleared' and not scene.is_prepped
         
         row = col.row(align=True)
@@ -214,7 +215,7 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "colors_dropdown")
-        split.operator('kkb.importcolors', text = t('recalc_dark'), icon='IMAGE')
+        split.operator('kkbp.importcolors', text = t('recalc_dark'), icon='IMAGE')
         row.enabled = True
 
         row = col.row(align=True)
@@ -251,7 +252,7 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         box = layout.box()
         col = box.column(align=True)
         row = col.row(align=True)
-        row.operator('kkb.exportprep', text = t('prep'), icon = 'GROUP')
+        row.operator('kkbp.exportprep', text = t('prep'), icon = 'GROUP')
         row.enabled = not context.scene.kkbp.is_prepped
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
@@ -261,7 +262,7 @@ class EXPORTING_PT_panel(bpy.types.Panel):
 
         col = box.column(align=True)
         row = col.row(align=True)
-        row.operator('kkb.bakematerials', text = t('bake'), icon='VIEW_CAMERA')
+        row.operator('kkbp.bakematerials', text = t('bake'), icon='VIEW_CAMERA')
         row = col.row(align=True)
         split = row.split(align=True, factor=0.33)
         split.prop(context.scene.kkbp, "bake_light_bool", toggle=True, text = t('bake_light'))
@@ -274,7 +275,7 @@ class EXPORTING_PT_panel(bpy.types.Panel):
 
         col = box.column(align=True)
         row = col.row(align=True)
-        row.operator('kkb.applymaterials', text = t('apply_temp'), icon = 'FILE_REFRESH')
+        row.operator('kkbp.applymaterials', text = t('apply_temp'), icon = 'FILE_REFRESH')
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.label(text=t('atlas'))
@@ -282,7 +283,7 @@ class EXPORTING_PT_panel(bpy.types.Panel):
     
         col = box.column(align=True)
         row = col.row(align=True)
-        row.operator('kkb.exportfbx', text = t('export_fbx'), icon = 'FILEBROWSER')
+        row.operator('kkbp.exportfbx', text = t('export_fbx'), icon = 'FILEBROWSER')
 
 class EXTRAS_PT_panel(bpy.types.Panel):
     bl_label = 'KKBP Extras'
@@ -300,7 +301,7 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text=t('studio_object'))
-        split.operator('kkb.importstudio', text = '', icon = 'MATCUBE')
+        split.operator('kkbp.importstudio', text = '', icon = 'MATCUBE')
         row = col.row(align=True)
         split = row.split(align=True)
         split.label(text="Shader")
@@ -318,7 +319,7 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text=t('animation_library'))
-        split.operator('kkb.createanimassetlib', text = '', icon = 'ARMATURE_DATA')
+        split.operator('kkbp.createanimassetlib', text = '', icon = 'ARMATURE_DATA')
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text="")
@@ -328,39 +329,39 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text=t('map_library'))
-        split.operator('kkb.createmapassetlib', text = '', icon = 'WORLD')
+        split.operator('kkbp.createmapassetlib', text = '', icon = 'WORLD')
 
         box = layout.box()
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text=t('finalize_materials'))
-        split.operator('kkb.finalizematerials', text = '', icon='SHADERFX')
+        split.operator('kkbp.finalizematerials', text = '', icon='SHADERFX')
 
         box = layout.box()
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text="Update bone visibility")
-        split.operator('kkb.updatebones', text = '', icon = 'HIDE_OFF')
+        split.operator('kkbp.updatebones', text = '', icon = 'HIDE_OFF')
 
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text=t('rigify_convert'))
-        split.operator('kkb.rigifyconvert', text = '', icon='SOLO_OFF')
+        split.operator('kkbp.rigifyconvert', text = '', icon='SOLO_OFF')
 
         #col = box.column(align=True)
         #row = col.row(align=True)
         #split = row.split(align=True, factor=splitfac)
         #split.label(text="Swap armature type")
-        #split.operator('kkb.switcharmature', text = '', icon = 'ARROW_LEFTRIGHT')
+        #split.operator('kkbp.switcharmature', text = '', icon = 'ARROW_LEFTRIGHT')
 
         '''col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text="Toggle hand IKs")
-        split.operator('kkb.toggleik', text = '', icon = 'BONE_DATA')'''
+        split.operator('kkbp.toggleik', text = '', icon = 'BONE_DATA')'''
         
         box = layout.box()
         col = box.column(align=True)
@@ -368,13 +369,13 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         split = row.split(align=True, factor=splitfac)
         
         split.label(text="Export Seperate Meshes")
-        split.operator('kkb.exportseparatemeshes', text = '', icon = 'EXPORT')
+        split.operator('kkbp.exportseparatemeshes', text = '', icon = 'EXPORT')
         
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text=t('sep_eye'))
-        split.operator('kkb.linkshapekeys', text = '', icon='SPHERECURVE')
+        split.operator('kkbp.linkshapekeys', text = '', icon='SPHERECURVE')
 
         
         #put all icons available in blender at the end of the panel
@@ -384,7 +385,7 @@ class EXTRAS_PT_panel(bpy.types.Panel):
             row = col.row(align=True)
             split = row.split(align=True, factor=.5)
             split.label(text=icon)
-            split.operator('kkb.linkshapekeys', icon = icon)'''
+            split.operator('kkbp.linkshapekeys', icon = icon)'''
 
 
 #The panel inside of the image editor
@@ -400,12 +401,12 @@ class EDITOR_PT_panel(bpy.types.Panel):
         box = layout.box()
         col = box.column(align=True)
         row = col.row(align = True)
-        row.operator('kkb.imageconvert', text = t('convert_image'), icon = 'IMAGE')
+        row.operator('kkbp.imageconvert', text = t('convert_image'), icon = 'IMAGE')
 
         row = col.row(align=True)
         row.prop(context.scene.kkbp, "image_dropdown")
         row = col.row(align=True)
-        row.operator('kkb.imagedarkconvert', text = 'Create KKBP dark version', icon = 'IMAGE')
+        row.operator('kkbp.imagedarkconvert', text = 'Create KKBP dark version', icon = 'IMAGE')
 
 def register():
     bpy.utils.register_class(PlaceholderProperties)

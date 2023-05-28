@@ -3,7 +3,7 @@
 #using the variable order x, y, z, w according to https://github.com/Unity-Technologies/Unity.Mathematics/blob/master/src/Unity.Mathematics/float4.gen.cs#L42
 
 import math, numpy, bpy, time, os
-from .importbuttons import kklog
+from .. import common as c
 
 #class to mimic part of float4 class in Unity
 class float4:
@@ -179,8 +179,6 @@ def skin_dark_color(color, shadow_color = None):
     hlslcc_movcTemp.z = diffuseShaded.z if (compTest.z) else shadingAdjustment.z; #372
     shadingAdjustment = (hlslcc_movcTemp).saturate(); #374 the lerp result (and shadowCol) is going to be this because shadowColor's alpha is always 1 making shadowCol 1
 
-    #print(diffuse)
-    #print(shadingAdjustment)
     finalDiffuse = diffuse * shadingAdjustment;
     
     bodyShine = float4(1.0656, 1.0656, 1.0656, 1);
@@ -226,7 +224,6 @@ def ShadeAdjustItem(col, _ShadowColor):
     t1 = t1.clamp() #94
     t1 = t1 + (-1); #95
     t1 = (t30) * t1 + 1; #96
-    #print([t1.x, t1.y, t1.z, 1])
     return float4(t1.x, t1.y, t1.z, 1) #97
 
 #clothes is from https://github.com/xukmi/KKShadersPlus/blob/main/Shaders/Item/MainItemPlus.shader
@@ -271,7 +268,6 @@ def clothes_dark_color(color, shadow_color):
 def create_darktex(maintex, shadow_color):
     if not os.path.isfile(bpy.context.scene.kkbp.import_dir + '/dark_files/' + maintex.name[:-6] + 'DT.png'):
         ok = time.time()
-        #kklog('1')
         image_array = numpy.asarray(maintex.pixels)
         image_length = len(image_array)
         image_row_length = int(image_length/4)
@@ -353,20 +349,18 @@ def create_darktex(maintex, shadow_color):
         darktex_filename = maintex.filepath_raw[maintex.filepath_raw.find(maintex.name):][:-7]+ '_DT.png'
         darktex_filepath = bpy.context.scene.kkbp.import_dir + 'dark_files/' + darktex_filename
         darktex.filepath_raw = darktex_filepath
-        #kklog(maintex.filepath_raw)
-        #kklog(darktex.filepath_raw)
         darktex.pack()
         darktex.save()
-        kklog('Created dark version of {} in {} seconds'.format(darktex.name, time.time() - ok))
+        c.kklog('Created dark version of {} in {} seconds'.format(darktex.name, time.time() - ok))
         return darktex
     else:
         bpy.ops.image.open(filepath=str(bpy.context.scene.kkbp.import_dir + 'dark_files/' + maintex.name[:-6] + 'DT.png'), use_udim_detecting=False)
         darktex = bpy.data.images[maintex.name[:-6] + 'DT.png']
-        kklog('A dark version of {} already exists'.format(darktex.name))
+        c.kklog('A dark version of {} already exists'.format(darktex.name))
         try:
             darktex.pack()
         except:
-            kklog('This image was not automatically loaded in because its name exceeds 64 characters: ' + darktex.name, type = 'error')
+            c.kklog('This image was not automatically loaded in because its name exceeds 64 characters: ' + darktex.name, type = 'error')
         return darktex
 
 if __name__ == '__main__':

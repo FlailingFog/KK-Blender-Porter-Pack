@@ -386,7 +386,7 @@ def import_studio_objects(directory):
 
 
 class import_studio(bpy.types.Operator):
-    bl_idname = "kkb.importstudio"
+    bl_idname = "kkbp.importstudio"
     bl_label = "Import studio object"
     bl_description = "Open the folder containing the fbx files exported with SB3Utility"
     bl_options = {'REGISTER', 'UNDO'}
@@ -409,4 +409,4 @@ if __name__ == "__main__":
     bpy.utils.register_class(import_studio)
     
     # test call
-    print((bpy.ops.kkb.importstudio('INVOKE_DEFAULT')))
+    print((bpy.ops.kkbp.importstudio('INVOKE_DEFAULT')))

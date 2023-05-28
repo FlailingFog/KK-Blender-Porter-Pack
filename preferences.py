@@ -1,7 +1,7 @@
 #The preferences for the plugin 
 
 import bpy
-from bpy.props import StringProperty, IntProperty, BoolProperty, EnumProperty
+from bpy.props import BoolProperty, EnumProperty
 
 from .interface.dictionary_en import t
 

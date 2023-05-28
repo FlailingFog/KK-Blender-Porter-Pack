@@ -124,7 +124,7 @@ translation_dictionary = {
 
     'convert_image' : 'Convert image with KKBP',
 
-    'quick_import_tt'   : "Imports a Koikatsu model (.pmx format) and applies fixes to it",
+    'kkbp_import_tt'   : "Imports a Koikatsu model (.pmx format) and applies fixes to it",
     'mat_import_tt'     : "Finish separating objects, apply the textures and colors",
     'export_prep_tt'    : "Check the dropdown for more info",
     'bake_mats_tt'      : "Open the folder you want to bake the material templates to",

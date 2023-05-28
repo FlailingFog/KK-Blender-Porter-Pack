@@ -1,7 +1,7 @@
 import bpy
 
 class toggle_ik(bpy.types.Operator):
-    bl_idname = "kkb.toggleik"
+    bl_idname = "kkbp.toggleik"
     bl_label = "Toggle IKs"
     bl_description = "Click this to toggle the hand and arm IKs"
     bl_options = {'REGISTER', 'UNDO'}

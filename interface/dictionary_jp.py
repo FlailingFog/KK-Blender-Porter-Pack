@@ -119,7 +119,7 @@ translation_dictionary = {
 
     'convert_image' : 'KKBPのLUTでイマージをコンヴァート',
 
-    'quick_import_tt'   : "コイカツモデル(.PMXフォーマット)をインポートして改造して",
+    'kkbp_import_tt'   : "コイカツモデル(.PMXフォーマット)をインポートして改造して",
     'mat_import_tt'     : "カテゴライズしまってテクスチャーや色データつけて",
     'export_prep_tt'    : "メニューの情報をチェックして",
     'bake_mats_tt'      : "フォルダにマテリアルテンプレートをベークして",

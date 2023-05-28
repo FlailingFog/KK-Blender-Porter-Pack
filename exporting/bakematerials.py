@@ -15,7 +15,7 @@ Notes:
 
 import bpy, os, traceback, time
 from pathlib import Path
-from ..importing.importbuttons import kklog, toggle_console
+from .. import common as c
 from bpy.props import StringProperty, BoolProperty
 from bpy_extras.io_utils import ImportHelper
 from bpy.types import Operator
@@ -391,7 +391,7 @@ def cleanup():
     bpy.context.scene.render.filter_size = 1.5
 
 class bake_materials(bpy.types.Operator):
-    bl_idname = "kkb.bakematerials"
+    bl_idname = "kkbp.bakematerials"
     bl_label = "Store images here"
     bl_description = t('bake_mats_tt')
     bl_options = {'REGISTER', 'UNDO'}
@@ -405,8 +405,8 @@ class bake_materials(bpy.types.Operator):
     def execute(self, context):
         try:
             last_step = time.time()
-            toggle_console()
-            kklog('Switching to EEVEE for material baking...')
+            c.toggle_console()
+            c.kklog('Switching to EEVEE for material baking...')
             bpy.context.scene.render.engine = 'BLENDER_EEVEE'
             #set viewport shading to solid for better performance
             my_areas = bpy.context.workspace.screens[0].areas
@@ -447,11 +447,11 @@ class bake_materials(bpy.types.Operator):
                     obj.hide_render = False
                     ob.hide_viewport = False
                 cleanup()
-            toggle_console()
+            c.toggle_console()
             #run the apply materials script right after baking
             scene.import_dir = folderpath #use import dir as a temp directory holder
-            bpy.ops.kkb.applymaterials('EXEC_DEFAULT')
-            kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
+            bpy.ops.kkbp.applymaterials('EXEC_DEFAULT')
+            c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             #reset viewport shading back to material preview
             my_areas = bpy.context.workspace.screens[0].areas
             my_shading = 'MATERIAL'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
@@ -461,8 +461,8 @@ class bake_materials(bpy.types.Operator):
                         space.shading.type = my_shading 
             return {'FINISHED'}
         except:
-            kklog('Unknown python error occurred', type = 'error')
-            kklog(traceback.format_exc())
+            c.kklog('Unknown python error occurred', type = 'error')
+            c.kklog(traceback.format_exc())
             #reset viewport shading back to solid
             my_areas = bpy.context.workspace.screens[0].areas
             my_shading = 'SOLID'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
@@ -481,4 +481,4 @@ if __name__ == "__main__":
     bpy.utils.register_class(bake_materials)
 
     # test call
-    print((bpy.ops.kkb.bakematerials('INVOKE_DEFAULT')))
+    print((bpy.ops.kkbp.bakematerials('INVOKE_DEFAULT')))

@@ -1,6 +1,3 @@
-### redo toe bone connections
-#       when did i put this note here
-
 '''
 AFTER CATS (CLEAN ARMATURE) SCRIPT
 - Hides all bones that aren't in the bonelists
@@ -12,7 +9,7 @@ Usage:
 
 import bpy, time, traceback
 from .finalizepmx import survey_vertexes
-from .importbuttons import kklog
+from .. import common as c
 
 #function that returns a type of bone list
 def get_bone_list(kind):
@@ -272,14 +269,6 @@ def visually_connect_bones():
         #this character isn't using the BP/toe control armature
         pass
     
-    '''#Make sure top skirt root bones are visually correct (flip them)
-    def flip(switchbone):
-        chain = switchbone[5:10]
-        armature.data.edit_bones[switchbone].tail = (armature.data.edit_bones[switchbone].head + armature.data.edit_bones['cf_j_'+chain+'_00'].tail)/2
-    for skirtroot in skirt_list:
-        if '_d_' in skirtroot:
-            flip(skirtroot)
-    '''
     bpy.ops.object.mode_set(mode='OBJECT')
 
 def move_accessory_bones(context):
@@ -317,7 +306,7 @@ def move_accessory_bones(context):
     bpy.ops.pose.select_all(action='DESELECT')
 
 class clean_armature(bpy.types.Operator):
-    bl_idname = "kkb.cleanarmature"
+    bl_idname = "kkbp.cleanarmature"
     bl_label = "Clean armature"
     bl_description = "Makes the armature less of an eyesore"
     bl_options = {'REGISTER', 'UNDO'}
@@ -326,23 +315,23 @@ class clean_armature(bpy.types.Operator):
         try:
             last_step = time.time()
 
-            kklog('\nCategorizing bones into armature layers...', 'timed')
+            c.kklog('\nCategorizing bones into armature layers...', 'timed')
 
             reorganize_armature_layers()
             if context.scene.kkbp.categorize_dropdown in ['A', 'B']:
                 visually_connect_bones()
             move_accessory_bones(context)
             
-            kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
+            c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
 
             return {'FINISHED'}
         except:
-            kklog('Unknown python error occurred', type = 'error')
-            kklog(traceback.format_exc())
+            c.kklog('Unknown python error occurred', type = 'error')
+            c.kklog(traceback.format_exc())
             self.report({'ERROR'}, traceback.format_exc())
             return {"CANCELLED"}
 if __name__ == "__main__":
     bpy.utils.register_class(clean_armature)
 
     # test call
-    print((bpy.ops.kkb.cleanarmature('INVOKE_DEFAULT')))
+    print((bpy.ops.kkbp.cleanarmature('INVOKE_DEFAULT')))

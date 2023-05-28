@@ -14,7 +14,7 @@
 import bpy, os, time, pathlib
 from bpy.props import StringProperty
 from ..importstudio import import_studio_objects
-from ...importing.importbuttons import kklog, toggle_console
+from ... import common as c
 from ...importing.importcolors import load_luts, image_to_KK
 from ...importing.darkcolors import create_darktex
 from ...interface.dictionary_en import t
@@ -52,7 +52,7 @@ def better_fbx_map_import(directory):
         #if the material already exists, use that, else create it
         try:
             obj.material_slots[0].material = bpy.data.materials['KK ' + obj.material_slots[0].material.name]
-            kklog('Material already exists: ' + obj.material_slots[0].material.name)
+            c.kklog('Material already exists: ' + obj.material_slots[0].material.name)
         except:
             try:
                 template = bpy.data.materials['KK Simple'].copy()
@@ -122,7 +122,7 @@ def main(folder):
     #Use the Better FBX importer addon if installed, else fallback to internal fbx importer
     use_better_fbx_importer = 'better_fbx' in [addon.module for addon in bpy.context.preferences.addons]
 
-    toggle_console()
+    c.toggle_console()
     start = time.time()
 
     #delete the default scene if present
@@ -326,11 +326,11 @@ def main(folder):
             bpy.data.node_groups.remove(block)
         
     print(str(time.time() - start))
-    toggle_console()
+    c.toggle_console()
 
 
 class map_asset_lib(bpy.types.Operator):
-    bl_idname = "kkb.createmapassetlib"
+    bl_idname = "kkbp.createmapassetlib"
     bl_label = "Create map asset library"
     bl_description = t('map_library_tt')
     bl_options = {'REGISTER', 'UNDO'}
@@ -353,4 +353,4 @@ if __name__ == "__main__":
     bpy.utils.register_class(map_asset_lib)
     
     # test call
-    print((bpy.ops.kkb.createmapassetlib('INVOKE_DEFAULT')))
+    print((bpy.ops.kkbp.createmapassetlib('INVOKE_DEFAULT')))

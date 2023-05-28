@@ -216,7 +216,7 @@ def import_the_fbx(directory):
     bpy.context.scene.view_settings.view_transform = 'Standard'
 
 class import_grey(bpy.types.Operator):
-    bl_idname = "kkb.importgrey"
+    bl_idname = "kkbp.importgrey"
     bl_label = "Import Grey's .fbx"
     bl_description = "Select the .fbx file from Grey's Mesh Exporter"
     bl_options = {'REGISTER', 'UNDO'}
@@ -238,4 +238,4 @@ if __name__ == "__main__":
     bpy.utils.register_class(import_grey)
     
     # test call
-    print((bpy.ops.kkb.importgrey('INVOKE_DEFAULT')))
+    print((bpy.ops.kkbp.importgrey('INVOKE_DEFAULT')))

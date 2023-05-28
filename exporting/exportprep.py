@@ -1,20 +1,19 @@
 #simplfies bone count using the merge weights function in CATS
 
 import bpy, traceback, time
-from ..importing.importbuttons import kklog
-
+from .. import common as c
 from ..interface.dictionary_en import t
 
 def main(prep_type, simp_type):
 
     armature = bpy.data.objects['Armature']
 
-    kklog('\nPrepping for export...')
+    c.kklog('\nPrepping for export...')
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.ops.object.select_all(action='DESELECT')
 
     #Assume hidden items are unused and move them to their own collection
-    kklog('Moving unused objects to their own collection...')
+    c.kklog('Moving unused objects to their own collection...')
     no_move_objects = ['Bonelyfans', 'Shadowcast', 'Hitboxes', 'Body', 'Armature']
     for object in bpy.context.scene.objects:
         #print(object.name)
@@ -38,7 +37,7 @@ def main(prep_type, simp_type):
             #maybe the collection is already hidden, or doesn't exist
             pass
     
-    kklog('Removing object outline modifier...')
+    c.kklog('Removing object outline modifier...')
     for ob in bpy.data.objects:
         if ob.modifiers.get('Outline Modifier'):
             ob.modifiers['Outline Modifier'].show_render = False
@@ -100,13 +99,13 @@ def main(prep_type, simp_type):
                 if select_bool:
                     bone.select = True
         
-        kklog('Using the merge weights function in CATS to simplify bones...')
+        c.kklog('Using the merge weights function in CATS to simplify bones...')
         bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.kkb.cats_merge_weights()
+        bpy.ops.kkbp.cats_merge_weights()
 
     #If exporting for VRM or VRC...
     if prep_type in ['A', 'D']:
-        kklog('Editing armature for VRM...')
+        c.kklog('Editing armature for VRM...')
         bpy.context.view_layer.objects.active=armature
         bpy.ops.object.mode_set(mode='EDIT')
 
@@ -137,7 +136,7 @@ def main(prep_type, simp_type):
                 bone.select = True
 
         bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.kkb.cats_merge_weights()
+        bpy.ops.kkbp.cats_merge_weights()
 
     #If exporting for MMD...
     if prep_type == 'C':
@@ -151,7 +150,7 @@ def main(prep_type, simp_type):
 
         #rename bones to stock
         if armature.data.bones.get('Center'):
-            bpy.ops.kkb.switcharmature('INVOKE_DEFAULT')
+            bpy.ops.kkbp.switcharmature('INVOKE_DEFAULT')
         
         #then rename bones to japanese
         pmx_rename_dict = {
@@ -229,7 +228,7 @@ def main(prep_type, simp_type):
 
         #create leg IKs?
         
-        kklog('Using CATS to simplify more bones for MMD...')
+        c.kklog('Using CATS to simplify more bones for MMD...')
 
         #use mmd_tools to convert
         bpy.ops.mmd_tools.convert_to_mmd_model()
@@ -237,7 +236,7 @@ def main(prep_type, simp_type):
     bpy.ops.object.mode_set(mode='OBJECT')
 
 class export_prep(bpy.types.Operator):
-    bl_idname = "kkb.exportprep"
+    bl_idname = "kkbp.exportprep"
     bl_label = "Prep for target application"
     bl_description = t('export_prep_tt')
     bl_options = {'REGISTER', 'UNDO'}
@@ -250,11 +249,11 @@ class export_prep(bpy.types.Operator):
         try:
             main(prep_type, simp_type)
             scene.is_prepped = True
-            kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
+            c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             return {'FINISHED'}
         except:
-            kklog('Unknown python error occurred', type = 'error')
-            kklog(traceback.format_exc())
+            c.kklog('Unknown python error occurred', type = 'error')
+            c.kklog(traceback.format_exc())
             self.report({'ERROR'}, traceback.format_exc())
             return {"CANCELLED"}
     
@@ -263,4 +262,4 @@ if __name__ == "__main__":
     bpy.utils.register_class(export_prep)
 
     # test call
-    print((bpy.ops.kkb.exportprep('INVOKE_DEFAULT')))
+    print((bpy.ops.kkbp.exportprep('INVOKE_DEFAULT')))

@@ -10,98 +10,16 @@ some code stolen from MediaMoots here https://github.com/FlailingFog/KK-Blender-
 
 import bpy, math, time, traceback
 from mathutils import Vector
-from .importbuttons import kklog
-
-def rename_and_merge_outfits():
-    bpy.ops.object.mode_set(mode='OBJECT')
-    
-    #get objects
-    armature = bpy.data.objects['Model_arm']
-    body = bpy.data.objects['Model_mesh']
-    empty = bpy.data.objects['Model']
-    
-    #rename
-    armature.parent = None
-    armature.name = 'Armature'
-    body.name = 'Body'
-    body.modifiers[0].show_in_editmode = True
-    body.modifiers[0].show_on_cage = True
-    body.modifiers[0].show_expanded = False
-    
-    #Deselect all objects
-    bpy.ops.object.select_all(action='DESELECT')
-
-    bpy.data.objects.remove(empty)
-    
-    idx = 1
-    for obj in bpy.data.objects:
-        if "Model_arm" in obj.name and obj.type == 'ARMATURE':
-            #get objects
-            empty = bpy.data.objects['Model.' + str(idx).zfill(3)]
-            id = empty['KKBP outfit ID']
-            outfit_arm = bpy.data.objects['Model_arm.' + str(idx).zfill(3)]
-            outfit = bpy.data.objects[empty.name  + '_mesh']
-            
-            bpy.data.objects.remove(empty)
-            bpy.data.objects.remove(outfit_arm)
-            #rename outfit to match ID
-            outfit.name = 'Outfit ' + id
-            outfit.parent = armature
-            outfit.modifiers[0].object = armature
-            outfit.modifiers[0].show_in_editmode = True
-            outfit.modifiers[0].show_on_cage = True
-            outfit.modifiers[0].show_expanded = False
-            
-            idx += 1
+from .. import common as c
+ 
         
-    #Select the Body object
-    body.select_set(True)
-    #and make it active
-    bpy.context.view_layer.objects.active = armature   
 
 # makes the pmx armature and bone names match the koikatsu armature structure and bone names
-def standardize_armature(modify_arm):
-    rename_and_merge_outfits()
+def standardize_armature(modify_arm):    
     
-    armature = bpy.data.objects['Armature']
     
-    #scale all bone sizes down by a factor of 12
-    try:
-        bpy.ops.object.mode_set(mode='EDIT')
-    except:
-        armature.hide = False
-        bpy.ops.object.mode_set(mode='EDIT')
-    for bone in armature.data.edit_bones:
-        bone.tail.z = bone.head.z + (bone.tail.z - bone.head.z)/12
-    
-    if modify_arm != 'D':
-        #reparent foot to leg03
-        armature.data.edit_bones['cf_j_foot_R'].parent = armature.data.edit_bones['cf_j_leg03_R']
-        armature.data.edit_bones['cf_j_foot_L'].parent = armature.data.edit_bones['cf_j_leg03_L']
 
-        #unparent body bone to match KK
-        armature.data.edit_bones['p_cf_body_bone'].parent = None
-
-    #remove all constraints from all bones
-    bpy.ops.object.mode_set(mode='POSE')
-    for bone in armature.pose.bones:
-        for constraint in bone.constraints:
-            bone.constraints.remove(constraint)
     
-    #remove all drivers from all armature bones
-    #animation_data is nonetype if no drivers have been created yet
-    if armature.animation_data:
-        drivers_data = armature.animation_data.drivers
-        for driver in drivers_data:  
-            armature.driver_remove(driver.data_path, -1)
-
-    #unlock the armature and all bones
-    armature.lock_location = [False, False, False]
-    armature.lock_rotation = [False, False, False]
-    armature.lock_scale = [False, False, False]
-    
-    for bone in armature.pose.bones:
-        bone.lock_location = [False, False, False]
 
     bpy.ops.object.mode_set(mode='EDIT')
     
@@ -116,32 +34,7 @@ def standardize_armature(modify_arm):
 
     bpy.ops.armature.select_all(action='DESELECT')
 
-    #delete bones not under the cf_n_height bone
-    def select_children(parent):
-        try:
-            parent.select = True
-            parent.select_head = True
-            parent.select_tail = True
-            for child in parent.children:
-                select_children(child)
-            
-        except:
-            #The script hit the last bone in the chain
-            return
-
-    if modify_arm == 'D':
-        select_children(armature.data.edit_bones['BodyTop'])
-    else:
-        select_children(armature.data.edit_bones['cf_n_height'])
-
-        #make sure these bones aren't deleted
-        for preserve_bone in ['cf_j_root', 'p_cf_body_bone', 'cf_n_height']:
-            armature.data.edit_bones[preserve_bone].select = True
-            armature.data.edit_bones[preserve_bone].select_head = True
-            armature.data.edit_bones[preserve_bone].select_tail = True
-
-    bpy.ops.armature.select_all(action='INVERT')
-    bpy.ops.armature.delete()
+    
 
 def reset_and_reroll_bones():
     bpy.ops.object.mode_set(mode='EDIT')
@@ -149,7 +42,7 @@ def reset_and_reroll_bones():
     height_adder = Vector((0,0,0.1))
     
     #all finger bones need to be rotated a specific direction
-    def rotate_thumb(bone, direction='L'):
+    def rotate_thumb(bone):
         bpy.ops.armature.select_all(action='DESELECT')
         armature.data.edit_bones[bone].select = True
         armature.data.edit_bones[bone].select_head = True
@@ -160,7 +53,6 @@ def reset_and_reroll_bones():
         #right thumbs face towards hand center
         #left thumbs face away from hand center
         angle = -math.pi/2
-        
         s = math.sin(angle)
         c = math.cos(angle)
 
@@ -176,15 +68,14 @@ def reset_and_reroll_bones():
         armature.data.edit_bones[bone].tail.x = xnew + armature.data.edit_bones[bone].head.x
         armature.data.edit_bones[bone].tail.y = ynew + armature.data.edit_bones[bone].head.y
         armature.data.edit_bones[bone].roll = 0
-        #armature.data.edit_bones[bone].tail.z = armature.data.edit_bones[bone].head.z
         armature.data.edit_bones[bone].parent = parent
         
     rotate_thumb('cf_j_thumb03_L')
     rotate_thumb('cf_j_thumb02_L')
     rotate_thumb('cf_j_thumb01_L')
-    rotate_thumb('cf_j_thumb03_R', 'R')
-    rotate_thumb('cf_j_thumb02_R', 'R')
-    rotate_thumb('cf_j_thumb01_R', 'R')
+    rotate_thumb('cf_j_thumb03_R')
+    rotate_thumb('cf_j_thumb02_R')
+    rotate_thumb('cf_j_thumb01_R')
     
     height_adder = Vector((0,0,0.05))
     def flip_finger(bone):
@@ -223,10 +114,7 @@ def reset_and_reroll_bones():
     #reset the orientation of certain bones
     height_adder = Vector((0,0,0.1))
     def reorient(bone):
-        #print(bone)
         armature.data.edit_bones[bone].tail = bpy.data.objects['Armature'].data.edit_bones[bone].head + height_adder
-        #print(bone)
-        #print(height_adder)  
 
     reorient_list = [
         'cf_j_thigh00_R', 'cf_j_thigh00_L',
@@ -578,7 +466,6 @@ def reset_and_reroll_bones():
 #slightly modify the armature to support IKs
 def modify_pmx_armature():
     armature = bpy.data.objects['Armature']
-    body = bpy.data.objects['Body']
     
     armature.select_set(True)
     bpy.context.view_layer.objects.active=armature
@@ -588,7 +475,6 @@ def modify_pmx_armature():
     armature.data.edit_bones['p_cf_body_bone'].parent = armature.data.edit_bones['cf_pv_root']
     
     #relocate the tail of some bones to make IKs easier
-    #this is different from the one in finalizefbx.py
     def relocate_tail(bone1, bone2, direction):
         if direction == 'leg':
             armature.data.edit_bones[bone1].tail.z = armature.data.edit_bones[bone2].head.z
@@ -638,190 +524,6 @@ def survey(obj):
             if (maxWeight.get(keylist[gn]) is None or w>maxWeight[keylist[gn]]):
                 maxWeight[keylist[gn]] = w
     return maxWeight
-
-'''
-Duplicated accesory vertex groups are merged. This function makes sure they're separate.
-
-Basic strategy:
-* Get bones under each ca_slot accessory bone
-* Get the locations of the bones
-* Get the average vertex group locations separated by material
-* Match the bone and vertex group locations per material
-* Extract the vertices from the merged vertex group and assign them to the matched vertex group for each material + vertex group / bone combo
-'''
-'''def fix_accessories():
-    armature = bpy.data.objects['Armature']
-    body = bpy.data.objects['Body']
-
-    duplicated_groups = {} #{child_bone1:[caslot01_child_bone1, caslot02_child_bone1]}, {child_bone2: [caslot05_child_bone2]}, etc...
-
-    #if there are any duplicated bones under any ca_slot bones, rename it and put it in the duplicated groups dictionary
-    #renaming the bone will also automatically rename the associated vertex group
-    def rename_all_child_bones(parent):
-        try:
-            for child_bone in parent.children:
-                if '.0' in child_bone.name:
-                    base_child_name = child_bone.name[:-4]
-                    child_bone.name = ca_bone.name[-6:] + '_' + base_child_name
-                    if duplicated_groups.get(base_child_name):
-                        duplicated_groups[base_child_name].append(child_bone.name)
-                    else:
-                        duplicated_groups[base_child_name] = []
-                        duplicated_groups[base_child_name].append(child_bone.name)
-                rename_all_child_bones(child_bone)
-        except:
-            #the script hit the last bone in the chain
-            return
-
-    for ca_bone in armature.data.bones:
-        if 'ca_slot' in ca_bone.name:
-            rename_all_child_bones(ca_bone)
-
-    #print(duplicated_groups)
-
-    bpy.ops.object.mode_set(mode='OBJECT')
-    armature.select_set(False)
-    body.select_set(True)
-    bpy.context.view_layer.objects.active=body
-    for v in body.data.vertices:
-        v.select = False
-    #bpy.ops.object.mode_set(mode='EDIT')
-
-    #collect all vertices used by all materials
-    materialPolys = { ms.material.name : [] for ms in body.material_slots }
-    for i, p in enumerate( body.data.polygons ):
-        materialPolys[ body.material_slots[ p.material_index ].name ].append( body.data.polygons[i] )
-    
-    materialVertices = {ms.material.name : [] for ms in body.material_slots}
-    for mat in materialPolys:
-        for polygon in materialPolys[mat]:
-            for vert in polygon.vertices:
-                materialVertices[ mat ].append( vert )
-
-    #Collect all vertices used by all vertex groups
-    vertices_in_all_groups = {}
-    vertexWeightMap = survey(body)
-
-    for group in duplicated_groups:
-        if vertexWeightMap.get(group):
-            group_index = body.vertex_groups.find(group)
-            vertices_in_all_groups[group] = [ v.index for v in body.data.vertices if group_index in [ vg.group for vg in v.groups ] ]
-    #print(vertices_in_all_groups.keys())
-
-    #Go through each base vertex group and separate the duplicates
-    for base_group in vertices_in_all_groups:
-        #refresh UI after each base group to let the user know it's doing something
-        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-        
-        #print("The base group is: {}".format(base_group))
-        base_group_index = body.vertex_groups.find(base_group)
-        #check which materials are being used by the vertexes in this group
-        base_group_materials = set()
-        for mat in materialVertices:
-            #print("Getting material verticies for {}".format(mat))
-            for matvert in materialVertices[mat]:
-                if matvert in vertices_in_all_groups[base_group]:
-                    base_group_materials.add(mat)
-        #use each material vertex and the base group vertices to find the weighted average location for the vertexes of each material
-        locations_dictionary = {}
-        #print("Finding each material location for {} using these materials: {}".format(base_group, base_group_materials))
-        for mat in base_group_materials:
-            #get the total of all weights shared by the vertex group and the material
-            total_weight = None
-            for vertex in materialVertices[mat]:
-                if vertex in vertices_in_all_groups[base_group]:
-                    #find the correct vertex group
-                    group_for_weights = 0
-                    for index, grp in enumerate(body.data.vertices[vertex].groups):
-                        #print("The real group index is {} and the numbering the vertex sees is {}".format(grp.group, index))
-                        if grp.group == base_group_index:
-                            group_for_weights = index
-                    #add the weight
-                    vertex_weight = body.data.vertices[vertex].groups[group_for_weights].weight
-                    total_weight = (total_weight + vertex_weight) if total_weight else vertex_weight
-            average_location = None
-            for vertex in materialVertices[mat]:
-                if vertex in vertices_in_all_groups[base_group]:
-                    #find the correct vertex group
-                    group_for_weights = 0
-                    for index, grp in enumerate(body.data.vertices[vertex].groups):
-                        if grp.group == base_group_index:
-                            group_for_weights = index
-                    vertex_weight = body.data.vertices[vertex].groups[group_for_weights].weight
-                    average_location = (body.data.vertices[vertex].co * vertex_weight + average_location) if average_location else body.data.vertices[vertex].co * vertex_weight
-            locations_dictionary[mat] = average_location / total_weight
-            bpy.context.scene.cursor.location = locations_dictionary[mat]
-            #print("Found the location for {} at {}".format(mat, locations_dictionary[mat]) )
-
-        #locations dictionary holds locations per material for this base_group vertex group (mat:base_group)
-        #duplicated_groups holds the duplicated group names for the base_group in an array (base_group: [slot01_base_group, slot02_base_group])
-        #the armature has bones for base_group, slot01_base_group, slot02_base_group, etc
-
-        #Get locations of each duplicate bone head and match them to the average location of each duplicated vertex group
-        dupe_groups = duplicated_groups[base_group]
-        kklog("Correcting merged bones {}".format(dupe_groups))
-        bone_locations_dictionary = {}
-        for duplicate_group in dupe_groups:
-            bone_locations_dictionary[duplicate_group] = (armature.pose.bones[duplicate_group].head)# + armature.pose.bones[duplicate_group].tail) / 2
-
-        final_data = {}
-        error_dist = 0.1 #If the bone match isn't detected properly there's no point in moving it
-
-        for material in locations_dictionary:
-            #best bone match for this material in distance, material
-            best_match_for_material = [100, None]
-            for duplicate_bone in bone_locations_dictionary:
-                distance = (locations_dictionary[material] - bone_locations_dictionary[duplicate_bone]).length
-                if (distance < best_match_for_material[0]):
-                    best_match_for_material = [distance, duplicate_bone]
-            matched_bone = best_match_for_material[1]
-            #The bone and the material are now matched
-            #move the vertex group data from the base bone to the duplicated bone, but only if it belongs to the matched material
-            if best_match_for_material[0] < error_dist:
-                final_data[material] = matched_bone
-                kklog("Matched bone {} to material {} with a distance of {}".format(matched_bone, material, round(best_match_for_material[0],4)))
-            else:
-                kklog("Bone {} was too far from material {} and not automatically separated from the vertex group {}".format(matched_bone, material, base_group), 'warn')
-
-        for material in final_data:
-            duplicate_bone = final_data[material]
-            #kklog("Correcting material vertices {} using the bone {}".format(material, duplicate_bone))
-            #add all base_group vertices to the new group
-            new_group_index = body.vertex_groups.find(duplicate_bone)
-            #print("The vertices for {} will be taken out of the vertex group {} placed into the new vertex group {}".format(duplicate_bone, base_group_index, new_group_index))
-            #check if each base_group vertex is in the matched material group. If it is, set the weight and remove it from the base_group
-            for vertex in vertices_in_all_groups[base_group]:
-                body.vertex_groups[new_group_index].add([vertex], 0.0, 'ADD')
-                for index, grp in enumerate(body.data.vertices[vertex].groups):
-                    if grp.group == new_group_index:
-                        new_vg_index = index
-                    elif grp.group == base_group_index:
-                        old_vg_index = index
-                if vertex in materialVertices[material]:
-                    body.data.vertices[vertex].groups[new_vg_index].weight = body.data.vertices[vertex].groups[old_vg_index].weight
-                    #body.data.vertices[vertex].groups[old_vg_index].weight = 0
-                    #body.vertex_groups[old_vg_index].remove([vertex])
-                    #print("Moved vertex {} from {} (real {}) to {} (real {}) with weight {}".format(vertex,old_vg_index,base_group_index,new_vg_index,new_group_index, body.data.vertices[vertex].groups[new_vg_index].weight))
-                #Else remove it from the new group
-                else:
-                    body.vertex_groups[new_vg_index].remove([vertex])
-                    #print("vertex {} was not moved from group {}".format(vertex,old_vg_index))
-            
-        #Now that the vertex weights are copied over, remove them from the original group
-        #kklog("Cleaning vertexes {}".format(dupe_groups))
-        for material in final_data:
-            duplicate_bone = final_data[material]
-            new_group_index = body.vertex_groups.find(duplicate_bone)
-            for vertex in vertices_in_all_groups[base_group]:
-                body.vertex_groups[new_group_index].add([vertex], 0.0, 'ADD')
-                for index, grp in enumerate(body.data.vertices[vertex].groups):
-                    if grp.group == new_group_index:
-                        new_vg_index = index
-                    elif grp.group == base_group_index:
-                        old_vg_index = index
-                if vertex in materialVertices[material]:
-                    body.data.vertices[vertex].groups[old_vg_index].weight = 0
-                    body.vertex_groups[old_vg_index].remove([vertex])'''
 
 def rename_mmd_bones():
     #renames japanese name field for importing vmds via mmd tools
@@ -915,9 +617,9 @@ def remove_empty_vertex_groups():
             body.vertex_groups.remove(body.vertex_groups[group])
 
 class finalize_pmx(bpy.types.Operator):
-    bl_idname = "kkb.finalizepmx"
-    bl_label = "Finalize .pmx file"
-    bl_description = "Finalize CATS .pmx file"
+    bl_idname = "kkbp.finalizepmx"
+    bl_label = "Finalize .pmx files"
+    bl_description = "Finalize imported .pmx files"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
@@ -927,23 +629,20 @@ class finalize_pmx(bpy.types.Operator):
             scene = context.scene.kkbp
             modify_armature = scene.armature_dropdown
 
-            kklog('\nFinalizing PMX file...')
+            c.kklog('\nFinalizing PMX file...')
             standardize_armature(modify_armature)
             reset_and_reroll_bones()
             if modify_armature in ['A', 'B']:
-                kklog('Modifying armature...', type='timed')
+                c.kklog('Modifying armature...')
                 modify_pmx_armature()
-            #if fix_accs:
-                #kklog('Fixing accessories...')
-                #fix_accessories()
             rename_mmd_bones()
             remove_empty_vertex_groups()
-            kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
+            c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             
             return {'FINISHED'}
         except:
-            kklog('Unknown python error occurred', type = 'error')
-            kklog(traceback.format_exc())
+            c.kklog('Unknown python error occurred', type = 'error')
+            c.kklog(traceback.format_exc())
             self.report({'ERROR'}, traceback.format_exc())
             return {"CANCELLED"}
 
@@ -951,4 +650,4 @@ if __name__ == "__main__":
     bpy.utils.register_class(finalize_pmx)
     
     # test call
-    print((bpy.ops.kkb.finalizepmx('INVOKE_DEFAULT')))
+    print((bpy.ops.kkbp.finalizepmx('INVOKE_DEFAULT')))

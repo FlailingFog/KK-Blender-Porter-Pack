@@ -32,7 +32,7 @@ from . import common as Common
 
 #@register_wrap
 class MergeWeights(bpy.types.Operator):
-    bl_idname = 'kkb.cats_merge_weights'
+    bl_idname = 'kkbp.cats_merge_weights'
     bl_label = 'cats merge weights'
     #bl_description = t('MergeWeights.desc')
     bl_options = {'REGISTER', 'UNDO'}

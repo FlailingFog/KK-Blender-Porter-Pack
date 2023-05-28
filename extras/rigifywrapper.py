@@ -2,7 +2,7 @@
 Wrapper for the rigifyscripts folder
 '''
 import bpy
-from ..importing.importbuttons import kklog
+from .. import common as c
 import traceback
 
 #Stop if rigify is not enabled
@@ -12,14 +12,14 @@ def rigify_not_enabled(self, context):
 from pathlib import Path
 
 class rigify_convert(bpy.types.Operator):
-    bl_idname = "kkb.rigifyconvert"
+    bl_idname = "kkbp.rigifyconvert"
     bl_label = "Convert for rigify"
     bl_description = """Runs several scripts to convert a KKBP armature to be Rigify compatible"""
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):
         try:
-            kklog('\nConverting to Rigify...')
+            c.kklog('\nConverting to Rigify...')
             #Make the armature active
             bpy.ops.object.mode_set(mode='OBJECT')
             bpy.ops.object.select_all(action='DESELECT')
@@ -29,17 +29,17 @@ class rigify_convert(bpy.types.Operator):
             bpy.context.view_layer.objects.active=armature
 
             try:
-                bpy.ops.kkb.rigbefore('INVOKE_DEFAULT')
+                bpy.ops.kkbp.rigbefore('INVOKE_DEFAULT')
             except:
                 if 'Calling operator "bpy.ops.pose.rigify_layer_init" error, could not be found' in traceback.format_exc():
-                    kklog("There was an issue preparing the rigify metarig. \nMake sure the Rigify addon is installed and enabled.\n\n", 'error')
+                    c.kklog("There was an issue preparing the rigify metarig. \nMake sure the Rigify addon is installed and enabled.\n\n", 'error')
                     bpy.context.window_manager.popup_menu(rigify_not_enabled, title="Error", icon='ERROR')
-                kklog(traceback.format_exc())
+                c.kklog(traceback.format_exc())
                 return {'FINISHED'}
 
             bpy.ops.pose.rigify_generate()
             
-            bpy.ops.kkb.rigafter('INVOKE_DEFAULT')
+            bpy.ops.kkbp.rigafter('INVOKE_DEFAULT')
 
             #make sure the new bones on the generated rig retain the KKBP outfit id entry
             rig = bpy.context.active_object
@@ -85,9 +85,9 @@ class rigify_convert(bpy.types.Operator):
                     for bone in group_list:
                         if rig.data.bones.get(bone):
                             rig.data.edit_bones[bone].select = True
-                            bpy.ops.kkb.cats_merge_weights()
+                            bpy.ops.kkbp.cats_merge_weights()
                         else:
-                            kklog('Bone wasn\'t found when deleting bones: ' + bone, 'warn')
+                            c.kklog('Bone wasn\'t found when deleting bones: ' + bone, 'warn')
                     bpy.ops.armature.select_all(action='DESELECT')
                     bpy.ops.object.mode_set(mode = 'OBJECT')
 
@@ -139,8 +139,8 @@ class rigify_convert(bpy.types.Operator):
             return {'FINISHED'}
             
         except:
-            kklog('Unknown python error occurred', type = 'error')
-            kklog(traceback.format_exc())
+            c.kklog('Unknown python error occurred', type = 'error')
+            c.kklog(traceback.format_exc())
             self.report({'ERROR'}, traceback.format_exc())
             return {"CANCELLED"}
 
@@ -148,5 +148,5 @@ if __name__ == "__main__":
     bpy.utils.register_class(rigify_convert)
 
     # test call
-    print((bpy.ops.kkb.rigifyconvert('INVOKE_DEFAULT')))
+    print((bpy.ops.kkbp.rigifyconvert('INVOKE_DEFAULT')))
 

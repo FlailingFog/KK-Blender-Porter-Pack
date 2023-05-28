@@ -2,7 +2,7 @@ import bpy, os, traceback
 import bgl
 import gpu
 import json
-from .importbuttons import kklog
+from .. import common as c
 from .darkcolors import clothes_dark_color, hair_dark_color, skin_dark_color
 import numpy as np
 from pathlib import Path
@@ -615,12 +615,12 @@ def update_shaders(json, lut_selection, active_lut, light):
     ### Get json groups based on shader type, and reformat them to work with the existing script
     supporting_entries = ['Shader Forge/create_body', 'Shader Forge/create_head', 'Shader Forge/create_eyewhite', 'Shader Forge/create_eye', 'Shader Forge/create_topN']
     body = bpy.data.objects['Body']
-    body_material_name = body['KKBP materials']['o_body_a']
-    face_material_name = body['KKBP materials']['cf_O_face']
-    brow_material_name = body['KKBP materials']['cf_O_mayuge']
-    eyeline_material_name = body['KKBP materials']['cf_O_eyeline']
+    body_material_name = body['SMR materials']['o_body_a']
+    face_material_name = body['SMR materials']['cf_O_face']
+    brow_material_name = body['SMR materials']['cf_O_mayuge']
+    eyeline_material_name = body['SMR materials']['cf_O_eyeline']
     kage_material_name = 'cf_m_eyeline_kage'
-    tongue_material_names = [body['KKBP materials']['o_tang'], body['KKBP materials']['o_tang_rigged']]
+    tongue_material_names = [body['SMR materials']['o_tang'], body['SMR materials']['o_tang_rigged']]
     hair_material_names = []
     for ob in bpy.data.objects:
         if 'Hair Outfit ' in ob.name:
@@ -708,7 +708,7 @@ def update_shaders(json, lut_selection, active_lut, light):
                 tongue_color2 = to_255(colors["_Color2 Color 1"])
                 tongue_color3 = to_255(colors["_Color3 Color 2"])
             except:
-                kklog('Could not load tongue colors', 'error')
+                c.kklog('Could not load tongue colors', 'error')
                 print(colors)
         
         #This is the kage
@@ -905,7 +905,7 @@ def set_color_management():
     bpy.data.scenes[0].view_settings.look = 'None'
 
 class import_colors(bpy.types.Operator):
-    bl_idname = "kkb.importcolors"
+    bl_idname = "kkbp.importcolors"
     bl_label = "Open Export folder"
     bl_description = t('import_colors_tt')
     bl_options = {'REGISTER', 'UNDO'}
@@ -917,7 +917,7 @@ class import_colors(bpy.types.Operator):
     structure = None
 
     def execute(self, context):
-        kklog('\nConverting Colors...')
+        c.kklog('\nConverting Colors...')
         print(context.scene.kkbp.import_dir)
         try:
             if self.directory == '':
@@ -951,8 +951,8 @@ class import_colors(bpy.types.Operator):
             return {'FINISHED'}
         
         except:
-            kklog('Unknown python error occurred', type = 'error')
-            kklog(traceback.format_exc())
+            c.kklog('Unknown python error occurred', type = 'error')
+            c.kklog(traceback.format_exc())
             self.report({'ERROR'}, traceback.format_exc())
             return {"CANCELLED"}
 
@@ -962,5 +962,5 @@ class import_colors(bpy.types.Operator):
 
 if __name__ == "__main__":
     bpy.utils.register_class(import_colors)
-    print((bpy.ops.kkb.importcolors('INVOKE_DEFAULT')))
+    print((bpy.ops.kkbp.importcolors('INVOKE_DEFAULT')))
 

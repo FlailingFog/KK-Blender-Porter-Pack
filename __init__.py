@@ -4,19 +4,17 @@ bl_info = {
     "author" : "a blendlet and some blenderchads",
     "location" : "View 3D > Tool Shelf > KKBP and Image Editor > Tool Shelf > KKBP",
     "description" : "Scripts to automate cleanup of a Koikatsu export",
-    "version": (6, 5, 0),
+    "version": (6, 6, 0),
     "blender" : (3, 5, 0),
     "category" : "3D View",
     "tracker_url" : "https://github.com/FlailingFog/KK-Blender-Porter-Pack/"
 }
 
-import bpy
 from bpy.utils import register_class, unregister_class
-
 from bpy.types import Scene
 from bpy.props import PointerProperty
 
-def wrap(register_bool):
+def reg_unreg(register_bool):
     from .preferences import KKBPPreferences
     if register_bool:
         register_class(KKBPPreferences)
@@ -25,14 +23,13 @@ def wrap(register_bool):
 
     from .importing.bonedrivers import bone_drivers
     from .importing.cleanarmature import clean_armature
-    #from .importing.importgrey import import_grey
-    #from .importing.finalizegrey import finalize_grey
     from .importing.finalizepmx import finalize_pmx
     from .importing.importeverything import import_everything
     from .importing.importcolors import import_colors
-    from .importing.importbuttons import quick_import, mat_import
+    from .importing.importbuttons import kkbp_import
     from .importing.separatebody import separate_body
     from .importing.shapekeys import shape_keys
+    from .importing.modifymesh import modify_mesh
 
     from .exporting.bakematerials import bake_materials
     from .exporting.applymaterials import apply_materials
@@ -74,6 +71,7 @@ def wrap(register_bool):
         export_fbx,
         image_convert, 
         image_dark_convert,
+        modify_mesh,
 
         import_animation, 
         import_studio,
@@ -93,13 +91,10 @@ def wrap(register_bool):
 
         bone_drivers, 
         clean_armature, 
-        #finalize_grey, 
         finalize_pmx, 
         import_everything, 
         import_colors, 
-        #import_grey,
-        quick_import,
-        mat_import,
+        kkbp_import,
         separate_body, 
         shape_keys,
 
@@ -119,10 +114,10 @@ def wrap(register_bool):
         del Scene.kkbp
 
 def register():
-    wrap(True)
+    reg_unreg(True)
 
 def unregister():
-    wrap(False)
+    reg_unreg(False)
 
 if __name__ == "__main__":
     register()

@@ -108,7 +108,7 @@ translation_dictionary = {
 
     'convert_image' : '使用KKBP转换图像',
 
-    'quick_import_tt'   : "导入恋活模型（.pmx格式），并对其应用修复",
+    'kkbp_import_tt'   : "导入恋活模型（.pmx格式），并对其应用修复",
     'mat_import_tt'     : "完成对象分离，应用纹理和颜色",
     'export_prep_tt'    : "查看下拉列表以了解更多信息",
     'bake_mats_tt'      : "打开要将材质模板烘焙到的文件夹",

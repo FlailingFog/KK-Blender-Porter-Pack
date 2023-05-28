@@ -35,20 +35,20 @@
 
 import bpy, os, time, mathutils, json, pathlib
 from bpy.props import StringProperty
-from...importing.importbuttons import kklog, toggle_console
+from ... import common as c
 from...interface.dictionary_en import t
 def main(folder):
 
     kkbp_character = False
     #delete the armature before starting to reduce console spam
     if bpy.data.objects.get('Body'):
-        if bpy.data.objects['Body'].get('KKBP materials'):
+        if bpy.data.objects['Body'].get('SMR materials'):
             kkbp_character = True
     if bpy.data.objects.get('Armature') and kkbp_character:
         n = bpy.data.objects['Armature'].data.name
         bpy.data.objects.remove(bpy.data.objects['Armature'])
         bpy.data.armatures.remove(bpy.data.armatures[n])
-    toggle_console() #open console for some kind of progression
+    c.toggle_console() #open console for some kind of progression
     start = time.time()
     rigify_armature = bpy.data.objects['RIG-Armature']
     bpy.context.view_layer.objects.active=rigify_armature
@@ -420,10 +420,10 @@ bpy.ops.wm.quit_blender()
 
     print(str(time.time() - start))
     bpy.ops.wm.save_as_mainfile(filepath = original_file_name.replace('.blend', ' ' + category + ' ' + str(original_file_number) + '.blend'))
-    toggle_console() #close console
+    c.toggle_console() #close console
 
 class anim_asset_lib(bpy.types.Operator):
-    bl_idname = "kkb.createanimassetlib"
+    bl_idname = "kkbp.createanimassetlib"
     bl_label = "Create animation asset library"
     bl_description = t('animation_library_tt')
     bl_options = {'REGISTER', 'UNDO'}
@@ -446,7 +446,7 @@ if __name__ == "__main__":
     bpy.utils.register_class(anim_asset_lib)
     
     # test call
-    print((bpy.ops.kkb.importstudio('INVOKE_DEFAULT')))
+    print((bpy.ops.kkbp.importstudio('INVOKE_DEFAULT')))
 
 
 """

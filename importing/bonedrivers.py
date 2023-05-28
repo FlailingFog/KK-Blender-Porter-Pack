@@ -14,7 +14,7 @@ Usage:
 
 import bpy, math, time, json, traceback
 
-from .finalizepmx import kklog
+from .. import common as c
 from .cleanarmature import set_armature_layer
 
 #Makes a new bone on the armature
@@ -620,7 +620,7 @@ def scale_final_bones():
             for chain in skirtchild:
                 connect_bone(root, chain)
     except:
-        kklog('No skirt bones detected. Skipping...', type = 'warn')
+        c.kklog('No skirt bones detected. Skipping...', type = 'warn')
     
     #scale eye bones, mouth bones, eyebrow bones
     bpy.ops.object.mode_set(mode='POSE')
@@ -705,7 +705,7 @@ def categorize_bones():
  
     bpy.ops.object.mode_set(mode='OBJECT')
 
-def rename_bones_for_clarity(action):
+def rename_bones_for_clarity():
     armature = bpy.data.objects['Armature']
     
     #rename core bones to match unity bone names (?)
@@ -771,21 +771,9 @@ def rename_bones_for_clarity(action):
     'cf_j_toes_R':'Right toe'
     }
 
-    if action == 'modified':
-        for bone in unity_rename_dict:
-            if armature.data.bones.get(bone):
-                armature.data.bones[bone].name = unity_rename_dict[bone]
-    
-    elif action == 'stock':
-        for bone in unity_rename_dict:
-            if armature.data.bones.get(unity_rename_dict[bone]):
-                armature.data.bones[unity_rename_dict[bone]].name = bone
-
-    elif action == 'animation':
-        armature = bpy.data.objects['Animation Armature']
-        for bone in unity_rename_dict:
-            if armature.data.bones.get(bone):
-                armature.data.bones[bone].name = unity_rename_dict[bone]
+    for bone in unity_rename_dict:
+        if armature.data.bones.get(bone):
+            armature.data.bones[bone].name = unity_rename_dict[bone]
     
 #selects all materials that are likely to be hair on each outfit object
 def begin_hair_selections():
@@ -825,7 +813,7 @@ def begin_hair_selections():
     bpy.data.objects['Armature'].hide = True
 
 class bone_drivers(bpy.types.Operator):
-    bl_idname = "kkb.bonedrivers"
+    bl_idname = "kkbp.bonedrivers"
     bl_label = "Bone Driver script"
     bl_description = "Add IKs, joint drivers and an eye bone"
     bl_options = {'REGISTER', 'UNDO'}
@@ -834,29 +822,29 @@ class bone_drivers(bpy.types.Operator):
         try:
             last_step = time.time()
 
-            kklog('\nAdding bone drivers...')
+            c.kklog('\nAdding bone drivers...')
 
             modify_armature = context.scene.kkbp.armature_dropdown in ['A', 'B']
             
             if modify_armature:
-                kklog('Reparenting bones and setting up IKs...')
+                c.kklog('Reparenting bones and setting up IKs...')
                 reparent_bones()
                 bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
                 setup_iks()
                 bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
-            kklog('Setting up joint bones...')
+            c.kklog('Setting up joint bones...')
             setup_joints()
             bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
             
             if modify_armature:
-                kklog('Creating eye controller and renaming bones...', 'timed')
+                c.kklog('Creating eye controller and renaming bones...', 'timed')
                 make_eye_controller()
                 bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
                 scale_final_bones()
                 categorize_bones()
-                rename_bones_for_clarity('modified')
+                rename_bones_for_clarity()
 
                 #reset the eye vertex groups after renaming the bones
                 mod = bpy.data.objects['Body'].modifiers[1]
@@ -876,12 +864,12 @@ class bone_drivers(bpy.types.Operator):
                     if space.type == 'VIEW_3D':
                         space.shading.type = my_shading 
             
-            kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
+            c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             
             return {'FINISHED'}
         except:
-            kklog('Unknown python error occurred', type = 'error')
-            kklog(traceback.format_exc())
+            c.kklog('Unknown python error occurred', type = 'error')
+            c.kklog(traceback.format_exc())
             self.report({'ERROR'}, traceback.format_exc())
             return {"CANCELLED"}
 
@@ -889,4 +877,4 @@ if __name__ == "__main__":
     bpy.utils.register_class(bone_drivers)
 
     # test call
-    print((bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT')))
+    print((bpy.ops.kkbp.bonedrivers('INVOKE_DEFAULT')))

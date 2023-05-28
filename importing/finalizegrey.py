@@ -168,7 +168,7 @@ def modify_fbx_armature():
     bpy.ops.object.mode_set(mode='OBJECT')
 
 class finalize_grey(bpy.types.Operator):
-    bl_idname = "kkb.finalizegrey"
+    bl_idname = "kkbp.finalizegrey"
     bl_label = "Finalize .fbx file"
     bl_description = "Finalize accessory placements and .fbx file"
     bl_options = {'REGISTER', 'UNDO'}
@@ -184,16 +184,16 @@ class finalize_grey(bpy.types.Operator):
         
         #redraw the UI after each operation to let the user know the plugin is actually doing something
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-        bpy.ops.kkb.shapekeys('INVOKE_DEFAULT')
+        bpy.ops.kkbp.shapekeys('INVOKE_DEFAULT')
 
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-        bpy.ops.kkb.separatebody('INVOKE_DEFAULT')
+        bpy.ops.kkbp.separatebody('INVOKE_DEFAULT')
 
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-        bpy.ops.kkb.cleanarmature('INVOKE_DEFAULT')
+        bpy.ops.kkbp.cleanarmature('INVOKE_DEFAULT')
 
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-        bpy.ops.kkb.bonedrivers('INVOKE_DEFAULT')
+        bpy.ops.kkbp.bonedrivers('INVOKE_DEFAULT')
         
         #Set the view transform 
         bpy.context.scene.view_settings.view_transform = 'Standard'
@@ -204,4 +204,4 @@ if __name__ == "__main__":
     bpy.utils.register_class(finalize_grey)
     
     # test call
-    print((bpy.ops.kkb.finalizegrey('INVOKE_DEFAULT')))
+    print((bpy.ops.kkbp.finalizegrey('INVOKE_DEFAULT')))
