@@ -52,7 +52,7 @@ def handle_error(error_causer:bpy.types.Operator, error:Exception):
     error_causer.report({'ERROR'}, traceback.format_exc())
 
 def switch(object:bpy.types.Object, mode = 'OBJECT'):
-    '''Switches blender mode on a blender object'''
+    '''Switches blender mode on a blender object. Valid modes are 'object', 'edit' and 'pose' '''
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.ops.object.select_all(action='DESELECT')
     object.select_set(True)
@@ -61,15 +61,18 @@ def switch(object:bpy.types.Object, mode = 'OBJECT'):
     mode = mode.upper()
     bpy.ops.object.mode_set(mode=mode)
 
-    if mode == 'OBJECT':
-        bpy.ops.object.select_all(action='DESELECT')
     if mode == 'POSE':
         bpy.ops.pose.select_all(action='DESELECT')
-    if mode == 'EDIT':
+    elif mode == 'EDIT':
         try:
             bpy.ops.armature.select_all(action='DESELECT')
         except:
             bpy.ops.pose.select_all(action='DESELECT')
+    elif mode == 'OBJECT':
+        pass
+    else:
+        kklog('INVALID MODE CHOICE', type = 'error')
+        print(error_out_here)
 
 def clean_orphaned_data():
     '''clean data that is no longer being used'''
@@ -86,3 +89,17 @@ def clean_orphaned_data():
     for block in bpy.data.materials:
         if block.users == 0 and not block.use_fake_user:
             bpy.data.materials.remove(block)
+
+def import_from_library_file(category, list_of_items, use_fake_user = False):
+    '''Import items from the KKBP library file. The category is 'Armature', 'Brush', 'Collection' etc and
+    the list_of_items is an array with all of the item names that you want to import'''
+    directory = Path(__file__)
+    filename = 'KK Shader V6.0.blend/'
+    library_path=(Path(directory) / filename).resolve()
+    template_list = [{'name':item} for item in list_of_items]
+    bpy.ops.wm.append(
+        filepath=str((library_path / category).resolve()),
+        directory=str(library_path / category) + '/',
+        files=template_list,
+        set_fake=use_fake_user
+        )

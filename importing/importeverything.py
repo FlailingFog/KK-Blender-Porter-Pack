@@ -260,161 +260,11 @@ def get_templates_and_apply(directory, use_fake_user):
                 if node.type == 'GROUP':
                     eliminate(node)
 
-    #Import custom bone shapes
-    innerpath = 'Collection'
     
-    templateList = ['Bone Widgets']
-
-    for template in templateList:
-        bpy.ops.wm.append(
-            filepath=os.path.join(filepath, innerpath, template),
-            directory=os.path.join(filepath, innerpath),
-            filename=template,
-            #set_fake=True
-            )
 
     return False
 
-def apply_bone_widgets():
-    #apply custom bone shapes
-    #Select the armature and make it active
-    bpy.ops.object.select_all(action='DESELECT')
-    armature = bpy.data.objects['Armature']
-    armature.hide = False
-    armature.select_set(True)
-    bpy.context.view_layer.objects.active=armature
-    
-    #Add custom shapes to the armature        
-    armature.data.show_bone_custom_shapes = True
-    bpy.ops.object.mode_set(mode='POSE')
 
-    #Remove the .001 tag from all bone widgets
-    #This is because the KK shader has to hold duplicate widgets for pmx and fbx
-    for object in bpy.data.objects:
-        if 'Widget' in object.name:
-            object.name = object.name.replace(".001", "")
-    
-    bpy.context.object.pose.bones["Spine"].custom_shape = bpy.data.objects["WidgetChest"]
-    bpy.context.object.pose.bones["Chest"].custom_shape = bpy.data.objects["WidgetChest"]
-    bpy.context.object.pose.bones["Upper Chest"].custom_shape = bpy.data.objects["WidgetChest"]
-
-    bpy.context.object.pose.bones["cf_d_bust00"].custom_shape = bpy.data.objects["WidgetBust"]
-    bpy.context.object.pose.bones["cf_d_bust00"].use_custom_shape_bone_size = False
-    bpy.context.object.pose.bones["cf_j_bust01_L"].custom_shape = bpy.data.objects["WidgetBreastL"]
-    bpy.context.object.pose.bones["cf_j_bust01_L"].use_custom_shape_bone_size = False
-    bpy.context.object.pose.bones["cf_j_bust01_R"].custom_shape = bpy.data.objects["WidgetBreastR"]
-    bpy.context.object.pose.bones["cf_j_bust01_R"].use_custom_shape_bone_size = False
-
-    bpy.context.object.pose.bones["Left shoulder"].custom_shape = bpy.data.objects["WidgetShoulderL"]
-    bpy.context.object.pose.bones["Right shoulder"].custom_shape = bpy.data.objects["WidgetShoulderR"]
-    bpy.context.object.pose.bones["cf_pv_hand_R"].custom_shape = bpy.data.objects["WidgetHandR"]
-    bpy.context.object.pose.bones["cf_pv_hand_L"].custom_shape = bpy.data.objects["WidgetHandL"]
-
-    bpy.context.object.pose.bones["Head"].custom_shape = bpy.data.objects["WidgetHead"]
-    bpy.context.object.pose.bones["Eye Controller"].custom_shape = bpy.data.objects["WidgetEye"]
-    bpy.context.object.pose.bones["Neck"].custom_shape = bpy.data.objects["WidgetNeck"]
-
-    bpy.context.object.pose.bones["Hips"].custom_shape = bpy.data.objects["WidgetHips"]
-    bpy.context.object.pose.bones["Pelvis"].custom_shape = bpy.data.objects["WidgetPelvis"]
-
-    bpy.context.object.pose.bones["MasterFootIK.R"].custom_shape = bpy.data.objects["WidgetFoot"]
-    bpy.context.object.pose.bones["MasterFootIK.L"].custom_shape = bpy.data.objects["WidgetFoot"]
-    bpy.context.object.pose.bones["ToeRotator.R"].custom_shape = bpy.data.objects["WidgetToe"]
-    bpy.context.object.pose.bones["ToeRotator.L"].custom_shape = bpy.data.objects["WidgetToe"]
-    bpy.context.object.pose.bones["HeelIK.R"].custom_shape = bpy.data.objects["WidgetHeel"]
-    bpy.context.object.pose.bones["HeelIK.L"].custom_shape = bpy.data.objects["WidgetHeel"]
-
-    bpy.context.object.pose.bones["cf_pv_knee_R"].custom_shape = bpy.data.objects["WidgetKnee"]
-    bpy.context.object.pose.bones["cf_pv_knee_L"].custom_shape = bpy.data.objects["WidgetKnee"]
-    bpy.context.object.pose.bones["cf_pv_elbo_R"].custom_shape = bpy.data.objects["WidgetKnee"]
-    bpy.context.object.pose.bones["cf_pv_elbo_L"].custom_shape = bpy.data.objects["WidgetKnee"]
-    
-    bpy.context.object.pose.bones["Center"].custom_shape = bpy.data.objects["WidgetRoot"]
-    
-    try:
-        bpy.context.space_data.overlay.show_relationship_lines = False
-    except:
-        #the script was run in the text editor or console, so this won't work
-        pass
-    
-    # apply eye bones, mouth bones, eyebrow bones
-    eyebones = [1,2,3,4,5,6,7,8]
-    for piece in eyebones:
-        left = 'cf_J_Eye0'+str(piece)+'_s_L'
-        right = 'cf_J_Eye0'+str(piece)+'_s_R'
-        bpy.context.object.pose.bones[left].custom_shape  = bpy.data.objects['WidgetFace']
-        bpy.context.object.pose.bones[right].custom_shape = bpy.data.objects['WidgetFace']
-    
-    restOfFace = [
-    'cf_J_Mayu_R', 'cf_J_MayuMid_s_R', 'cf_J_MayuTip_s_R',
-    'cf_J_Mayu_L', 'cf_J_MayuMid_s_L', 'cf_J_MayuTip_s_L',
-    'cf_J_Mouth_R', 'cf_J_Mouth_L',
-    'cf_J_Mouthup', 'cf_J_MouthLow', 'cf_J_MouthMove', 'cf_J_MouthCavity']
-    for bone in restOfFace:
-        bpy.context.object.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetFace']
-    
-    evenMoreOfFace = [
-    'cf_J_EarUp_L', 'cf_J_EarBase_ry_L', 'cf_J_EarLow_L',
-    'cf_J_CheekUp2_L', 'cf_J_Eye_rz_L', 'cf_J_Eye_rz_L', 
-    'cf_J_CheekUp_s_L', 'cf_J_CheekLow_s_L', 
-
-    'cf_J_EarUp_R', 'cf_J_EarBase_ry_R', 'cf_J_EarLow_R',
-    'cf_J_CheekUp2_R', 'cf_J_Eye_rz_R', 'cf_J_Eye_rz_R', 
-    'cf_J_CheekUp_s_R', 'cf_J_CheekLow_s_R',
-
-    'cf_J_ChinLow', 'cf_J_Chin_s', 'cf_J_ChinTip_Base', 
-    'cf_J_NoseBase', 'cf_J_NoseBridge_rx', 'cf_J_Nose_tip']
-    
-    for bone in evenMoreOfFace:
-        bpy.context.object.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetSpine']
-        
-    
-    fingerList = [
-    'IndexFinger1_L', 'IndexFinger2_L', 'IndexFinger3_L',
-    'MiddleFinger1_L', 'MiddleFinger2_L', 'MiddleFinger3_L',
-    'RingFinger1_L', 'RingFinger2_L', 'RingFinger3_L',
-    'LittleFinger1_L', 'LittleFinger2_L', 'LittleFinger3_L',
-    'Thumb0_L', 'Thumb1_L', 'Thumb2_L',
-    
-    'IndexFinger1_R', 'IndexFinger2_R', 'IndexFinger3_R',
-    'MiddleFinger1_R', 'MiddleFinger2_R', 'MiddleFinger3_R',
-    'RingFinger1_R', 'RingFinger2_R', 'RingFinger3_R',
-    'LittleFinger1_R', 'LittleFinger2_R', 'LittleFinger3_R',
-    'Thumb0_R', 'Thumb1_R', 'Thumb2_R']
-    
-    for finger in fingerList:
-        #print(armature.pose.bones[finger].name)
-        if 'Thumb' in finger:
-            armature.pose.bones[finger].custom_shape  = bpy.data.objects['WidgetFingerThumb']
-        else:
-            armature.pose.bones[finger].custom_shape  = bpy.data.objects['WidgetFinger']
-        
-    try:
-        bp_list = get_bone_list('bp_list')
-        toe_list = get_bone_list('toe_list')
-        for bone in bp_list:
-            armature.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetSpine']
-            armature.pose.bones[bone].custom_shape_scale = 1.8
-        for bone in toe_list:
-            armature.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetSpine']
-    except:
-        #This isn't a BP armature
-        pass
-    
-    #Make the body and clothes layers visible
-    all_layers = [
-    False, False, False, False, False, False, False, False,
-    False, False, False, False, False, False, False, False,
-    False, False, False, False, False, False, False, False,
-    False, False, False, False, False, False, False, False]
-
-    all_layers[0] = True
-    all_layers[8] = True
-    all_layers[9] = True
-    bpy.ops.armature.armature_layers(layers=all_layers)
-    bpy.context.object.data.display_type = 'STICK'
-    
-    bpy.ops.object.mode_set(mode='OBJECT')
 
 def get_and_load_textures(directory):
     body = bpy.data.objects['Body']
@@ -1077,20 +927,7 @@ def add_outlines(single_outline_mode):
     for obj in [obj for obj in bpy.data.objects if obj.get('KKBP outfit ID') != None and 'Hair Outfit ' in obj.name and obj.name != 'Hair Outfit 00']:
         obj.hide = True
 
-def hide_widgets():
-    #automatically hide bone widgets collection if it's visible
-    for widget_col in ['Bone Widgets', 'Bone Widgets fbx']:
-        try:
-            bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children[widget_col]
-            bpy.context.scene.view_layers[0].active_layer_collection.exclude = True
-        except:
-            try:
-                #maybe the collection is in the Collection collection
-                bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children['Collection'].children[widget_col]
-                bpy.context.scene.view_layers[0].active_layer_collection.exclude = True
-            except:
-                #maybe the collection is already hidden
-                pass
+
 
 def clean_orphan_data():
     #clean up the oprhaned data

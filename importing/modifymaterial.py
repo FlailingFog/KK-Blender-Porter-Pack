@@ -25,6 +25,7 @@ class modify_material(bpy.types.Operator):
 
     # %% Main functions
     def remove_unused_material_slots(self):
+        '''Remove unused mat slots on all objects'''
         for object in [o for o in bpy.data.objects if o.type == 'MESH']:
             c.switch(object, 'object')
             bpy.ops.object.material_slot_remove_unused()
