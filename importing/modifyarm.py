@@ -123,6 +123,11 @@ class modify_material(bpy.types.Operator):
         self.armature.name = 'Armature'
         self.armature['KKBP tag'] = 'armature'
         bpy.data.objects.remove(empty)
+
+        #change armature modifier on body
+        self.body.modifiers[0].show_in_editmode = True
+        self.body.modifiers[0].show_on_cage = True
+        self.body.modifiers[0].show_expanded = False
         
         #reparent the outfit meshes as well
         for empty in [e for e in bpy.data.objects if ("Model_arm" in e.name and e.type == 'EMPTY')]:
@@ -144,8 +149,8 @@ class modify_material(bpy.types.Operator):
             alt_parent = [p for p in self.outfits if p['KKBP outfit ID'] == alt['KKBP outfit ID']][0]
             alt.parent = alt_parent
         for hair in self.hairs:
-            hair = [p for p in self.outfits if p['KKBP outfit ID'] == hair['KKBP outfit ID']][0]
-            hair.parent = alt_parent
+            hair_parent = [p for p in self.outfits if p['KKBP outfit ID'] == hair['KKBP outfit ID']][0]
+            hair.parent = hair_parent if bpy.context.scene.kkbp.categorize_dropdown not in ['D'] else hair.parent #don't reparent hair if Categorize by SMR
         #reparent the tongue, tears and gag eyes if they exist
         for object in ['Tongue (rigged)', 'Tears', 'Gag Eyes']:
             if bpy.data.objects.get(object):

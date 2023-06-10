@@ -56,40 +56,39 @@ class kkbp_import(bpy.types.Operator):
         if force_current_pose:
             bpy.context.scene.kkbp.armature_dropdown = 'C'
 
-        #run commands based on selection
+        #run functions based on selection
         if bpy.context.scene.kkbp.categorize_dropdown == 'A': #Automatic separation
-            commands = [
+            functions = [
                 lambda:bpy.ops.kkbp.modifymesh('INVOKE_DEFAULT'),
-                '''bpy.ops.kkbp.modifyarm('INVOKE_DEFAULT'),
-                bpy.ops.kkbp.modifymaterial('INVOKE_DEFAULT'),
-                bpy.ops.kkbp.postoperations('INVOKE_DEFAULT'),'''
+                lambda:bpy.ops.kkbp.modifyarm('INVOKE_DEFAULT'),
+                lambda:bpy.ops.kkbp.modifymaterial('INVOKE_DEFAULT'),
+                lambda:bpy.ops.kkbp.postoperations('INVOKE_DEFAULT'),
             ]
         elif bpy.context.scene.kkbp.categorize_dropdown == 'C': #Separate every piece
-            commands = [
-                bpy.ops.kkbp.modifymesh('INVOKE_DEFAULT'),
-                bpy.ops.kkbp.modifyarm('INVOKE_DEFAULT'),
-                bpy.ops.kkbp.separatemeshes('EXEC_DEFAULT'),
-                bpy.ops.kkbp.modifymaterial('INVOKE_DEFAULT'),
-                bpy.ops.kkbp.postoperations('INVOKE_DEFAULT'),
+            functions = [
+                lambda:bpy.ops.kkbp.modifymesh('INVOKE_DEFAULT'),
+                lambda:bpy.ops.kkbp.modifyarm('INVOKE_DEFAULT'),
+                lambda:bpy.ops.kkbp.separatemeshes('EXEC_DEFAULT'),
+                lambda:bpy.ops.kkbp.modifymaterial('INVOKE_DEFAULT'),
+                lambda:bpy.ops.kkbp.postoperations('INVOKE_DEFAULT'),
             ]
         else: #SMR pipeline
-            commands = [
-                bpy.ops.kkbp.finalizepmx('INVOKE_DEFAULT'),
-                bpy.ops.kkbp.shapekeys('INVOKE_DEFAULT'),
-                bpy.ops.kkbp.separatebody('INVOKE_DEFAULT'),
-                bpy.ops.kkbp.cleanarmature('INVOKE_DEFAULT'),
-                bpy.ops.kkbp.separatemeshes('INVOKE_DEFAULT'),
+            functions = [
+                lambda:bpy.ops.kkbp.finalizepmx('INVOKE_DEFAULT'),
+                lambda:bpy.ops.kkbp.shapekeys('INVOKE_DEFAULT'),
+                lambda:bpy.ops.kkbp.separatebody('INVOKE_DEFAULT'),
+                lambda:bpy.ops.kkbp.cleanarmature('INVOKE_DEFAULT'),
+                lambda:bpy.ops.kkbp.separatemeshes('INVOKE_DEFAULT'),
             ]
 
-        #run commands based on selection
+        #run functions based on selection
         c.toggle_console()
         self.import_pmx_models()
         c.print_timer('Import PMX')
-        for command in commands:
-            print(command)
-            command()
+        for function in functions:
+            print(function)
+            function()
         c.toggle_console()
-
         return {'FINISHED'}
         
     def invoke(self, context, event):

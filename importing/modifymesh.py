@@ -137,7 +137,7 @@ class modify_mesh(bpy.types.Operator):
                 # if mat['ShaderName'] in ["Shader Forge/main_hair_front", "Shader Forge/main_hair", 'Koikano/hair_main_sun_front', 'Koikano/hair_main_sun', 'xukmi/HairPlus', 'xukmi/HairFrontPlus']:
                 #     if (mat['MaterialName'] + '_HGLS.png') in texture_files or ((mat['MaterialName'] + '_NMP.png') not in texture_files and (mat['MaterialName'] + '_MT_CT.png') not in texture_files and (mat['MaterialName'] + '_MT.png') not in texture_files):
                 #         hair_mat_list.append(mat['MaterialName'])
-                #only hair shaders have the HairGloss parameter
+                #only hair shaders have the HairGloss parameter, this should be able to replace commented out method shown above
                 material_name = line['MaterialName']
                 gloss_present = [name for name in line['ShaderPropNames'] if '_HairGloss ' in name]
                 if gloss_present and material_name in outfit_materials:

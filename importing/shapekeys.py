@@ -8,9 +8,6 @@ SHAPEKEYS SCRIPT
 import bpy, time,traceback
 from .. import common as c
 
-
-        
-
 class shape_keys(bpy.types.Operator):
     bl_idname = "kkbp.shapekeys"
     bl_label = "The shapekeys script"
@@ -19,16 +16,6 @@ class shape_keys(bpy.types.Operator):
     
     def execute(self, context):
         try:
-            last_step = time.time()
-            scene = context.scene.kkbp
-            
-            if scene.shapekeys_dropdown in ['A', 'B'] :
-                keep_partial_shapekeys = scene.shapekeys_dropdown == 'B'
-
-                
-                )
-                
-                c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
 
             return {'FINISHED'}
         except:

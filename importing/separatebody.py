@@ -2,31 +2,6 @@ import bpy, json, time, traceback
 from .. import common as c
 from ..extras.linkshapekeys import link_keys
 
-def clean_body():
-        
-        #change armature modifier
-        body.modifiers[0].show_in_editmode = True
-        body.modifiers[0].show_on_cage = True
-        body.modifiers[0].show_expanded = False
-
-def separate_everything(context):
-    body = bpy.data.objects['Body']
-
-    hair['KKBP outfit ID'] = int(outfit.name[-1:])
-
-    #don't reparent hair if Categorize by SMR
-    if context.scene.kkbp.categorize_dropdown not in ['D']:
-        bpy.data.objects['Hair ' + outfit.name].parent = outfit
-
-    bpy.context.view_layer.objects.active = body
-    #remove unused material slots on all objects
-    bpy.ops.object.mode_set(mode = 'OBJECT')
-    bpy.ops.object.select_all(action='SELECT')
-    bpy.ops.object.material_slot_remove_unused()
-            
-
-
-
 
 
 class separate_body(bpy.types.Operator):

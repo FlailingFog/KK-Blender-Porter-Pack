@@ -13,32 +13,7 @@ from bpy.props import StringProperty, BoolProperty
 
 from ..interface.dictionary_en import t
 
-########## ERRORS ##########
-def kk_folder_error(self, context):
-    self.layout.label(text="Please make sure to open the folder that was exported. (Hint: go into the folder before confirming)")
 
-
-########## FUNCTIONS ##########
-
-
-
-
-def checks(directory):
-    # "Borrowed" some logic from importeverything.py :P
-    file_list = Path(directory).glob('*.*')
-    files = [file for file in file_list if file.is_file()]
-    filtered_files = []
-    json_file_missing = True
-    for file in files:
-        if 'KK_MaterialData.json' in str(file):
-            json_file_path = str(file)
-            json_file = open(json_file_path)
-            json_file_missing = False
-    
-    if json_file_missing:
-        bpy.context.window_manager.popup_menu(kk_folder_error, title="Error", icon='ERROR')
-        return True
-    return False
 
 
 

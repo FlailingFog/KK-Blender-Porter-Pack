@@ -28,7 +28,7 @@ This file performs the following operations
 ·	Autopack all files
 
 Color and image saturation code taken from MediaMoots https://github.com/FlailingFog/KK-Blender-Porter-Pack/blob/ecad6a136e86aaf6c51194705157200797f91e5f/importing/importcolors.py
-Dark color code taken from Xukmi https://github.com/xukmi/KKShadersPlus/tree/main/Shaders
+Dark color conversion code taken from Xukmi https://github.com/xukmi/KKShadersPlus/tree/main/Shaders
 '''
 
 import bpy, sys, os, bgl, gpu, numpy, math, time
