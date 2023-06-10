@@ -56,7 +56,7 @@ class PlaceholderProperties(PropertyGroup):
     categorize_dropdown : EnumProperty(
         items=(
             ("A", t('cat_drop_A'), t('cat_drop_A_tt')),
-            ("B", t('cat_drop_B'), t('cat_drop_B_tt')),
+            #("B", t('cat_drop_B'), t('cat_drop_B_tt')),
             ("C", t('cat_drop_C'), t('cat_drop_C_tt') ),
             ("D", t('cat_drop_D'), t('cat_drop_D_tt')),
         ), name="", default=bpy.context.preferences.addons[__package__].preferences.categorize_dropdown, description=t('cat_drop'))
@@ -192,7 +192,7 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         
         row = col.row(align=True)
         row.operator('kkbp.kkbpimport', text = t('import_model'), icon='MODIFIER')
-        row.enabled = not scene.import_dir == 'cleared' and not scene.is_prepped
+        row.enabled = scene.plugin_state not in ['imported', 'prepped']
         
         row = col.row(align=True)
         row.label(text="")
@@ -201,41 +201,35 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         box = row.box()
         col = box.column(align=True)
         
-        if scene.categorize_dropdown in ['B']:
-            row = col.row(align=True)
-            row.operator('kkbp.matimport', text = t('finish_cat'), icon='BRUSHES_ALL')
-            row.enabled = not scene.import_dir == 'cleared' and not scene.is_prepped
-        
+        row = col.row(align=True)
+        row.prop(context.scene.kkbp, "categorize_dropdown")
+        row.enabled = scene.plugin_state not in ['imported', 'prepped']
+
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "armature_dropdown")
-        split.prop(context.scene.kkbp, "categorize_dropdown")
-        row.enabled = not scene.import_dir == 'cleared' and not scene.is_prepped
-        
-        row = col.row(align=True)
-        split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "colors_dropdown")
-        split.operator('kkbp.importcolors', text = t('recalc_dark'), icon='IMAGE')
-        row.enabled = True
+        #split.operator('kkbp.importcolors', text = t('recalc_dark'), icon='IMAGE')
+        row.enabled = scene.plugin_state not in ['imported', 'prepped']
 
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "shapekeys_dropdown")
         split.prop(context.scene.kkbp, "shader_dropdown")
         
-        row.enabled = not scene.import_dir == 'cleared' and not scene.is_prepped
+        row.enabled = scene.plugin_state not in ['imported', 'prepped']
         
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "fix_seams", toggle=True, text = t('seams'))
         split.prop(context.scene.kkbp, "use_material_fake_user", toggle=True, text = t('keep_templates'))
-        row.enabled = not scene.import_dir == 'cleared' and not scene.is_prepped
+        row.enabled = scene.plugin_state not in ['imported', 'prepped']
 
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "use_single_outline", toggle=True, text = t('outline'))
         split.prop(context.scene.kkbp, "sfw_mode", toggle=True, text = t('sfw_mode'))
-        row.enabled = not scene.import_dir == 'cleared' and not scene.is_prepped
+        row.enabled = scene.plugin_state not in ['imported', 'prepped']
     
 class EXPORTING_PT_panel(bpy.types.Panel):
     bl_parent_id = "IMPORTING_PT_panel"
@@ -246,6 +240,7 @@ class EXPORTING_PT_panel(bpy.types.Panel):
     bl_region_type = "UI"
     
     def draw(self,context):
+        scene = context.scene.kkbp
         layout = self.layout
         splitfac = 0.5
         
@@ -253,12 +248,12 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         col = box.column(align=True)
         row = col.row(align=True)
         row.operator('kkbp.exportprep', text = t('prep'), icon = 'GROUP')
-        row.enabled = not context.scene.kkbp.is_prepped
+        row.enabled = scene.plugin_state not in ['prepped']
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.prop(context.scene.kkbp, "simp_dropdown")
         split.prop(context.scene.kkbp, "prep_dropdown")
-        row.enabled = not context.scene.kkbp.is_prepped
+        row.enabled = scene.plugin_state not in ['prepped']
 
         col = box.column(align=True)
         row = col.row(align=True)

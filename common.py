@@ -53,6 +53,7 @@ def handle_error(error_causer:bpy.types.Operator, error:Exception):
 
 def switch(object:bpy.types.Object, mode = 'OBJECT'):
     '''Switches blender mode on a blender object. Valid modes are 'object', 'edit' and 'pose' '''
+    bpy.context.view_layer.objects.active = object 
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.ops.object.select_all(action='DESELECT')
     object.select_set(True)
@@ -64,10 +65,10 @@ def switch(object:bpy.types.Object, mode = 'OBJECT'):
     if mode == 'POSE':
         bpy.ops.pose.select_all(action='DESELECT')
     elif mode == 'EDIT':
-        try:
-            bpy.ops.armature.select_all(action='DESELECT')
-        except:
-            bpy.ops.pose.select_all(action='DESELECT')
+        if object.type == 'MESH':
+            bpy.ops.mesh.select_all(action='DESELECT')
+        else:
+            bpy.ops.armature.select_all(action='DESELECT')                
     elif mode == 'OBJECT':
         pass
     else:
@@ -107,7 +108,7 @@ def import_from_library_file(category, list_of_items, use_fake_user = False):
         directory = Path(__file__)
         filename = 'KK Shader V6.0.blend/'
     
-    library_path=(Path(directory) / filename).resolve()
+    library_path=(Path(directory).parent / filename).resolve()
     template_list = [{'name':item} for item in list_of_items]
     bpy.ops.wm.append(
         filepath=str((library_path / category).resolve()),

@@ -1,8 +1,7 @@
 import bpy, os
 from pathlib import Path
 from bpy.props import StringProperty
-from ..importing.importcolors import load_luts, image_to_KK
-from ..importing.darkcolors import create_darktex
+from ..importing.modifymaterial import modify_material
 
 def import_studio_objects(directory):
     #Stop if no files were detected
@@ -296,7 +295,7 @@ def import_studio_objects(directory):
                         else:
                             #but if there is a main image, create a darktex for it and load it in
                             bpy.context.scene.kkbp.import_dir = os.path.dirname(bpy.data.filepath) + '\\'
-                            darktex = create_darktex(bpy.data.images[image.name], [.764, .880, 1]) #create the darktex now and load it in later
+                            darktex = modify_material.create_darktex(bpy.data.images[image.name], [.764, .880, 1]) #create the darktex now and load it in later
                             bpy.context.scene.kkbp.import_dir = ''
 
                             image_load('Gentex', 'Darktex', darktex.name)
@@ -362,7 +361,7 @@ def import_studio_objects(directory):
         image_list = [image for image in bpy.data.images if image.name not in already_loaded_images]
         lut_light = 'Lut_TimeDay.png'
         lut_dark = 'Lut_TimeDay.png'
-        load_luts(lut_light, lut_dark)
+        modify_material.load_luts(lut_light, lut_dark)
 
         first = True
         for image in image_list:
@@ -377,10 +376,10 @@ def import_studio_objects(directory):
 
                 # Need to run image_to_KK twice for the first image due to a weird bug
                 #if first:
-                image_to_KK(image, lut_light)
+                modify_material.image_to_KK(image, lut_light)
                 #    first = False
 
-                new_pixels, width, height = image_to_KK(image, lut_light)
+                new_pixels, width, height = modify_material.image_to_KK(image, lut_light)
                 image.pixels = new_pixels
                 #image.save()
 

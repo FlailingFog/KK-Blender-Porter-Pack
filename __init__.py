@@ -21,15 +21,11 @@ def reg_unreg(register_bool):
     else:
         unregister_class(KKBPPreferences)
 
-    from .importing.bonedrivers import bone_drivers
-    from .importing.cleanarmature import clean_armature
-    from .importing.finalizepmx import finalize_pmx
-    from .importing.importeverything import import_everything
-    from .importing.importcolors import import_colors
     from .importing.importbuttons import kkbp_import
-    from .importing.separatebody import separate_body
-    from .importing.shapekeys import shape_keys
     from .importing.modifymesh import modify_mesh
+    from .importing.modifyarmature import modify_armature
+    from .importing.modifymaterial import modify_material
+    from .importing.postoperations import post_operations
 
     from .exporting.bakematerials import bake_materials
     from .exporting.applymaterials import apply_materials
@@ -41,7 +37,6 @@ def reg_unreg(register_bool):
     from .extras.animationlibrary.createanimationlibrary import anim_asset_lib
     from .extras.linkshapekeys import link_shapekeys
     from .extras.importanimation import import_animation
-    from .extras.switcharmature import switch_armature
     from .extras.separatemeshes import separate_meshes
     from .extras.separatemeshes import export_separate_meshes
     from .extras.toggleik import toggle_ik
@@ -64,21 +59,18 @@ def reg_unreg(register_bool):
     )
 
     classes = (
-
         apply_materials,
         bake_materials, 
         export_prep,
         export_fbx,
         image_convert, 
         image_dark_convert,
-        modify_mesh,
 
         import_animation, 
         import_studio,
         map_asset_lib,
         anim_asset_lib,
         link_shapekeys,
-        switch_armature,
         separate_meshes,
         export_separate_meshes,
         toggle_ik,
@@ -89,14 +81,11 @@ def reg_unreg(register_bool):
         rigify_after,
         MergeWeights,
 
-        bone_drivers, 
-        clean_armature, 
-        finalize_pmx, 
-        import_everything, 
-        import_colors, 
         kkbp_import,
-        separate_body, 
-        shape_keys,
+        modify_mesh,
+        modify_armature,
+        modify_material,
+        post_operations,
 
         PlaceholderProperties, 
         IMPORTINGHEADER_PT_panel,

@@ -49,19 +49,21 @@ class post_operations(bpy.types.Operator):
         self.outfit_alternates = []
         self.hitboxes = []
         for object in [o for o in bpy.data.objects if o.type == 'MESH']:
-            if object['KKBP tag'] == 'body':
-                self.body = object
-            elif object['KKBP tag'] == 'outfit':
-                self.outfits.append(object)
-            elif object['KKBP tag'] == 'alt':
-                self.outfit_alternates.append(object)
-            elif object['KKBP tag'] == 'hair':
-                self.hairs.append(object)
-            elif object['KKBP tag'] == 'hitbox':
-                self.hitboxes.append(object)
+            if object.get('KKBP tag'):
+                if object['KKBP tag'] == 'body':
+                    self.body = object
+                elif object['KKBP tag'] == 'outfit':
+                    self.outfits.append(object)
+                elif object['KKBP tag'] == 'alt':
+                    self.outfit_alternates.append(object)
+                elif object['KKBP tag'] == 'hair':
+                    self.hairs.append(object)
+                elif object['KKBP tag'] == 'hitbox':
+                    self.hitboxes.append(object)
         for object in [o for o in bpy.data.objects if o.type == 'ARMATURE']:
-            if object['KKBP tag'] == 'armature':
-                self.armature = object
+            if object.get('KKBP tag'):
+                if object['KKBP tag'] == 'armature':
+                    self.armature = object
     
     def hide_unused_objects(self):
         bpy.data.objects['Armature'].hide = False

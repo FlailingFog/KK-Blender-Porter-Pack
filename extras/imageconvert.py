@@ -1,8 +1,7 @@
 from pathlib import Path
 import bpy
 from .. import common as c
-from ..importing.importcolors import image_to_KK, load_luts
-from ..importing.darkcolors import create_darktex
+from ..importing.modifymaterial import modify_material
 
 class image_convert(bpy.types.Operator):
     bl_idname = "kkbp.imageconvert"
@@ -28,11 +27,11 @@ class image_convert(bpy.types.Operator):
         image.colorspace_settings.name = 'sRGB'
         
         # Use code from importcolors to convert the current image
-        load_luts(lut_choice, lut_choice)
+        modify_material.load_luts(lut_choice, lut_choice)
         # Need to run image_to_KK twice for the first image due to a weird bug
-        image_to_KK(image, lut_choice)
+        modify_material.image_to_KK(image, lut_choice)
 
-        new_pixels, width, height = image_to_KK(image, lut_choice)
+        new_pixels, width, height = modify_material.image_to_KK(image, lut_choice)
         image.pixels = new_pixels
         #image.save()
 
@@ -52,7 +51,7 @@ class image_dark_convert(bpy.types.Operator):
         material_name = image.name[:-10]
         try:
             shadow_color = [body['KKBP shadow colors'][material_name]['r'], body['KKBP shadow colors'][material_name]['g'], body['KKBP shadow colors'][material_name]['b']]
-            darktex = create_darktex(bpy.data.images[image.name], shadow_color)
+            darktex = modify_material.create_darktex(bpy.data.images[image.name], shadow_color)
             material_name = 'KK ' + image.name[:-10]
             bpy.data.materials[material_name].node_tree.nodes['Gentex'].node_tree.nodes['Darktex'].image = darktex
             bpy.data.materials[material_name].node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use dark maintex?'].default_value = 1

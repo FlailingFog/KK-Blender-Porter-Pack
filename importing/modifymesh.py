@@ -99,13 +99,13 @@ class modify_mesh(bpy.types.Operator):
             else:
                 self.body['SMR materials'][body_material['SMRName']] = body_material['SMRMaterialNames']
             #rename some materials if in smr mode
-            if (body_material['SMRName'] in smr_postfix_map and 
-               (bpy.context.scene.kkbp.categorize_dropdown == 'D' or 'cf_Ohitomi_R' not in body_material['SMRName'])):
-                smr_postfix_map = {
+            smr_postfix_map = {
                     'cf_Ohitomi_R' : '.001',
                     'cf_O_namida_M' : '.001',
                     'cf_O_namida_S' : '.002',
                     }
+            if (body_material['SMRName'] in smr_postfix_map and 
+               (bpy.context.scene.kkbp.categorize_dropdown == 'D' or 'cf_Ohitomi_R' not in body_material['SMRName'])):
                 mat_name = body_material['SMRMaterialNames'][0] + smr_postfix_map[body_material['SMRName']]  
                 self.body['SMR materials'][body_material['SMRName']] = mat_name
         
@@ -216,10 +216,11 @@ class modify_mesh(bpy.types.Operator):
                             if (smr_index['SMRName'] == object):
                                 materials_to_separate.append(smr_index['SMRMaterialNames'])
             self.separate_materials(outfit, materials_to_separate)
-            indoor_shoes = bpy.data.objects[outfit.name + '.001']
-            indoor_shoes.name = clothes_piece + ' ' + outfit.name
-            indoor_shoes['KKBP type'] = clothes_piece
-            self.outfit_alternates.append(indoor_shoes)
+            if bpy.data.objects.get(outfit.name + '.001'):
+                indoor_shoes = bpy.data.objects[outfit.name + '.001']
+                indoor_shoes.name = clothes_piece + ' ' + outfit.name
+                indoor_shoes['KKBP type'] = clothes_piece
+                self.outfit_alternates.append(indoor_shoes)
             c.kklog('Separated {} alternate clothing pieces automatically'.format(materials_to_separate))
 
     def separate_shad_bone(self):
@@ -237,12 +238,12 @@ class modify_mesh(bpy.types.Operator):
             bpy.data.objects[self.body.name + '.001'].name = 'Bonelyfans'
         except:
             pass
-        self.move_and_hide_collection(['Shadowcast', 'Bonelyfans'], "Shadowcast Collection")
-
+        shadbone = [o for o in [bpy.data.objects.get('Shadowcast'), bpy.data.objects.get('Bonelyfans')] if o]
+        self.move_and_hide_collection(shadbone, "Shadowcast Collection")
+            
     def separate_hitboxes(self):
         '''Separate the hitbox mesh, if present'''
         self.hitboxes = []
-
         hitbox_list = []
         material_data = c.get_json_file('KK_MaterialData.json')
         for mat in material_data:
@@ -573,16 +574,18 @@ class modify_mesh(bpy.types.Operator):
         c.switch(self.body, 'edit')
         #Move tears and gag backwards on the basis shapekey
         tear_mats = {
-            self.body['SMR materials']['cf_O_namida_L']:   "Tears big",
-            self.body['SMR materials']['cf_O_namida_M']:   "Tears med",
-            self.body['SMR materials']['cf_O_namida_S']:   'Tears small',
-            self.body['SMR materials']['cf_O_gag_eye_00']:     "Gag eye 00",
-            self.body['SMR materials']['cf_O_gag_eye_01']:     "Gag eye 01",
-            self.body['SMR materials']['cf_O_gag_eye_02']:     "Gag eye 02",
+            'cf_O_namida_L'     :     "Tears big",
+            'cf_O_namida_M'     :     "Tears med",
+            'cf_O_namida_S'     :     'Tears small',
+            'cf_O_gag_eye_00'   :     "Gag eye 00",
+            'cf_O_gag_eye_01'   :     "Gag eye 01",
+            'cf_O_gag_eye_02'   :     "Gag eye 02",
         }
-        for mat in tear_mats:
-            bpy.context.object.active_material_index = self.body.data.materials.find(mat)
-            bpy.ops.object.material_slot_select()
+        for cat in tear_mats:
+            mats = self.body['SMR materials'][cat]
+            for mat in mats:
+                bpy.context.object.active_material_index = self.body.data.materials.find(mat)
+                bpy.ops.object.material_slot_select()
         
         #refresh selection, then move tears a random amount backwards
         bpy.ops.object.mode_set(mode = 'OBJECT')
@@ -592,39 +595,42 @@ class modify_mesh(bpy.types.Operator):
         bpy.ops.transform.translate(value=(0, abs(amount_to_move_tears_back), 0))
 
         #move the tears forwards again the same amount in individual shapekeys
-        for mat in tear_mats:
-            c.switch(self.body, 'object')
-            bpy.ops.object.shape_key_add(from_mix=False)
-            last_shapekey = len(self.body.data.shape_keys.key_blocks)-1
-            self.body.data.shape_keys.key_blocks[-1].name = tear_mats[mat]
-            bpy.context.object.active_shape_key_index = last_shapekey
-            c.switch(self.body, 'edit')
-            bpy.context.object.active_material_index = self.body.data.materials.find(mat)
-            if self.body.data.materials.find(mat) == -1:
-                bpy.context.object.active_material_index += 1
-            else:
+        for cat in tear_mats:
+            mats = self.body['SMR materials'][cat]
+            for mat in mats:
+                c.switch(self.body, 'object')
+                bpy.ops.object.shape_key_add(from_mix=False)
+                last_shapekey = len(self.body.data.shape_keys.key_blocks)-1
+                self.body.data.shape_keys.key_blocks[-1].name = tear_mats[cat]
+                bpy.context.object.active_shape_key_index = last_shapekey
+                c.switch(self.body, 'edit')
                 bpy.context.object.active_material_index = self.body.data.materials.find(mat)
-            bpy.ops.object.material_slot_select()
-            #find a random vertex location of the tear and move it forwards
-            c.switch(self.body, 'object')
-            selected_verts = [v for v in self.body.data.vertices if v.select]
-            bpy.ops.object.mode_set(mode = 'EDIT')
-            bpy.ops.transform.translate(value=(0, -1 * abs(amount_to_move_tears_back), 0))
-            c.switch(self.body, 'object')
-            bpy.ops.object.shape_key_move(type='TOP' if self.body['SMR materials']['cf_O_namida_L'] in mat else 'BOTTOM')
+                if self.body.data.materials.find(mat) == -1:
+                    bpy.context.object.active_material_index += 1
+                else:
+                    bpy.context.object.active_material_index = self.body.data.materials.find(mat)
+                bpy.ops.object.material_slot_select()
+                #find a random vertex location of the tear and move it forwards
+                c.switch(self.body, 'object')
+                selected_verts = [v for v in self.body.data.vertices if v.select]
+                bpy.ops.object.mode_set(mode = 'EDIT')
+                bpy.ops.transform.translate(value=(0, -1 * abs(amount_to_move_tears_back), 0))
+                c.switch(self.body, 'object')
+                bpy.ops.object.shape_key_move(type='TOP' if self.body['SMR materials']['cf_O_namida_L'][0] in mat else 'BOTTOM')
 
         #Move the Eye, eyewhite and eyeline materials back on the KK gageye shapekey
         bpy.context.object.active_shape_key_index = bpy.context.object.data.shape_keys.key_blocks.find('KK Eyes_gageye')
         c.switch(self.body, 'edit')
-        for mat in [
+        for cat in [
             self.body['SMR materials']['cf_Ohitomi_L'],
             self.body['SMR materials']['cf_Ohitomi_R'], 
             self.body['SMR materials']['cf_Ohitomi_L02'],
             self.body['SMR materials']['cf_Ohitomi_R02'],
             self.body['SMR materials']['cf_O_eyeline'],
             self.body['SMR materials']['cf_O_eyeline_low']]:
-            bpy.context.object.active_material_index = self.body.data.materials.find(mat)
-            bpy.ops.object.material_slot_select()
+            for mat in cat:
+                bpy.context.object.active_material_index = self.body.data.materials.find(mat)
+                bpy.ops.object.material_slot_select()
         #find a random vertex location of the eye and move it backwards
         c.switch(self.body, 'object')
         selected_verts = [v for v in self.body.data.vertices if v.select]
@@ -634,11 +640,13 @@ class modify_mesh(bpy.types.Operator):
 
         #Merge the tear materials
         c.switch(self.body, 'edit')
-        tear_mats = [self.body['SMR materials']['cf_O_namida_M'], self.body['SMR materials']['cf_O_namida_S']]
+        tear_mats = []
+        tear_mats.extend(self.body['SMR materials']['cf_O_namida_M'])
+        tear_mats.extend(self.body['SMR materials']['cf_O_namida_S'])
         for mat in tear_mats:
             bpy.context.object.active_material_index = self.body.data.materials.find(mat)
             bpy.ops.object.material_slot_select()
-            bpy.context.object.active_material_index = self.body.data.materials.find(self.body['SMR materials']['cf_O_namida_L'])
+            bpy.context.object.active_material_index = self.body.data.materials.find(self.body['SMR materials']['cf_O_namida_L'][0])
             bpy.ops.object.material_slot_assign()
             bpy.ops.mesh.select_all(action='DESELECT')
 
@@ -646,14 +654,15 @@ class modify_mesh(bpy.types.Operator):
         bpy.ops.object.vertex_group_add()
         bpy.ops.mesh.select_all(action='SELECT')
         self.body.vertex_groups.active.name = "Body without Tears"
-        bpy.context.object.active_material_index = self.body.data.materials.find(self.body['SMR materials']['cf_O_namida_L'])
+        bpy.context.object.active_material_index = self.body.data.materials.find(self.body['SMR materials']['cf_O_namida_L'][0])
         bpy.ops.object.material_slot_deselect()
         bpy.ops.object.vertex_group_assign()
 
         #Separate tears from body object
         #link shapekeys of tears to body
-        tearMats = [self.body['SMR materials']['cf_O_namida_L']]
-        self.separate_materials(self.body, tearMats)
+        tear_mats = []
+        tear_mats.extend(self.body['SMR materials']['cf_O_namida_L'])
+        self.separate_materials(self.body, tear_mats)
         tears = bpy.data.objects['Body.001']
         tears.name = 'Tears'
         bpy.ops.object.mode_set(mode = 'OBJECT')
@@ -740,14 +749,18 @@ class modify_mesh(bpy.types.Operator):
             c.switch(self.body, 'edit')
             bpy.ops.mesh.select_all(action='SELECT')
             self.body.vertex_groups.active.name = "Body without Gag eyes"
-            for gag_mat in [self.body['SMR materials']['cf_O_gag_eye_00'], self.body['SMR materials']['cf_O_gag_eye_01'], self.body['SMR materials']['cf_O_gag_eye_02']]:
-                bpy.context.object.active_material_index = self.body.data.materials.find(gag_mat)
-                bpy.ops.object.material_slot_deselect()
+            for gag_cat in [self.body['SMR materials']['cf_O_gag_eye_00'], self.body['SMR materials']['cf_O_gag_eye_01'], self.body['SMR materials']['cf_O_gag_eye_02']]:
+                for gag_mat in gag_cat:
+                    bpy.context.object.active_material_index = self.body.data.materials.find(gag_mat)
+                    bpy.ops.object.material_slot_deselect()
             bpy.ops.object.vertex_group_assign()
 
             #Separate gag from body object
             #link shapekeys of gag to body
-            gag_mat = [self.body['SMR materials']['cf_O_gag_eye_00'], self.body['SMR materials']['cf_O_gag_eye_01'], self.body['SMR materials']['cf_O_gag_eye_02']]
+            gag_mat = []
+            gag_mat.extend(self.body['SMR materials']['cf_O_gag_eye_00'])
+            gag_mat.extend(self.body['SMR materials']['cf_O_gag_eye_01'])
+            gag_mat.extend(self.body['SMR materials']['cf_O_gag_eye_02'])
             self.separate_materials(self.body, gag_mat)
             gag = bpy.data.objects['Body.001']
             gag.name = 'Gag Eyes'
@@ -776,9 +789,10 @@ class modify_mesh(bpy.types.Operator):
             self.body['SMR materials']['o_body_a'],
             ]
         bpy.context.tool_settings.mesh_select_mode = (True, False, False) #enable vertex select in edit mode
-        for mat in select_list:
-            bpy.context.object.active_material_index = self.body.data.materials.find(mat)
-            bpy.ops.object.material_slot_select()
+        for cat in select_list:
+            for mat in cat:
+                bpy.context.object.active_material_index = self.body.data.materials.find(mat)
+                bpy.ops.object.material_slot_select()
         bpy.ops.mesh.remove_doubles(threshold=0.00001)
 
         #This still messes with the weights. Maybe it's possible to save the 3D positions, weights, and UV positions for each duplicate vertex
@@ -798,15 +812,15 @@ class modify_mesh(bpy.types.Operator):
                     else:
                         c.kklog('Material wasn\'t found when freestyling body materials: ' + mat, 'warn')
             bpy.ops.mesh.mark_freestyle_face(clear=False)
-        freestyle_list = [
-            self.body['SMR materials']['cf_Ohitomi_L02'],
-            self.body['SMR materials']['cf_Ohitomi_R02'],
-            self.body['SMR materials']['cf_Ohitomi_L'],
-            self.body['SMR materials']['cf_Ohitomi_R'],
-            self.body['SMR materials']['cf_O_eyeline_low'],
-            self.body['SMR materials']['cf_O_eyeline'],
-            self.body['SMR materials']['cf_O_noseline'],
-            self.body['SMR materials']['cf_O_mayuge']]
+        freestyle_list = []
+        freestyle_list.extend(self.body['SMR materials']['cf_Ohitomi_L02'])
+        freestyle_list.extend(self.body['SMR materials']['cf_Ohitomi_R02'])
+        freestyle_list.extend(self.body['SMR materials']['cf_Ohitomi_L'])
+        freestyle_list.extend(self.body['SMR materials']['cf_Ohitomi_R'])
+        freestyle_list.extend(self.body['SMR materials']['cf_O_eyeline_low'])
+        freestyle_list.extend(self.body['SMR materials']['cf_O_eyeline'])
+        freestyle_list.extend(self.body['SMR materials']['cf_O_noseline'])
+        freestyle_list.extend(self.body['SMR materials']['cf_O_mayuge'])
         mark_as_freestyle(freestyle_list)
         bpy.ops.mesh.select_all(action = 'DESELECT')
         bpy.ops.object.mode_set(mode = 'OBJECT')
@@ -825,16 +839,15 @@ class modify_mesh(bpy.types.Operator):
         
 
     # %% Supporting functions
-    def move_and_hide_collection (objects, new_collection):
+    def move_and_hide_collection (self, objects, new_collection):
         '''Move the objects into their own collection and hide them'''
         if not objects:
             return
         
         c.switch(objects[0], 'object')
         for object in objects:
-            if bpy.data.objects.get(object):
-                bpy.data.objects[object].select_set(True)
-                bpy.context.view_layer.objects.active=bpy.data.objects[object]
+            object.select_set(True)
+            bpy.context.view_layer.objects.active=object
         #move
         bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name=new_collection)
         #then hide the new collection
@@ -874,14 +887,14 @@ class modify_mesh(bpy.types.Operator):
         try:
             bpy.ops.mesh.separate(type='SELECTED')
         except:
-            c.kklog('Nothing was selected when separating materials from : ' + object, 'warn')
+            c.kklog('Nothing was selected when separating materials from : ' + object.name, 'warn')
         bpy.ops.object.mode_set(mode = 'OBJECT')
 
     def delete_material(self, object, mat_list):
         for mat in mat_list:
-            if object.data.materials.find(mat) > -1:
+            if object.data.materials.find(mat.name) > -1:
                 c.switch(object, 'edit')
-                bpy.context.object.active_material_index = object.data.materials.find(mat)
+                bpy.context.object.active_material_index = object.data.materials.find(mat.name)
                 bpy.ops.object.material_slot_select()
                 bpy.ops.mesh.delete(type='VERT')
 

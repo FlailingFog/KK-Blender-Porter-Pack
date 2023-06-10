@@ -48,8 +48,8 @@ import bpy, math
 from .. import common as c
 from mathutils import Vector
 
-class modify_material(bpy.types.Operator):
-    bl_idname = "kkbp.modifymaterial"
+class modify_armature(bpy.types.Operator):
+    bl_idname = "kkbp.modifyarmature"
     bl_label = bl_idname
     bl_description = bl_idname
     bl_options = {'REGISTER', 'UNDO'}
@@ -102,16 +102,17 @@ class modify_material(bpy.types.Operator):
         self.outfit_alternates = []
         self.hitboxes = []
         for object in [o for o in bpy.data.objects if o.type == 'MESH']:
-            if object['KKBP tag'] == 'body':
-                self.body = object
-            elif object['KKBP tag'] == 'outfit':
-                self.outfits.append(object)
-            elif object['KKBP tag'] == 'alt':
-                self.outfit_alternates.append(object)
-            elif object['KKBP tag'] == 'hair':
-                self.hairs.append(object)
-            elif object['KKBP tag'] == 'hitbox':
-                self.hitboxes.append(object)
+            if object.get('KKBP tag'):
+                if object['KKBP tag'] == 'body':
+                    self.body = object
+                elif object['KKBP tag'] == 'outfit':
+                    self.outfits.append(object)
+                elif object['KKBP tag'] == 'alt':
+                    self.outfit_alternates.append(object)
+                elif object['KKBP tag'] == 'hair':
+                    self.hairs.append(object)
+                elif object['KKBP tag'] == 'hitbox':
+                    self.hitboxes.append(object)
         
     def reparent_all_objects(self):
         '''Reparents all objects to the main armature'''
@@ -130,12 +131,10 @@ class modify_material(bpy.types.Operator):
         self.body.modifiers[0].show_expanded = False
         
         #reparent the outfit meshes as well
-        for empty in [e for e in bpy.data.objects if ("Model_arm" in e.name and e.type == 'EMPTY')]:
+        for empty in [e for e in bpy.data.objects if ("Model" in e.name and e.type == 'EMPTY')]:
             outfit_id = empty['KKBP outfit ID']
             outfit_arm = empty.children[0]
             outfit_meshes = outfit_arm.children
-            bpy.data.objects.remove(empty)
-            bpy.data.objects.remove(outfit_arm)
             #preserve outfit ID from empty then reparent
             for outfit in outfit_meshes:
                 outfit['KKBP outfit ID'] = outfit_id
@@ -144,6 +143,8 @@ class modify_material(bpy.types.Operator):
                 outfit.modifiers[0].show_in_editmode = True
                 outfit.modifiers[0].show_on_cage = True
                 outfit.modifiers[0].show_expanded = False
+            bpy.data.objects.remove(empty)
+            bpy.data.objects.remove(outfit_arm)
         #reparent the alts and hairs to the main outfit object
         for alt in self.outfit_alternates:
             alt_parent = [p for p in self.outfits if p['KKBP outfit ID'] == alt['KKBP outfit ID']][0]
@@ -1152,40 +1153,39 @@ class modify_material(bpy.types.Operator):
         def heelController(footbone, footIK, toebone):   
             c.switch(self.armature, 'edit')             
             #duplicate the foot IK. This is the new master bone
-            armatureData = self.armature.data
             masterbone = self.new_bone('MasterFootIK.' + footbone[-1])
-            masterbone.head = armatureData.edit_bones[footbone].head
-            masterbone.tail = armatureData.edit_bones[footbone].tail
-            masterbone.matrix = armatureData.edit_bones[footbone].matrix
+            masterbone.head = self.armature.data.edit_bones[footbone].head
+            masterbone.tail = self.armature.data.edit_bones[footbone].tail
+            masterbone.matrix = self.armature.data.edit_bones[footbone].matrix
             masterbone.parent = self.armature.data.edit_bones['cf_n_height']
             
             #Create the heel controller
             heelIK = self.new_bone('HeelIK.' + footbone[-1])
-            heelIK.head = armatureData.edit_bones[footbone].tail
-            heelIK.tail = armatureData.edit_bones[footbone].head
+            heelIK.head = self.armature.data.edit_bones[footbone].tail
+            heelIK.tail = self.armature.data.edit_bones[footbone].head
             heelIK.parent = masterbone
             heelIK.tail.y *= .5
 
             #parent footIK to heel controller
-            armatureData.edit_bones[footIK].parent = heelIK
+            self.armature.data.edit_bones[footIK].parent = heelIK
             
             #make a bone to pin the foot
             footPin = self.new_bone('FootPin.' + footbone[-1])
-            footPin.head = armatureData.edit_bones[toebone].head
-            footPin.tail = armatureData.edit_bones[toebone].tail
+            footPin.head = self.armature.data.edit_bones[toebone].head
+            footPin.tail = self.armature.data.edit_bones[toebone].tail
             footPin.parent = masterbone
             footPin.tail.z*=.8
                 
             #make a bone to allow rotation of the toe along an arc
             toeRotator = self.new_bone('ToeRotator.' + footbone[-1])
-            toeRotator.head = armatureData.edit_bones[toebone].head
-            toeRotator.tail = armatureData.edit_bones[toebone].tail
+            toeRotator.head = self.armature.data.edit_bones[toebone].head
+            toeRotator.tail = self.armature.data.edit_bones[toebone].tail
             toeRotator.parent = masterbone
             
             #make a bone to pin the toe
             toePin = self.new_bone('ToePin.' + footbone[-1])
-            toePin.head = armatureData.edit_bones[toebone].tail
-            toePin.tail = armatureData.edit_bones[toebone].tail
+            toePin.head = self.armature.data.edit_bones[toebone].tail
+            toePin.tail = self.armature.data.edit_bones[toebone].tail
             toePin.parent = toeRotator
             toePin.tail.z *=1.2
             
@@ -1244,23 +1244,19 @@ class modify_material(bpy.types.Operator):
             c.switch(self.armature, 'edit')
             bone = self.armature.data.edit_bones[handcontroller]
             bone.parent = self.armature.data.edit_bones['cf_n_height']
+            self.armature.data.bones[wristbone].hide = True
+            
+            # move elbow IKs closer to body
+            elbowdist = round((self.armature.data.edit_bones[elbowbone].head - self.armature.data.edit_bones[elbowbone].tail).length,2)
+            self.armature.data.edit_bones[elbowcontroller].head.y = elbowdist*2
+            self.armature.data.edit_bones[elbowcontroller].tail.y = elbowdist*2
             c.switch(self.armature, 'pose')
 
             # Set hand rotation then hide it
             bone = self.armature.pose.bones[wristbone]
-
             bone.constraints.new("COPY_ROTATION")
             bone.constraints[0].target=self.armature
             bone.constraints[0].subtarget=self.armature.data.bones[handcontroller].name
-            
-            c.switch(self.armature, 'edit')
-            self.armature.data.bones[wristbone].hide = True
-            c.switch(self.armature, 'pose')
-
-            # move elbow IKs closer to body
-            elbowdist = round((self.armature.pose.bones[elbowbone].head - self.armature.pose.bones[elbowbone].tail).length,2)
-            self.armature.data.edit_bones[elbowcontroller].head.y = elbowdist*2
-            self.armature.data.edit_bones[elbowcontroller].tail.y = elbowdist*2
 
         #Run for each side
         armhandIK('cf_j_forearm01_R', 'cf_pv_hand_R', 'cf_pv_elbo_R', 0, 'cf_j_hand_R')
@@ -1695,7 +1691,7 @@ class modify_material(bpy.types.Operator):
             for bone in bp_list:
                 if self.armature.pose.bones.get(bone):
                     self.armature.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetSpine']
-                    self.armature.pose.bones[bone].custom_shape_scale = 1.8
+                    self.armature.pose.bones[bone].custom_shape_scale_xyz = Vector((1.8, 1.8, 1.8))
             for bone in toe_list:
                 if self.armature.pose.bones.get(bone):
                     self.armature.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetSpine']
@@ -1742,7 +1738,8 @@ class modify_material(bpy.types.Operator):
         c.switch(self.armature, 'object')
 
     # %% Supporting functions
-    def survey(self, obj):
+    @staticmethod
+    def survey(obj):
         '''Function to check for empty vertex groups of an object
         returns a dictionary in the form {vertex_group1: maxweight1, vertex_group2: maxweight2, etc}'''
         maxWeight = {}
@@ -1760,7 +1757,8 @@ class modify_material(bpy.types.Operator):
                     maxWeight[keylist[gn]] = w
         return maxWeight
 
-    def survey_vertexes(self, obj):
+    @staticmethod
+    def survey_vertexes(obj):
         has_vertexes = {}
         for i in obj.vertex_groups:
             has_vertexes[i.name] = False
@@ -1777,18 +1775,20 @@ class modify_material(bpy.types.Operator):
 
     def set_armature_layer(self, bone_name, show_layer, hidden = False):
         '''Sets a bone to an armature layer. Must already be'''
-        self.armature.bones[bone_name].layers = (
-            True, False, False, False, False, False, False, False,
-            False, False, False, False, False, False, False, False, 
-            False, False, False, False, False, False, False, False, 
-            False, False, False, False, False, False, False, False
-        )
-        #have to show the bone on both layer 1 and chosen layer before setting it to just chosen layer
-        self.armature.bones[bone_name].layers[show_layer] = True 
-        self.armature.bones[bone_name].layers[0] = False
-        self.armature.bones[bone_name].hide = hidden
+        if self.armature.data.bones.get(bone_name):
+            self.armature.data.bones[bone_name].layers = (
+                True, False, False, False, False, False, False, False,
+                False, False, False, False, False, False, False, False, 
+                False, False, False, False, False, False, False, False, 
+                False, False, False, False, False, False, False, False
+            )
+            #have to show the bone on both layer 1 and chosen layer before setting it to just chosen layer
+            self.armature.data.bones[bone_name].layers[show_layer] = True 
+            self.armature.data.bones[bone_name].layers[0] = False
+            self.armature.data.bones[bone_name].hide = hidden
 
-    def get_bone_list(self, kind):
+    @staticmethod
+    def get_bone_list(kind):
         '''returns a list of a certain category of bones'''
         if kind == 'core_list':
             #main bone list
@@ -1905,14 +1905,13 @@ class modify_material(bpy.types.Operator):
 
     def new_bone(self, new_bone_name):
         '''Creates a new bone on the armature with the specified name and returns the blender bone'''
-        c.switch(self.armature, 'edit')
         bpy.ops.armature.bone_primitive_add()
         bone = self.armature.data.edit_bones['Bone']
         bone.name = new_bone_name
         return bone
 
 if __name__ == "__main__":
-    bpy.utils.register_class(modify_material)
+    bpy.utils.register_class(modify_armature)
 
     # test call
-    print((bpy.ops.kkbp.modifymaterial('INVOKE_DEFAULT')))
+    print((bpy.ops.kkbp.modifyarmature('INVOKE_DEFAULT')))

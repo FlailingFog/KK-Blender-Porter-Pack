@@ -15,8 +15,7 @@ import bpy, os, time, pathlib
 from bpy.props import StringProperty
 from ..importstudio import import_studio_objects
 from ... import common as c
-from ...importing.importcolors import load_luts, image_to_KK
-from ...importing.darkcolors import create_darktex
+from ...importing.modifymaterial import modify_material
 from ...interface.dictionary_en import t
 
 def better_fbx_map_import(directory):
@@ -90,21 +89,21 @@ def better_fbx_map_import(directory):
                     #create darktex
                     bpy.context.scene.kkbp.import_dir = os.path.dirname(bpy.data.filepath) + '\\'
                     main_image = bpy.data.images[new_image_name]
-                    dark_image = create_darktex(main_image, [.764, .880, 1])
+                    dark_image = modify_material.create_darktex(main_image, [.764, .880, 1])
                     bpy.context.scene.kkbp.import_dir = ''
 
                     #saturate both with color code
                     lut_light = 'Lut_TimeDay.png'
                     lut_dark = 'Lut_TimeDay.png'
-                    load_luts(lut_light, lut_dark)
+                    modify_material.load_luts(lut_light, lut_dark)
 
                     for image in [main_image, dark_image]:
                         print('converting ' + image.name)
                         image.save()
                         image.reload()
                         image.colorspace_settings.name = 'sRGB'
-                        image_to_KK(image, lut_light) #run twice because of bug
-                        new_pixels, width, height = image_to_KK(image, lut_light)
+                        modify_material.image_to_KK(image, lut_light) #run twice because of bug
+                        new_pixels, width, height = modify_material.image_to_KK(image, lut_light)
                         image.pixels = new_pixels
                     
                     #then load it in

@@ -248,7 +248,7 @@ class export_prep(bpy.types.Operator):
         last_step = time.time()
         try:
             main(prep_type, simp_type)
-            scene.is_prepped = True
+            scene.plugin_state = 'prepped'
             c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             return {'FINISHED'}
         except:

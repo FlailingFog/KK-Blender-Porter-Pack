@@ -48,7 +48,7 @@ class kkbp_import(bpy.types.Operator):
         subdirs = [i[1] for i in os.walk(bpy.context.scene.kkbp.import_dir)][0]
         outfit_subdirs = [i for i in subdirs if 'Outfit ' in i]
         if not outfit_subdirs:
-            bpy.context.scene.kkbp.import_dir = os.path.dirname(bpy.context.scene.kkbp.import_dir)
+            bpy.context.scene.kkbp.import_dir = os.path.dirname(os.path.dirname(bpy.context.scene.kkbp.import_dir))
             c.kklog('User chose wrong pmx file. Defaulting to pmx file located at ' + str(bpy.context.scene.kkbp.import_dir), 'warn')
 
         #force pmx armature selection if exportCurrentPose in the Exporter Config json is true
@@ -60,14 +60,14 @@ class kkbp_import(bpy.types.Operator):
         if bpy.context.scene.kkbp.categorize_dropdown == 'A': #Automatic separation
             functions = [
                 lambda:bpy.ops.kkbp.modifymesh('INVOKE_DEFAULT'),
-                lambda:bpy.ops.kkbp.modifyarm('INVOKE_DEFAULT'),
+                lambda:bpy.ops.kkbp.modifyarmature('INVOKE_DEFAULT'),
                 lambda:bpy.ops.kkbp.modifymaterial('INVOKE_DEFAULT'),
                 lambda:bpy.ops.kkbp.postoperations('INVOKE_DEFAULT'),
             ]
         elif bpy.context.scene.kkbp.categorize_dropdown == 'C': #Separate every piece
             functions = [
                 lambda:bpy.ops.kkbp.modifymesh('INVOKE_DEFAULT'),
-                lambda:bpy.ops.kkbp.modifyarm('INVOKE_DEFAULT'),
+                lambda:bpy.ops.kkbp.modifyarmature('INVOKE_DEFAULT'),
                 lambda:bpy.ops.kkbp.separatemeshes('EXEC_DEFAULT'),
                 lambda:bpy.ops.kkbp.modifymaterial('INVOKE_DEFAULT'),
                 lambda:bpy.ops.kkbp.postoperations('INVOKE_DEFAULT'),
@@ -75,7 +75,7 @@ class kkbp_import(bpy.types.Operator):
         else: #SMR pipeline
             functions = [
                 lambda:bpy.ops.kkbp.modifymesh('INVOKE_DEFAULT'),
-                lambda:bpy.ops.kkbp.modifyarm('INVOKE_DEFAULT'),
+                lambda:bpy.ops.kkbp.modifyarmature('INVOKE_DEFAULT'),
                 lambda:bpy.ops.kkbp.separatemeshes('INVOKE_DEFAULT'),
             ]
 
@@ -87,6 +87,7 @@ class kkbp_import(bpy.types.Operator):
             print(function)
             function()
         c.toggle_console()
+        bpy.context.scene.kkbp.plugin_state = 'imported'
         return {'FINISHED'}
         
     def invoke(self, context, event):
