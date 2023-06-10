@@ -650,38 +650,39 @@ class modify_material(bpy.types.Operator):
 
     def bend_bones_for_iks(self):
         '''slightly modify the armature to support IKs'''
-        if bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
-            c.switch(self.armature, 'edit')
-            self.armature.data.edit_bones['cf_n_height'].parent = None
-            self.armature.data.edit_bones['cf_j_root'].parent = self.armature.data.edit_bones['cf_pv_root']
-            self.armature.data.edit_bones['p_cf_body_bone'].parent = self.armature.data.edit_bones['cf_pv_root']
-            #relocate the tail of some bones to make IKs easier
-            def relocate_tail(bone1, bone2, direction):
-                if direction == 'leg':
-                    self.armature.data.edit_bones[bone1].tail.z = self.armature.data.edit_bones[bone2].head.z
-                    #move the bone forward a bit or the ik bones might not bend correctly
-                    self.armature.data.edit_bones[bone1].head.y += -.004
-                    self.armature.data.edit_bones[bone1].roll = 0
-                elif direction == 'arm':
-                    self.armature.data.edit_bones[bone1].tail.x = self.armature.data.edit_bones[bone2].head.x
-                    self.armature.data.edit_bones[bone1].tail.z = self.armature.data.edit_bones[bone2].head.z
-                    self.armature.data.edit_bones[bone1].roll = -math.pi/2
-                elif direction == 'hand':
-                    self.armature.data.edit_bones[bone1].tail = self.armature.data.edit_bones[bone2].tail
-                    self.armature.data.edit_bones[bone1].tail.z += .01
-                    self.armature.data.edit_bones[bone1].head = self.armature.data.edit_bones[bone2].head
-                else:
-                    self.armature.data.edit_bones[bone1].tail.y = self.armature.data.edit_bones[bone2].head.y
-                    self.armature.data.edit_bones[bone1].tail.z = self.armature.data.edit_bones[bone2].head.z
-                    self.armature.data.edit_bones[bone1].roll = 0
-            relocate_tail('cf_j_leg01_R', 'cf_j_foot_R', 'leg')
-            relocate_tail('cf_j_foot_R', 'cf_j_toes_R', 'foot')
-            relocate_tail('cf_j_forearm01_R', 'cf_j_hand_R', 'arm')
-            relocate_tail('cf_pv_hand_R', 'cf_j_hand_R', 'hand')
-            relocate_tail('cf_j_leg01_L', 'cf_j_foot_L', 'leg')
-            relocate_tail('cf_j_foot_L', 'cf_j_toes_L', 'foot')
-            relocate_tail('cf_j_forearm01_L', 'cf_j_hand_L', 'arm')
-            relocate_tail('cf_pv_hand_L', 'cf_j_hand_L', 'hand')
+        if not bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
+            return
+        c.switch(self.armature, 'edit')
+        self.armature.data.edit_bones['cf_n_height'].parent = None
+        self.armature.data.edit_bones['cf_j_root'].parent = self.armature.data.edit_bones['cf_pv_root']
+        self.armature.data.edit_bones['p_cf_body_bone'].parent = self.armature.data.edit_bones['cf_pv_root']
+        #relocate the tail of some bones to make IKs easier
+        def relocate_tail(bone1, bone2, direction):
+            if direction == 'leg':
+                self.armature.data.edit_bones[bone1].tail.z = self.armature.data.edit_bones[bone2].head.z
+                #move the bone forward a bit or the ik bones might not bend correctly
+                self.armature.data.edit_bones[bone1].head.y += -.004
+                self.armature.data.edit_bones[bone1].roll = 0
+            elif direction == 'arm':
+                self.armature.data.edit_bones[bone1].tail.x = self.armature.data.edit_bones[bone2].head.x
+                self.armature.data.edit_bones[bone1].tail.z = self.armature.data.edit_bones[bone2].head.z
+                self.armature.data.edit_bones[bone1].roll = -math.pi/2
+            elif direction == 'hand':
+                self.armature.data.edit_bones[bone1].tail = self.armature.data.edit_bones[bone2].tail
+                self.armature.data.edit_bones[bone1].tail.z += .01
+                self.armature.data.edit_bones[bone1].head = self.armature.data.edit_bones[bone2].head
+            else:
+                self.armature.data.edit_bones[bone1].tail.y = self.armature.data.edit_bones[bone2].head.y
+                self.armature.data.edit_bones[bone1].tail.z = self.armature.data.edit_bones[bone2].head.z
+                self.armature.data.edit_bones[bone1].roll = 0
+        relocate_tail('cf_j_leg01_R', 'cf_j_foot_R', 'leg')
+        relocate_tail('cf_j_foot_R', 'cf_j_toes_R', 'foot')
+        relocate_tail('cf_j_forearm01_R', 'cf_j_hand_R', 'arm')
+        relocate_tail('cf_pv_hand_R', 'cf_j_hand_R', 'hand')
+        relocate_tail('cf_j_leg01_L', 'cf_j_foot_L', 'leg')
+        relocate_tail('cf_j_foot_L', 'cf_j_toes_L', 'foot')
+        relocate_tail('cf_j_forearm01_L', 'cf_j_hand_L', 'arm')
+        relocate_tail('cf_pv_hand_L', 'cf_j_hand_L', 'hand')
 
     def remove_empty_vertex_groups(self):
         '''check body for groups with no vertexes. Delete if the group is not a bone on the armature'''
@@ -856,44 +857,46 @@ class modify_material(bpy.types.Operator):
 
     def visually_connect_bones(self):
         '''make sure certain bones are visually connected'''
-        if bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
-            c.switch(self.armature, 'edit')
-            # Make sure all toe bones are visually correct if using the better penetration armature 
-            try:
-                self.armature.data.edit_bones['Toes4_L'].tail.y = self.armature.data.edit_bones['Toes30_L'].head.y
-                self.armature.data.edit_bones['Toes4_L'].tail.z = self.armature.data.edit_bones['Toes30_L'].head.z*.8
-                self.armature.data.edit_bones['Toes0_L'].tail.y = self.armature.data.edit_bones['Toes10_L'].head.y
-                self.armature.data.edit_bones['Toes0_L'].tail.z = self.armature.data.edit_bones['Toes30_L'].head.z*.9
-                
-                self.armature.data.edit_bones['Toes30_L'].tail.z = self.armature.data.edit_bones['Toes30_L'].head.z*0.8
-                self.armature.data.edit_bones['Toes30_L'].tail.y = self.armature.data.edit_bones['Toes30_L'].head.y*1.2
-                self.armature.data.edit_bones['Toes20_L'].tail.z = self.armature.data.edit_bones['Toes20_L'].head.z*0.8
-                self.armature.data.edit_bones['Toes20_L'].tail.y = self.armature.data.edit_bones['Toes20_L'].head.y*1.2
-                self.armature.data.edit_bones['Toes10_L'].tail.z = self.armature.data.edit_bones['Toes10_L'].head.z*0.8
-                self.armature.data.edit_bones['Toes10_L'].tail.y = self.armature.data.edit_bones['Toes10_L'].head.y*1.2
-                
-                self.armature.data.edit_bones['Toes4_R'].tail.y = self.armature.data.edit_bones['Toes30_R'].head.y
-                self.armature.data.edit_bones['Toes4_R'].tail.z = self.armature.data.edit_bones['Toes30_R'].head.z*.8
-                self.armature.data.edit_bones['Toes0_R'].tail.y = self.armature.data.edit_bones['Toes10_R'].head.y
-                self.armature.data.edit_bones['Toes0_R'].tail.z = self.armature.data.edit_bones['Toes30_R'].head.z*.9
-                
-                self.armature.data.edit_bones['Toes30_R'].tail.z = self.armature.data.edit_bones['Toes30_R'].head.z*0.8
-                self.armature.data.edit_bones['Toes30_R'].tail.y = self.armature.data.edit_bones['Toes30_R'].head.y*1.2
-                self.armature.data.edit_bones['Toes20_R'].tail.z = self.armature.data.edit_bones['Toes20_R'].head.z*0.8
-                self.armature.data.edit_bones['Toes20_R'].tail.y = self.armature.data.edit_bones['Toes20_R'].head.y*1.2
-                self.armature.data.edit_bones['Toes10_R'].tail.z = self.armature.data.edit_bones['Toes10_R'].head.z*0.8
-                self.armature.data.edit_bones['Toes10_R'].tail.y = self.armature.data.edit_bones['Toes10_R'].head.y*1.2
-            except:
-                #this character isn't using the BP/toe control armature
-                pass
-            c.switch(self.armature, 'object')
+        if not bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
+            return
+        c.switch(self.armature, 'edit')
+        # Make sure all toe bones are visually correct if using the better penetration armature 
+        try:
+            self.armature.data.edit_bones['Toes4_L'].tail.y = self.armature.data.edit_bones['Toes30_L'].head.y
+            self.armature.data.edit_bones['Toes4_L'].tail.z = self.armature.data.edit_bones['Toes30_L'].head.z*.8
+            self.armature.data.edit_bones['Toes0_L'].tail.y = self.armature.data.edit_bones['Toes10_L'].head.y
+            self.armature.data.edit_bones['Toes0_L'].tail.z = self.armature.data.edit_bones['Toes30_L'].head.z*.9
+            
+            self.armature.data.edit_bones['Toes30_L'].tail.z = self.armature.data.edit_bones['Toes30_L'].head.z*0.8
+            self.armature.data.edit_bones['Toes30_L'].tail.y = self.armature.data.edit_bones['Toes30_L'].head.y*1.2
+            self.armature.data.edit_bones['Toes20_L'].tail.z = self.armature.data.edit_bones['Toes20_L'].head.z*0.8
+            self.armature.data.edit_bones['Toes20_L'].tail.y = self.armature.data.edit_bones['Toes20_L'].head.y*1.2
+            self.armature.data.edit_bones['Toes10_L'].tail.z = self.armature.data.edit_bones['Toes10_L'].head.z*0.8
+            self.armature.data.edit_bones['Toes10_L'].tail.y = self.armature.data.edit_bones['Toes10_L'].head.y*1.2
+            
+            self.armature.data.edit_bones['Toes4_R'].tail.y = self.armature.data.edit_bones['Toes30_R'].head.y
+            self.armature.data.edit_bones['Toes4_R'].tail.z = self.armature.data.edit_bones['Toes30_R'].head.z*.8
+            self.armature.data.edit_bones['Toes0_R'].tail.y = self.armature.data.edit_bones['Toes10_R'].head.y
+            self.armature.data.edit_bones['Toes0_R'].tail.z = self.armature.data.edit_bones['Toes30_R'].head.z*.9
+            
+            self.armature.data.edit_bones['Toes30_R'].tail.z = self.armature.data.edit_bones['Toes30_R'].head.z*0.8
+            self.armature.data.edit_bones['Toes30_R'].tail.y = self.armature.data.edit_bones['Toes30_R'].head.y*1.2
+            self.armature.data.edit_bones['Toes20_R'].tail.z = self.armature.data.edit_bones['Toes20_R'].head.z*0.8
+            self.armature.data.edit_bones['Toes20_R'].tail.y = self.armature.data.edit_bones['Toes20_R'].head.y*1.2
+            self.armature.data.edit_bones['Toes10_R'].tail.z = self.armature.data.edit_bones['Toes10_R'].head.z*0.8
+            self.armature.data.edit_bones['Toes10_R'].tail.y = self.armature.data.edit_bones['Toes10_R'].head.y*1.2
+        except:
+            #this character isn't using the BP/toe control armature
+            pass
+        c.switch(self.armature, 'object')
 
     def shorten_kokan_bone(self):
         '''make the kokan bone shorter if it's on the armature'''
-        if bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
-            c.switch(self.armature, 'edit')
-            if self.armature.data.edit_bones.get('cf_j_kokan'):
-                self.armature.data.edit_bones['cf_j_kokan'].tail.z = self.armature.data.edit_bones['cf_s_waist02'].head.z
+        if not bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
+            return
+        c.switch(self.armature, 'edit')
+        if self.armature.data.edit_bones.get('cf_j_kokan'):
+            self.armature.data.edit_bones['cf_j_kokan'].tail.z = self.armature.data.edit_bones['cf_s_waist02'].head.z
 
     def scale_skirt_and_face_bones(self):
         '''scales skirt bones and face bones down. Scales BP bones down if exists'''
@@ -971,509 +974,516 @@ class modify_material(bpy.types.Operator):
 
     def create_eye_reference_bone(self):
         '''Create a bone called "Eyesx that will act as a fixed reference bone for the Eye controller" '''
-        if bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
-            c.switch(self.armature, 'edit')       
-            new_bone = self.armature.data.edit_bones.new('Eyesx')
-            new_bone.head = self.armature.data.edit_bones['cf_hit_head'].tail
-            new_bone.head.y = new_bone.head.y + 0.05
-            new_bone.tail = self.armature.data.edit_bones['cf_J_Mayu_R'].tail
-            new_bone.tail.x = new_bone.head.x
-            new_bone.tail.y = new_bone.head.y
-            new_bone.parent = self.armature.data.edit_bones['cf_j_head']
+        if not bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
+            return
+        c.switch(self.armature, 'edit')       
+        new_bone = self.armature.data.edit_bones.new('Eyesx')
+        new_bone.head = self.armature.data.edit_bones['cf_hit_head'].tail
+        new_bone.head.y = new_bone.head.y + 0.05
+        new_bone.tail = self.armature.data.edit_bones['cf_J_Mayu_R'].tail
+        new_bone.tail.x = new_bone.head.x
+        new_bone.tail.y = new_bone.head.y
+        new_bone.parent = self.armature.data.edit_bones['cf_j_head']
 
     def create_eye_controller_bone(self):
-        if bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
-            c.switch(self.armature, 'edit')
-        
-            #roll the eye bone based on armature, create a copy and name it eye controller
-            armature_data = self.armature.data
-            armature_data.edit_bones['Eyesx'].roll = -math.pi/2
-            copy = self.new_bone('Eye Controller')
-            copy.head = armature_data.edit_bones['Eyesx'].head/2
-            copy.tail = armature_data.edit_bones['Eyesx'].tail/2
-            copy.matrix = armature_data.edit_bones['Eyesx'].matrix
-            copy.parent = armature_data.edit_bones['cf_j_head']
-            armature_data.edit_bones['Eye Controller'].roll = -math.pi/2
+        if not bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
+            return
+        c.switch(self.armature, 'edit')
+    
+        #roll the eye bone based on armature, create a copy and name it eye controller
+        armature_data = self.armature.data
+        armature_data.edit_bones['Eyesx'].roll = -math.pi/2
+        copy = self.new_bone('Eye Controller')
+        copy.head = armature_data.edit_bones['Eyesx'].head/2
+        copy.tail = armature_data.edit_bones['Eyesx'].tail/2
+        copy.matrix = armature_data.edit_bones['Eyesx'].matrix
+        copy.parent = armature_data.edit_bones['cf_j_head']
+        armature_data.edit_bones['Eye Controller'].roll = -math.pi/2
 
-            c.switch(self.armature, 'pose')
-            #Lock y location at zero
-            self.armature.pose.bones['Eye Controller'].lock_location[1] = True
-            #Hide the original Eyesx bone
-            self.armature.data.bones['Eyesx'].hide = True
-            self.set_armature_layer('Eye Controller', 0)
-            c.switch(self.armature, 'object')
+        c.switch(self.armature, 'pose')
+        #Lock y location at zero
+        self.armature.pose.bones['Eye Controller'].lock_location[1] = True
+        #Hide the original Eyesx bone
+        self.armature.data.bones['Eyesx'].hide = True
+        self.set_armature_layer('Eye Controller', 0)
+        c.switch(self.armature, 'object')
 
-            #Create a UV warp modifier for the eyes. Controlled by the Eye controller bone
-            def eyeUV(modifiername, eyevertexgroup):
-                mod = bpy.data.objects['Body'].modifiers.new(modifiername, 'UV_WARP')
-                mod.axis_u = 'Z'
-                mod.axis_v = 'X'
-                mod.object_from = self.armature
-                mod.bone_from = self.armature.data.bones['Eyesx'].name
-                mod.object_to = self.armature
-                mod.bone_to = self.armature.data.bones['Eye Controller'].name
-                mod.vertex_group = eyevertexgroup
-                mod.uv_layer = 'UVMap'
-                mod.show_expanded = False
+        #Create a UV warp modifier for the eyes. Controlled by the Eye controller bone
+        def eyeUV(modifiername, eyevertexgroup):
+            mod = bpy.data.objects['Body'].modifiers.new(modifiername, 'UV_WARP')
+            mod.axis_u = 'Z'
+            mod.axis_v = 'X'
+            mod.object_from = self.armature
+            mod.bone_from = self.armature.data.bones['Eyesx'].name
+            mod.object_to = self.armature
+            mod.bone_to = self.armature.data.bones['Eye Controller'].name
+            mod.vertex_group = eyevertexgroup
+            mod.uv_layer = 'UVMap'
+            mod.show_expanded = False
 
-            eyeUV("Left Eye UV warp",  'Left Eye')
-            eyeUV("Right Eye UV warp", 'Right Eye')
+        eyeUV("Left Eye UV warp",  'Left Eye')
+        eyeUV("Right Eye UV warp", 'Right Eye')
 
     def fix_empty_eye_vertex_groups(self):
         '''checks if the Eyex_L vertex group is empty. If it is, assume the Eyex_R vertex group is also empty,
         then fix it by finding the vertices using the eye material and assign both eyes to Eyex_L'''
-        if bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
-            c.switch(self.body, 'object')
-            #make the cf_J_hitomi_tx_L vertex group active
-            self.body.vertex_groups.active_index = self.body.vertex_groups['cf_J_hitomi_tx_L'].index
-            #go into edit mode and select the vertices in the cf_J_hitomi_tx_L vertex group
-            c.switch(self.body, 'edit')
-            bpy.ops.object.vertex_group_select()
-            #refresh the selection (this needs to be done for some reason)
-            c.switch(self.body, 'edit')
-            #get a list of the selected vertices
-            vgVerts = [v for v in self.body.data.vertices if v.select]
-            #If the list is empty...
-            if not vgVerts:
-                #select the eye materials
-                self.body.active_material_index = self.body.data.materials.find('cf_m_hitomi_00 (Instance)')
+        if not bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
+            return
+        c.switch(self.body, 'object')
+        #make the cf_J_hitomi_tx_L vertex group active
+        self.body.vertex_groups.active_index = self.body.vertex_groups['cf_J_hitomi_tx_L'].index
+        #go into edit mode and select the vertices in the cf_J_hitomi_tx_L vertex group
+        c.switch(self.body, 'edit')
+        bpy.ops.object.vertex_group_select()
+        #refresh the selection (this needs to be done for some reason)
+        c.switch(self.body, 'edit')
+        #get a list of the selected vertices
+        vgVerts = [v for v in self.body.data.vertices if v.select]
+        #If the list is empty...
+        if not vgVerts:
+            #select the eye materials
+            self.body.active_material_index = self.body.data.materials.find('cf_m_hitomi_00 (Instance)')
+            bpy.ops.object.material_slot_select()
+            #Try to select the other eye if it wasn't merged
+            try:
+                self.body.active_material_index = self.body.data.materials.find('cf_m_hitomi_00 (Instance).001')
                 bpy.ops.object.material_slot_select()
-                #Try to select the other eye if it wasn't merged
-                try:
-                    self.body.active_material_index = self.body.data.materials.find('cf_m_hitomi_00 (Instance).001')
-                    bpy.ops.object.material_slot_select()
-                except:
-                    #the eye was already merged, skip
-                    pass
-                #then assign them to the Eyex_L group
-                bpy.ops.object.vertex_group_assign()
-                bpy.ops.mesh.select_all(action = 'DESELECT')
+            except:
+                #the eye was already merged, skip
+                pass
+            #then assign them to the Eyex_L group
+            bpy.ops.object.vertex_group_assign()
+            bpy.ops.mesh.select_all(action = 'DESELECT')
 
     def prepare_ik_bones(self):
         '''reparents some bones to work for IK'''
-        if bpy.context.scene.kkbp.armature_dropdown in ['A','B']:
-            #Select the armature and make it active
+        if not bpy.context.scene.kkbp.armature_dropdown in ['A','B']:
+            return
+        #Select the armature and make it active
+        c.switch(self.armature, 'edit')
+        bpy.context.scene.cursor.location = (0.0, 0.0, 0.0)
+        #separate the PV bones, so the elbow IKs rotate with the spine
+        pvrootupper = self.new_bone('cf_pv_root_upper')
+        pvrootupper.tail = self.armature.data.edit_bones['cf_pv_root'].tail
+        pvrootupper.head = self.armature.data.edit_bones['cf_pv_root'].head
+        #reparent things
+        def reparent(bone,newparent):
+            #refresh armature by going to object mode then back to edit mode?
             c.switch(self.armature, 'edit')
-            bpy.context.scene.cursor.location = (0.0, 0.0, 0.0)
-            #separate the PV bones, so the elbow IKs rotate with the spine
-            pvrootupper = self.new_bone('cf_pv_root_upper')
-            pvrootupper.tail = self.armature.data.edit_bones['cf_pv_root'].tail
-            pvrootupper.head = self.armature.data.edit_bones['cf_pv_root'].head
-            #reparent things
-            def reparent(bone,newparent):
-                #refresh armature by going to object mode then back to edit mode?
-                c.switch(self.armature, 'edit')
-                self.armature.data.edit_bones[bone].parent = self.armature.data.edit_bones[newparent]
-            reparent('cf_pv_root_upper', 'cf_j_spine01')
-            reparent('cf_pv_elbo_R', 'cf_pv_root_upper')
-            reparent('cf_pv_elbo_L', 'cf_pv_root_upper')
+            self.armature.data.edit_bones[bone].parent = self.armature.data.edit_bones[newparent]
+        reparent('cf_pv_root_upper', 'cf_j_spine01')
+        reparent('cf_pv_elbo_R', 'cf_pv_root_upper')
+        reparent('cf_pv_elbo_L', 'cf_pv_root_upper')
 
     def create_ik_bones(self):
         '''give the leg a foot IK, the foot a heel controller, and the arm a hand IK'''
-        if bpy.context.scene.kkbp.armature_dropdown in ['A','B']:
-            center_bone = self.armature.data.edit_bones['cf_n_height']
-            c.switch(self.armature, 'edit')
-            
-            def legIK(legbone, IKtarget, IKpole, IKpoleangle, footIK, kneebone, toebone, footbone):
-                bone = self.armature.pose.bones[legbone]
-
-                #Make IK
-                bone.constraints.new("IK")
-
-                #Set target and subtarget
-                bone.constraints["IK"].target = self.armature
-                bone.constraints["IK"].subtarget = self.armature.data.bones[IKtarget].name
-
-                #Set pole and subpole and pole angle
-                bone.constraints["IK"].pole_target = self.armature
-                bone.constraints["IK"].pole_subtarget = self.armature.data.bones[IKpole].name
-                bone.constraints["IK"].pole_angle = IKpoleangle
-
-                #Set chain length
-                bone.constraints["IK"].chain_count=2
-
-                #Flip foot IK to match foot bone
-                bpy.ops.object.mode_set(mode='EDIT')
-
-                bone = self.armature.data.edit_bones[footIK]
-                
-                bone.head.y = self.armature.data.edit_bones[kneebone].tail.y
-                bone.tail.z = self.armature.data.edit_bones[toebone].head.z
-                bone.head.z = self.armature.data.edit_bones[footbone].head.z
-                
-                bone.head.x = self.armature.data.edit_bones[kneebone].tail.x
-                bone.tail.x = bone.head.x
-
-                #unparent the bone
-                bone.parent = center_bone
-
-            #Run for each side
-            legIK('cf_j_leg01_R', 'cf_pv_foot_R', 'cf_pv_knee_R', math.pi/2, 'cf_pv_foot_R', 'cf_j_leg01_R', 'cf_j_toes_R', 'cf_j_foot_R')
-            legIK('cf_j_leg01_L',  'cf_pv_foot_L', 'cf_pv_knee_L', math.pi/2, 'cf_pv_foot_L', 'cf_j_leg01_L', 'cf_j_toes_L', 'cf_j_foot_L')
-
-            #adds an IK for the toe bone, moves the knee IKs a little closer to the body
-            def footIK(footbone, toebone, footIK, kneebone, legbone):
-
-                bone = self.armature.pose.bones[footbone]
-
-                #Make Copy rotation
-                bone.constraints.new("COPY_ROTATION")
-
-                #Set target and subtarget
-                bone.constraints[0].target=self.armature
-                bone.constraints[0].subtarget=self.armature.data.bones[footIK].name
-
-                #Set the rotation to local space
-                bone.constraints[0].target_space = 'LOCAL_WITH_PARENT'
-                bone.constraints[0].owner_space = 'LOCAL_WITH_PARENT'
-                
-                # move knee IKs closer to body
-                kneedist = round((self.armature.pose.bones[footbone].head - self.armature.pose.bones[footbone].tail).length,2)
-                self.armature.data.edit_bones[kneebone].head.y = kneedist * -5
-                self.armature.data.edit_bones[kneebone].tail.y = kneedist * -5
-
-                # make toe bone shorter
-                self.armature.data.edit_bones[toebone].tail.z = self.armature.data.edit_bones[legbone].head.z * 0.2
-
-            #Run for each side
-            footIK('cf_j_foot_R', 'cf_j_toes_R', 'cf_pv_foot_R', 'cf_pv_knee_R', 'cf_j_leg01_R')
-            footIK('cf_j_foot_L',  'cf_j_toes_L', 'cf_pv_foot_L', 'cf_pv_knee_L', 'cf_j_leg01_L')
-
-            #Add a heel controller to the foot
-            def heelController(footbone, footIK, toebone):   
-                c.switch(self.armature, 'edit')             
-                #duplicate the foot IK. This is the new master bone
-                armatureData = self.armature.data
-                masterbone = self.new_bone('MasterFootIK.' + footbone[-1])
-                masterbone.head = armatureData.edit_bones[footbone].head
-                masterbone.tail = armatureData.edit_bones[footbone].tail
-                masterbone.matrix = armatureData.edit_bones[footbone].matrix
-                masterbone.parent = self.armature.data.edit_bones['cf_n_height']
-                
-                #Create the heel controller
-                heelIK = self.new_bone('HeelIK.' + footbone[-1])
-                heelIK.head = armatureData.edit_bones[footbone].tail
-                heelIK.tail = armatureData.edit_bones[footbone].head
-                heelIK.parent = masterbone
-                heelIK.tail.y *= .5
-
-                #parent footIK to heel controller
-                armatureData.edit_bones[footIK].parent = heelIK
-                
-                #make a bone to pin the foot
-                footPin = self.new_bone('FootPin.' + footbone[-1])
-                footPin.head = armatureData.edit_bones[toebone].head
-                footPin.tail = armatureData.edit_bones[toebone].tail
-                footPin.parent = masterbone
-                footPin.tail.z*=.8
-                    
-                #make a bone to allow rotation of the toe along an arc
-                toeRotator = self.new_bone('ToeRotator.' + footbone[-1])
-                toeRotator.head = armatureData.edit_bones[toebone].head
-                toeRotator.tail = armatureData.edit_bones[toebone].tail
-                toeRotator.parent = masterbone
-                
-                #make a bone to pin the toe
-                toePin = self.new_bone('ToePin.' + footbone[-1])
-                toePin.head = armatureData.edit_bones[toebone].tail
-                toePin.tail = armatureData.edit_bones[toebone].tail
-                toePin.parent = toeRotator
-                toePin.tail.z *=1.2
-                
-                #pin the foot
-                c.switch(self.armature, 'pose')
-                bone = self.armature.pose.bones[footbone]
-                bone.constraints.new("IK")
-                bone.constraints["IK"].target = self.armature
-                bone.constraints["IK"].subtarget = self.armature.data.bones['FootPin.' + footbone[-1]].name
-                bone.constraints["IK"].chain_count=1
-                
-                #pin the toe
-                bone = self.armature.pose.bones[toebone]
-                bone.constraints.new("IK")
-                bone.constraints["IK"].target = self.armature
-                bone.constraints["IK"].subtarget = self.armature.data.bones['ToePin.' + footbone[-1]].name
-                bone.constraints["IK"].chain_count=1
-                
-                #move these bones to armature layer 2
-                layer2 =   (False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False)
-                bpy.ops.pose.select_all(action='DESELECT')
-                self.armature.data.bones['FootPin.' + footbone[-1]].select = True
-                self.armature.data.bones['ToePin.' + footbone[-1]].select = True
-                self.armature.data.bones[toebone].select = True
-                self.armature.data.bones[footIK].select = True
-                bpy.ops.pose.bone_layers(layers=layer2)
-                
-            heelController('cf_j_foot_L', 'cf_pv_foot_L', 'cf_j_toes_L')
-            heelController('cf_j_foot_R', 'cf_pv_foot_R', 'cf_j_toes_R')
-
-            #Give the new foot IKs an mmd bone name
-            self.armature.pose.bones['MasterFootIK.L'].mmd_bone.name_j = '左足ＩＫ'
-            self.armature.pose.bones['MasterFootIK.R'].mmd_bone.name_j = '右足ＩＫ'
-            
-            #add an IK to the arm, makes the wrist bone copy the hand IK's rotation, moves elbow IKs a little closer to the body
-            def armhandIK(elbowbone, handcontroller, elbowcontroller, IKangle, wristbone):
-                #Set IK bone
-                bone = self.armature.pose.bones[elbowbone]
-
-                #Add IK
-                bone.constraints.new("IK")
-
-                #Set target and subtarget
-                bone.constraints["IK"].target = self.armature
-                bone.constraints["IK"].subtarget = self.armature.data.bones[handcontroller].name
-
-                #Set pole and subpole and pole angle
-                bone.constraints["IK"].pole_target = self.armature
-                bone.constraints["IK"].pole_subtarget = self.armature.data.bones[elbowcontroller].name
-                bone.constraints["IK"].pole_angle= IKangle
-
-                #Set chain length
-                bone.constraints["IK"].chain_count=2
-
-                #unparent the bone
-                c.switch(self.armature, 'edit')
-                bone = self.armature.data.edit_bones[handcontroller]
-                bone.parent = self.armature.data.edit_bones['cf_n_height']
-                c.switch(self.armature, 'pose')
-
-                # Set hand rotation then hide it
-                bone = self.armature.pose.bones[wristbone]
-
-                bone.constraints.new("COPY_ROTATION")
-                bone.constraints[0].target=self.armature
-                bone.constraints[0].subtarget=self.armature.data.bones[handcontroller].name
-                
-                c.switch(self.armature, 'edit')
-                self.armature.data.bones[wristbone].hide = True
-                c.switch(self.armature, 'pose')
-
-                # move elbow IKs closer to body
-                elbowdist = round((self.armature.pose.bones[elbowbone].head - self.armature.pose.bones[elbowbone].tail).length,2)
-                self.armature.data.edit_bones[elbowcontroller].head.y = elbowdist*2
-                self.armature.data.edit_bones[elbowcontroller].tail.y = elbowdist*2
-
-            #Run for each side
-            armhandIK('cf_j_forearm01_R', 'cf_pv_hand_R', 'cf_pv_elbo_R', 0, 'cf_j_hand_R')
-            armhandIK('cf_j_forearm01_L',  'cf_pv_hand_L', 'cf_pv_elbo_L', 180, 'cf_j_hand_L')
-
-            #move newly created bones to correct armature layers
-            self.set_armature_layer('MasterFootIK.L', 0)
-            self.set_armature_layer('MasterFootIK.R', 0)
-            self.set_armature_layer('HeelIK.L', 0)
-            self.set_armature_layer('HeelIK.R', 0)
-            self.set_armature_layer('ToeRotator.L', 0)
-            self.set_armature_layer('ToeRotator.R', 0)
-            self.set_armature_layer('cf_d_bust00', 0)
-            
-            self.armature.data.bones['cf_pv_root_upper'].hide = True
+        if not bpy.context.scene.kkbp.armature_dropdown in ['A','B']:
+            return
         
-            bpy.ops.object.mode_set(mode='OBJECT')
+        center_bone = self.armature.data.edit_bones['cf_n_height']
+        c.switch(self.armature, 'edit')
+        
+        def legIK(legbone, IKtarget, IKpole, IKpoleangle, footIK, kneebone, toebone, footbone):
+            bone = self.armature.pose.bones[legbone]
+
+            #Make IK
+            bone.constraints.new("IK")
+
+            #Set target and subtarget
+            bone.constraints["IK"].target = self.armature
+            bone.constraints["IK"].subtarget = self.armature.data.bones[IKtarget].name
+
+            #Set pole and subpole and pole angle
+            bone.constraints["IK"].pole_target = self.armature
+            bone.constraints["IK"].pole_subtarget = self.armature.data.bones[IKpole].name
+            bone.constraints["IK"].pole_angle = IKpoleangle
+
+            #Set chain length
+            bone.constraints["IK"].chain_count=2
+
+            #Flip foot IK to match foot bone
+            bpy.ops.object.mode_set(mode='EDIT')
+
+            bone = self.armature.data.edit_bones[footIK]
+            
+            bone.head.y = self.armature.data.edit_bones[kneebone].tail.y
+            bone.tail.z = self.armature.data.edit_bones[toebone].head.z
+            bone.head.z = self.armature.data.edit_bones[footbone].head.z
+            
+            bone.head.x = self.armature.data.edit_bones[kneebone].tail.x
+            bone.tail.x = bone.head.x
+
+            #unparent the bone
+            bone.parent = center_bone
+
+        #Run for each side
+        legIK('cf_j_leg01_R', 'cf_pv_foot_R', 'cf_pv_knee_R', math.pi/2, 'cf_pv_foot_R', 'cf_j_leg01_R', 'cf_j_toes_R', 'cf_j_foot_R')
+        legIK('cf_j_leg01_L',  'cf_pv_foot_L', 'cf_pv_knee_L', math.pi/2, 'cf_pv_foot_L', 'cf_j_leg01_L', 'cf_j_toes_L', 'cf_j_foot_L')
+
+        #adds an IK for the toe bone, moves the knee IKs a little closer to the body
+        def footIK(footbone, toebone, footIK, kneebone, legbone):
+
+            bone = self.armature.pose.bones[footbone]
+
+            #Make Copy rotation
+            bone.constraints.new("COPY_ROTATION")
+
+            #Set target and subtarget
+            bone.constraints[0].target=self.armature
+            bone.constraints[0].subtarget=self.armature.data.bones[footIK].name
+
+            #Set the rotation to local space
+            bone.constraints[0].target_space = 'LOCAL_WITH_PARENT'
+            bone.constraints[0].owner_space = 'LOCAL_WITH_PARENT'
+            
+            # move knee IKs closer to body
+            kneedist = round((self.armature.pose.bones[footbone].head - self.armature.pose.bones[footbone].tail).length,2)
+            self.armature.data.edit_bones[kneebone].head.y = kneedist * -5
+            self.armature.data.edit_bones[kneebone].tail.y = kneedist * -5
+
+            # make toe bone shorter
+            self.armature.data.edit_bones[toebone].tail.z = self.armature.data.edit_bones[legbone].head.z * 0.2
+
+        #Run for each side
+        footIK('cf_j_foot_R', 'cf_j_toes_R', 'cf_pv_foot_R', 'cf_pv_knee_R', 'cf_j_leg01_R')
+        footIK('cf_j_foot_L',  'cf_j_toes_L', 'cf_pv_foot_L', 'cf_pv_knee_L', 'cf_j_leg01_L')
+
+        #Add a heel controller to the foot
+        def heelController(footbone, footIK, toebone):   
+            c.switch(self.armature, 'edit')             
+            #duplicate the foot IK. This is the new master bone
+            armatureData = self.armature.data
+            masterbone = self.new_bone('MasterFootIK.' + footbone[-1])
+            masterbone.head = armatureData.edit_bones[footbone].head
+            masterbone.tail = armatureData.edit_bones[footbone].tail
+            masterbone.matrix = armatureData.edit_bones[footbone].matrix
+            masterbone.parent = self.armature.data.edit_bones['cf_n_height']
+            
+            #Create the heel controller
+            heelIK = self.new_bone('HeelIK.' + footbone[-1])
+            heelIK.head = armatureData.edit_bones[footbone].tail
+            heelIK.tail = armatureData.edit_bones[footbone].head
+            heelIK.parent = masterbone
+            heelIK.tail.y *= .5
+
+            #parent footIK to heel controller
+            armatureData.edit_bones[footIK].parent = heelIK
+            
+            #make a bone to pin the foot
+            footPin = self.new_bone('FootPin.' + footbone[-1])
+            footPin.head = armatureData.edit_bones[toebone].head
+            footPin.tail = armatureData.edit_bones[toebone].tail
+            footPin.parent = masterbone
+            footPin.tail.z*=.8
+                
+            #make a bone to allow rotation of the toe along an arc
+            toeRotator = self.new_bone('ToeRotator.' + footbone[-1])
+            toeRotator.head = armatureData.edit_bones[toebone].head
+            toeRotator.tail = armatureData.edit_bones[toebone].tail
+            toeRotator.parent = masterbone
+            
+            #make a bone to pin the toe
+            toePin = self.new_bone('ToePin.' + footbone[-1])
+            toePin.head = armatureData.edit_bones[toebone].tail
+            toePin.tail = armatureData.edit_bones[toebone].tail
+            toePin.parent = toeRotator
+            toePin.tail.z *=1.2
+            
+            #pin the foot
+            c.switch(self.armature, 'pose')
+            bone = self.armature.pose.bones[footbone]
+            bone.constraints.new("IK")
+            bone.constraints["IK"].target = self.armature
+            bone.constraints["IK"].subtarget = self.armature.data.bones['FootPin.' + footbone[-1]].name
+            bone.constraints["IK"].chain_count=1
+            
+            #pin the toe
+            bone = self.armature.pose.bones[toebone]
+            bone.constraints.new("IK")
+            bone.constraints["IK"].target = self.armature
+            bone.constraints["IK"].subtarget = self.armature.data.bones['ToePin.' + footbone[-1]].name
+            bone.constraints["IK"].chain_count=1
+            
+            #move these bones to armature layer 2
+            layer2 =   (False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False)
+            bpy.ops.pose.select_all(action='DESELECT')
+            self.armature.data.bones['FootPin.' + footbone[-1]].select = True
+            self.armature.data.bones['ToePin.' + footbone[-1]].select = True
+            self.armature.data.bones[toebone].select = True
+            self.armature.data.bones[footIK].select = True
+            bpy.ops.pose.bone_layers(layers=layer2)
+            
+        heelController('cf_j_foot_L', 'cf_pv_foot_L', 'cf_j_toes_L')
+        heelController('cf_j_foot_R', 'cf_pv_foot_R', 'cf_j_toes_R')
+
+        #Give the new foot IKs an mmd bone name
+        self.armature.pose.bones['MasterFootIK.L'].mmd_bone.name_j = '左足ＩＫ'
+        self.armature.pose.bones['MasterFootIK.R'].mmd_bone.name_j = '右足ＩＫ'
+        
+        #add an IK to the arm, makes the wrist bone copy the hand IK's rotation, moves elbow IKs a little closer to the body
+        def armhandIK(elbowbone, handcontroller, elbowcontroller, IKangle, wristbone):
+            #Set IK bone
+            bone = self.armature.pose.bones[elbowbone]
+
+            #Add IK
+            bone.constraints.new("IK")
+
+            #Set target and subtarget
+            bone.constraints["IK"].target = self.armature
+            bone.constraints["IK"].subtarget = self.armature.data.bones[handcontroller].name
+
+            #Set pole and subpole and pole angle
+            bone.constraints["IK"].pole_target = self.armature
+            bone.constraints["IK"].pole_subtarget = self.armature.data.bones[elbowcontroller].name
+            bone.constraints["IK"].pole_angle= IKangle
+
+            #Set chain length
+            bone.constraints["IK"].chain_count=2
+
+            #unparent the bone
+            c.switch(self.armature, 'edit')
+            bone = self.armature.data.edit_bones[handcontroller]
+            bone.parent = self.armature.data.edit_bones['cf_n_height']
+            c.switch(self.armature, 'pose')
+
+            # Set hand rotation then hide it
+            bone = self.armature.pose.bones[wristbone]
+
+            bone.constraints.new("COPY_ROTATION")
+            bone.constraints[0].target=self.armature
+            bone.constraints[0].subtarget=self.armature.data.bones[handcontroller].name
+            
+            c.switch(self.armature, 'edit')
+            self.armature.data.bones[wristbone].hide = True
+            c.switch(self.armature, 'pose')
+
+            # move elbow IKs closer to body
+            elbowdist = round((self.armature.pose.bones[elbowbone].head - self.armature.pose.bones[elbowbone].tail).length,2)
+            self.armature.data.edit_bones[elbowcontroller].head.y = elbowdist*2
+            self.armature.data.edit_bones[elbowcontroller].tail.y = elbowdist*2
+
+        #Run for each side
+        armhandIK('cf_j_forearm01_R', 'cf_pv_hand_R', 'cf_pv_elbo_R', 0, 'cf_j_hand_R')
+        armhandIK('cf_j_forearm01_L',  'cf_pv_hand_L', 'cf_pv_elbo_L', 180, 'cf_j_hand_L')
+
+        #move newly created bones to correct armature layers
+        self.set_armature_layer('MasterFootIK.L', 0)
+        self.set_armature_layer('MasterFootIK.R', 0)
+        self.set_armature_layer('HeelIK.L', 0)
+        self.set_armature_layer('HeelIK.R', 0)
+        self.set_armature_layer('ToeRotator.L', 0)
+        self.set_armature_layer('ToeRotator.R', 0)
+        self.set_armature_layer('cf_d_bust00', 0)
+        
+        self.armature.data.bones['cf_pv_root_upper'].hide = True
+    
+        bpy.ops.object.mode_set(mode='OBJECT')
 
     def create_joint_drivers(self):
         '''There are several joint corrections that use the cf_d_ and cf_s_ bones on the armature. This function attempts to replicate them using blender drivers and bone constraints'''
-        if bpy.context.scene.kkbp.armature_dropdown in ['A','B']:
-            c.switch(self.armature, 'pose')
-            #generic function to set a copy rotation modifier
-            def set_copy(bone, bonetarget, influence, axis = 'all', mix = 'replace', space = 'LOCAL'):
-                constraint = self.armature.pose.bones[bone].constraints.new("COPY_ROTATION")
-                constraint.target = self.armature
-                constraint.subtarget = bonetarget
-                constraint.influence = influence
-                constraint.target_space = space
-                constraint.owner_space = space
+        if not bpy.context.scene.kkbp.armature_dropdown in ['A','B']:
+            return
+        c.switch(self.armature, 'pose')
+        #generic function to set a copy rotation modifier
+        def set_copy(bone, bonetarget, influence, axis = 'all', mix = 'replace', space = 'LOCAL'):
+            constraint = self.armature.pose.bones[bone].constraints.new("COPY_ROTATION")
+            constraint.target = self.armature
+            constraint.subtarget = bonetarget
+            constraint.influence = influence
+            constraint.target_space = space
+            constraint.owner_space = space
 
-                if axis == 'X':
-                    constraint.use_y = False
-                    constraint.use_z = False
-                
-                elif axis == 'Y':
-                    constraint.use_x = False
-                    constraint.use_z = False
-                
-                elif axis == 'antiX':
-                    constraint.use_y = False
-                    constraint.use_z = False
-                    constraint.invert_x = True
-                
-                elif axis == 'Z':
-                    constraint.use_x = False
-                    constraint.use_y = False
-
-                if mix == 'add':
-                    constraint.mix_mode = 'ADD'
-
-            #setup most of the drivers with this
-            set_copy('cf_d_shoulder02_L', 'cf_j_arm00_L', 0.5)
-            set_copy('cf_d_arm01_L', 'cf_j_arm00_L', 0.75, axis = 'X')
-            set_copy('cf_d_arm02_L', 'cf_j_arm00_L', 0.5, axis = 'X')
-            set_copy('cf_d_arm03_L', 'cf_j_arm00_L', 0.25, axis = 'X')
-            set_copy('cf_d_forearm02_L', 'cf_j_hand_L', 0.33, axis = 'X')
-            set_copy('cf_d_wrist_L', 'cf_j_hand_L', 0.33, axis = 'X', )
-            set_copy('cf_d_kneeF_L', 'cf_j_leg01_L', 0.5, axis = 'antiX', mix = 'add')
-            set_copy('cf_d_siri_L', 'cf_j_thigh00_L', 0.33)
-            set_copy('cf_d_thigh02_L', 'cf_j_thigh00_L', 0.25, axis='Y')
-            set_copy('cf_d_thigh03_L', 'cf_j_thigh00_L', 0.25, axis='Y')
-            set_copy('cf_d_leg02_L', 'cf_j_leg01_L', 0.33, axis='Y')
-            set_copy('cf_d_leg03_L', 'cf_j_leg01_L', 0.66, axis='Y')
-
-            set_copy('cf_d_shoulder02_R', 'cf_j_arm00_R', 0.5)
-            set_copy('cf_d_arm01_R', 'cf_j_arm00_R', 0.75, axis = 'X')
-            set_copy('cf_d_arm02_R', 'cf_j_arm00_R', 0.5, axis = 'X')
-            set_copy('cf_d_arm03_R', 'cf_j_arm00_R', 0.25, axis = 'X')
-            set_copy('cf_d_forearm02_R', 'cf_j_hand_R', 0.33, axis = 'X')
-            set_copy('cf_d_wrist_R', 'cf_j_hand_R', 0.33, axis = 'X')
-            set_copy('cf_d_kneeF_R', 'cf_j_leg01_R', 0.5, axis = 'antiX', mix = 'add')
-            set_copy('cf_d_siri_R', 'cf_j_thigh00_R', 0.33)
-            set_copy('cf_d_thigh02_R', 'cf_j_thigh00_R', 0.25, axis='Y')
-            set_copy('cf_d_thigh03_R', 'cf_j_thigh00_R', 0.25, axis='Y')
-            set_copy('cf_d_leg02_R', 'cf_j_leg01_R', 0.33, axis='Y')
-            set_copy('cf_d_leg03_R', 'cf_j_leg01_R', 0.66, axis='Y')
-
-            #move the waist some if only one leg is rotated
-            set_copy('cf_s_waist02', 'cf_j_thigh00_L', 0.1, mix = 'add')
-            set_copy('cf_s_waist02', 'cf_j_thigh00_R', 0.1, mix = 'add')
-            #set_copy('cf_s_waist02', 'cf_j_thigh00_R', 0.1, mix = 'add')
-            #set_copy('cf_s_waist02', 'cf_j_thigh00_L', 0.1, mix = 'add')
-
-            set_copy('cf_s_waist02', 'cf_j_waist02', 0.5, axis = 'antiX')
-
-            #this rotation helps when doing a split
-            set_copy('cf_s_leg_L', 'cf_j_thigh00_L', .9, axis = 'Z', mix = 'add')
-            set_copy('cf_s_leg_R', 'cf_j_thigh00_R', .9, axis = 'Z', mix = 'add')
-
-            #generic function for creating a driver
-            def setDriver (bone, drivertype, drivertypeselect, drivertarget, drivertt, drivermult, expresstype = 'move'):
-
-                #add driver to first component
-                #drivertype is the kind of driver you want to be applied to the bone and can be location/rotation
-                #drivertypeselect is the component of the bone you want the driver to be applied to
-                # for location it's (0 is x component, y is 1, z is 2)
-                # for rotation it's (0 is w, 1 is x, etc)
-                # for scale it's (0 is x, 1 is y, 2 is z)
-                driver = self.armature.pose.bones[bone].driver_add(drivertype, drivertypeselect)
-
-                #add driver variable
-                vari = driver.driver.variables.new()
-                vari.name = 'var'
-                vari.type = 'TRANSFORMS'
-
-                #set the target and subtarget
-                target = vari.targets[0]
-                target.id = self.armature
-                target.bone_target = self.armature.pose.bones[drivertarget].name
-
-                #set the transforms for the target. this can be rotation or location 
-                target.transform_type = drivertt
-
-                #set the transform space. can be world space too
-                target.transform_space = 'LOCAL_SPACE'
-                target.rotation_mode = 'QUATERNION' if expresstype in ['scale', 'quat'] else 'AUTO'
-
-                #use the distance to the target bone's parent to make results consistent for different sized bones
-                targetbonelength = str(round((self.armature.pose.bones[drivertarget].head - self.armature.pose.bones[drivertarget].parent.head).length,3))
-                
-                #driver expression is the rotation value of the target bone multiplied by a percentage of the driver target bone's length
-                if expresstype in ['move', 'quat']:
-                    driver.driver.expression = vari.name + '*' + targetbonelength + '*' + drivermult 
-                
-                #move but only during positive rotations
-                elif expresstype == 'movePos':
-                    driver.driver.expression = vari.name + '*' + targetbonelength + '*' + drivermult + ' if ' + vari.name + ' > 0 else 0'
-                
-                #move but only during negative rotations
-                elif expresstype == 'moveNeg':
-                    driver.driver.expression = vari.name + '*' + targetbonelength + '*' + drivermult + ' if ' + vari.name + ' < 0 else 0'
-                
-                #move but the ABS value
-                elif expresstype == 'moveABS':    
-                    driver.driver.expression = 'abs(' + vari.name + '*' + targetbonelength + '*' + drivermult +')'
-
-                #move but the negative ABS value
-                elif expresstype == 'moveABSNeg':
-                    driver.driver.expression = '-abs(' + vari.name + '*' + targetbonelength + '*' + drivermult +')'
-                
-                #move but exponentially
-                elif expresstype == 'moveexp':
-                    driver.driver.expression = vari.name + '*' + vari.name + '*' + targetbonelength + '*' + drivermult
-                
-                elif expresstype == 'scale':
-                    driver.driver.expression = '1 + ' + vari.name + '*' + targetbonelength + '*' + drivermult
-                
-                elif expresstype == 'rotation':
-                    driver.driver.expression = vari.name + '*' + targetbonelength + '*' + drivermult
-
-            #Set the remaining joint correction drivers
-            #set knee joint corrections. These go in toward the body and down toward the foot at an exponential rate
-            setDriver('cf_s_kneeB_R', 'location', 1, 'cf_j_leg01_R', 'ROT_X',  '-0.2', expresstype = 'moveexp')
-            setDriver('cf_s_kneeB_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '-0.08')
-
-            setDriver('cf_s_kneeB_L', 'location', 1, 'cf_j_leg01_L', 'ROT_X',  '-0.2', expresstype = 'moveexp')
-            setDriver('cf_s_kneeB_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '-0.08')
-
-            #knee correction to thicken the knee in a kneeling pose if the rigify armature is being used
-            # if bpy.context.scene.kkbp.armature_dropdown == 'B' and bpy.context.scene.kkbp.categorize_dropdown in ['A', 'B', 'C']:
-            #     setDriver('cf_s_leg01_R', 'scale', 2, 'cf_j_leg01_R', 'ROT_X',  '1',  expresstype = 'scale')
-            #     setDriver('cf_s_leg01_R', 'scale', 0, 'cf_j_leg01_R', 'ROT_X',  '-2', expresstype = 'scale')
-            #     setDriver('cf_s_leg01_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '0.05', expresstype='quat')
-            #     setDriver('cf_d_thigh03_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',   '.015')
-
-            #     setDriver('cf_s_leg01_L', 'scale', 2, 'cf_j_leg01_L', 'ROT_X',  '1', expresstype = 'scale')
-            #     setDriver('cf_s_leg01_L', 'scale', 0, 'cf_j_leg01_L', 'ROT_X',  '-2', expresstype = 'scale')
-            #     setDriver('cf_s_leg01_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '0.05', expresstype='quat')
-            #     setDriver('cf_d_thigh03_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '-.015')
-
-            #knee tip corrections go up toward the waist and in toward the body, also rotate a bit
-            setDriver('cf_d_kneeF_R', 'location', 1, 'cf_j_leg01_R', 'ROT_X',  '0.02')
-            setDriver('cf_d_kneeF_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '-0.04')
-
-            setDriver('cf_d_kneeF_L', 'location', 1, 'cf_j_leg01_L', 'ROT_X',  '0.02')
-            setDriver('cf_d_kneeF_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '-0.04')
-
-            #butt corrections go slightly up to the spine and in to the waist 
-            setDriver('cf_d_siri_R', 'location', 1, 'cf_j_thigh00_R', 'ROT_X',  '0.02')
-            setDriver('cf_d_siri_R', 'location', 2, 'cf_j_thigh00_R',  'ROT_X',  '0.02')
-
-            setDriver('cf_d_siri_L', 'location', 1, 'cf_j_thigh00_L', 'ROT_X',  '0.02')
-            setDriver('cf_d_siri_L', 'location', 2, 'cf_j_thigh00_L',  'ROT_X',  '0.02')
+            if axis == 'X':
+                constraint.use_y = False
+                constraint.use_z = False
             
-            #hand corrections go up to the head and in towards the elbow
-            setDriver('cf_d_hand_R', 'location', 0, 'cf_j_hand_R', 'ROT_Z',  '-0.4', expresstype = 'moveNeg')
-            setDriver('cf_d_hand_R', 'location', 1, 'cf_j_hand_R', 'ROT_Z', '-0.4', expresstype = 'moveNeg')
+            elif axis == 'Y':
+                constraint.use_x = False
+                constraint.use_z = False
+            
+            elif axis == 'antiX':
+                constraint.use_y = False
+                constraint.use_z = False
+                constraint.invert_x = True
+            
+            elif axis == 'Z':
+                constraint.use_x = False
+                constraint.use_y = False
 
-            setDriver('cf_d_hand_L', 'location', 0, 'cf_j_hand_L', 'ROT_Z', '-0.4', expresstype = 'movePos')
-            setDriver('cf_d_hand_L', 'location', 1, 'cf_j_hand_L', 'ROT_Z', '0.4', expresstype = 'movePos')
+            if mix == 'add':
+                constraint.mix_mode = 'ADD'
 
-            #elboback goes out to the chest and into the shoulder
-            #elbo goes does the opposite
-            setDriver('cf_s_elboback_R', 'location', 0, 'cf_j_forearm01_R', 'ROT_X',  '-0.7')
-            setDriver('cf_s_elboback_R', 'location', 2, 'cf_j_forearm01_R', 'ROT_X',  '0.6')
-            setDriver('cf_s_elbo_R', 'location', 0, 'cf_j_forearm01_R', 'ROT_X',  '0.025')
-            setDriver('cf_s_elbo_R', 'location', 2, 'cf_j_forearm01_R', 'ROT_X',  '0.025')
+        #setup most of the drivers with this
+        set_copy('cf_d_shoulder02_L', 'cf_j_arm00_L', 0.5)
+        set_copy('cf_d_arm01_L', 'cf_j_arm00_L', 0.75, axis = 'X')
+        set_copy('cf_d_arm02_L', 'cf_j_arm00_L', 0.5, axis = 'X')
+        set_copy('cf_d_arm03_L', 'cf_j_arm00_L', 0.25, axis = 'X')
+        set_copy('cf_d_forearm02_L', 'cf_j_hand_L', 0.33, axis = 'X')
+        set_copy('cf_d_wrist_L', 'cf_j_hand_L', 0.33, axis = 'X', )
+        set_copy('cf_d_kneeF_L', 'cf_j_leg01_L', 0.5, axis = 'antiX', mix = 'add')
+        set_copy('cf_d_siri_L', 'cf_j_thigh00_L', 0.33)
+        set_copy('cf_d_thigh02_L', 'cf_j_thigh00_L', 0.25, axis='Y')
+        set_copy('cf_d_thigh03_L', 'cf_j_thigh00_L', 0.25, axis='Y')
+        set_copy('cf_d_leg02_L', 'cf_j_leg01_L', 0.33, axis='Y')
+        set_copy('cf_d_leg03_L', 'cf_j_leg01_L', 0.66, axis='Y')
 
-            setDriver('cf_s_elboback_L', 'location', 0, 'cf_j_forearm01_L', 'ROT_X',  '-0.7')
-            setDriver('cf_s_elboback_L', 'location', 2, 'cf_j_forearm01_L', 'ROT_X',  '-0.6')
-            setDriver('cf_s_elbo_L', 'location', 0, 'cf_j_forearm01_L', 'ROT_X',  '0.025')
-            setDriver('cf_s_elbo_L', 'location', 2, 'cf_j_forearm01_L', 'ROT_X',  '-0.025')
+        set_copy('cf_d_shoulder02_R', 'cf_j_arm00_R', 0.5)
+        set_copy('cf_d_arm01_R', 'cf_j_arm00_R', 0.75, axis = 'X')
+        set_copy('cf_d_arm02_R', 'cf_j_arm00_R', 0.5, axis = 'X')
+        set_copy('cf_d_arm03_R', 'cf_j_arm00_R', 0.25, axis = 'X')
+        set_copy('cf_d_forearm02_R', 'cf_j_hand_R', 0.33, axis = 'X')
+        set_copy('cf_d_wrist_R', 'cf_j_hand_R', 0.33, axis = 'X')
+        set_copy('cf_d_kneeF_R', 'cf_j_leg01_R', 0.5, axis = 'antiX', mix = 'add')
+        set_copy('cf_d_siri_R', 'cf_j_thigh00_R', 0.33)
+        set_copy('cf_d_thigh02_R', 'cf_j_thigh00_R', 0.25, axis='Y')
+        set_copy('cf_d_thigh03_R', 'cf_j_thigh00_R', 0.25, axis='Y')
+        set_copy('cf_d_leg02_R', 'cf_j_leg01_R', 0.33, axis='Y')
+        set_copy('cf_d_leg03_R', 'cf_j_leg01_R', 0.66, axis='Y')
 
-            #shoulder bones have a few corrections as well
-            setDriver('cf_d_shoulder02_R', 'location', 1, 'cf_j_arm00_R', 'ROT_Z',  '-0.1', expresstype = 'moveNeg')
-            setDriver('cf_d_shoulder02_R', 'location', 0, 'cf_j_arm00_R', 'ROT_Y',  '0.1', expresstype = 'moveABSNeg')
-            setDriver('cf_d_shoulder02_R', 'location', 2, 'cf_j_arm00_R', 'ROT_Y',  '-0.1')
+        #move the waist some if only one leg is rotated
+        set_copy('cf_s_waist02', 'cf_j_thigh00_L', 0.1, mix = 'add')
+        set_copy('cf_s_waist02', 'cf_j_thigh00_R', 0.1, mix = 'add')
+        #set_copy('cf_s_waist02', 'cf_j_thigh00_R', 0.1, mix = 'add')
+        #set_copy('cf_s_waist02', 'cf_j_thigh00_L', 0.1, mix = 'add')
 
-            setDriver('cf_d_shoulder02_L', 'location', 1, 'cf_j_arm00_L', 'ROT_Z',  '0.1', expresstype = 'movePos')
-            setDriver('cf_d_shoulder02_L', 'location', 0, 'cf_j_arm00_L', 'ROT_Y',  '-0.1', expresstype = 'moveABS')
-            setDriver('cf_d_shoulder02_L', 'location', 2, 'cf_j_arm00_L', 'ROT_Y',  '0.1')
+        set_copy('cf_s_waist02', 'cf_j_waist02', 0.5, axis = 'antiX')
 
-            #leg corrections go up to the head and slightly forwards/backwards
-            setDriver('cf_s_leg_R', 'location', 1, 'cf_j_thigh00_R', 'ROT_X',  '1', expresstype = 'moveexp')
-            setDriver('cf_s_leg_R', 'location', 2, 'cf_j_thigh00_R', 'ROT_X',  '-1.5')
+        #this rotation helps when doing a split
+        set_copy('cf_s_leg_L', 'cf_j_thigh00_L', .9, axis = 'Z', mix = 'add')
+        set_copy('cf_s_leg_R', 'cf_j_thigh00_R', .9, axis = 'Z', mix = 'add')
 
-            setDriver('cf_s_leg_L', 'location', 1, 'cf_j_thigh00_L', 'ROT_X',  '1', expresstype = 'moveexp')
-            setDriver('cf_s_leg_L', 'location', 2, 'cf_j_thigh00_L', 'ROT_X',  '-1.5')
+        #generic function for creating a driver
+        def setDriver (bone, drivertype, drivertypeselect, drivertarget, drivertt, drivermult, expresstype = 'move'):
 
-            #waist correction slightly moves out to chest when lower waist rotates
-            setDriver('cf_s_waist02', 'location', 2, 'cf_j_waist02', 'ROT_X',  '0.2', expresstype='moveABS')
+            #add driver to first component
+            #drivertype is the kind of driver you want to be applied to the bone and can be location/rotation
+            #drivertypeselect is the component of the bone you want the driver to be applied to
+            # for location it's (0 is x component, y is 1, z is 2)
+            # for rotation it's (0 is w, 1 is x, etc)
+            # for scale it's (0 is x, 1 is y, 2 is z)
+            driver = self.armature.pose.bones[bone].driver_add(drivertype, drivertypeselect)
+
+            #add driver variable
+            vari = driver.driver.variables.new()
+            vari.name = 'var'
+            vari.type = 'TRANSFORMS'
+
+            #set the target and subtarget
+            target = vari.targets[0]
+            target.id = self.armature
+            target.bone_target = self.armature.pose.bones[drivertarget].name
+
+            #set the transforms for the target. this can be rotation or location 
+            target.transform_type = drivertt
+
+            #set the transform space. can be world space too
+            target.transform_space = 'LOCAL_SPACE'
+            target.rotation_mode = 'QUATERNION' if expresstype in ['scale', 'quat'] else 'AUTO'
+
+            #use the distance to the target bone's parent to make results consistent for different sized bones
+            targetbonelength = str(round((self.armature.pose.bones[drivertarget].head - self.armature.pose.bones[drivertarget].parent.head).length,3))
+            
+            #driver expression is the rotation value of the target bone multiplied by a percentage of the driver target bone's length
+            if expresstype in ['move', 'quat']:
+                driver.driver.expression = vari.name + '*' + targetbonelength + '*' + drivermult 
+            
+            #move but only during positive rotations
+            elif expresstype == 'movePos':
+                driver.driver.expression = vari.name + '*' + targetbonelength + '*' + drivermult + ' if ' + vari.name + ' > 0 else 0'
+            
+            #move but only during negative rotations
+            elif expresstype == 'moveNeg':
+                driver.driver.expression = vari.name + '*' + targetbonelength + '*' + drivermult + ' if ' + vari.name + ' < 0 else 0'
+            
+            #move but the ABS value
+            elif expresstype == 'moveABS':    
+                driver.driver.expression = 'abs(' + vari.name + '*' + targetbonelength + '*' + drivermult +')'
+
+            #move but the negative ABS value
+            elif expresstype == 'moveABSNeg':
+                driver.driver.expression = '-abs(' + vari.name + '*' + targetbonelength + '*' + drivermult +')'
+            
+            #move but exponentially
+            elif expresstype == 'moveexp':
+                driver.driver.expression = vari.name + '*' + vari.name + '*' + targetbonelength + '*' + drivermult
+            
+            elif expresstype == 'scale':
+                driver.driver.expression = '1 + ' + vari.name + '*' + targetbonelength + '*' + drivermult
+            
+            elif expresstype == 'rotation':
+                driver.driver.expression = vari.name + '*' + targetbonelength + '*' + drivermult
+
+        #Set the remaining joint correction drivers
+        #set knee joint corrections. These go in toward the body and down toward the foot at an exponential rate
+        setDriver('cf_s_kneeB_R', 'location', 1, 'cf_j_leg01_R', 'ROT_X',  '-0.2', expresstype = 'moveexp')
+        setDriver('cf_s_kneeB_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '-0.08')
+
+        setDriver('cf_s_kneeB_L', 'location', 1, 'cf_j_leg01_L', 'ROT_X',  '-0.2', expresstype = 'moveexp')
+        setDriver('cf_s_kneeB_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '-0.08')
+
+        #knee correction to thicken the knee in a kneeling pose if the rigify armature is being used
+        # if bpy.context.scene.kkbp.armature_dropdown == 'B' and bpy.context.scene.kkbp.categorize_dropdown in ['A', 'B', 'C']:
+        #     setDriver('cf_s_leg01_R', 'scale', 2, 'cf_j_leg01_R', 'ROT_X',  '1',  expresstype = 'scale')
+        #     setDriver('cf_s_leg01_R', 'scale', 0, 'cf_j_leg01_R', 'ROT_X',  '-2', expresstype = 'scale')
+        #     setDriver('cf_s_leg01_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '0.05', expresstype='quat')
+        #     setDriver('cf_d_thigh03_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',   '.015')
+
+        #     setDriver('cf_s_leg01_L', 'scale', 2, 'cf_j_leg01_L', 'ROT_X',  '1', expresstype = 'scale')
+        #     setDriver('cf_s_leg01_L', 'scale', 0, 'cf_j_leg01_L', 'ROT_X',  '-2', expresstype = 'scale')
+        #     setDriver('cf_s_leg01_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '0.05', expresstype='quat')
+        #     setDriver('cf_d_thigh03_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '-.015')
+
+        #knee tip corrections go up toward the waist and in toward the body, also rotate a bit
+        setDriver('cf_d_kneeF_R', 'location', 1, 'cf_j_leg01_R', 'ROT_X',  '0.02')
+        setDriver('cf_d_kneeF_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '-0.04')
+
+        setDriver('cf_d_kneeF_L', 'location', 1, 'cf_j_leg01_L', 'ROT_X',  '0.02')
+        setDriver('cf_d_kneeF_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '-0.04')
+
+        #butt corrections go slightly up to the spine and in to the waist 
+        setDriver('cf_d_siri_R', 'location', 1, 'cf_j_thigh00_R', 'ROT_X',  '0.02')
+        setDriver('cf_d_siri_R', 'location', 2, 'cf_j_thigh00_R',  'ROT_X',  '0.02')
+
+        setDriver('cf_d_siri_L', 'location', 1, 'cf_j_thigh00_L', 'ROT_X',  '0.02')
+        setDriver('cf_d_siri_L', 'location', 2, 'cf_j_thigh00_L',  'ROT_X',  '0.02')
+        
+        #hand corrections go up to the head and in towards the elbow
+        setDriver('cf_d_hand_R', 'location', 0, 'cf_j_hand_R', 'ROT_Z',  '-0.4', expresstype = 'moveNeg')
+        setDriver('cf_d_hand_R', 'location', 1, 'cf_j_hand_R', 'ROT_Z', '-0.4', expresstype = 'moveNeg')
+
+        setDriver('cf_d_hand_L', 'location', 0, 'cf_j_hand_L', 'ROT_Z', '-0.4', expresstype = 'movePos')
+        setDriver('cf_d_hand_L', 'location', 1, 'cf_j_hand_L', 'ROT_Z', '0.4', expresstype = 'movePos')
+
+        #elboback goes out to the chest and into the shoulder
+        #elbo goes does the opposite
+        setDriver('cf_s_elboback_R', 'location', 0, 'cf_j_forearm01_R', 'ROT_X',  '-0.7')
+        setDriver('cf_s_elboback_R', 'location', 2, 'cf_j_forearm01_R', 'ROT_X',  '0.6')
+        setDriver('cf_s_elbo_R', 'location', 0, 'cf_j_forearm01_R', 'ROT_X',  '0.025')
+        setDriver('cf_s_elbo_R', 'location', 2, 'cf_j_forearm01_R', 'ROT_X',  '0.025')
+
+        setDriver('cf_s_elboback_L', 'location', 0, 'cf_j_forearm01_L', 'ROT_X',  '-0.7')
+        setDriver('cf_s_elboback_L', 'location', 2, 'cf_j_forearm01_L', 'ROT_X',  '-0.6')
+        setDriver('cf_s_elbo_L', 'location', 0, 'cf_j_forearm01_L', 'ROT_X',  '0.025')
+        setDriver('cf_s_elbo_L', 'location', 2, 'cf_j_forearm01_L', 'ROT_X',  '-0.025')
+
+        #shoulder bones have a few corrections as well
+        setDriver('cf_d_shoulder02_R', 'location', 1, 'cf_j_arm00_R', 'ROT_Z',  '-0.1', expresstype = 'moveNeg')
+        setDriver('cf_d_shoulder02_R', 'location', 0, 'cf_j_arm00_R', 'ROT_Y',  '0.1', expresstype = 'moveABSNeg')
+        setDriver('cf_d_shoulder02_R', 'location', 2, 'cf_j_arm00_R', 'ROT_Y',  '-0.1')
+
+        setDriver('cf_d_shoulder02_L', 'location', 1, 'cf_j_arm00_L', 'ROT_Z',  '0.1', expresstype = 'movePos')
+        setDriver('cf_d_shoulder02_L', 'location', 0, 'cf_j_arm00_L', 'ROT_Y',  '-0.1', expresstype = 'moveABS')
+        setDriver('cf_d_shoulder02_L', 'location', 2, 'cf_j_arm00_L', 'ROT_Y',  '0.1')
+
+        #leg corrections go up to the head and slightly forwards/backwards
+        setDriver('cf_s_leg_R', 'location', 1, 'cf_j_thigh00_R', 'ROT_X',  '1', expresstype = 'moveexp')
+        setDriver('cf_s_leg_R', 'location', 2, 'cf_j_thigh00_R', 'ROT_X',  '-1.5')
+
+        setDriver('cf_s_leg_L', 'location', 1, 'cf_j_thigh00_L', 'ROT_X',  '1', expresstype = 'moveexp')
+        setDriver('cf_s_leg_L', 'location', 2, 'cf_j_thigh00_L', 'ROT_X',  '-1.5')
+
+        #waist correction slightly moves out to chest when lower waist rotates
+        setDriver('cf_s_waist02', 'location', 2, 'cf_j_waist02', 'ROT_X',  '0.2', expresstype='moveABS')
 
     def categorize_bones(self):
         '''Add some bones to bone groups to give them colors'''

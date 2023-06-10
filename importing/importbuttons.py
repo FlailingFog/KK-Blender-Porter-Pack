@@ -74,10 +74,8 @@ class kkbp_import(bpy.types.Operator):
             ]
         else: #SMR pipeline
             functions = [
-                lambda:bpy.ops.kkbp.finalizepmx('INVOKE_DEFAULT'),
-                lambda:bpy.ops.kkbp.shapekeys('INVOKE_DEFAULT'),
-                lambda:bpy.ops.kkbp.separatebody('INVOKE_DEFAULT'),
-                lambda:bpy.ops.kkbp.cleanarmature('INVOKE_DEFAULT'),
+                lambda:bpy.ops.kkbp.modifymesh('INVOKE_DEFAULT'),
+                lambda:bpy.ops.kkbp.modifyarm('INVOKE_DEFAULT'),
                 lambda:bpy.ops.kkbp.separatemeshes('INVOKE_DEFAULT'),
             ]
 

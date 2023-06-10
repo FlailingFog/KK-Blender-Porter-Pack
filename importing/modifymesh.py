@@ -15,7 +15,7 @@ This file performs the following operations
 ·	Creates gag eye shapekeys and drivers for shapekeys
 
 ·	Add a data transfer modifier to the body to use the shadowcast as a shading proxy
-.   Removes doubles on body object to prevent seams
+.   Removes doubles on body object to prevent seams (if selected)
 
 ·	Mark certain body materials as freestyle faces for freestyle exclusion
 '''
@@ -150,78 +150,77 @@ class modify_mesh(bpy.types.Operator):
 
     def separate_alternate_clothing(self):
         '''Separates any clothes pieces that are normally supposed to be hidden'''
+        if not bpy.context.scene.kkbp.categorize_dropdown in ['A', 'B']:
+            return
+        #the KK_ReferenceInfoData json lists the clothes variations' object paths in the ENUM order in the modifymesh markdown file
+        ref_data = c.get_json_file('KK_ReferenceInfoData.json')
+        #the smr json contains the link between the object path and the clothing material. The material is used for separation
+        smr_data = c.get_json_file('KK_SMRData.json')
+        #the clothesdata json can identify what objects are the indoor shoes
+        clothes_data = c.get_json_file('KK_ClothesData.json')
+        
+        clothes_labels = {
+            'Top shift':       [93, 97, 112, 114, 116],
+            'Bottom shift':    [95, 99],
+            'Bra shift':       [101, 118],
+            'Underwear shift': [107],
+            'Underwear hang':  [108],
+            'Pantyhose shift': [110],}
+        #get the maximum enum number from referenceinfodata. This is usually 174 but the length can vary
+        max_enum = 0
+        temp_outfit_tracker = ref_data[0]['CoordinateType']
+        for line in ref_data:
+            if line['CoordinateType'] == temp_outfit_tracker:
+                max_enum = line['ChaReference_RefObjKey']
+            else:
+                break
         self.outfit_alternates = []
-
-        if bpy.context.scene.kkbp.categorize_dropdown in ['A', 'B']:
-            #the KK_ReferenceInfoData json lists the clothes variations' object paths in the ENUM order in the modifymesh markdown file
-            ref_data = c.get_json_file('KK_ReferenceInfoData.json')
-            #the smr json contains the link between the object path and the clothing material. The material is used for separation
-            smr_data = c.get_json_file('KK_SMRData.json')
-            #the clothesdata json can identify what objects are the indoor shoes
-            clothes_data = c.get_json_file('KK_ClothesData.json')
+        #If there's multiple pieces to any clothing type, separate them into their own object using the smr data
+        for outfit in self.outfits:
+            outfit_coordinate_index = int(outfit.name[-3:]) if len(self.outfits) > 1 else 0 #change index to 0 for single outfit exports
+            for clothes_piece in clothes_labels:
+                materials_to_separate = []
+                #go through each nuge piece in this label category
+                for enum_index in clothes_labels[clothes_piece]:
+                    enum_index += (max_enum + 1) * outfit_coordinate_index #shift based on outfit number
+                    #if this is the right outfit, then find the material this piece uses
+                    if ref_data[enum_index]['CoordinateType'] == outfit_coordinate_index:
+                        game_path = ref_data[enum_index]['GameObjectPath']
+                        for smr_index in smr_data:
+                            if (game_path in smr_index['SMRPath']) and game_path != '':
+                                if len(smr_index['SMRMaterialNames']) > 1:
+                                    for mat in smr_index['SMRMaterialNames']:
+                                        materials_to_separate.append(mat)
+                                else:
+                                    materials_to_separate.append(smr_index['SMRMaterialNames'][0])
+                #separate all found pieces
+                if materials_to_separate:
+                    try:
+                        print(materials_to_separate)
+                        self.separate_materials(outfit, materials_to_separate)
+                        alt_piece = bpy.data.objects[outfit.name + '.001']
+                        alt_piece.name = clothes_piece + ' ' + outfit.name
+                        alt_piece['KKBP type'] = clothes_piece
+                        self.outfit_alternates.append(alt_piece)
+                        c.kklog('Separated {} alternate clothing pieces automatically'.format(materials_to_separate))
+                    except:
+                        bpy.ops.object.mode_set(mode = 'OBJECT')
+                        c.kklog('Couldn\'t separate {} automatically'.format(materials_to_separate), 'warn')
             
-            clothes_labels = {
-                'Top shift':       [93, 97, 112, 114, 116],
-                'Bottom shift':    [95, 99],
-                'Bra shift':       [101, 118],
-                'Underwear shift': [107],
-                'Underwear hang':  [108],
-                'Pantyhose shift': [110],}
-            #get the maximum enum number from referenceinfodata. This is usually 174 but the length can vary
-            max_enum = 0
-            temp_outfit_tracker = ref_data[0]['CoordinateType']
-            for line in ref_data:
-                if line['CoordinateType'] == temp_outfit_tracker:
-                    max_enum = line['ChaReference_RefObjKey']
-                else:
-                    break
-
-            #If there's multiple pieces to any clothing type, separate them into their own object using the smr data
-            for outfit in self.outfits:
-                outfit_coordinate_index = int(outfit.name[-3:]) if len(self.outfits) > 1 else 0 #change index to 0 for single outfit exports
-                for clothes_piece in clothes_labels:
-                    materials_to_separate = []
-                    #go through each nuge piece in this label category
-                    for enum_index in clothes_labels[clothes_piece]:
-                        enum_index += (max_enum + 1) * outfit_coordinate_index #shift based on outfit number
-                        #if this is the right outfit, then find the material this piece uses
-                        if ref_data[enum_index]['CoordinateType'] == outfit_coordinate_index:
-                            game_path = ref_data[enum_index]['GameObjectPath']
-                            for smr_index in smr_data:
-                                if (game_path in smr_index['SMRPath']) and game_path != '':
-                                    if len(smr_index['SMRMaterialNames']) > 1:
-                                        for mat in smr_index['SMRMaterialNames']:
-                                            materials_to_separate.append(mat)
-                                    else:
-                                        materials_to_separate.append(smr_index['SMRMaterialNames'][0])
-                    #separate all found pieces
-                    if materials_to_separate:
-                        try:
-                            print(materials_to_separate)
-                            self.separate_materials(outfit, materials_to_separate)
-                            alt_piece = bpy.data.objects[outfit.name + '.001']
-                            alt_piece.name = clothes_piece + ' ' + outfit.name
-                            alt_piece['KKBP type'] = clothes_piece
-                            self.outfit_alternates.append(alt_piece)
-                            c.kklog('Separated {} alternate clothing pieces automatically'.format(materials_to_separate))
-                        except:
-                            bpy.ops.object.mode_set(mode = 'OBJECT')
-                            c.kklog('Couldn\'t separate {} automatically'.format(materials_to_separate), 'warn')
-                
-                #always separate indoor shoes if present using the clothes data
-                for index, clothes_index in enumerate(clothes_data):
-                    if clothes_index['CoordinateType'] == outfit_coordinate_index:
-                        if (index - 12 * outfit_coordinate_index) % 7 == 0:
-                            object = clothes_index['RendNormal01']
-                            for smr_index in smr_data:
-                                if (smr_index['SMRName'] == object):
-                                    materials_to_separate.append(smr_index['SMRMaterialNames'])
-                self.separate_materials(outfit, materials_to_separate)
-                indoor_shoes = bpy.data.objects[outfit.name + '.001']
-                indoor_shoes.name = clothes_piece + ' ' + outfit.name
-                indoor_shoes['KKBP type'] = clothes_piece
-                self.outfit_alternates.append(indoor_shoes)
-                c.kklog('Separated {} alternate clothing pieces automatically'.format(materials_to_separate))
+            #always separate indoor shoes if present using the clothes data
+            for index, clothes_index in enumerate(clothes_data):
+                if clothes_index['CoordinateType'] == outfit_coordinate_index:
+                    if (index - 12 * outfit_coordinate_index) % 7 == 0:
+                        object = clothes_index['RendNormal01']
+                        for smr_index in smr_data:
+                            if (smr_index['SMRName'] == object):
+                                materials_to_separate.append(smr_index['SMRMaterialNames'])
+            self.separate_materials(outfit, materials_to_separate)
+            indoor_shoes = bpy.data.objects[outfit.name + '.001']
+            indoor_shoes.name = clothes_piece + ' ' + outfit.name
+            indoor_shoes['KKBP type'] = clothes_piece
+            self.outfit_alternates.append(indoor_shoes)
+            c.kklog('Separated {} alternate clothing pieces automatically'.format(materials_to_separate))
 
     def separate_shad_bone(self):
         '''Separate the shadowcast and bonelyfans meshes, if present'''
@@ -276,6 +275,8 @@ class modify_mesh(bpy.types.Operator):
 
     def remove_unused_shapekeys(self):
         '''remove shapekeys on all objects except the body because that needs them'''
+        if bpy.context.scene.kkbp.shapekeys_dropdown not in ['A', 'B']:
+            return
         for obj in bpy.data.objects:
             if obj.name != self.body.name and obj.type == 'MESH':
                 if not obj.data.shape_keys:
@@ -565,6 +566,8 @@ class modify_mesh(bpy.types.Operator):
 
     def create_tear_shapekeys(self):
         '''Separate tears from body and create tear shapekeys'''
+        if bpy.context.scene.kkbp.shapekeys_dropdown not in ['A', 'B']:
+            return
         #Create a reverse shapekey for each tear material
         armature = bpy.data.objects['Model_arm']
         c.switch(self.body, 'edit')
@@ -658,6 +661,8 @@ class modify_mesh(bpy.types.Operator):
 
     def create_gag_eye_shapekeys(self):
         '''Separate gag eyes from body and create gag eye shapekeys'''
+        if bpy.context.scene.kkbp.shapekeys_dropdown not in ['A', 'B']:
+            return
         bpy.context.view_layer.objects.active=self.body
         gag_keys = [
             'Circle Eyes 1',
@@ -763,21 +768,22 @@ class modify_mesh(bpy.types.Operator):
 
     def remove_body_seams(self):
         '''merge certain materials for the body object to prevent odd shading issues later on'''
-        if bpy.context.scene.kkbp.fix_seams:
-            c.switch(self.body, 'edit')
-            select_list = [
-                self.body['SMR materials']['cf_O_face'],
-                self.body['SMR materials']['o_body_a'],
-                ]
-            bpy.context.tool_settings.mesh_select_mode = (True, False, False) #enable vertex select in edit mode
-            for mat in select_list:
-                bpy.context.object.active_material_index = self.body.data.materials.find(mat)
-                bpy.ops.object.material_slot_select()
-            bpy.ops.mesh.remove_doubles(threshold=0.00001)
+        if not bpy.context.scene.kkbp.fix_seams:
+            return
+        c.switch(self.body, 'edit')
+        select_list = [
+            self.body['SMR materials']['cf_O_face'],
+            self.body['SMR materials']['o_body_a'],
+            ]
+        bpy.context.tool_settings.mesh_select_mode = (True, False, False) #enable vertex select in edit mode
+        for mat in select_list:
+            bpy.context.object.active_material_index = self.body.data.materials.find(mat)
+            bpy.ops.object.material_slot_select()
+        bpy.ops.mesh.remove_doubles(threshold=0.00001)
 
-            #This still messes with the weights. Maybe it's possible to save the 3D positions, weights, and UV positions for each duplicate vertex
-            # then delete and make new vertices with saved info 
-            # The vertices on the body object seem to be consistent across imports according to https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/82
+        #This still messes with the weights. Maybe it's possible to save the 3D positions, weights, and UV positions for each duplicate vertex
+        # then delete and make new vertices with saved info 
+        # The vertices on the body object seem to be consistent across imports according to https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/82
 
     def mark_body_freestyle_faces(self):
         c.switch(self.body, 'edit')
