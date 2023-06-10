@@ -89,11 +89,7 @@ class bone_drivers(bpy.types.Operator):
                 categorize_bones()
                 rename_bones_for_clarity()
 
-                #reset the eye vertex groups after renaming the bones
-                mod = bpy.data.objects['Body'].modifiers[1]
-                mod.vertex_group = 'Left Eye'
-                mod = bpy.data.objects['Body'].modifiers[2]
-                mod.vertex_group = 'Right Eye'
+                
             
             if context.scene.kkbp.categorize_dropdown in ['B']:
                 begin_hair_selections()

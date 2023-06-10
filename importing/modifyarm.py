@@ -121,6 +121,7 @@ class modify_material(bpy.types.Operator):
         c.switch(self.armature, 'object')
         self.armature.parent = None
         self.armature.name = 'Armature'
+        self.armature['KKBP tag'] = 'armature'
         bpy.data.objects.remove(empty)
         
         #reparent the outfit meshes as well
@@ -1564,6 +1565,12 @@ class modify_material(bpy.types.Operator):
             for bone in unity_rename_dict:
                 if self.armature.data.bones.get(bone):
                     self.armature.data.bones[bone].name = unity_rename_dict[bone]
+            
+            #reset the eye vertex groups after renaming the bones
+            mod = bpy.data.objects['Body'].modifiers[1]
+            mod.vertex_group = 'Left Eye'
+            mod = bpy.data.objects['Body'].modifiers[2]
+            mod.vertex_group = 'Right Eye'
 
     def apply_bone_widgets(self):
         '''apply custom bone shapes from library file'''

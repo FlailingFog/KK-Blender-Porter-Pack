@@ -33,13 +33,13 @@ class PlaceholderProperties(PropertyGroup):
     description=t('seams_tt'),
     default = bpy.context.preferences.addons[__package__].preferences.fix_seams)
     
-    texture_outline_bool : BoolProperty(
+    use_single_outline : BoolProperty(
     description= t('outline_tt'),
-    default = bpy.context.preferences.addons[__package__].preferences.texture_outline_bool)
+    default = bpy.context.preferences.addons[__package__].preferences.use_single_outline)
     
-    templates_bool : BoolProperty(
+    use_material_fake_user : BoolProperty(
     description=t('keep_templates_tt'),
-    default = bpy.context.preferences.addons[__package__].preferences.templates_bool)
+    default = bpy.context.preferences.addons[__package__].preferences.use_material_fake_user)
 
     old_bake_bool : BoolProperty(
     description=t('old_bake_tt'),
@@ -228,12 +228,12 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "fix_seams", toggle=True, text = t('seams'))
-        split.prop(context.scene.kkbp, "templates_bool", toggle=True, text = t('keep_templates'))
+        split.prop(context.scene.kkbp, "use_material_fake_user", toggle=True, text = t('keep_templates'))
         row.enabled = not scene.import_dir == 'cleared' and not scene.is_prepped
 
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
-        split.prop(context.scene.kkbp, "texture_outline_bool", toggle=True, text = t('outline'))
+        split.prop(context.scene.kkbp, "use_single_outline", toggle=True, text = t('outline'))
         split.prop(context.scene.kkbp, "sfw_mode", toggle=True, text = t('sfw_mode'))
         row.enabled = not scene.import_dir == 'cleared' and not scene.is_prepped
     

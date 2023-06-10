@@ -93,8 +93,20 @@ def clean_orphaned_data():
 def import_from_library_file(category, list_of_items, use_fake_user = False):
     '''Import items from the KKBP library file. The category is 'Armature', 'Brush', 'Collection' etc and
     the list_of_items is an array with all of the item names that you want to import'''
-    directory = Path(__file__)
-    filename = 'KK Shader V6.0.blend/'
+    # try to import the material templates from the KK Shader.blend file in the plugin directory.
+    # If not available, default to the one that comes with the plugin
+    fileList = Path(bpy.context.scene.kkbp.import_dir).glob('*.*')
+    files = [file for file in fileList if file.is_file()]
+    blend_file_missing = True
+    for file in files:
+        if '.blend' in str(file) and '.blend1' not in str(file) and 'KK Shader' in str(file):
+            directory = Path(file).resolve()
+            blend_file_missing = False
+    if blend_file_missing:
+        #grab it from the plugin directory
+        directory = Path(__file__)
+        filename = 'KK Shader V6.0.blend/'
+    
     library_path=(Path(directory) / filename).resolve()
     template_list = [{'name':item} for item in list_of_items]
     bpy.ops.wm.append(

@@ -4,7 +4,7 @@ This file performs the following operations
 ·	Hide all alternate clothing pieces and indoor shoes and other outfits
     (show only the first outfit if it’s present, if not, count up until the
     first outfit collection is found and use that one)
-
+·	Clean orphaned data as long as users = 0 and fake user = False
 '''
 
 import bpy
