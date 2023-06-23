@@ -670,9 +670,9 @@ def update_shaders(json, lut_selection, active_lut, light):
                 data.extend(json[existing_index]['ShaderPropColorValues'])
                 data.extend(json[existing_index]['ShaderPropFloatValues'])
                 colors = dict(zip(labels, data))
-                body_light = colors["_Color Color 0"]
-                skin_type  = to_255(colors["_Color2 Color 1"])
-                nail_color = to_255(colors["_Color5 Color 4"])
+                body_light = colors.get("_Color Color 0", {"r":1,"g":1,"b":1,"a":1})
+                skin_type  = to_255(colors.get("_Color2 Color 1", {"r":1,"g":1,"b":1,"a":1}))
+                nail_color = to_255(colors.get("_Color5 Color 4", {"r":1,"g":1,"b":1,"a":1}))
 
             body_colors.append(color_to_KK(to_255(body_light), active_lut))            # light body color
             body_colors.append(color_to_KK(skin_type,  active_lut))            # skin type color
@@ -729,18 +729,20 @@ def update_shaders(json, lut_selection, active_lut, light):
                 pater2 = {"r":0,"g":1,"b":1,"a":1}
                 pater3 = {"r":0,"g":1,"b":1,"a":1}
             else:
-                labels =    json[existing_index]['ShaderPropNames']
-                data   =    json[existing_index]['ShaderPropTextures']
-                data.extend(json[existing_index]['ShaderPropTextureValues'])
-                data.extend(json[existing_index]['ShaderPropColorValues'])
-                data.extend(json[existing_index]['ShaderPropFloatValues'])
+                json_materialdata = json[existing_index]
+
+                labels =    json_materialdata['ShaderPropNames']
+                data   =    json_materialdata['ShaderPropTextures']
+                data.extend(json_materialdata['ShaderPropTextureValues'])
+                data.extend(json_materialdata['ShaderPropColorValues'])
+                data.extend(json_materialdata['ShaderPropFloatValues'])
                 colors = dict(zip(labels, data))
-                color1 = colors["_Color Color 0"]
-                color2 = colors["_Color2 Color 2"]
-                color3 = colors["_Color3 Color 4"]
-                pater1 = colors["_Color1_2 Color 1"]
-                pater2 = colors["_Color2_2 Color 3"]
-                pater3 = colors["_Color3_2 Color 5"]
+                color1 = colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1})
+                color2 = colors.get("_Color2 Color 2", {"r":0,"g":1,"b":1,"a":1})
+                color3 = colors.get("_Color3 Color 4", {"r":0,"g":1,"b":1,"a":1})
+                pater1 = colors.get("_Color1_2 Color 1", {"r":0,"g":1,"b":1,"a":1})
+                pater2 = colors.get("_Color2_2 Color 3", {"r":0,"g":1,"b":1,"a":1}) 
+                pater3 = colors.get("_Color3_2 Color 5", {"r":0,"g":1,"b":1,"a":1})
 
             reformatted_data = {
                 "MaterialName":

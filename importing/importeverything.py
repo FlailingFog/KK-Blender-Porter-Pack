@@ -35,6 +35,9 @@ Texture Postfix Legend:
 '''
 
 import bpy, os, traceback, json, time, sys
+from bpy.types import (
+    ShaderNodeTexImage, Object, ShaderNodeGroup
+)
 from pathlib import Path
 from .importbuttons import kklog
 from .cleanarmature import get_bone_list
@@ -428,29 +431,32 @@ def get_and_load_textures(directory):
         print_directory =  directory[directory.find('/', 7):]
     else:
         print_directory = directory
+    
     kklog('Getting textures from: ' + print_directory)
 
-    #get images for body object
+    #get images for body object (pmx 'main' directory)
     fileList = Path(directory).glob('*.*')
     files = [file for file in fileList if file.is_file()]
 
     #get images from outfit directory based on outfit ID numbers
     id_list = []
+    json_tex_data = []
     for obj in [obj for obj in bpy.data.objects if obj.get('KKBP outfit ID') != None and obj.type == 'MESH']:
         if obj['KKBP outfit ID'] not in id_list:
             id_list.append(obj['KKBP outfit ID'])
+
     for outfit_id in id_list:
-        fileList = Path(directory + (r'/Outfit 0' if (sys.platform == 'linux' or sys.platform == 'darwin') else r'\Outfit 0') + str(outfit_id)).glob('*.*')
-        files_to_append = [file for file in fileList if file.is_file()]
-        for outfit_file in files_to_append:
+        fileList = Path(directory, "Outfit 0" + str(outfit_id)).glob('*.*')
+        for outfit_file in [file for file in fileList if file.is_file()]:
             files.append(outfit_file)
 
     #get shadow colors for each material and store the dictionary on the body object
     for file in files:
+        # dont load garbage 
+        if not (file.name.endswith(".json")):
+            continue
         if 'KK_MaterialData.json' in str(file):
-            json_file_path = str(file)
-            json_file = open(json_file_path)
-            json_material_data = json.load(json_file)
+            json_material_data = json.load(open(str(file), "r", encoding="utf-8"))
             color_dict = {}
             supporting_entries = ['Shader Forge/create_body', 'Shader Forge/create_head', 'Shader Forge/create_eyewhite', 'Shader Forge/create_eye', 'Shader Forge/create_topN']
             for line in json_material_data:
@@ -468,15 +474,21 @@ def get_and_load_textures(directory):
                         break
                     #default to [.764, .880, 1] if shadow color is not available for the material
                     color_dict[line['MaterialName']] = {"r":0.764,"g":0.880,"b":1,"a":1}
+        #Get texture data for offset and scale
+        if 'KK_TextureData.json' in str(file):
+            # tbh we should assume these json files exist, normaly older versions break
+            json_tex_data = json.load(open(str(file), "r", encoding="utf-8"))
+
     body['KKBP shadow colors'] = color_dict
 
     #open all images into blender and create dark variants if the image is a maintex
     for image in files:
-        bpy.ops.image.open(filepath=str(image), use_udim_detecting=False)
-        try:
-            bpy.data.images[image.name].pack()
-        except:
-            kklog('This image was not automatically loaded in because its name exceeds 64 characters: ' + image.name, type = 'error')
+        # dont load garbage i value my blender file size
+        if not image.name.endswith(('.png', '.jpg', '.jpeg', '.tiff', '.dds')):
+            continue
+        bpy.data.images.load(str(image.resolve()), check_existing=False)
+        bpy.data.images[image.name].pack()
+
         try:
             skip_list = ['cf_m_gageye', 'cf_m_eyeline', 'cf_m_mayuge', 'cf_m_namida_00', 'cf_m_noseline_00', 'cf_m_sirome_00', 'cf_m_tooth', '_cf_Ohitomi_', 'cf_m_emblem']
             convert_this = True
@@ -500,56 +512,65 @@ def get_and_load_textures(directory):
                 material_name = image.name[:-10]
                 darktex = create_darktex(bpy.data.images[image.name], [.764, .880, 1]) #create the darktex now and load it in later
     
-    #Get texture data for offset and scale
-    for file in files:
-        if 'KK_TextureData.json' in str(file):
-            json_file_path = str(file)
-            json_file = open(json_file_path)
-            json_tex_data = json.load(json_file)
-    
-    #Add all textures to the correct places in the body template
-    def image_load(mat, group, node, image, raw = False):
+    def image_load(mat: int, group: str, node: str, image, raw = False):
+        """
+        Loads image to a material
+        
+        - `mat`: The material index
+        - `group`: The target node group ID, not name, eg "Gentex" for "Body Texture"
+        - `node`: The target node ID inside the group, not name, eg "BodyMain" for "Body Maintex"
+        - `image`: The image file.
+        """
+        
+        # light parity check
         if bpy.data.images.get(image):
             current_obj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].image = bpy.data.images[image]
             if raw:
                 current_obj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].image.colorspace_settings.name = 'Raw'
-            apply_texture_data_to_image(image, mat, group, node)
+            apply_texture_offset_to_image(image, mat, group, node)
         elif 'MainCol' in image:
             if bpy.data.images[image[0:len(image)-4] + '.dds']:
                 current_obj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].image = bpy.data.images[image[0:len(image)-4] + '.dds']
             kklog('.dds and .png files not found, skipping: ' + image[0:len(image)-4] + '.dds')
         else:
             kklog('File not found, skipping: ' + image)
-    
-    def set_uv_type(mat, group, uvnode, uvtype):
-        current_obj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[uvnode].uv_map = uvtype
 
-    #Added node2 for the alpha masks
-    def apply_texture_data_to_image(image, mat, group, node, node2 = ''):
+    def apply_texture_offset_to_image(image, mat: int, group: str, node: str, node2 = ''):
+        """
+        Sets texture mapping values for the images (scale offset etc...)
+
+        - `mat`: The material index
+        - `group`: The target node group ID, not name, eg "Gentex" for "Body Texture"
+        - `node`: The target node ID inside the group, not name, eg "BodyMain" for "Body Maintex"
+        - `image`: The image file.
+        """
+        
         for item in json_tex_data:
             if item["textureName"] == str(image):
                 #Apply Offset and Scale
+                material_node: (ShaderNodeTexImage | ShaderNodeGroup) = current_obj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node]
                 if node2 == '':
-                    current_obj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].texture_mapping.translation[0] = item["offset"]["x"]
-                    current_obj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].texture_mapping.translation[1] = item["offset"]["y"]
-                    current_obj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].texture_mapping.scale[0] = item["scale"]["x"]
-                    current_obj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].texture_mapping.scale[1] = item["scale"]["y"]
+                    material_node.texture_mapping.translation = (item["offset"]["x"], item["offset"]["y"], 0)
+                    material_node.texture_mapping.scale = (item["scale"]["x"], item["scale"]["y"], 0)
                 else:
-                    current_obj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].node_tree.nodes[node2].texture_mapping.translation[0] = item["offset"]["x"]
-                    current_obj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].node_tree.nodes[node2].texture_mapping.translation[1] = item["offset"]["y"]
-                    current_obj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].node_tree.nodes[node2].texture_mapping.scale[0] = item["scale"]["x"]
-                    current_obj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[node].node_tree.nodes[node2].texture_mapping.scale[1] = item["scale"]["y"]
+                    material_node.node_tree.nodes[node2].texture_mapping.translation = (item["offset"]["x"], item["offset"]["y"], 0)
+                    material_node.node_tree.nodes[node2].texture_mapping.scale = (item["scale"]["x"], item["scale"]["y"], 0)
                 break
-    
+
+    def set_uv_type(mat: int, group: str, uvnode, uvtype):
+        current_obj.material_slots[mat].material.node_tree.nodes[group].node_tree.nodes[uvnode].uv_map = uvtype
+
     current_obj = bpy.data.objects['Body']
     image_load('KK Body', 'Gentex', 'BodyMain', body['KKBP materials']['o_body_a'] + '_MT_CT.png')
     image_load('KK Body', 'Gentex', 'Darktex', body['KKBP materials']['o_body_a'] + '_MT_DT.png')
+
     #check there's a maintex, if not there fallback to colors
     if not current_obj.material_slots['KK Body'].material.node_tree.nodes['Gentex'].node_tree.nodes['BodyMain'].image:
         current_obj.material_slots['KK Body'].material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use maintex instead?'].default_value = 0
     #but if it is, make sure the body darktex is being used as default
     else:
         current_obj.material_slots['KK Body'].material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use maintex instead?'].default_value = 1
+    
     image_load('KK Body', 'Gentex', 'BodyMC', body['KKBP materials']['o_body_a'] + '_CM.png')
     image_load('KK Body', 'Gentex', 'BodyMD', body['KKBP materials']['o_body_a'] + '_DM.png') #cfm female
     image_load('KK Body', 'Gentex', 'BodyLine', body['KKBP materials']['o_body_a'] + '_LM.png')
@@ -587,7 +608,7 @@ def get_and_load_textures(directory):
                 break
     if alpha_mask:
         current_obj.material_slots['KK Body'].material.node_tree.nodes['Gentex'].node_tree.nodes['Bodyalpha'].image = bpy.data.images[alpha_mask.name] #female
-        apply_texture_data_to_image(alpha_mask.name, 'KK Body', 'Gentex', 'Bodyalpha')
+        apply_texture_offset_to_image(alpha_mask.name, 'KK Body', 'Gentex', 'Bodyalpha')
     else:
         #disable transparency if no alpha mask is present
         current_obj.material_slots['KK Body'].material.node_tree.nodes['Shader'].node_tree.nodes['BodyTransp'].inputs['Built in transparency toggle'].default_value = 0
@@ -689,13 +710,18 @@ def get_and_load_textures(directory):
             if hairMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairAlpha'].image == None and hairMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairMainTex'].image == None:
                 getOut = hairMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Group Output'].inputs['Hair alpha'].links[0]
                 hairMat.material.node_tree.nodes['Gentex'].node_tree.links.remove(getOut)
-    
+
     # Loop through each material in the general object and load the textures, if any, into unique node groups
     # also make unique shader node groups so all materials are unique
     # make a copy of the node group, use it to replace the current node group
     outfit_objects = [obj for obj in bpy.data.objects if obj.get('KKBP outfit ID') != None and 'Hair Outfit ' not in obj.name and obj.type == 'MESH']
     for object in outfit_objects:
         current_obj = object
+        # sort it so it isnt insufferable
+        outfit_parent: Object = bpy.data.objects.get("Outfit 0" + str(current_obj.get('KKBP outfit ID')))
+        if outfit_parent and (outfit_parent != current_obj):
+            current_obj.parent = outfit_parent
+
         for genMat in current_obj.material_slots:
             genType = genMat.name.replace('KK ','')
             
@@ -725,63 +751,67 @@ def get_and_load_textures(directory):
             image_load(genMat.name, 'Gentex', 'PatGreen', genType+'_PM2.png')
             image_load(genMat.name, 'Gentex', 'PatBlue', genType+'_PM3.png')
             
-            MainImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Maintex'].image
-            DarkImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Darktex'].image
-            AlphaImage = genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Alphamask'].image
+            gentex: ShaderNodeGroup = genMat.material.node_tree.nodes['Gentex']
+            shader: ShaderNodeGroup = genMat.material.node_tree.nodes['Shader']
+
+            MainImage = gentex.node_tree.nodes['Maintex'].image
+            DarkImage = gentex.node_tree.nodes['Darktex'].image
+            AlphaImage = gentex.node_tree.nodes['Alphamask'].image
 
             #set dark colors to use the maintex if there was a dark image loaded in
             if DarkImage and 'Template: Pattern Placeholder' not in DarkImage.name:
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use dark maintex?'].default_value = 1
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 1
+                shader.node_tree.nodes['colorsDark'].inputs['Use dark maintex?'].default_value = 1
+                shader.node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 1
 
             #Also, make a copy of the General shader node group, as it's unlikely everything using it will be the same color
-            newNode = genMat.material.node_tree.nodes['Shader'].node_tree.copy()
-            genMat.material.node_tree.nodes['Shader'].node_tree = newNode
+            newNode = shader.node_tree.copy()
+            shader.node_tree = newNode
             newNode.name = genType + ' Shader'
             
             #If an alpha mask was loaded in, enable the alpha mask toggle in the KK shader
-            if  AlphaImage != None:
-                toggle = genMat.material.node_tree.nodes['Shader'].node_tree.nodes['alphatoggle'].inputs['Transparency toggle'].default_value = 1
+            if AlphaImage != None:
+                shader.node_tree.nodes['alphatoggle'].inputs['Transparency toggle'].default_value = 1
 
             #If no main image was loaded in, there's no alpha channel being fed into the KK Shader.
             #Unlink the input node and make the alpha channel pure white
-            if  not MainImage:
-                getOut = genMat.material.node_tree.nodes['Shader'].node_tree.nodes['alphatoggle'].inputs['maintex alpha'].links[0]
-                genMat.material.node_tree.nodes['Shader'].node_tree.links.remove(getOut)
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['alphatoggle'].inputs['maintex alpha'].default_value = (1,1,1,1)
+            if not MainImage:
+                getOut = shader.node_tree.nodes['alphatoggle'].inputs['maintex alpha'].links[0]
+                shader.node_tree.links.remove(getOut)
+                shader.node_tree.nodes['alphatoggle'].inputs['maintex alpha'].default_value = (1,1,1,1)
             
             #check maintex config
             plainMain = not genMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Maintexplain'].image.name == 'Template: Maintex plain placeholder'
-            if not MainImage and not plainMain:
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 0
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Ignore colormask?'].default_value = 0
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 0
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 0
 
+            if not MainImage and not plainMain:
+                shader.node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 0
+                shader.node_tree.nodes['colorsLight'].inputs['Ignore colormask?'].default_value = 0
+                shader.node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 0
+                shader.node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 0
+        
             elif not MainImage and plainMain:
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 1
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use colored maintex?'].default_value = 0
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Ignore colormask?'].default_value = 0
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use colored maintex?'].default_value = 0
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 0
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 1
+                shader.node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 1
+                shader.node_tree.nodes['colorsLight'].inputs['Use colored maintex?'].default_value = 0
+                shader.node_tree.nodes['colorsLight'].inputs['Ignore colormask?'].default_value = 0
+                shader.node_tree.nodes['colorsDark'].inputs['Use colored maintex?'].default_value = 0
+                shader.node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 0
+                shader.node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 1
 
             elif MainImage and not plainMain:
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 1
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use colored maintex?'].default_value = 1
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Ignore colormask?'].default_value = 1
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use colored maintex?'].default_value = 1
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 1
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 1
+                shader.node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 1
+                shader.node_tree.nodes['colorsLight'].inputs['Use colored maintex?'].default_value = 1
+                shader.node_tree.nodes['colorsLight'].inputs['Ignore colormask?'].default_value = 1
+                shader.node_tree.nodes['colorsDark'].inputs['Use colored maintex?'].default_value = 1
+                shader.node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 1
+                shader.node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 1
 
             else: #MainImage and plainMain
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 1
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use colored maintex?'].default_value = 1
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Ignore colormask?'].default_value = 1
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use colored maintex?'].default_value = 1
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 1
-                genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 1
-    
+                shader.node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 1
+                shader.node_tree.nodes['colorsLight'].inputs['Use colored maintex?'].default_value = 1
+                shader.node_tree.nodes['colorsLight'].inputs['Ignore colormask?'].default_value = 1
+                shader.node_tree.nodes['colorsDark'].inputs['Use colored maintex?'].default_value = 1
+                shader.node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 1
+                shader.node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 1
+
     #setup face normals
     try:
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -818,7 +848,9 @@ def get_and_load_textures(directory):
         bpy.ops.pose.select_all(action='DESELECT')
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.select_all(action='DESELECT')
+
         bpy.data.node_groups['Generated Face Normals'].nodes['GFNEmpty'].object = empty
+        
         bpy.context.view_layer.objects.active = empty
         empty.select_set(True)
         bpy.ops.object.move_to_collection(collection_index=1)
@@ -1374,8 +1406,10 @@ def apply_sfw():
     #reload the sfw alpha mask
     body_material = bpy.data.objects['Body'].material_slots['KK Body'].material
     body_material.node_tree.nodes['Gentex'].node_tree.nodes['Bodyalphacustom'].image = bpy.data.images['Template: SFW alpha mask.png']
+
     bpy.data.node_groups["Body Shader"].nodes["BodyTransp"].inputs[0].default_value = 1 #why do i have to do it this way
     bpy.data.node_groups["Body Shader"].nodes["BodyTransp"].inputs[1].default_value = 1
+
     body_material.node_tree.nodes['Shader'].node_tree.nodes['BodyTransp'].node_tree.inputs[0].hide_value = True
     body_material.node_tree.nodes['Shader'].node_tree.nodes['BodyTransp'].node_tree.inputs[1].hide_value = True
 
