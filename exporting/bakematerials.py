@@ -419,10 +419,11 @@ class bake_materials(bpy.types.Operator):
             for mat in bpy.data.materials:
                 if mat.node_tree:
                     if mat.node_tree.nodes.get('Rim'):
-                        if mat.node_tree.nodes['Rim'].node_tree == bpy.data.node_groups['LBS']:
-                            mat.node_tree.nodes['Rim'].node_tree = bpy.data.node_groups['Rim: None']
-                            links = mat.node_tree.links
-                            links.new(mat.node_tree.nodes['Shader'].outputs[0], mat.node_tree.nodes['Rim'].inputs[0]) #connect color out to rim input
+                        if bpy.data.node_groups.get('LBS'):
+                            if mat.node_tree.nodes['Rim'].node_tree == bpy.data.node_groups['LBS']:
+                                mat.node_tree.nodes['Rim'].node_tree = bpy.data.node_groups['Rim: None']
+                                links = mat.node_tree.links
+                                links.new(mat.node_tree.nodes['Shader'].outputs[0], mat.node_tree.nodes['Rim'].inputs[0]) #connect color out to rim input
             print(self.directory)
             folderpath =  self.directory
             scene = context.scene.kkbp
