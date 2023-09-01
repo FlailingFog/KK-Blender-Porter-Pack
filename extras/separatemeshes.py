@@ -141,8 +141,8 @@ def separate_body(json_smr_data):
     body_obj_material_map = {
         'cf_Ohitomi_L' : {body['KKBP materials']['cf_Ohitomi_L']},
         'cf_Ohitomi_R' : {body['KKBP materials']['cf_Ohitomi_R']},
-        'cf_Ohitomi_L02' : {body['KKBP materials']['cf_Ohitomi_L02']},
-        'cf_Ohitomi_R02' : {body['KKBP materials']['cf_Ohitomi_R02']},
+        'cf_Ohitomi_L02' : {body['KKBP materials']['cf_Ohitomi_L02'] + '_' + 'cf_Ohitomi_L02'},
+        'cf_Ohitomi_R02' : {body['KKBP materials']['cf_Ohitomi_R02'] + '_' + 'cf_Ohitomi_R02'},
         'cf_O_namida_L' : {body['KKBP materials']['cf_O_namida_L']},
         'cf_O_namida_M' : {body['KKBP materials']['cf_O_namida_M']},
         'cf_O_namida_S' : {body['KKBP materials']['cf_O_namida_S']},
@@ -262,8 +262,8 @@ def export_meshes(directory):
     obj_material_map = {
         'cf_Ohitomi_L' : body['KKBP materials']['cf_Ohitomi_L'],
         'cf_Ohitomi_R' : body['KKBP materials']['cf_Ohitomi_L'],
-        'cf_Ohitomi_L02' : body['KKBP materials']['cf_Ohitomi_L02'],
-        'cf_Ohitomi_R02' : body['KKBP materials']['cf_Ohitomi_R02'],
+        'cf_Ohitomi_L02' : body['KKBP materials']['cf_Ohitomi_L02'], #'cf_Ohitomi_L02' : body['KKBP materials']['cf_Ohitomi_L02'] + '_' + 'cf_Ohitomi_L02',
+        'cf_Ohitomi_R02' : body['KKBP materials']['cf_Ohitomi_R02'], #'cf_Ohitomi_R02' : body['KKBP materials']['cf_Ohitomi_R02'] + '_' + 'cf_Ohitomi_R02',
         'cf_O_namida_L' : body['KKBP materials']['cf_O_namida_L'],
         'cf_O_namida_M' : body['KKBP materials']['cf_O_namida_L'],
         'cf_O_namida_S' : body['KKBP materials']['cf_O_namida_L'],
