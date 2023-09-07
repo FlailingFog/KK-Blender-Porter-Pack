@@ -321,7 +321,7 @@ class modify_material(bpy.types.Operator):
         c.switch(self.body, 'object')
 
         #get images for body object
-        directory = bpy.context.scene.kkbp.import_dir + '/' if (sys.platform == 'linux' or sys.platform == 'darwin') else '\\'
+        directory = bpy.context.scene.kkbp.import_dir + ('/' if (sys.platform == 'linux' or sys.platform == 'darwin') else '\\')
         fileList = Path(directory).glob('*.*')
         files = [file for file in fileList if file.is_file()]
         c.kklog('this is my directory')
@@ -958,7 +958,7 @@ class modify_material(bpy.types.Operator):
 
                 new_pixels, width, height = self.image_to_KK(image, self.lut_light)
                 image.pixels = new_pixels
-                image.save()
+                #image.save()
 
     def load_json_colors(self):
         json_color_data = c.get_json_file('KK_MaterialData.json')
@@ -972,7 +972,6 @@ class modify_material(bpy.types.Operator):
 
     # %% Supporting functions
 
-    #Added node2 for the alpha masks
     @staticmethod
     def apply_texture_data_to_image(image, mat, group, node, node2 = ''):
         '''Sets offset and scale of an image node using the TextureData.json '''
@@ -981,7 +980,7 @@ class modify_material(bpy.types.Operator):
             if item["textureName"] == str(image):
                 if bpy.data.materials.get(mat):
                     #Apply Offset and Scale
-                    if node2 == '':
+                    if node2 == '': #Added node2 for the alpha masks
                         bpy.data.materials[mat].node_tree.nodes[group].node_tree.nodes[node].texture_mapping.translation[0] = item["offset"]["x"]
                         bpy.data.materials[mat].node_tree.nodes[group].node_tree.nodes[node].texture_mapping.translation[1] = item["offset"]["y"]
                         bpy.data.materials[mat].node_tree.nodes[group].node_tree.nodes[node].texture_mapping.scale[0] = item["scale"]["x"]
@@ -1416,17 +1415,17 @@ class modify_material(bpy.types.Operator):
         kage_material_name = 'cf_m_eyeline_kage'
         tongue_material_names = [body['SMR materials']['o_tang'][0], body['SMR materials']['o_tang_rigged'][0]]
         hair_material_names = []
-        for ob in bpy.data.objects:
-            if 'Hair Outfit ' in ob.name:
-                hair_material_names.extend([mat.material.name.replace('KK ','') for mat in ob.material_slots])
+        print('getting hair materials')
+        for ob in self.hairs:
+            hair_material_names.extend([mat.material.name.replace('KK ','') for mat in ob.material_slots])
         
         for idx, line in enumerate(json):
             #Skip supporting entries for now
-            if line in supporting_entries:
+            if line['ShaderName'] in supporting_entries:
                 continue
             
             labels = line['ShaderPropNames']
-            data = line['ShaderPropTextures']
+            data = line['ShaderPropTextures'].copy()
             data.extend(line['ShaderPropTextureValues'])
             data.extend(line['ShaderPropColorValues'])
             data.extend(line['ShaderPropFloatValues'])
@@ -1459,7 +1458,7 @@ class modify_material(bpy.types.Operator):
                     nail_color = to_255({"r":1,"g":1,"b":1,"a":1})
                 else:
                     labels =    json[existing_index]['ShaderPropNames']
-                    data   =    json[existing_index]['ShaderPropTextures']
+                    data   =    json[existing_index]['ShaderPropTextures'].copy()
                     data.extend(json[existing_index]['ShaderPropTextureValues'])
                     data.extend(json[existing_index]['ShaderPropColorValues'])
                     data.extend(json[existing_index]['ShaderPropFloatValues'])
@@ -1468,7 +1467,7 @@ class modify_material(bpy.types.Operator):
                     skin_type  = to_255(colors["_Color2 Color 1"])
                     nail_color = to_255(colors["_Color5 Color 4"])
 
-                body_colors.append(self.color_to_KK(to_255(body_light), active_lut))            # light body color
+                body_colors.append(self.color_to_KK(to_255(body_light), active_lut))    # light body color
                 body_colors.append(self.color_to_KK(skin_type,  active_lut))            # skin type color
                 body_colors.append(self.color_to_KK(nail_color, active_lut))            # nail color
                 body_colors.append(self.color_to_KK(nip_base,   active_lut))            # nip base
@@ -1524,7 +1523,7 @@ class modify_material(bpy.types.Operator):
                     pater3 = {"r":0,"g":1,"b":1,"a":1}
                 else:
                     labels =    json[existing_index]['ShaderPropNames']
-                    data   =    json[existing_index]['ShaderPropTextures']
+                    data   =    json[existing_index]['ShaderPropTextures'].copy()
                     data.extend(json[existing_index]['ShaderPropTextureValues'])
                     data.extend(json[existing_index]['ShaderPropColorValues'])
                     data.extend(json[existing_index]['ShaderPropFloatValues'])
@@ -1693,7 +1692,7 @@ class modify_material(bpy.types.Operator):
                         color_channel = [x * .3 for x in color_channel]
                     shader_inputs[pattern_input_names[i]].default_value = color_channel
 
-    #something is wrong with this one
+    #something is wrong with this one, currently unused
     def hair_dark_color(self, color, shadow_color):
         diffuse = float4(color[0], color[1], color[2], 1)
         _ShadowColor = float4(shadow_color['r'], shadow_color['g'], shadow_color['b'], 1)
