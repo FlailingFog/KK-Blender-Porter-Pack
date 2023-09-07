@@ -100,14 +100,14 @@ class modify_mesh(bpy.types.Operator):
                 self.body['SMR materials'][body_material['SMRName']] = body_material['SMRMaterialNames']
             #rename some materials if in smr mode
             smr_postfix_map = {
-                    'cf_Ohitomi_R' : '.001',
+                    'cf_Ohitomi_R'  : '.001',
                     'cf_O_namida_M' : '.001',
                     'cf_O_namida_S' : '.002',
                     }
             if (body_material['SMRName'] in smr_postfix_map and 
                (bpy.context.scene.kkbp.categorize_dropdown == 'D' or 'cf_Ohitomi_R' not in body_material['SMRName'])):
                 mat_name = body_material['SMRMaterialNames'][0] + smr_postfix_map[body_material['SMRName']]  
-                self.body['SMR materials'][body_material['SMRName']] = mat_name
+                self.body['SMR materials'][body_material['SMRName']] = [mat_name]
         
     def separate_rigged_tongue(self):
         '''Separates the rigged tongue object'''
@@ -573,6 +573,18 @@ class modify_mesh(bpy.types.Operator):
         armature = bpy.data.objects['Model_arm']
         c.switch(self.body, 'edit')
         #Move tears and gag backwards on the basis shapekey
+        #use head mesh as reference location
+        bpy.context.object.active_material_index = self.body.data.materials.find(self.body['SMR materials']['cf_O_face'][0])
+        bpy.ops.object.material_slot_select()
+        #refresh selection, then get head location
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+        bpy.ops.object.mode_set(mode = 'EDIT')
+        selected_verts = [v.co.y for v in self.body.data.vertices if v.select]
+        loc = 0
+        for y in selected_verts:
+            loc+=y
+        middle_of_head = loc / len(selected_verts)
+        c.switch(self.body, 'edit')
         tear_mats = {
             'cf_O_namida_L'     :     "Tears big",
             'cf_O_namida_M'     :     "Tears med",
@@ -586,12 +598,12 @@ class modify_mesh(bpy.types.Operator):
             for mat in mats:
                 bpy.context.object.active_material_index = self.body.data.materials.find(mat)
                 bpy.ops.object.material_slot_select()
-        
         #refresh selection, then move tears a random amount backwards
         bpy.ops.object.mode_set(mode = 'OBJECT')
         bpy.ops.object.mode_set(mode = 'EDIT')
         selected_verts = [v for v in self.body.data.vertices if v.select]
-        amount_to_move_tears_back = selected_verts[0].co.y - armature.data.bones['cf_j_head'].head.y
+        amount_to_move_tears_back = 2 * (selected_verts[0].co.y - middle_of_head)
+        self.body['debug'] = amount_to_move_tears_back
         bpy.ops.transform.translate(value=(0, abs(amount_to_move_tears_back), 0))
 
         #move the tears forwards again the same amount in individual shapekeys
