@@ -80,13 +80,13 @@ class kkbp_import(bpy.types.Operator):
             ]
 
         #run functions based on selection
-        #c.toggle_console() REMEMBER TO UNCOMMENT THIS YES YOU THE PERSON READING THIS
+        c.toggle_console()
         self.import_pmx_models()
         c.print_timer('Import PMX')
-        for function in functions:
-            print(function)
+        for index, function in enumerate(functions):
+            print('Import function {} running'.format(index))
             function()
-        #c.toggle_console() YOU BETTER DO IT I SWEAR IF YOU DON'T I WILL BE SLIGHTLY DISPLEASED
+        c.toggle_console()
         bpy.context.scene.kkbp.plugin_state = 'imported'
         return {'FINISHED'}
         

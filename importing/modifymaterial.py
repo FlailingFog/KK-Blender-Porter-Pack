@@ -324,25 +324,25 @@ class modify_material(bpy.types.Operator):
         directory = bpy.context.scene.kkbp.import_dir + ('/' if (sys.platform == 'linux' or sys.platform == 'darwin') else '\\')
         fileList = Path(directory).glob('*.*')
         files = [file for file in fileList if file.is_file()]
-        c.kklog('this is my directory')
-        c.kklog(directory)
-        c.kklog('gettin this filelist')
-        c.kklog(files)
+        #c.kklog('this is my directory')
+        #c.kklog(directory)
+        #c.kklog('gettin this filelist')
+        #c.kklog(files)
         #get images from outfit directory based on outfit ID numbers
         id_list = []
         for obj in [obj for obj in bpy.data.objects if obj.get('KKBP outfit ID') != None and obj.type == 'MESH']:
             if obj['KKBP outfit ID'] not in id_list:
                 id_list.append(obj['KKBP outfit ID'])
-        c.kklog(id_list)
+        #c.kklog(id_list)
         for outfit_id in id_list:
-            c.kklog(directory)
-            c.kklog(directory + 'Outfit ' + str(outfit_id))
-            c.kklog(Path(directory + 'Outfit ' + str(outfit_id)))
+            #c.kklog(directory)
+            #c.kklog(directory + 'Outfit ' + str(outfit_id))
+            #c.kklog(Path(directory + 'Outfit ' + str(outfit_id)))
 
             fileList = Path(directory + 'Outfit ' + str(outfit_id)).glob('*.*')
             files_to_append = [file for file in fileList if file.is_file()]
-            c.kklog('gettin this additional clothes fileList')
-            c.kklog(files_to_append)
+            #c.kklog('gettin this additional clothes fileList')
+            #c.kklog(files_to_append)
             for outfit_file in files_to_append:
                 files.append(outfit_file)
 
@@ -368,8 +368,8 @@ class modify_material(bpy.types.Operator):
         self.body['KKBP shadow colors'] = color_dict
 
         #open all images into blender and create dark variants if the image is a maintex
-        c.kklog('gettin these files')
-        c.kklog(files)
+        #c.kklog('gettin these files')
+        #c.kklog(files)
         for image in files:
             bpy.ops.image.open(filepath=str(image), use_udim_detecting=False)
             try:
@@ -928,11 +928,11 @@ class modify_material(bpy.types.Operator):
         self.lut_path = os.path.dirname(os.path.abspath(__file__)) + '/luts/'
         day_lut = bpy.data.images.load(self.lut_path + self.lut_light, check_existing=True)
         day_lut.use_fake_user = True
-        day_lut.save()
+        #day_lut.save()
 
         night_lut = bpy.data.images.load(self.lut_path + self.lut_dark, check_existing=True)
         night_lut.use_fake_user = True
-        night_lut.save()
+        #night_lut.save()
 
     def convert_main_textures(self):
         ignore_list = [
@@ -1415,7 +1415,6 @@ class modify_material(bpy.types.Operator):
         kage_material_name = 'cf_m_eyeline_kage'
         tongue_material_names = [body['SMR materials']['o_tang'][0], body['SMR materials']['o_tang_rigged'][0]]
         hair_material_names = []
-        print('getting hair materials')
         for ob in self.hairs:
             hair_material_names.extend([mat.material.name.replace('KK ','') for mat in ob.material_slots])
         
