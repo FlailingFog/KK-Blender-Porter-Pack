@@ -57,7 +57,7 @@ def better_fbx_map_import(directory):
                 template = bpy.data.materials['KK Simple'].copy()
             except:
                 script_dir=pathlib.Path(__file__).parent.parent
-                template_path=(script_dir / '../KK Shader V6.0.blend').resolve()
+                template_path=(script_dir / '../KK Shader V6.6.blend').resolve()
                 filepath = str(template_path)
 
                 innerpath = 'Material'

@@ -35,7 +35,7 @@ class finalize_materials(bpy.types.Operator):
                         simple = bpy.data.materials['KK Simple'].copy()
                     except:
                         script_dir=pathlib.Path(__file__).parent
-                        template_path=(script_dir / '../KK Shader V6.0.blend').resolve()
+                        template_path=(script_dir / '../KK Shader V6.6.blend').resolve()
                         filepath = str(template_path)
                         innerpath = 'Material'
                         templateList = ['KK Simple']

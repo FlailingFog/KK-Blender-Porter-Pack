@@ -106,7 +106,7 @@ def import_from_library_file(category, list_of_items, use_fake_user = False):
     if blend_file_missing:
         #grab it from the plugin directory
         directory = Path(__file__)
-        filename = 'KK Shader V6.0.blend/'
+        filename = 'KK Shader V6.6.blend/'
     
     library_path=(Path(directory).parent / filename).resolve()
     template_list = [{'name':item} for item in list_of_items]
