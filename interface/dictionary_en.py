@@ -31,9 +31,9 @@ translation_dictionary = {
     'cat_drop_A_tt' : "Import everything and get a single object containing all your model's clothes. Hides any alternate clothes by default",
     'cat_drop_B'    : "Pause to categorize",
     'cat_drop_B_tt' : "Import everything, but pause to manually separate the clothes into groups of objects. The hair must be separated and named \"Hair\" or \"hair\". When done separating, click the Finish categorization button to finish the import. Hides any alternate clothes by default",
-    'cat_drop_C'    : "Do not categorize",
+    'cat_drop_C'    : "Separate every object",
     'cat_drop_C_tt' : "Import everything and automatically separate every single piece of clothing into several objects",
-    'cat_drop_D'    : "Separate every object",
+    'cat_drop_D'    : "Categorize by SMR Data",
     'cat_drop_D_tt' : "Import everyting and automatically separate every object by it's Skinned Mesh Renderer. Note: This option is only for exporting meshes so it will not apply any material templates or colors",
 
     'dark'      : "Dark colors",

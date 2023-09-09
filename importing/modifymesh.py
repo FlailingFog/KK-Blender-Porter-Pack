@@ -108,6 +108,7 @@ class modify_mesh(bpy.types.Operator):
                (bpy.context.scene.kkbp.categorize_dropdown == 'D' or 'cf_Ohitomi_R' not in body_material['SMRName'])):
                 mat_name = body_material['SMRMaterialNames'][0] + smr_postfix_map[body_material['SMRName']]  
                 self.body['SMR materials'][body_material['SMRName']] = [mat_name]
+        c.print_timer('get_body_material_names')
         
     def separate_rigged_tongue(self):
         '''Separates the rigged tongue object'''
@@ -118,6 +119,7 @@ class modify_mesh(bpy.types.Operator):
                 if bpy.data.objects.get('Body.001'):
                     tongue = bpy.data.objects['Body.001']
                     tongue.name = 'Tongue (rigged)'
+        c.print_timer('separate_rigged_tongue')
 
     def separate_hair(self):
         '''Separates the hair from the clothes object'''
@@ -147,9 +149,11 @@ class modify_mesh(bpy.types.Operator):
                 hair = bpy.data.objects[outfit.name + '.001']
                 hair.name = 'Hair ' + outfit.name
                 self.hairs.append(hair)
+        c.print_timer('separate_hair')
 
     def separate_alternate_clothing(self):
         '''Separates any clothes pieces that are normally supposed to be hidden'''
+        self.outfit_alternates = []
         if not bpy.context.scene.kkbp.categorize_dropdown in ['A', 'B']:
             return
         #the KK_ReferenceInfoData json lists the clothes variations' object paths in the ENUM order in the modifymesh markdown file
@@ -174,10 +178,9 @@ class modify_mesh(bpy.types.Operator):
                 max_enum = line['ChaReference_RefObjKey']
             else:
                 break
-        self.outfit_alternates = []
         #If there's multiple pieces to any clothing type, separate them into their own object using the smr data
         for outfit in self.outfits:
-            outfit_coordinate_index = int(outfit.name[-3:]) if len(self.outfits) > 1 else 0 #change index to 0 for single outfit exports
+            outfit_coordinate_index = (int(outfit.name[-7:-5])-1) if (len(self.outfits) > 1) else 0 #change index to 0 for single outfit exports
             for clothes_piece in clothes_labels:
                 materials_to_separate = []
                 #go through each nuge piece in this label category
@@ -222,6 +225,7 @@ class modify_mesh(bpy.types.Operator):
                 indoor_shoes['KKBP type'] = clothes_piece
                 self.outfit_alternates.append(indoor_shoes)
             c.kklog('Separated {} alternate clothing pieces automatically'.format(materials_to_separate))
+        c.print_timer('separate_alternate_clothing')
 
     def separate_shad_bone(self):
         '''Separate the shadowcast and bonelyfans meshes, if present'''
@@ -240,6 +244,7 @@ class modify_mesh(bpy.types.Operator):
             pass
         shadbone = [o for o in [bpy.data.objects.get('Shadowcast'), bpy.data.objects.get('Bonelyfans')] if o]
         self.move_and_hide_collection(shadbone, "Shadowcast Collection")
+        c.print_timer('separate_shad_bone')
             
     def separate_hitboxes(self):
         '''Separate the hitbox mesh, if present'''
@@ -264,6 +269,7 @@ class modify_mesh(bpy.types.Operator):
                     hitbox.name = 'Hitboxes' + outfit.name
                     self.hitboxes.append(hitbox)
         self.move_and_hide_collection(self.hitboxes, "Hitbox Collection")
+        c.print_timer('separate_hitboxes')
 
     def delete_mask_quad(self):
         '''delete the mask material if not in smr mode'''
@@ -273,6 +279,7 @@ class modify_mesh(bpy.types.Operator):
                     if 'm_Mask ' in mat.material.name:
                         if mat.material.name[7:].isnumeric():
                             self.delete_material(outfit, [mat])
+        c.print_timer('delete_mask_quad')
 
     def remove_unused_shapekeys(self):
         '''remove shapekeys on all objects except the body because that needs them'''
@@ -284,6 +291,7 @@ class modify_mesh(bpy.types.Operator):
                     continue
                 for key in obj.data.shape_keys.key_blocks.keys():
                     obj.shape_key_remove(obj.data.shape_keys.key_blocks[key])
+        c.print_timer('remove_unused_shapekeys')
 
     def rename_uv_maps(self):
         #Make UV map names clearer
@@ -309,6 +317,7 @@ class modify_mesh(bpy.types.Operator):
             alt.data.uv_layers[1].name = 'uv_nipple_and_shine'
             alt.data.uv_layers[2].name = 'uv_underhair'
             alt.data.uv_layers[3].name = 'uv_eyeshadow'
+        c.print_timer('rename_uv_maps')
 
     def translate_shapekeys(self):
         '''Renames the face shapekeys to english'''
@@ -436,6 +445,7 @@ class modify_mesh(bpy.types.Operator):
                     #or not
                     c.kklog("Couldn't delete shapekey: " + keyblock.name, 'error')
                     pass
+        c.print_timer('translate_shapekeys')
 
     def combine_shapekeys(self):
         '''Creates new, full shapekeys using the existing partial shapekeys, and Deletes the partial shapekeys if user didn't elect to keep them in the panel'''
@@ -503,8 +513,8 @@ class modify_mesh(bpy.types.Operator):
                     #The shapekeys for the current emotion are now all active
                     #Some need manual corrections
                     correction_needed = False
-                    for c in correctionList:
-                        if c in current_keyblock.name:
+                    for cor in correctionList:
+                        if cor in current_keyblock.name:
                             correction_needed = True
                     if correction_needed:
                         activate_shapekey('Fangs_default_op')
@@ -564,6 +574,7 @@ class modify_mesh(bpy.types.Operator):
         self.body.active_shape_key_index = 0
         #and reset the pivot point to median
         bpy.context.scene.tool_settings.transform_pivot_point = 'MEDIAN_POINT'
+        c.print_timer('combine_shapekeys')
 
     def create_tear_shapekeys(self):
         '''Separate tears from body and create tear shapekeys'''
@@ -679,6 +690,7 @@ class modify_mesh(bpy.types.Operator):
         tears.name = 'Tears'
         bpy.ops.object.mode_set(mode = 'OBJECT')
         link_keys(self.body, [tears])
+        c.print_timer('create_tear_shapekeys')
 
     def create_gag_eye_shapekeys(self):
         '''Separate gag eyes from body and create gag eye shapekeys'''
@@ -778,6 +790,7 @@ class modify_mesh(bpy.types.Operator):
             gag.name = 'Gag Eyes'
             c.switch(self.body, 'object')
             link_keys(self.body, [gag])
+        c.print_timer('create_gag_eye_shapekeys')
 
     def add_body_datatransfer(self):
         '''Give the body an inactive data transfer modifier for a cheap shading proxy'''
@@ -790,6 +803,7 @@ class modify_mesh(bpy.types.Operator):
         mod.use_loop_data = True
         mod.data_types_loops = {'CUSTOM_NORMAL'}
         mod.loop_mapping = 'POLYINTERP_LNORPROJ'
+        c.print_timer('add_body_datatransfer')
 
     def remove_body_seams(self):
         '''merge certain materials for the body object to prevent odd shading issues later on'''
@@ -810,6 +824,7 @@ class modify_mesh(bpy.types.Operator):
         #This still messes with the weights. Maybe it's possible to save the 3D positions, weights, and UV positions for each duplicate vertex
         # then delete and make new vertices with saved info 
         # The vertices on the body object seem to be consistent across imports according to https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/82
+        c.print_timer('remove_body_seams')
 
     def mark_body_freestyle_faces(self):
         c.switch(self.body, 'edit')
@@ -836,6 +851,7 @@ class modify_mesh(bpy.types.Operator):
         mark_as_freestyle(freestyle_list)
         bpy.ops.mesh.select_all(action = 'DESELECT')
         bpy.ops.object.mode_set(mode = 'OBJECT')
+        c.print_timer('mark_body_freestyle_faces')
 
     def tag_all_objects_for_next_operation(self):
         '''Gives each object a tag so they can be identified by other scripts'''
@@ -848,7 +864,8 @@ class modify_mesh(bpy.types.Operator):
             hair['KKBP tag'] = 'hair'
         for hb in self.hitboxes:
             hb['KKBP tag'] = 'hitbox'
-        
+        c.print_timer('tag_all_objects_for_next_operation')
+
 
     # %% Supporting functions
     def move_and_hide_collection (self, objects, new_collection):

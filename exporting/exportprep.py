@@ -52,6 +52,14 @@ def main(prep_type, simp_type):
     bpy.context.view_layer.objects.active=body
     body.select_set(True)
 
+    c.kklog('disabling uv warp modifiers on the eyes...')
+    for ob in bpy.data.objects:
+        if ob.modifiers.get('Left Eye UV warp'):
+            ob.modifiers['Left Eye UV warp'].show_render = False
+            ob.modifiers['Left Eye UV warp'].show_viewport = False
+            ob.modifiers['Right Eye UV warp'].show_render = False
+            ob.modifiers['Right Eye UV warp'].show_viewport = False
+
     #remove the second Template Eyewhite slot if there are two of the same name in a row
     eye_index = 0
     for mat_slot_index in range(len(body.material_slots)):
@@ -247,9 +255,11 @@ class export_prep(bpy.types.Operator):
         simp_type = scene.simp_dropdown
         last_step = time.time()
         try:
+            c.toggle_console()
             main(prep_type, simp_type)
             scene.plugin_state = 'prepped'
             c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
+            c.toggle_console()
             return {'FINISHED'}
         except:
             c.kklog('Unknown python error occurred', type = 'error')

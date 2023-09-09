@@ -418,7 +418,7 @@ class bake_materials(bpy.types.Operator):
             #reset LBS node group to "Rim: None" if used
             for mat in bpy.data.materials:
                 if mat.node_tree:
-                    if mat.node_tree.nodes.get('Rim'):
+                    if mat.node_tree.nodes.get('Rim') and mat.node_tree.nodes.get('LBS'):
                         if mat.node_tree.nodes['Rim'].node_tree == bpy.data.node_groups['LBS']:
                             mat.node_tree.nodes['Rim'].node_tree = bpy.data.node_groups['Rim: None']
                             links = mat.node_tree.links

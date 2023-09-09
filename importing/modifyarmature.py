@@ -112,6 +112,7 @@ class modify_armature(bpy.types.Operator):
                     self.hairs.append(object)
                 elif object['KKBP tag'] == 'hitbox':
                     self.hitboxes.append(object)
+        c.print_timer('retreive_stored_tags')
         
     def reparent_all_objects(self):
         '''Reparents all objects to the main armature'''
@@ -144,6 +145,9 @@ class modify_armature(bpy.types.Operator):
                 outfit.modifiers[0].show_expanded = False
             bpy.data.objects.remove(empty)
             bpy.data.objects.remove(outfit_arm)
+        #fix outfit names
+        for outfit in self.outfits:
+            outfit.name = 'Outfit ' + str(outfit['KKBP outfit ID'])
         #reparent the alts and hairs to the main outfit object
         for alt in self.outfit_alternates:
             alt_parent = [p for p in self.outfits if p['KKBP outfit ID'] == alt['KKBP outfit ID']][0]
@@ -151,6 +155,7 @@ class modify_armature(bpy.types.Operator):
         for hair in self.hairs:
             hair_parent = [p for p in self.outfits if p['KKBP outfit ID'] == hair['KKBP outfit ID']][0]
             hair.parent = hair_parent if bpy.context.scene.kkbp.categorize_dropdown not in ['D'] else hair.parent #don't reparent hair if Categorize by SMR
+            hair.name = 'Hair Outfit ' + str(hair['KKBP outfit ID'])
         #reparent the tongue, tears and gag eyes if they exist
         for object in ['Tongue (rigged)', 'Tears', 'Gag Eyes']:
             if bpy.data.objects.get(object):
@@ -158,12 +163,14 @@ class modify_armature(bpy.types.Operator):
         #reparent hitboxes if they exist
         for hb in self.hitboxes:
             hb.parent = self.armature
+        c.print_timer('reparent_all_objects')
     
     def scale_armature_bones_down(self):
         '''scale all bone sizes down by a factor of 12. (all armature bones must be sticking upwards)'''
         c.switch(self.armature, 'edit')
         for bone in self.armature.data.edit_bones:
             bone.tail.z = bone.head.z + (bone.tail.z - bone.head.z)/12
+        c.print_timer('scale_armature_bones_down')
 
     def remove_bone_locks_and_modifiers(self):
         '''Removes mmd bone constraints and bone drivers, unlocks all bones'''
@@ -187,6 +194,7 @@ class modify_armature(bpy.types.Operator):
         
         for bone in self.armature.pose.bones:
             bone.lock_location = [False, False, False]
+        c.print_timer('remove_bone_locks_and_modifiers')
 
     def reparent_leg_and_body_bone(self):
         '''Reparent the leg bone to match the koikatsu armature. Unparent the body_bone bone to match koikatsu armature'''
@@ -196,6 +204,7 @@ class modify_armature(bpy.types.Operator):
             self.armature.data.edit_bones['cf_j_foot_L'].parent = self.armature.data.edit_bones['cf_j_leg03_L']
             #unparent body bone to match KK
             self.armature.data.edit_bones['p_cf_body_bone'].parent = None
+        c.print_timer('reparent_leg_and_body_bone')
 
     def delete_non_height_bones(self):
         '''delete bones not under the cf_n_height bone. Deletes bones not under the BodyTop bone if PMX armature was selected'''
@@ -220,6 +229,7 @@ class modify_armature(bpy.types.Operator):
                 self.armature.data.edit_bones[preserve_bone].select_tail = True
         bpy.ops.armature.select_all(action='INVERT')
         bpy.ops.armature.delete()
+        c.print_timer('delete_non_height_bones')
 
     def modify_finger_bone_orientations(self):
         '''Reorient the finger bones to match the in game koikatsu armature'''
@@ -311,6 +321,7 @@ class modify_armature(bpy.types.Operator):
 
         for bone in reorient_list:
             reorient(bone)
+        c.print_timer('modify_finger_bone_orientations')
 
     def set_bone_roll_data(self):
         '''Use roll data from a reference armature dump to set the roll for each bone'''
@@ -647,6 +658,7 @@ class modify_armature(bpy.types.Operator):
         for bone in reroll_data:
             if self.armature.data.edit_bones.get(bone):
                 self.armature.data.edit_bones[bone].roll = reroll_data[bone]
+        c.print_timer('set_bone_roll_data')
 
     def bend_bones_for_iks(self):
         '''slightly modify the armature to support IKs'''
@@ -683,6 +695,7 @@ class modify_armature(bpy.types.Operator):
         relocate_tail('cf_j_foot_L', 'cf_j_toes_L', 'foot')
         relocate_tail('cf_j_forearm01_L', 'cf_j_hand_L', 'arm')
         relocate_tail('cf_pv_hand_L', 'cf_j_hand_L', 'hand')
+        c.print_timer('bend_bones_for_iks')
 
     def remove_empty_vertex_groups(self):
         '''check body for groups with no vertexes. Delete if the group is not a bone on the armature'''
@@ -691,6 +704,7 @@ class modify_armature(bpy.types.Operator):
         for group in vertexWeightMap:
             if group not in bones_in_armature and vertexWeightMap[group] == False and 'cf_J_Vagina' not in group:
                 self.body.vertex_groups.remove(self.body.vertex_groups[group])
+        c.print_timer('remove_empty_vertex_groups')
 
     def reorganize_armature_layers(self):
         '''Moves all bones to different armature layers'''
@@ -900,6 +914,11 @@ class modify_armature(bpy.types.Operator):
 
     def scale_skirt_and_face_bones(self):
         '''scales skirt bones and face bones down. Scales BP bones down if exists'''
+
+        #skip this operation if this is the pmx or koikatsu armature
+        if not bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
+            return
+
         c.switch(self.armature, 'pose')
 
         def shorten_bone(bone, scale):

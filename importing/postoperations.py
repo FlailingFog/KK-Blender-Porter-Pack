@@ -67,6 +67,9 @@ class post_operations(bpy.types.Operator):
     
     def hide_unused_objects(self):
         bpy.data.objects['Armature'].hide = False
+        #don't hide any outfits if not automatically categorizing
+        if not bpy.context.scene.kkbp.categorize_dropdown in ['A']:
+            return
         #hide all outfits except the first found
         outfit = None
         if bpy.data.objects.get('Outfit 00'):
@@ -83,9 +86,9 @@ class post_operations(bpy.types.Operator):
                 child.hide = False
         for type in [self.outfits, self.outfit_alternates]:
             for clothes_object in type:
-                if clothes_object != ob:
+                if clothes_object != outfit:
                     clothes_object.hide = True
-                    for child in clothes_object:
+                    for child in clothes_object.children:
                         child.hide = True
         #hide rigged tongue and all clothes alts
         if bpy.data.objects.get('Tongue (Rigged)'):
@@ -96,10 +99,9 @@ class post_operations(bpy.types.Operator):
     def apply_cycles(self):
         if not bpy.context.scene.kkbp.shader_dropdown == 'B':
             return
-        c.kklog('\nConverting to Rigify...')
+        c.kklog('Applying Cycles adjustments...')
         c.import_from_library_file('NodeTree', ['Raw Shading (face)', 'Cycles', 'Cycles no shadows', 'LBS', 'LBS face normals'], bpy.context.scene.kkbp.use_material_fake_user)
 
-        c.kklog('Applying Cycles adjustments...')
         #taken from https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/234
         #remove outline modifier
         for o in bpy.context.view_layer.objects:
@@ -281,6 +283,7 @@ class post_operations(bpy.types.Operator):
     def apply_rigify(self):
         if not bpy.context.scene.kkbp.armature_dropdown == 'B':
             return
+        c.kklog('Running Rigify conversion scripts...')
         c.switch(self.armature, 'object')
         try:
             bpy.ops.kkbp.rigbefore('INVOKE_DEFAULT')
@@ -347,6 +350,7 @@ class post_operations(bpy.types.Operator):
     def apply_sfw(self):
         if not bpy.context.scene.kkbp.sfw_mode:
             return
+        c.kklog('Applying mesh adjustments...')
         #delete nsfw parts of the mesh
         body = bpy.data.objects['Body']
         bpy.ops.object.select_all(action='DESELECT')
@@ -431,7 +435,7 @@ class post_operations(bpy.types.Operator):
                 bpy.ops.object.mode_set(mode = 'OBJECT')
                 bpy.ops.object.select_all(action='DESELECT')
                 self.rig.select_set(True)
-                bpy.context.view_layer.objects.active = rig
+                bpy.context.view_layer.objects.active = self.rig
                 bpy.ops.object.mode_set(mode = 'EDIT')
                 bpy.ops.armature.select_all(action='DESELECT')
                 for bone in group_list:

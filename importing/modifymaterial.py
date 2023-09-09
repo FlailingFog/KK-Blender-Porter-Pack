@@ -102,6 +102,7 @@ class modify_material(bpy.types.Operator):
             if object.get('KKBP tag'):
                 if object['KKBP tag'] == 'armature':
                     self.armature = object
+        c.print_timer('retreive_stored_tags')
             
     def remove_unused_material_slots(self):
         '''Remove unused mat slots on all visible objects'''
@@ -111,7 +112,8 @@ class modify_material(bpy.types.Operator):
                 bpy.ops.object.material_slot_remove_unused()
             except:
                 pass
-    
+        c.print_timer('remove_unused_material_slots')
+
     def remap_duplcate_material_slots(self):
         c.switch(self.body, 'object')
         for cat in [[self.body], self.hairs, self.outfit_alternates, self.outfits]:
@@ -176,6 +178,7 @@ class modify_material(bpy.types.Operator):
                             bpy.ops.mesh.select_all(action='DESELECT')
                 c.switch(obj, 'object')
                 bpy.ops.object.material_slot_remove_unused()
+        c.print_timer('remap_duplcate_material_slots')
 
     def replace_materials_for_body(self):
         c.switch(self.body, 'object')
@@ -229,6 +232,7 @@ class modify_material(bpy.types.Operator):
         swap_body_material(self.body['SMR materials']['cf_O_tooth'],'KK Teeth (tooth)')
         swap_body_material([self.body['SMR materials']['cf_O_tooth'][0] + '.001'],'KK Fangs (tooth.001)')
         swap_body_material(self.body['SMR materials']['o_tang'],'KK General')
+        c.print_timer('replace_materials_for_body')
 
     def replace_materials_for_hair(self):
         '''Replace all of the Hair materials with hair templates and name accordingly'''
@@ -237,6 +241,7 @@ class modify_material(bpy.types.Operator):
                 template = bpy.data.materials['KK Hair'].copy()
                 template.name = 'KK ' + original_material.name
                 original_material.material = bpy.data.materials[template.name]
+        c.print_timer('replace_materials_for_hair')
 
     def replace_materials_for_outfits(self):
         #Replace all other materials with the general template and name accordingly
@@ -246,6 +251,7 @@ class modify_material(bpy.types.Operator):
                     template = bpy.data.materials['KK General'].copy()
                     template.name = 'KK ' + original_material.name
                     original_material.material = bpy.data.materials[template.name]
+        c.print_timer('replace_materials_for_outfits')
 
     def replace_materials_for_shadowcast(self):
         #give the shadowcast object a template as well
@@ -253,6 +259,7 @@ class modify_material(bpy.types.Operator):
             shadowcast = bpy.data.objects['Shadowcast']
             template = bpy.data.materials['KK Shadowcast']
             shadowcast.material_slots[0].material = bpy.data.materials[template.name]
+        c.print_timer('replace_materials_for_shadowcast')
 
     def replace_materials_for_tears_tongue_gageye(self):
         #give the tears a material template
@@ -287,6 +294,7 @@ class modify_material(bpy.types.Operator):
             gag.material_slots[self.body['SMR materials']['cf_O_gag_eye_00'][0]].material = bpy.data.materials['KK Gag00']
             gag.material_slots[self.body['SMR materials']['cf_O_gag_eye_01'][0]].material = bpy.data.materials['KK Gag01']
             gag.material_slots[self.body['SMR materials']['cf_O_gag_eye_02'][0]].material = bpy.data.materials['KK Gag02']
+        c.print_timer('replace_materials_for_tears_tongue_gageye')
 
     def remove_duplicate_node_groups(self):
         # Get rid of the duplicate node groups cause there's a lot
@@ -315,6 +323,7 @@ class modify_material(bpy.types.Operator):
                 for node in mat.node_tree.nodes:
                     if node.type == 'GROUP':
                         eliminate(node)
+        c.print_timer('remove_duplicate_node_groups')
 
     def load_images_and_shadow_colors(self):
         '''Load all images from the pmx folder'''
@@ -396,7 +405,8 @@ class modify_material(bpy.types.Operator):
                 if '_MT_CT' in image.name and convert_this:
                     material_name = image.name[:-10]
                     darktex = self.create_darktex(bpy.data.images[image.name], [.764, .880, 1]) #create the darktex now and load it in later
-        
+        c.print_timer('load_images_and_shadow_colors')
+
     def link_textures_for_body(self):
         '''Load the textures for the body materials to the correct spot'''
         self.image_load('KK Body', 'Gentex', 'BodyMain', self.body['SMR materials']['o_body_a'][0] + '_MT_CT.png')
@@ -496,7 +506,8 @@ class modify_material(bpy.types.Operator):
         self.image_load('KK EyeL (hitomi)', 'Gentex', 'EyeHD', self.body['SMR materials']['cf_Ohitomi_L02'][0] + '_ot2.png')
         self.image_load('KK EyeL (hitomi)', 'Gentex', 'expression0', self.body['SMR materials']['cf_Ohitomi_L02'][0] + '_cf_t_expression_00_EXPR.png')
         self.image_load('KK EyeL (hitomi)', 'Gentex', 'expression1', self.body['SMR materials']['cf_Ohitomi_L02'][0] + '_cf_t_expression_01_EXPR.png')
-    
+        c.print_timer('link_textures_for_body')
+
     def link_textures_for_hair(self):
         #for each material slot in each hair object, load in the hair detail mask, colormask
         for current_obj  in self.hairs:
@@ -519,7 +530,8 @@ class modify_material(bpy.types.Operator):
                 if hairMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairAlpha'].image == None and hairMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairMainTex'].image == None:
                     getOut = hairMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Group Output'].inputs['Hair alpha'].links[0]
                     hairMat.material.node_tree.nodes['Gentex'].node_tree.links.remove(getOut)
-    
+        c.print_timer('link_textures_for_hair')
+
     def link_textures_for_clothes(self):
         '''Loop through each material in the general object and load the textures, if any, into unique node groups
         also make unique shader node groups so all materials are unique
@@ -611,7 +623,8 @@ class modify_material(bpy.types.Operator):
                         genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use colored maintex?'].default_value = 1
                         genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 1
                         genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 1
-    
+        c.print_timer('link_textures_for_clothes')
+
     def link_textures_for_tongue_tear_gag(self):
         self.image_load('KK Tongue', 'Gentex', 'Maintex',        self.body['SMR materials']['o_tang'][0] + '_CM.png') #done on purpose
         self.image_load('KK Tongue', 'Gentex', 'MainCol',        self.body['SMR materials']['o_tang'][0] + '_CM.png')
@@ -638,6 +651,7 @@ class modify_material(bpy.types.Operator):
         #load the tears texture in
         if bpy.data.objects.get('Tears'):
             self.image_load('KK Tears', 'Gentex', 'Maintex', self.body['SMR materials']['cf_O_namida_L'][0] + '_MT_CT.png')
+        c.print_timer('link_textures_for_tongue_tear_gag')
 
     def import_and_setup_gfn(self):
         '''Sets up the Generated Face Normals (GFN) empty for smooth face normals'''
@@ -676,6 +690,7 @@ class modify_material(bpy.types.Operator):
             #i don't feel like dealing with any errors related to this
             c.kklog('The GFN empty wasnt setup correctly. Oh well.', 'warn')
             pass
+        c.print_timer('import_and_setup_gfn')
 
     def setup_gag_eye_material_drivers(self):
         '''setup gag eye drivers'''
@@ -755,6 +770,7 @@ class modify_material(bpy.types.Operator):
                 newVar.targets[0].id = self.body.data.shape_keys
                 newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
             skey_driver.driver.expression = 'CartoonyCrying or CartoonyWink or FieryEyes'
+        c.print_timer('setup_gag_eye_material_drivers')
 
     def add_outlines_to_body(self):
         #Add face and body outlines, then load in the clothes transparency mask to body outline
@@ -777,6 +793,7 @@ class modify_material(bpy.types.Operator):
         if not bpy.data.materials['KK Body Outline'].node_tree.nodes['Gentex'].node_tree.nodes['Bodyalpha'].image:
             #An alpha mask for the clothing wasn't present in the Textures folder
             bpy.data.materials['KK Body Outline'].node_tree.nodes['Clipping prevention toggle'].inputs[0].default_value = 0            
+        c.print_timer('add_outlines_to_body')
 
     def add_outlines_to_hair(self):
         #Give each piece of hair with an alphamask on each hair object it's own outline group
@@ -845,6 +862,7 @@ class modify_material(bpy.types.Operator):
             if ob.name[:12] == 'Hair Outfit ' and ob.name != 'Hair Outfit 00':
                 ob.hide = True
                 ob.hide_render = True
+        c.print_timer('add_outlines_to_hair')
 
     def add_outlines_to_clothes(self):
         #Add a standard outline to all other objects
@@ -912,6 +930,7 @@ class modify_material(bpy.types.Operator):
                 mod.use_rim = False
                 mod.show_expanded = False
                 ob.data.materials.append(bpy.data.materials['KK Outline'])
+        c.print_timer('add_outlines_to_clothes')
 
     @classmethod
     def load_luts(cls):
@@ -959,16 +978,21 @@ class modify_material(bpy.types.Operator):
                 new_pixels, width, height = self.image_to_KK(image, self.lut_light)
                 image.pixels = new_pixels
                 #image.save()
+        c.print_timer('convert_main_textures')
 
     def load_json_colors(self):
         json_color_data = c.get_json_file('KK_MaterialData.json')
         self.update_shaders(json_color_data, self.lut_selection, self.lut_light, light = True) # Set light colors
         self.update_shaders(json_color_data, self.lut_selection, self.lut_dark, light = False) # Set dark colors
+        c.print_timer('load_json_colors')
+
 
     def set_color_management(self):
         bpy.data.scenes[0].display_settings.display_device = 'sRGB'
         bpy.data.scenes[0].view_settings.view_transform = 'Standard'
         bpy.data.scenes[0].view_settings.look = 'None'
+        c.print_timer('set_color_management')
+
 
     # %% Supporting functions
 
@@ -1004,7 +1028,7 @@ class modify_material(bpy.types.Operator):
                 bpy.data.materials[mat].node_tree.nodes[group].node_tree.nodes[node].image = bpy.data.images[image[0:len(image)-4] + '.dds']
             c.kklog('.dds and .png files not found, skipping: ' + image[0:len(image)-4] + '.dds')
         else:
-            c.kklog('File not found, skipping: ' + image)
+            c.kklog('File wasnt found, skipping: ' + image)
 
     @staticmethod
     def set_uv_type(mat, group, uvnode, uvtype):

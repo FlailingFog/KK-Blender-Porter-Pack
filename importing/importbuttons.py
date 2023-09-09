@@ -24,8 +24,6 @@ class kkbp_import(bpy.types.Operator):
     filter_glob : bpy.props.StringProperty(default='*.pmx', options={'HIDDEN'})
     
     def execute(self, context):
-        bpy.context.scene.kkbp.timer = time.time()
-
         #do this thing because cats does it
         if hasattr(bpy.context.scene, 'layers'):
             bpy.context.scene.layers[0] = True
@@ -82,7 +80,6 @@ class kkbp_import(bpy.types.Operator):
         #run functions based on selection
         c.toggle_console()
         self.import_pmx_models()
-        c.print_timer('Import PMX')
         for index, function in enumerate(functions):
             print('Import function {} running'.format(index))
             function()
@@ -96,7 +93,7 @@ class kkbp_import(bpy.types.Operator):
 
     def import_pmx_models(self):
         c.kklog('Importing pmx files with mmdtools...')
-
+        
         for subdir, dirs, files in os.walk(bpy.context.scene.kkbp.import_dir):
             for file in files:
                 if (file == 'model.pmx'):
@@ -120,3 +117,5 @@ class kkbp_import(bpy.types.Operator):
                     if bpy.data.texts.get('Model'):
                             bpy.data.texts.remove(bpy.data.texts['Model'])
                             bpy.data.texts.remove(bpy.data.texts['Model_e'])
+        c.initialize_timer()
+        c.print_timer('Import PMX')
