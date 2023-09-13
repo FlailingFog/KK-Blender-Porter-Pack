@@ -1,4 +1,22 @@
-### Changes for V6.4.0
+### Changes for V6.6.0
+* KKBP Exporter improvements by **MediaMoots**!
+    * The exporter can now export with pushups enabled
+    * The exporter can now export with the current pose applied
+    * The exporter can now export with the current face expression applied
+    * All sub meshes now have unique material names
+    * All bones now have unique names
+    * See https://github.com/FlailingFog/KK-Blender-Porter-Pack/pull/398 for details
+* Fixed a bug that prevented baking
+* Hairs with a maintex can now be imported
+* The Blender import scripts were refactored
+* The Blender plugin will now show a lot more progress information in the console and time how long every function takes
+* Added a basic wiki
+
+### Changes for V6.5.0
+* Blender 3.5 support
+* The Blender Pose Asset Library button will now try to continue where it left off if you interrupt it
+
+### Changes for V6.4.2
 * KKBP Exporter improvements by **MediaMoots**!
     * [The exporter is up to 400% faster now!](https://github.com/FlailingFog/KK-Blender-Porter-Pack/pull/362)
     * Skirt bone structures will now be correct if you're exporting multiple outfits with differently sized skirts
@@ -15,13 +33,15 @@
     * You need to bake light and dark versions of the model to a folder, then use the "Switch baked templates" button for the Light and the Dark selection before attempting to use the "Finalize materials" button
     * The original materials are saved as "material_name-ORG" if you need to go back to edit or bake them again
 * Updated Rigify scripts (January 24th)
+    * These contain a bugfix related to headmods
 * The KKBP and Rigify armatures now have slight knee deformation drivers to smooth out the knee in kneeling poses
 * On Windows, the console will now show during long operations (importing characters, baking, importing animations, etc)
-    * This will help the user more easily identify errors as the console will stay open if an error occurs during the operation
+    * This will help the user more easily identify errors. If an error is encountered, the console will remain open after the operation is complete
+* Clothes without a shadow color will now generate a dark texture with a default shadow color (instead of not generating and appearing completely white)
+* Using both the Rigify and Cycles options on the panel will no longer result in a rotated body mesh
 * Dark textures are now created when the Import Studio Object button is used
 * Only new textures will be saturated when the Import Studio Object button is used
 * Baking materials should work on Linux and Mac now
-
 
 ### Changes for V6.3.0
 * Blender 3.4 support
