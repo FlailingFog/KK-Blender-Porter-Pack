@@ -2,7 +2,7 @@
 
 This wiki contains basic info on all features of the KKBP Blender addon.  
 
-### Frequency asked questions
+### Frequently asked questions
 * [My top is missing](https://github.com/FlailingFog/KK-Blender-Porter-Pack/blob/master/wiki/Wiki%20faq.md#My-top-is-missing)
 * [My clothes are missing](https://github.com/FlailingFog/KK-Blender-Porter-Pack/blob/master/wiki/Wiki%20faq.md#My-clothes-are-missing)
 * [I'm getting fully white textures after importing my character](https://github.com/FlailingFog/KK-Blender-Porter-Pack/blob/master/wiki/Wiki%20faq.md#Im-getting-fully-white-textures-after-importing-my-character)
