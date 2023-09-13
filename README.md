@@ -64,7 +64,7 @@ If you're still having trouble please [create a new issue](https://github.com/Fl
 ## Contributing
 If you're interested in contributing, please check [the issues page](https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues) or [make a pull request.](https://github.com/FlailingFog/KK-Blender-Porter-Pack/pulls)  
 If you're interested in editing the wiki, [check this folder](https://github.com/FlailingFog/KK-Blender-Porter-Pack/tree/master/wiki).  
-If you're interested in translating the plugin interface into your language, [check this folder for examples.](https://github.com/FlailingFog/KK-Blender-Porter-Pack/tree/master/interface) Current languages are EN, JP, ZH.  
+If you're interested in translating the plugin interface into your language, [check this folder for examples.](https://github.com/FlailingFog/KK-Blender-Porter-Pack/tree/master/interface) (Current languages are EN, JP, ZH.)  
 This project does not accept donations.
 
 ## Similar Projects
