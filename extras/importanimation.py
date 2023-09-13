@@ -147,7 +147,7 @@ def rename_bones(animation_armature):
                 bone.name = retargeting_dict[key]
 
 class import_animation(bpy.types.Operator):
-    bl_idname = "kkb.importanimation"
+    bl_idname = "kkbp.importanimation"
     bl_label = "Import .fbx animation"
     bl_description = "Imports a KK animation (.fbx format) and applies it to your character"
     bl_options = {'REGISTER', 'UNDO'}
@@ -186,4 +186,4 @@ if __name__ == "__main__":
     bpy.utils.register_class(import_animation)
 
     # test call
-    print((bpy.ops.kkb.importanimation('INVOKE_DEFAULT')))
+    print((bpy.ops.kkbp.importanimation('INVOKE_DEFAULT')))

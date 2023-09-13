@@ -10,7 +10,7 @@ Usage:
 '''
 
 import bpy, os, traceback
-from ..importing.importbuttons import kklog
+from .. import common as c
 from pathlib import Path
 from.bakematerials import sanitizeMaterialName, showError
 
@@ -103,7 +103,7 @@ def replace_images(folderpath, apply_type):
         else:
             currentImage = [file.name for file in files if (matname in file.name and 'normal' in file.name)]
         if not currentImage:
-            kklog("No {} baked image found for {}".format('light' if apply_type == 'A' else 'dark' if apply_type == 'B' else 'normal', matname))
+            c.kklog("No {} baked image found for {}".format('light' if apply_type == 'A' else 'dark' if apply_type == 'B' else 'normal', matname))
             continue
 
         imageName = currentImage[0]
@@ -123,7 +123,7 @@ def replace_images(folderpath, apply_type):
         nodes['KK Mix'].inputs[0].default_value = 1
 
 class apply_materials(bpy.types.Operator):
-    bl_idname = "kkb.applymaterials"
+    bl_idname = "kkbp.applymaterials"
     bl_label = "Open baked materials folder"
     bl_description = t('apply_mats_tt')
     bl_options = {'REGISTER', 'UNDO'}
@@ -153,8 +153,8 @@ class apply_materials(bpy.types.Operator):
             return {'FINISHED'}
         
         except:
-            kklog('Unknown python error occurred', type = 'error')
-            kklog(traceback.format_exc())
+            c.kklog('Unknown python error occurred', type = 'error')
+            c.kklog(traceback.format_exc())
             self.report({'ERROR'}, traceback.format_exc())
             return {"CANCELLED"}
 
@@ -166,4 +166,4 @@ if __name__ == "__main__":
     bpy.utils.register_class(apply_materials)
 
     # test call
-    print((bpy.ops.kkb.applymaterials('INVOKE_DEFAULT')))
+    print((bpy.ops.kkbp.applymaterials('INVOKE_DEFAULT')))

@@ -46,7 +46,7 @@ def link_keys(shapekey_holder_object, objects_to_link):
 
 
 class link_shapekeys(bpy.types.Operator):
-    bl_idname = "kkb.linkshapekeys"
+    bl_idname = "kkbp.linkshapekeys"
     bl_label = "Link shapekeys"
     bl_description = "Separates the Eyes and Eyebrows from the Body object and links the shapekeys to the Body object. Useful for when you want to make eyes or eyebrows appear through the hair using the Cryptomatte features in the compositor"
     bl_options = {'REGISTER', 'UNDO'}
@@ -100,4 +100,4 @@ if __name__ == "__main__":
     bpy.utils.register_class(link_shapekeys)
 
     # test call
-    print((bpy.ops.kkb.linkshapekeys('INVOKE_DEFAULT')))
+    print((bpy.ops.kkbp.linkshapekeys('INVOKE_DEFAULT')))

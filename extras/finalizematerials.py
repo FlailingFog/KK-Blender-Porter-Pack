@@ -1,8 +1,9 @@
 import bpy, pathlib, os
 from ..interface.dictionary_en import t
+from .. import common as c
 
 class finalize_materials(bpy.types.Operator):
-    bl_idname = "kkb.finalizematerials"
+    bl_idname = "kkbp.finalizematerials"
     bl_label = "Optimize KKBP Materials"
     bl_description = t('finalize_materials_tt')
     bl_options = {'REGISTER', 'UNDO'}
@@ -13,7 +14,7 @@ class finalize_materials(bpy.types.Operator):
         #bpy.context.scene.kkbp.bake_light_bool = True
         #bpy.context.scene.kkbp.bake_norm_bool = False
         #bpy.context.scene.kkbp.atlas_dropdown = 'B'
-        #bpy.ops.kkb.applymaterials('INVOKE_DEFAULT')
+        #bpy.ops.kkbp.applymaterials('INVOKE_DEFAULT')
 
         #now all needed images are loaded into the file. Match each material to it's image textures
         for mat in bpy.data.materials:
@@ -34,7 +35,7 @@ class finalize_materials(bpy.types.Operator):
                         simple = bpy.data.materials['KK Simple'].copy()
                     except:
                         script_dir=pathlib.Path(__file__).parent
-                        template_path=(script_dir / '../KK Shader V6.0.blend').resolve()
+                        template_path=(script_dir / '../KK Shader V6.6.blend').resolve()
                         filepath = str(template_path)
                         innerpath = 'Material'
                         templateList = ['KK Simple']

@@ -14,9 +14,8 @@
 import bpy, os, time, pathlib
 from bpy.props import StringProperty
 from ..importstudio import import_studio_objects
-from ...importing.importbuttons import kklog, toggle_console
-from ...importing.importcolors import load_luts, image_to_KK
-from ...importing.darkcolors import create_darktex
+from ... import common as c
+from ...importing.modifymaterial import modify_material
 from ...interface.dictionary_en import t
 
 def better_fbx_map_import(directory):
@@ -52,13 +51,13 @@ def better_fbx_map_import(directory):
         #if the material already exists, use that, else create it
         try:
             obj.material_slots[0].material = bpy.data.materials['KK ' + obj.material_slots[0].material.name]
-            kklog('Material already exists: ' + obj.material_slots[0].material.name)
+            c.kklog('Material already exists: ' + obj.material_slots[0].material.name)
         except:
             try:
                 template = bpy.data.materials['KK Simple'].copy()
             except:
                 script_dir=pathlib.Path(__file__).parent.parent
-                template_path=(script_dir / '../KK Shader V6.0.blend').resolve()
+                template_path=(script_dir / '../KK Shader V6.6.blend').resolve()
                 filepath = str(template_path)
 
                 innerpath = 'Material'
@@ -90,21 +89,21 @@ def better_fbx_map_import(directory):
                     #create darktex
                     bpy.context.scene.kkbp.import_dir = os.path.dirname(bpy.data.filepath) + '\\'
                     main_image = bpy.data.images[new_image_name]
-                    dark_image = create_darktex(main_image, [.764, .880, 1])
+                    dark_image = modify_material.create_darktex(main_image, [.764, .880, 1])
                     bpy.context.scene.kkbp.import_dir = ''
 
                     #saturate both with color code
                     lut_light = 'Lut_TimeDay.png'
                     lut_dark = 'Lut_TimeDay.png'
-                    load_luts(lut_light, lut_dark)
+                    modify_material.load_luts(lut_light, lut_dark)
 
                     for image in [main_image, dark_image]:
                         print('converting ' + image.name)
                         image.save()
                         image.reload()
                         image.colorspace_settings.name = 'sRGB'
-                        image_to_KK(image, lut_light) #run twice because of bug
-                        new_pixels, width, height = image_to_KK(image, lut_light)
+                        modify_material.image_to_KK(image, lut_light) #run twice because of bug
+                        new_pixels, width, height = modify_material.image_to_KK(image, lut_light)
                         image.pixels = new_pixels
                     
                     #then load it in
@@ -122,7 +121,7 @@ def main(folder):
     #Use the Better FBX importer addon if installed, else fallback to internal fbx importer
     use_better_fbx_importer = 'better_fbx' in [addon.module for addon in bpy.context.preferences.addons]
 
-    toggle_console()
+    c.toggle_console()
     start = time.time()
 
     #delete the default scene if present
@@ -326,11 +325,11 @@ def main(folder):
             bpy.data.node_groups.remove(block)
         
     print(str(time.time() - start))
-    toggle_console()
+    c.toggle_console()
 
 
 class map_asset_lib(bpy.types.Operator):
-    bl_idname = "kkb.createmapassetlib"
+    bl_idname = "kkbp.createmapassetlib"
     bl_label = "Create map asset library"
     bl_description = t('map_library_tt')
     bl_options = {'REGISTER', 'UNDO'}
@@ -353,4 +352,4 @@ if __name__ == "__main__":
     bpy.utils.register_class(map_asset_lib)
     
     # test call
-    print((bpy.ops.kkb.createmapassetlib('INVOKE_DEFAULT')))
+    print((bpy.ops.kkbp.createmapassetlib('INVOKE_DEFAULT')))

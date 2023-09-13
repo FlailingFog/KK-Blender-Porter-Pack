@@ -4,35 +4,28 @@ bl_info = {
     "author" : "a blendlet and some blenderchads",
     "location" : "View 3D > Tool Shelf > KKBP and Image Editor > Tool Shelf > KKBP",
     "description" : "Scripts to automate cleanup of a Koikatsu export",
-    "version": (6, 5, 0),
-    "blender" : (3, 5, 0),
+    "version": (6, 6, 0),
+    "blender" : (3, 6, 2),
     "category" : "3D View",
     "tracker_url" : "https://github.com/FlailingFog/KK-Blender-Porter-Pack/"
 }
 
-import bpy
 from bpy.utils import register_class, unregister_class
-
 from bpy.types import Scene
 from bpy.props import PointerProperty
 
-def wrap(register_bool):
+def reg_unreg(register_bool):
     from .preferences import KKBPPreferences
     if register_bool:
         register_class(KKBPPreferences)
     else:
         unregister_class(KKBPPreferences)
 
-    from .importing.bonedrivers import bone_drivers
-    from .importing.cleanarmature import clean_armature
-    #from .importing.importgrey import import_grey
-    #from .importing.finalizegrey import finalize_grey
-    from .importing.finalizepmx import finalize_pmx
-    from .importing.importeverything import import_everything
-    from .importing.importcolors import import_colors
-    from .importing.importbuttons import quick_import, mat_import
-    from .importing.separatebody import separate_body
-    from .importing.shapekeys import shape_keys
+    from .importing.importbuttons import kkbp_import
+    from .importing.modifymesh import modify_mesh
+    from .importing.modifyarmature import modify_armature
+    from .importing.modifymaterial import modify_material
+    from .importing.postoperations import post_operations
 
     from .exporting.bakematerials import bake_materials
     from .exporting.applymaterials import apply_materials
@@ -44,7 +37,6 @@ def wrap(register_bool):
     from .extras.animationlibrary.createanimationlibrary import anim_asset_lib
     from .extras.linkshapekeys import link_shapekeys
     from .extras.importanimation import import_animation
-    from .extras.switcharmature import switch_armature
     from .extras.separatemeshes import separate_meshes
     from .extras.separatemeshes import export_separate_meshes
     from .extras.toggleik import toggle_ik
@@ -67,7 +59,6 @@ def wrap(register_bool):
     )
 
     classes = (
-
         apply_materials,
         bake_materials, 
         export_prep,
@@ -80,7 +71,6 @@ def wrap(register_bool):
         map_asset_lib,
         anim_asset_lib,
         link_shapekeys,
-        switch_armature,
         separate_meshes,
         export_separate_meshes,
         toggle_ik,
@@ -91,17 +81,11 @@ def wrap(register_bool):
         rigify_after,
         MergeWeights,
 
-        bone_drivers, 
-        clean_armature, 
-        #finalize_grey, 
-        finalize_pmx, 
-        import_everything, 
-        import_colors, 
-        #import_grey,
-        quick_import,
-        mat_import,
-        separate_body, 
-        shape_keys,
+        kkbp_import,
+        modify_mesh,
+        modify_armature,
+        modify_material,
+        post_operations,
 
         PlaceholderProperties, 
         IMPORTINGHEADER_PT_panel,
@@ -119,10 +103,10 @@ def wrap(register_bool):
         del Scene.kkbp
 
 def register():
-    wrap(True)
+    reg_unreg(True)
 
 def unregister():
-    wrap(False)
+    reg_unreg(False)
 
 if __name__ == "__main__":
     register()

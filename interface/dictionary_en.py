@@ -27,12 +27,12 @@ translation_dictionary = {
     'arm_drop_D_tt'     : "Use the stock PMX armature. This is the armature you get from the KKBP exporter",
 
     'cat_drop'      : 'Run type',
-    'cat_drop_A'    : "Don't pause to categorize",
+    'cat_drop_A'    : "Automatically categorize",
     'cat_drop_A_tt' : "Import everything and get a single object containing all your model's clothes. Hides any alternate clothes by default",
     'cat_drop_B'    : "Pause to categorize",
     'cat_drop_B_tt' : "Import everything, but pause to manually separate the clothes into groups of objects. The hair must be separated and named \"Hair\" or \"hair\". When done separating, click the Finish categorization button to finish the import. Hides any alternate clothes by default",
-    'cat_drop_C'    : "Automatically categorize",
-    'cat_drop_C_tt' : "Import everything and automatically separate every piece of clothing into several objects",
+    'cat_drop_C'    : "Separate every object",
+    'cat_drop_C_tt' : "Import everything and automatically separate every single piece of clothing into several objects",
     'cat_drop_D'    : "Categorize by SMR Data",
     'cat_drop_D_tt' : "Import everyting and automatically separate every object by it's Skinned Mesh Renderer. Note: This option is only for exporting meshes so it will not apply any material templates or colors",
 
@@ -47,8 +47,8 @@ translation_dictionary = {
     'dark_D_tt' : "Makes the dark colors more saturated than the light ones",
     'dark_E'    : 'Value reduction',
     'dark_E_tt' : "Makes the dark colors darker than the light ones",
-    'dark_F'    : 'Experimental',
-    'dark_F_tt' : "Uses an experimental method to set the dark colors",
+    'dark_F'    : 'Automatic',
+    'dark_F_tt' : "Uses an automatic method to set the dark colors",
 
     'prep_drop'         : "Export type",
     'prep_drop_A'       : "Unity - VRM compatible",
@@ -124,7 +124,7 @@ translation_dictionary = {
 
     'convert_image' : 'Convert image with KKBP',
 
-    'quick_import_tt'   : "Imports a Koikatsu model (.pmx format) and applies fixes to it",
+    'kkbp_import_tt'   : "Imports a Koikatsu model (.pmx format) and applies fixes to it",
     'mat_import_tt'     : "Finish separating objects, apply the textures and colors",
     'export_prep_tt'    : "Check the dropdown for more info",
     'bake_mats_tt'      : "Open the folder you want to bake the material templates to",

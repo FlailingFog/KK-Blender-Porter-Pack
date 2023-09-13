@@ -1,7 +1,7 @@
 import bpy
 
 class update_bones(bpy.types.Operator):
-    bl_idname = "kkb.updatebones"
+    bl_idname = "kkbp.updatebones"
     bl_label = "Update bones"
     bl_description = "Updates visibility of bones based on which outfits are hidden in the outliner"
     bl_options = {'REGISTER', 'UNDO'}

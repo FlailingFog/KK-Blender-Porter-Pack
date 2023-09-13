@@ -139,19 +139,19 @@ def separate_body(json_smr_data):
         return
     
     body_obj_material_map = {
-        'cf_Ohitomi_L' : {body['KKBP materials']['cf_Ohitomi_L']},
-        'cf_Ohitomi_R' : {body['KKBP materials']['cf_Ohitomi_R']},
-        'cf_Ohitomi_L02' : {body['KKBP materials']['cf_Ohitomi_L02']},
-        'cf_Ohitomi_R02' : {body['KKBP materials']['cf_Ohitomi_R02']},
-        'cf_O_namida_L' : {body['KKBP materials']['cf_O_namida_L']},
-        'cf_O_namida_M' : {body['KKBP materials']['cf_O_namida_M']},
-        'cf_O_namida_S' : {body['KKBP materials']['cf_O_namida_S']},
-        'cf_O_gag_eye_00' : {body['KKBP materials']['cf_O_gag_eye_00']},
-        'cf_O_gag_eye_01' : {body['KKBP materials']['cf_O_gag_eye_01']},
-        'cf_O_gag_eye_02' : {body['KKBP materials']['cf_O_gag_eye_02']},
-        'cf_O_eyeline' : {body['KKBP materials']['cf_O_eyeline'],'cf_m_eyeline_kage'},
-        'cf_O_eyeline_low' : {body['KKBP materials']['cf_O_eyeline_low']},
-        'o_tang' : {body['KKBP materials']['o_tang']},
+        'cf_Ohitomi_L' : {body['SMR materials']['cf_Ohitomi_L'][0]},
+        'cf_Ohitomi_R' : {body['SMR materials']['cf_Ohitomi_R'][0]},
+        'cf_Ohitomi_L02' : {body['SMR materials']['cf_Ohitomi_L02'][0]},
+        'cf_Ohitomi_R02' : {body['SMR materials']['cf_Ohitomi_R02'][0]},
+        'cf_O_namida_L' : {body['SMR materials']['cf_O_namida_L'][0]},
+        'cf_O_namida_M' : {body['SMR materials']['cf_O_namida_M'][0]},
+        'cf_O_namida_S' : {body['SMR materials']['cf_O_namida_S'][0]},
+        'cf_O_gag_eye_00' : {body['SMR materials']['cf_O_gag_eye_00'][0]},
+        'cf_O_gag_eye_01' : {body['SMR materials']['cf_O_gag_eye_01'][0]},
+        'cf_O_gag_eye_02' : {body['SMR materials']['cf_O_gag_eye_02'][0]},
+        'cf_O_eyeline' : {body['SMR materials']['cf_O_eyeline'][0],'cf_m_eyeline_kage'},
+        'cf_O_eyeline_low' : {body['SMR materials']['cf_O_eyeline_low'][0]},
+        'o_tang' : {body['SMR materials']['o_tang'][0]},
     }
     
     #Pass 1: To make sure each material has a mesh
@@ -183,7 +183,7 @@ def separate_body(json_smr_data):
         
         #deal with tang
         if (row['SMRName'] == 'o_tang' and len(row['SMRBoneNames']) > 1):
-            mat_name = body['KKBP materials']['o_tang_rigged']
+            mat_name = body['SMR materials']['o_tang_rigged'][0]
             found_mat_idx = body_data.materials.find(mat_name)
             
             if found_mat_idx == -1:
@@ -223,7 +223,7 @@ def separate_body(json_smr_data):
     
      
 class separate_meshes(bpy.types.Operator):
-    bl_idname = "kkb.separatemeshes"
+    bl_idname = "kkbp.separatemeshes"
     bl_label = "Separate Meshes"
     bl_description = "Open the folder containing the KK_SMRData.json file"
     bl_options = {'REGISTER', 'UNDO'}
@@ -251,7 +251,7 @@ if __name__ == "__main__":
     bpy.utils.register_class(separate_meshes)
 
     # test call
-    print((bpy.ops.kkb.separatemeshes('INVOKE_DEFAULT')))
+    print((bpy.ops.kkbp.separatemeshes('INVOKE_DEFAULT')))
 
 
 ########## EXPORTER ##########
@@ -260,15 +260,15 @@ def export_meshes(directory):
     bpy.ops.object.mode_set(mode = 'OBJECT')
     
     obj_material_map = {
-        'cf_Ohitomi_L' : body['KKBP materials']['cf_Ohitomi_L'],
-        'cf_Ohitomi_R' : body['KKBP materials']['cf_Ohitomi_L'],
-        'cf_Ohitomi_L02' : body['KKBP materials']['cf_Ohitomi_L02'],
-        'cf_Ohitomi_R02' : body['KKBP materials']['cf_Ohitomi_R02'],
-        'cf_O_namida_L' : body['KKBP materials']['cf_O_namida_L'],
-        'cf_O_namida_M' : body['KKBP materials']['cf_O_namida_L'],
-        'cf_O_namida_S' : body['KKBP materials']['cf_O_namida_L'],
-        'o_tang' : body['KKBP materials']['o_tang'],
-        'o_tang.001' : body['KKBP materials']['o_tang'],
+        'cf_Ohitomi_L' : body['SMR materials']['cf_Ohitomi_L'][0],
+        'cf_Ohitomi_R' : body['SMR materials']['cf_Ohitomi_L'][0],
+        'cf_Ohitomi_L02' : body['SMR materials']['cf_Ohitomi_L02'][0],
+        'cf_Ohitomi_R02' : body['SMR materials']['cf_Ohitomi_R02'][0],
+        'cf_O_namida_L' : body['SMR materials']['cf_O_namida_L'][0],
+        'cf_O_namida_M' : body['SMR materials']['cf_O_namida_L'][0],
+        'cf_O_namida_S' : body['SMR materials']['cf_O_namida_L'][0],
+        'o_tang' : body['SMR materials']['o_tang'][0],
+        'o_tang.001' : body['SMR materials']['o_tang'][0],
     }
 
     armature = bpy.data.objects['Armature']
@@ -290,7 +290,7 @@ def export_meshes(directory):
                 
                 
 class export_separate_meshes(bpy.types.Operator, ExportHelper):
-    bl_idname = "kkb.exportseparatemeshes"
+    bl_idname = "kkbp.exportseparatemeshes"
     bl_label = "Export Separate Meshes"
     bl_description = "Choose where to export meshes"
     bl_options = {'REGISTER', 'UNDO'}

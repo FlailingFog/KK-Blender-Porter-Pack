@@ -207,7 +207,7 @@ def main():
     #koikatsuCommons.setBoneManagerLayersFromRigifyLayers(generatedRig)
 
 class rigify_after(bpy.types.Operator):
-    bl_idname = "kkb.rigafter"
+    bl_idname = "kkbp.rigafter"
     bl_label = "After Each Rigify Generate - Public"
     bl_description = 'Performs cleanup after a Rigify generation'
     bl_options = {'REGISTER', 'UNDO'}
@@ -220,4 +220,4 @@ if __name__ == "__main__":
     bpy.utils.register_class(rigify_after)
 
     # test call
-    print((bpy.ops.kkb.rigafter('INVOKE_DEFAULT')))   
+    print((bpy.ops.kkbp.rigafter('INVOKE_DEFAULT')))   
