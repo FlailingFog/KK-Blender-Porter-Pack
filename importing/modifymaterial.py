@@ -520,16 +520,24 @@ class modify_material(bpy.types.Operator):
                 newNode.name = hairType + ' Textures'
             
                 self.image_load(hairMat.name, 'Gentex', 'hairMainTex',  hairType+'_MT_CT.png')
+                self.image_load(hairMat.name, 'Gentex', 'hairDarkTex',  hairType+'_MT_DT.png')
                 self.image_load(hairMat.name, 'Gentex', 'hairDetail', hairType+'_DM.png')
                 self.image_load(hairMat.name, 'Gentex', 'hairFade',   hairType+'_CM.png')
                 self.image_load(hairMat.name, 'Gentex', 'hairShine',  hairType+'_HGLS.png')
                 self.image_load(hairMat.name, 'Gentex', 'hairAlpha',  hairType+'_AM.png')
                 self.set_uv_type(hairMat.name, 'Hairpos', 'hairuv', 'uv_nipple_and_shine')
 
+                #If a maintex exists for this hair material, make a new node group so the rest of the hair is not affected
+                if hairMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairMainTex'].image:
+                    newNode = hairMat.material.node_tree.nodes['Shader'].node_tree.copy()
+                    hairMat.material.node_tree.nodes['Shader'].node_tree = newNode
+                    newNode.name = hairType + ' Hair Shader'
+                
                 #If no alpha mask wasn't loaded in disconnect the hair alpha node to make sure this piece of hair is visible
                 if hairMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairAlpha'].image == None and hairMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairMainTex'].image == None:
                     getOut = hairMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Group Output'].inputs['Hair alpha'].links[0]
                     hairMat.material.node_tree.nodes['Gentex'].node_tree.links.remove(getOut)
+                
         c.print_timer('link_textures_for_hair')
 
     def link_textures_for_clothes(self):
@@ -1418,6 +1426,7 @@ class modify_material(bpy.types.Operator):
         hair_root_color   = to_255({"r":1,"g":1,"b":1,"a":1})
         hair_tip_color    = to_255({"r":1,"g":1,"b":1,"a":1})
         hair_shadow_color = {"r":1,"g":1,"b":1,"a":1}
+        hair_colors_already_used = [] #keep track of hair colors for later
         
         ## All Other Items
         item_data = []
@@ -1438,10 +1447,12 @@ class modify_material(bpy.types.Operator):
         eyeline_material_name = body['SMR materials']['cf_O_eyeline'][0]
         kage_material_name = 'cf_m_eyeline_kage'
         tongue_material_names = [body['SMR materials']['o_tang'][0], body['SMR materials']['o_tang_rigged'][0]]
-        hair_material_names = []
+        hair_material_names = [] 
         for ob in self.hairs:
             hair_material_names.extend([mat.material.name.replace('KK ','') for mat in ob.material_slots])
         
+        hair_base_colors = {}
+
         for idx, line in enumerate(json):
             #Skip supporting entries for now
             if line['ShaderName'] in supporting_entries:
@@ -1468,9 +1479,9 @@ class modify_material(bpy.types.Operator):
 
             #This is a body entry
             if line['MaterialName'] == body_material_name:
-                nip_base  = to_255(colors["_overcolor1 Color 1"])
-                nip_1     = to_255(colors["_overcolor2 Color 2"])
-                nip_2     = to_255(colors["_overcolor3 Color 3"])
+                nip_base  = to_255(colors.get("_overcolor1 Color 1", {"r":0,"g":1,"b":1,"a":1}))
+                nip_1     = to_255(colors.get("_overcolor2 Color 2", {"r":0,"g":1,"b":1,"a":1}))
+                nip_2     = to_255(colors.get("_overcolor3 Color 3", {"r":0,"g":1,"b":1,"a":1}))
                 underhair = to_255({"r":0,"g":0,"b":0,"a":1})
 
                 #if this entry has a "create" equivalent, get additional colors from it
@@ -1486,9 +1497,9 @@ class modify_material(bpy.types.Operator):
                     data.extend(json[existing_index]['ShaderPropColorValues'])
                     data.extend(json[existing_index]['ShaderPropFloatValues'])
                     colors = dict(zip(labels, data))
-                    body_light = colors["_Color Color 0"]
-                    skin_type  = to_255(colors["_Color2 Color 1"])
-                    nail_color = to_255(colors["_Color5 Color 4"])
+                    body_light = colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1})
+                    skin_type  = to_255(colors.get("_Color2 Color 1", {"r":0,"g":1,"b":1,"a":1}))
+                    nail_color = to_255(colors.get("_Color5 Color 4", {"r":0,"g":1,"b":1,"a":1}))
 
                 body_colors.append(self.color_to_KK(to_255(body_light), active_lut))    # light body color
                 body_colors.append(self.color_to_KK(skin_type,  active_lut))            # skin type color
@@ -1501,46 +1512,64 @@ class modify_material(bpy.types.Operator):
 
             #This is hair
             if line['MaterialName'] in hair_material_names:
-                hair_base_color   = colors["_Color Color 0"]
+                hair_base_colors[line['MaterialName']] = colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1})
                 hair_shadow_color = shadow_color
-                hair_root_color   = to_255(colors["_Color2 Color 1"])
-                hair_tip_color    = to_255(colors["_Color3 Color 2"])
-                #print('hair colors: ' + str(hair_base_color))
+                hair_root_color   = to_255(colors.get("_Color2 Color 1", {"r":0,"g":1,"b":1,"a":1}))
+                hair_tip_color    = to_255(colors.get("_Color3 Color 2", {"r":0,"g":1,"b":1,"a":1}))
+                
+                #if this is a unique hair color, and the shader group is not unique from having a maintex, give it a unique group
+                hairType = line['MaterialName']
+                hairMat = bpy.data.materials.get('KK ' + hairType)
+                unique_group = hairMat.node_tree.nodes['Shader'].name != 'Hair Shader'
+                if hair_base_colors[line['MaterialName']] not in hair_colors_already_used and not unique_group and len(hair_colors_already_used) > 1:
+                    newNode = hairMat.material.node_tree.nodes['Shader'].node_tree.copy()
+                    hairMat.node_tree.nodes['Shader'].node_tree = newNode
+                    newNode.name = hairType + ' Hair Shader'
+                    hair_colors_already_used.append(hair_base_colors[line['MaterialName']])
+                elif len(hair_colors_already_used) == 0:
+                    hair_colors_already_used.append(hair_base_colors[line['MaterialName']]) #keep the first hair color so it still shows up as "Hair Shader"
             
             #This is eyeline
             if line['MaterialName'] == eyeline_material_name:
-                eyeline_color = to_255(colors["_Color Color 0"])
+                eyeline_color = to_255(colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1}))
                 continue
 
             #This is an eyebrow
             if line['MaterialName'] == brow_material_name:
-                brow_color = to_255(colors["_Color Color 0"])
+                brow_color = to_255(colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1}))
                 continue
             
             #This is the tongue
             if line['MaterialName'] in tongue_material_names:
                 try:
-                    tongue_color1 = to_255(colors["_Color Color 0"])
-                    tongue_color2 = to_255(colors["_Color2 Color 1"])
-                    tongue_color3 = to_255(colors["_Color3 Color 2"])
+                    tongue_color1 = to_255(colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1}))
+                    tongue_color2 = to_255(colors.get("_Color2 Color 1", {"r":0,"g":1,"b":1,"a":1}))
+                    tongue_color3 = to_255(colors.get("_Color3 Color 2", {"r":0,"g":1,"b":1,"a":1}))
                 except:
                     c.kklog('Could not load tongue colors', 'error')
                     print(colors)
             
             #This is the kage
             if line['MaterialName'] == kage_material_name:
-                kage_color = to_255(colors["_Color Color 0"])
+                kage_color = to_255(colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1}))
 
             #This is an item
             shader_name = line['MaterialName']
             if (shader_name + ' Shader') in node_groups:
                 
                 #if this entry has a "create" equivalent, get the rgb colors from it
+                #if it doesn't then get the colors from that entry
                 existing_index = entry_exists('create_' + shader_name)
                 if existing_index == -1:
-                    color1 = {"r":0,"g":1,"b":1,"a":1}
-                    color2 = {"r":0,"g":1,"b":1,"a":1}
-                    color3 = {"r":0,"g":1,"b":1,"a":1}
+                    labels =    line['ShaderPropNames']
+                    data   =    line['ShaderPropTextures'].copy()
+                    data.extend(line['ShaderPropTextureValues'])
+                    data.extend(line['ShaderPropColorValues'])
+                    data.extend(line['ShaderPropFloatValues'])
+                    colors = dict(zip(labels, data))
+                    color1 = colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1})
+                    color2 = colors.get("_Color2 Color 1", {"r":0,"g":1,"b":1,"a":1})
+                    color3 = colors.get("_Color3 Color 2", {"r":0,"g":1,"b":1,"a":1})
                     pater1 = {"r":0,"g":1,"b":1,"a":1}
                     pater2 = {"r":0,"g":1,"b":1,"a":1}
                     pater3 = {"r":0,"g":1,"b":1,"a":1}
@@ -1551,12 +1580,13 @@ class modify_material(bpy.types.Operator):
                     data.extend(json[existing_index]['ShaderPropColorValues'])
                     data.extend(json[existing_index]['ShaderPropFloatValues'])
                     colors = dict(zip(labels, data))
-                    color1 = colors["_Color Color 0"]
-                    color2 = colors["_Color2 Color 2"]
-                    color3 = colors["_Color3 Color 4"]
-                    pater1 = colors["_Color1_2 Color 1"]
-                    pater2 = colors["_Color2_2 Color 3"]
-                    pater3 = colors["_Color3_2 Color 5"]
+
+                    color1 = colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1})
+                    color2 = colors.get("_Color2 Color 2", {"r":0,"g":1,"b":1,"a":1})
+                    color3 = colors.get("_Color3 Color 4", {"r":0,"g":1,"b":1,"a":1})
+                    pater1 = colors.get("_Color1_2 Color 1", {"r":0,"g":1,"b":1,"a":1})
+                    pater2 = colors.get("_Color2_2 Color 3", {"r":0,"g":1,"b":1,"a":1})
+                    pater3 = colors.get("_Color3_2 Color 5", {"r":0,"g":1,"b":1,"a":1})
 
                 reformatted_data = {
                     "MaterialName":
@@ -1581,8 +1611,11 @@ class modify_material(bpy.types.Operator):
         tongue_color2 = self.color_to_KK(tongue_color2, active_lut)
         tongue_color3 = self.color_to_KK(tongue_color3, active_lut)
 
-        hair_light      = self.color_to_KK(to_255(hair_base_color), active_lut)
-        hair_dark       = self.color_to_KK(to_255(self.clothes_dark_color(color = hair_base_color, shadow_color = hair_shadow_color)), 'Lut_TimeDay.png')
+        hair_light_colors = {}
+        hair_dark_colors = {}
+        for material_name in hair_base_colors:
+            hair_light_colors[material_name]  = self.color_to_KK(to_255(hair_base_colors[material_name]), active_lut)
+            hair_dark_colors[material_name]   = self.color_to_KK(to_255(self.clothes_dark_color(color = hair_base_colors[material_name], shadow_color = hair_shadow_color)), 'Lut_TimeDay.png')
         hair_root_color = self.color_to_KK(hair_root_color, active_lut)
         hair_tip_color  = self.color_to_KK(hair_tip_color, active_lut)
 
@@ -1610,6 +1643,7 @@ class modify_material(bpy.types.Operator):
         shader_inputs['Skin color'].default_value = body_colors[0] if light else body_colors[5]
         shader_inputs['Skin detail color'].default_value = body_colors[1]
         shader_inputs['Light blush color'].default_value = face_colors[1]
+        shader_inputs['Eyeshadow intensity'].default_value = 0
         shader_inputs['Mouth interior multiplier'].default_value = [1, 1, 1, 1]
         shader_inputs['Lipstick multiplier'].default_value = face_colors[0]
 
@@ -1636,16 +1670,26 @@ class modify_material(bpy.types.Operator):
 
         ## Hair Shader
         shader_inputs = hair_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
-        if lut_selection == 'F' and not light:
-            shader_inputs['Dark Hair color'].default_value = hair_dark
-        else:
-            shader_inputs['Light Hair color' if light else 'Dark Hair color'].default_value = hair_light
         shader_inputs['Light Hair rim color' if light else 'Dark Hair rim color'].default_value = hair_root_color
         shader_inputs['Dark fade color'].default_value  = hair_root_color
         shader_inputs['Light fade color'].default_value = hair_tip_color
         shader_inputs['Manually set the hair color detail? (1 = yes)'].default_value = 0
         shader_inputs['Use fade mask? (1 = yes)'].default_value = 0.5
-
+        #go through all hairs to check for maintex
+        for hair in self.hairs:
+            for mat_slot in hair.material_slots:
+                hairType = mat_slot.material.name
+                hairMat = mat_slot.material
+                if 'Outline' not in hairType:
+                    if lut_selection == 'F' and not light:
+                        shader_inputs['Dark Hair color'].default_value = hair_dark_colors[hairType.replace('KK ', '')]
+                    else:
+                        shader_inputs['Light Hair color' if light else 'Dark Hair color'].default_value = hair_light_colors[hairType.replace('KK ', '')]
+                    if hairMat.node_tree.nodes['Gentex'].node_tree.nodes['hairMainTex'].image:
+                        hairMat.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 1
+                        hairMat.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 1
+                        #ensure the maintex hairs get the right hair color
+                        
         ## Accessories/Items Shader
         uses_lut = lut_selection in ['A', 'B', 'C', 'F']
         for idx, item in enumerate(item_data):

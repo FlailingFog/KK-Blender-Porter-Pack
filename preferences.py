@@ -41,7 +41,7 @@ class KKBPPreferences(bpy.types.AddonPreferences):
     categorize_dropdown : EnumProperty(
         items=(
             ("A", t('cat_drop_A'), t('cat_drop_A_tt')),
-            ("B", t('cat_drop_B'), t('cat_drop_B_tt')),
+            #("B", t('cat_drop_B'), t('cat_drop_B_tt')),
             ("C", t('cat_drop_C'), t('cat_drop_C_tt') ),
             ("D", t('cat_drop_D'), t('cat_drop_D_tt')),
         ), name="", default="A", description=t('cat_drop'))

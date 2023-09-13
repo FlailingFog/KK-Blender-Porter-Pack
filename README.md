@@ -3,22 +3,24 @@ Plugin pack for exporting and setting up Koikatsu characters in Blender.
 
 The ```KKBP exporter for Koikatsu``` is used to export the character's mesh, armature and color data. The exported data is then processed by the ```KKBP plugin for Blender```. Once characters are setup in Blender, they can be saved as FBX files for use in other programs. 
 
-The changelog for the pack [can be found here.](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/master/Changelog.md)
-The pack [also has a barebones wiki here.](https://github.com/FlailingFog/KK-Blender-Shader-Pack/wiki)
+The [wiki can be found here](https://github.com/FlailingFog/KK-Blender-Porter-Pack/blob/master/wiki/Wiki%20top.md).  
+The changelog [can be found here.](https://github.com/FlailingFog/KK-Blender-Shader-Pack/blob/master/Changelog.md)
 
 ## Download
 Stable versions of KKBP are [on the release page.](https://github.com/FlailingFog/KK-Blender-Porter-Pack/releases)  
-The absolute latest version of KKBP can be downloaded [here.](https://github.com/FlailingFog/KK-Blender-Porter-Pack/archive/refs/heads/master.zip)
+The absolute latest version of KKBP can be downloaded [here](https://github.com/FlailingFog/KK-Blender-Porter-Pack/archive/refs/heads/master.zip) (this is a live snapshot of the repo that might not work!)
 
 ## Usage Instructions for V6
 #### Required software:
 |    Software   | Version | 
 | ----------- | ----------- | 
 | HF Patch      | Install [HF Patch v3.16 or later](https://github.com/ManlyMarco/KK-HF_Patch) for Koikatsu<br /> Install [HF Patch v1.7 or later](https://github.com/ManlyMarco/KKS-HF_Patch) for Koikatsu Sunshine      | 
-| Blender   | Install [latest version of KKBP](https://github.com/FlailingFog/KK-Blender-Porter-Pack/releases) for Blender 3.5<br /> Install [KKBP 6.4.2](https://github.com/FlailingFog/KK-Blender-Porter-Pack/releases/tag/V6.4.2) for Blender 3.4 <br />Install [KKBP 6.2.1](https://github.com/FlailingFog/KK-Blender-Porter-Pack/releases/tag/V6.2.0) for Blender 3.3 | 
+| Blender   | Install [the latest version of KKBP](https://github.com/FlailingFog/KK-Blender-Porter-Pack/releases) for Blender 3.6<br /> Install [KKBP 6.4.2](https://github.com/FlailingFog/KK-Blender-Porter-Pack/releases/tag/V6.4.2) for Blender 3.4 <br />Install [KKBP 6.2.1](https://github.com/FlailingFog/KK-Blender-Porter-Pack/releases/tag/V6.2.0) for Blender 3.3 | 
 | PMX Importer | Install either [CATS](https://github.com/GiveMeAllYourCats/cats-blender-plugin) or [mmd_tools](https://github.com/UuuNyaa/blender_mmd_tools) to Blender <br />(it doesn't matter which)
 
-#### Exporting from Koikatsu and importing to Blender
+The last known working configuration as of writing this text is HF Patch v3.17, Blender 3.6.2, KKBP Exporter v4.30, KKBP for Blender 6.6.0, mmd_tools 2.8.0, Material Combiner 2.1.2.4.
+
+#### Exporting from Koikatsu and importing to Blender:
 <details><summary>Click to expand!</summary> 
 
 Install KKBP for Koikatsu by copying the KKBP_Exporter.DLL into the plugins folder: C:/Koikatsu install directory/BepInEx/plugins/  
@@ -37,12 +39,12 @@ Install KKBP for Koikatsu by copying the KKBP_Exporter.DLL into the plugins fold
 ![ ](https://github.com/FlailingFog/KK-Blender-Porter-Pack/blob/assets/readme/panelimport.PNG)
 </details>
 
-#### Exporting from Blender
+#### Exporting from Blender to fbx:
 
 <details><summary>Click to expand!</summary> 
 
 1. Save a backup file of your finished model
-1. Choose which export type you want in the KKBP panel. There's currently a targeted export type for Unity (VRM), and a generic fbx type for everything else
+1. Choose which export type you want in the KKBP panel. There's currently a targeted export type for Unity (VRM and VRChat), and a generic fbx type for everything else
 1. Click the "Prep for target application" button
 1. Click the "Bake material templates" button and choose the folder you want to store all of your baked images to (warning: there's going to be a lot, so an empty folder is recommended)
 1. Create an altas for the body, clothes and hair objects using the [material combiner](https://github.com/Grim-es/material-combiner-addon) addon
@@ -52,9 +54,18 @@ Install KKBP for Koikatsu by copying the KKBP_Exporter.DLL into the plugins fold
 
 #### Video walkthrough of all plugin options
 
-[(Click for playlist)  
+[(Click for playlist!)  
 ![ ](https://i.ytimg.com/vi/JSdggnGtcmU/hqdefault.jpg?sqp=-oaymwEXCNACELwBSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLB775lTVjcdZef5X39gSuwgKiRiBw)](https://www.youtube.com/playlist?list=PLhiuav2SCuvc-wbexi2vwSnVHnZFwkYNP)
 
+## Help
+[Check the wiki for FAQ and basic info.](https://github.com/FlailingFog/KK-Blender-Porter-Pack/blob/master/wiki/Wiki%20top.md)  
+If you're still having trouble please [create a new issue](https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues).
+
+## Contributing
+If you're interested in contributing, please check [the issues page](https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues) or [make a pull request.](https://github.com/FlailingFog/KK-Blender-Porter-Pack/pulls)  
+If you're interested in editing the wiki, [check this folder](https://github.com/FlailingFog/KK-Blender-Porter-Pack/tree/master/wiki).  
+If you're interested in translating the plugin interface into your language, [check this folder for examples.](https://github.com/FlailingFog/KK-Blender-Porter-Pack/tree/master/interface) Current languages are EN, JP, ZH.  
+This project does not accept donations.
 
 ## Similar Projects
 

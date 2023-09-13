@@ -85,6 +85,7 @@ class kkbp_import(bpy.types.Operator):
             function()
         c.toggle_console()
         bpy.context.scene.kkbp.plugin_state = 'imported'
+        c.kklog('KKBP import finished')
         return {'FINISHED'}
         
     def invoke(self, context, event):
