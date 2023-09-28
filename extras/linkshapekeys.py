@@ -67,29 +67,25 @@ class link_shapekeys(bpy.types.Operator):
                         pass
                     bpy.context.object.active_material_index = body.data.materials.find(mat)
                     bpy.ops.object.material_slot_select()
-                    #grab the other eye material if there is one
-                    if mat == 'Template Eye (hitomi)' and 'Template Eye' in body.data.materials[body.data.materials.find(mat) + 1].name:
-                        bpy.context.object.active_material_index = body.data.materials.find(mat) + 1
-                        bpy.ops.object.material_slot_select()
                 except:
                     print('material wasn\'t found: ' + mat)
             bpy.ops.mesh.separate(type='SELECTED')
 
-        eye_list = ['Template Eyeline up','Template Eyewhites (sirome)', 'Template Eyeline down', 'Template Eye (hitomi)']
+        eye_list = ['KK EyeL (hitomi)', 'KK Eyewhites (sirome)', 'KK Eyeline down', 'KK Eyeline up', 'KK EyeR (hitomi)']
         separateMaterial(eye_list)
 
         eyes = bpy.data.objects['Body.001']
         eyes.name = 'Eyes'
         
         #do the same for the eyebrows
-        separateMaterial(['Template Eyebrows (mayuge)'])
+        separateMaterial(['KK Eyebrows (mayuge)'])
         eyebrows = bpy.data.objects['Body.001']
         eyebrows.name = 'Eyebrows'
 
-        eyes.modifiers[3].show_viewport = False
-        eyes.modifiers[3].show_render = False
-        eyebrows.modifiers[3].show_viewport = False
-        eyebrows.modifiers[3].show_render = False
+        eyes.modifiers[4].show_viewport = False
+        eyes.modifiers[4].show_render = False
+        eyebrows.modifiers[4].show_viewport = False
+        eyebrows.modifiers[4].show_render = False
 
         bpy.ops.object.mode_set(mode = 'OBJECT')
         link_keys(body, [eyes, eyebrows])

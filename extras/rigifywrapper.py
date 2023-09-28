@@ -13,9 +13,10 @@ class rigify_convert(bpy.types.Operator):
     
     def execute(self, context):
         try:
-            p = post_operations()
-            p.retreive_stored_tags()
-            p.apply_rigify()
+            bpy.context.scene.kkbp.armature_dropdown = 'B'
+            post_operations.retreive_stored_tags()
+            post_operations.apply_rigify()
+            return {'FINISHED'}
         except:
             c.kklog('Unknown python error occurred', type = 'error')
             c.kklog(traceback.format_exc())

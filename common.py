@@ -50,7 +50,7 @@ def print_timer(operation_name:str):
     initialize_timer()
 
 def handle_error(error_causer:bpy.types.Operator, error:Exception):
-    kklog('Unknown python error occurred. \n          Make sure the default model imports correctly before troubleshooting on this model!', type = 'error')
+    kklog('Unknown python error occurred. \n          Make sure the default model imports correctly before troubleshooting on this model!\n\n\n', type = 'error')
     kklog(traceback.format_exc())
     error_causer.report({'ERROR'}, traceback.format_exc())
 
