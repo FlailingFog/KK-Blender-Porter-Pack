@@ -916,7 +916,7 @@ class modify_mesh(bpy.types.Operator):
         try:
             bpy.ops.mesh.separate(type='SELECTED')
         except:
-            c.kklog('Nothing was selected when separating materials from : ' + object.name, 'warn')
+            c.kklog('Nothing was selected when separating materials from: ' + object.name, 'warn')
         bpy.ops.object.mode_set(mode = 'OBJECT')
 
     def delete_material(self, object, mat_list):
