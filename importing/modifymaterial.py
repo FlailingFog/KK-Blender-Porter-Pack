@@ -1452,6 +1452,8 @@ class modify_material(bpy.types.Operator):
             hair_material_names.extend([mat.material.name.replace('KK ','') for mat in ob.material_slots])
         
         hair_base_colors = {}
+        hair_root_colors = {}
+        hair_tip_colors = {}
 
         for idx, line in enumerate(json):
             #Skip supporting entries for now
@@ -1472,8 +1474,8 @@ class modify_material(bpy.types.Operator):
             
             #This is a face entry
             if line['MaterialName'] == face_material_name:
-                face_colors.append(self.color_to_KK(to_255(colors["_overcolor1 Color 1"]), active_lut)) #lipstick
-                face_colors.append(self.color_to_KK(to_255(colors["_overcolor2 Color 2"]), active_lut)) #Light blush color
+                face_colors.append(self.color_to_KK(to_255(colors.get("_overcolor1 Color 1", {"r":1,"g":0,"b":0,"a":1})), active_lut)) #lipstick
+                face_colors.append(self.color_to_KK(to_255(colors.get("_overcolor2 Color 2", {"r":1,"g":0,"b":0,"a":1})), active_lut)) #Light blush color
                 #print('face colors: ' + str(face_colors))
                 continue
 
@@ -1514,21 +1516,20 @@ class modify_material(bpy.types.Operator):
             if line['MaterialName'] in hair_material_names:
                 hair_base_colors[line['MaterialName']] = colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1})
                 hair_shadow_color = shadow_color
-                hair_root_color   = to_255(colors.get("_Color2 Color 1", {"r":0,"g":1,"b":1,"a":1}))
-                hair_tip_color    = to_255(colors.get("_Color3 Color 2", {"r":0,"g":1,"b":1,"a":1}))
-                
+                hair_root_colors[line['MaterialName']]   = to_255(colors.get("_Color2 Color 1", {"r":0,"g":1,"b":1,"a":1}))
+                hair_tip_colors[line['MaterialName']]    = to_255(colors.get("_Color3 Color 2", {"r":0,"g":1,"b":1,"a":1}))
                 #if this is a unique hair color, and the shader group is not unique from having a maintex, give it a unique group
                 hairType = line['MaterialName']
                 hairMat = bpy.data.materials.get('KK ' + hairType)
-                unique_group = hairMat.node_tree.nodes['Shader'].name != 'Hair Shader'
-                if hair_base_colors[line['MaterialName']] not in hair_colors_already_used and not unique_group and len(hair_colors_already_used) > 1:
-                    newNode = hairMat.material.node_tree.nodes['Shader'].node_tree.copy()
+                using_default_group = hairMat.node_tree.nodes['Shader'].node_tree.name == 'Hair Shader'
+                if (hair_base_colors[line['MaterialName']] not in hair_colors_already_used) and (using_default_group) and (len(hair_colors_already_used) > 0):
+                    newNode = hairMat.node_tree.nodes['Shader'].node_tree.copy()
                     hairMat.node_tree.nodes['Shader'].node_tree = newNode
                     newNode.name = hairType + ' Hair Shader'
                     hair_colors_already_used.append(hair_base_colors[line['MaterialName']])
                 elif len(hair_colors_already_used) == 0:
                     hair_colors_already_used.append(hair_base_colors[line['MaterialName']]) #keep the first hair color so it still shows up as "Hair Shader"
-            
+
             #This is eyeline
             if line['MaterialName'] == eyeline_material_name:
                 eyeline_color = to_255(colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1}))
@@ -1616,8 +1617,8 @@ class modify_material(bpy.types.Operator):
         for material_name in hair_base_colors:
             hair_light_colors[material_name]  = self.color_to_KK(to_255(hair_base_colors[material_name]), active_lut)
             hair_dark_colors[material_name]   = self.color_to_KK(to_255(self.clothes_dark_color(color = hair_base_colors[material_name], shadow_color = hair_shadow_color)), 'Lut_TimeDay.png')
-        hair_root_color = self.color_to_KK(hair_root_color, active_lut)
-        hair_tip_color  = self.color_to_KK(hair_tip_color, active_lut)
+            hair_root_colors[material_name] = self.color_to_KK(hair_root_colors[material_name], active_lut)
+            hair_tip_colors[material_name]  = self.color_to_KK(hair_tip_colors[material_name], active_lut)
 
         ### Set shader colors
         ## Body Shader
@@ -1669,18 +1670,18 @@ class modify_material(bpy.types.Operator):
         shader_inputs['Color mask color (blue)'].default_value = tongue_color3
 
         ## Hair Shader
-        shader_inputs = hair_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
-        shader_inputs['Light Hair rim color' if light else 'Dark Hair rim color'].default_value = hair_root_color
-        shader_inputs['Dark fade color'].default_value  = hair_root_color
-        shader_inputs['Light fade color'].default_value = hair_tip_color
-        shader_inputs['Manually set the hair color detail? (1 = yes)'].default_value = 0
-        shader_inputs['Use fade mask? (1 = yes)'].default_value = 0.5
         #go through all hairs to check for maintex
         for hair in self.hairs:
             for mat_slot in hair.material_slots:
                 hairType = mat_slot.material.name
                 hairMat = mat_slot.material
                 if 'Outline' not in hairType:
+                    shader_inputs = hairMat.node_tree.nodes['Shader'].node_tree.nodes['colorsLight' if light else 'colorsDark'].inputs
+                    shader_inputs['Light Hair rim color' if light else 'Dark Hair rim color'].default_value = hair_root_colors[hairType.replace('KK ', '')]
+                    shader_inputs['Dark fade color'].default_value  = hair_root_colors[hairType.replace('KK ', '')]
+                    shader_inputs['Light fade color'].default_value = hair_tip_colors[hairType.replace('KK ', '')]
+                    shader_inputs['Manually set the hair color detail? (1 = yes)'].default_value = 0
+                    shader_inputs['Use fade mask? (1 = yes)'].default_value = 0.5
                     if lut_selection == 'F' and not light:
                         shader_inputs['Dark Hair color'].default_value = hair_dark_colors[hairType.replace('KK ', '')]
                     else:

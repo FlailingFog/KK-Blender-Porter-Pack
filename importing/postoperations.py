@@ -42,8 +42,10 @@ class post_operations(bpy.types.Operator):
             return {"CANCELLED"}
 
     # %% Main functions
-    def retreive_stored_tags(self):
+    @classmethod
+    def retreive_stored_tags(cls):
         '''Gets the tag from each object to repopulate the class variables below'''
+        self = cls
         self.hairs = []
         self.outfits = []
         self.outfit_alternates = []
@@ -280,7 +282,9 @@ class post_operations(bpy.types.Operator):
         bpy.ops.mesh.normals_tools(mode='RESET')
         bpy.ops.object.mode_set(mode = 'OBJECT')
     
-    def apply_rigify(self):
+    @classmethod
+    def apply_rigify(cls):
+        self = cls
         if not bpy.context.scene.kkbp.armature_dropdown == 'B':
             return
         c.kklog('Running Rigify conversion scripts...')
