@@ -94,7 +94,7 @@ class modify_mesh(bpy.types.Operator):
         smr_body_materials = [index for index in smr_data if (index['CoordinateType'] == -1 and 'Bonelyfan' not in index['SMRMaterialNames'][0])]
         for body_material in smr_body_materials:
             #if this is the rigged tongue, put it in the right category
-            if body_material['SMRPath'] == '/chaF_001/BodyTop/p_cf_body_00/cf_o_root/n_tang/o_tang':
+            if body_material['SMRPath'] in ['/chaF_001/BodyTop/p_cf_body_00/cf_o_root/n_tang/o_tang', "/chaM_001/BodyTop/p_cm_body_00/cf_o_root/n_tang/o_tang"]:
                 self.body['SMR materials']['o_tang_rigged'] = [tang_mat + '.001' for tang_mat in body_material['SMRMaterialNames']]
             else:
                 self.body['SMR materials'][body_material['SMRName']] = body_material['SMRMaterialNames']
@@ -202,7 +202,7 @@ class modify_mesh(bpy.types.Operator):
                         print(materials_to_separate)
                         self.separate_materials(outfit, materials_to_separate)
                         alt_piece = bpy.data.objects[outfit.name + '.001']
-                        alt_piece.name = clothes_piece + ' ' + outfit.name
+                        alt_piece.name = clothes_piece + ' Outfit ' + str(outfit_coordinate_index)
                         alt_piece['KKBP type'] = clothes_piece
                         self.outfit_alternates.append(alt_piece)
                         c.kklog('Separated {} alternate clothing pieces automatically'.format(materials_to_separate))
@@ -211,20 +211,23 @@ class modify_mesh(bpy.types.Operator):
                         c.kklog('Couldn\'t separate {} automatically'.format(materials_to_separate), 'warn')
             
             #always separate indoor shoes if present using the clothes data
+            materials_to_separate = []
             for index, clothes_index in enumerate(clothes_data):
                 if clothes_index['CoordinateType'] == outfit_coordinate_index:
-                    if (index - 12 * outfit_coordinate_index) % 7 == 0:
-                        object = clothes_index['RendNormal01']
-                        for smr_index in smr_data:
-                            if (smr_index['SMRName'] == object):
-                                materials_to_separate.append(smr_index['SMRMaterialNames'])
+                    if ((index - 12 * outfit_coordinate_index) % 7 == 0) and (index >=1):
+                        objects = clothes_index['RendNormal01']
+                        for ob in objects:
+                            for smr_index in smr_data:
+                                if (smr_index['SMRName'] == ob):
+                                    for mat in smr_index['SMRMaterialNames']:
+                                        materials_to_separate.append(mat)
             self.separate_materials(outfit, materials_to_separate)
             if bpy.data.objects.get(outfit.name + '.001'):
                 indoor_shoes = bpy.data.objects[outfit.name + '.001']
-                indoor_shoes.name = clothes_piece + ' ' + outfit.name
+                indoor_shoes.name = 'Indoor shoes Outfit ' + str(outfit_coordinate_index)
                 indoor_shoes['KKBP type'] = clothes_piece
                 self.outfit_alternates.append(indoor_shoes)
-            c.kklog('Separated {} alternate clothing pieces automatically'.format(materials_to_separate))
+                c.kklog('Separated {} indoor shoes automatically'.format(materials_to_separate))
         c.print_timer('separate_alternate_clothing')
 
     def separate_shad_bone(self):
@@ -614,7 +617,6 @@ class modify_mesh(bpy.types.Operator):
         bpy.ops.object.mode_set(mode = 'EDIT')
         selected_verts = [v for v in self.body.data.vertices if v.select]
         amount_to_move_tears_back = 2 * (selected_verts[0].co.y - middle_of_head)
-        self.body['debug'] = amount_to_move_tears_back
         bpy.ops.transform.translate(value=(0, abs(amount_to_move_tears_back), 0))
 
         #move the tears forwards again the same amount in individual shapekeys

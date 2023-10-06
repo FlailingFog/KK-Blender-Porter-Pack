@@ -1,4 +1,4 @@
-### Changes for V6.6.0
+### Changes for V6.6.2
 * KKBP Exporter improvements by **MediaMoots**!
     * The exporter can now export with pushups enabled
     * The exporter can now export with the current pose applied
@@ -8,8 +8,11 @@
     * See https://github.com/FlailingFog/KK-Blender-Porter-Pack/pull/398 for details
 * Fixed a bug that prevented baking
 * Hairs with a maintex can now be imported
-* The Blender import scripts were refactored
-* The Blender plugin will now show a lot more progress information in the console and time how long every function takes
+* Hairs with multiple colors can now be imported
+* Hair detail will now show above hair fade
+* The Blender import scripts in /importing/ were refactored
+* Manual categorization was removed (because hairs can have maintexes now)
+* The Blender plugin will now show a lot more progress information in the console and time every function
 * Added a basic wiki
 
 ### Changes for V6.5.0
