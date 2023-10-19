@@ -27,11 +27,11 @@ class image_convert(bpy.types.Operator):
         image.colorspace_settings.name = 'sRGB'
         
         # Use code from importcolors to convert the current image
-        modify_material.load_luts(lut_choice, lut_choice)
+        modify_material.load_luts()
         # Need to run image_to_KK twice for the first image due to a weird bug
-        modify_material.image_to_KK(image, lut_choice)
+        modify_material.image_to_KK_bgl(image, lut_choice)
 
-        new_pixels, width, height = modify_material.image_to_KK(image, lut_choice)
+        new_pixels, width, height = modify_material.image_to_KK_bgl(image, lut_choice)
         image.pixels = new_pixels
         #image.save()
 

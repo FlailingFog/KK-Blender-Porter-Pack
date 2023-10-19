@@ -32,6 +32,8 @@ Dark color conversion code taken from Xukmi https://github.com/xukmi/KKShadersPl
 '''
 
 import bpy, sys, os, bgl, gpu, numpy, math, time
+from gpu_extras.batch import batch_for_shader
+from gpu_extras.presets import draw_texture_2d
 from pathlib import Path
 from .. import common as c
 
@@ -1084,10 +1086,72 @@ class modify_material(bpy.types.Operator):
             return GPUBatch(type=type, buf=vbo, elem=ibo)
 
     @classmethod
-    def image_to_KK(cls, image, lut_name):
+    def image_to_KK_numpy(cls, image, lut_name):
         self = cls
         width = image.size[0]
         height = image.size[1]
+        lut_image = bpy.data.images[lut_name]
+        lut = numpy.array(lut_image.pixels)
+        number_of_pixels_lut = int(len(lut_image.pixels)/4)
+        lut = lut.reshape((number_of_pixels_lut, 4)) 
+        lut = lut * 255
+        lutrgb = numpy.array([i[0:3] for i in lut])
+
+        # The Secret Sauce (limited time only numpy flavor)
+        tex0 = numpy.array(image.pixels)
+        number_of_pixels = int(len(image.pixels)/4)
+        tex0 = tex0.reshape((number_of_pixels, 4)) 
+        tex0 = tex0 * 255
+        tex0rgb = numpy.array([i[0:3] for i in tex0])
+        tex0a = numpy.array([i[3] for i in tex0])
+
+        def to_srgb(c):
+            c = numpy.power(c, numpy.array([[0.416666667,0.416666667,0.416666667]] * number_of_pixels))
+            c = numpy.maximum(1.055 * c - 0.055, numpy.array([[0,0,0]] * number_of_pixels))
+            return c;
+
+        texColor = to_srgb(tex0rgb)
+        coord_scale = numpy.array([[0.0302734375, 0.96875, 31.0]] * number_of_pixels)
+        coord_offset = numpy.array([[0.5/1024, 0.5/32, 0.0]] * number_of_pixels)
+        texel_height_X0 = [[0.03125, 0.0]] * number_of_pixels
+
+        coord = texColor * coord_scale + coord_offset
+
+        coord_frac = coord - numpy.floor(coord)
+        coord_fracz = coord_frac[0][2]
+        coord_floor = coord - coord_frac
+        coordxy = numpy.array([i[0:1] for i in coord])
+        coord_floorzz = numpy.array([[i[2], i[2]] for i in coord_floor])
+        coord_bot = coordxy + coord_floorzz * texel_height_X0;
+        coord_top = coord_bot + texel_height_X0;
+
+        def texture(lut, coord):
+            x = coord_bot[0]
+            y = coord_bot[1]
+            return numpy.array(lut[x + y * width])
+        lutcol_bot = texture(lutrgb, coord_bot)
+        lutcol_top = texture(lutrgb, coord_top)
+
+        def mix(color1, color2, amount):
+            return color1 * (1-amount) + color2 * amount
+        lutColor = mix(lutcol_bot, lutcol_top, coord_fracz)
+
+        newColor = lutColor
+        newColor = to_srgb(newColor)
+        outColor = numpy.hstack((tex0rgb, tex0a))
+
+        flattened_pixel_array = numpy.array(outColor.to_list()).flatten()
+        pixels = (flattened_pixel_array/255).tolist()
+
+        # Return the final buffer-pixels
+        return pixels, width, height
+
+    @classmethod
+    def image_to_KK_gpu(cls, image, lut_name):
+        self = cls
+        width = image.size[0]
+        height = image.size[1]
+        lut_image = bpy.data.images[lut_name]
 
         # Some Sauce
         vertex_default = '''
@@ -1108,7 +1172,7 @@ class modify_material(bpy.types.Operator):
         uniform sampler2D tex0;
         uniform sampler2D lut;
         uniform vec2    u_resolution;
-        
+
         in vec4 col;
         out vec4 out_Color;
 
@@ -1116,7 +1180,7 @@ class modify_material(bpy.types.Operator):
             c.rgb = max( 1.055 * pow( c.rgb, vec3(0.416666667,0.416666667,0.416666667) ) - 0.055, 0 );
             return c;
         }
-        
+
         vec3 apply_lut(vec3 color) {
             const vec3 coord_scale = vec3(0.0302734375, 0.96875, 31.0);
             const vec3 coord_offset = vec3( 0.5/1024, 0.5/32, 0.0);
@@ -1156,6 +1220,141 @@ class modify_material(bpy.types.Operator):
         # Context manager to ensure balanced bind calls, even in the case of an error.
         # Only run if valid
         with offscreen.bind():
+            # Clear buffers to preset values
+            fb = gpu.state.active_framebuffer_get()
+            fb.clear(color=(0.0, 0.0, 0.0, 0.0))
+
+            # Initialize the shader
+            # GPUShader combines multiple GLSL shaders into a program used for drawing. 
+            # It must contain a vertex and fragment shaders, with an optional geometry shader.
+            shader = gpu.types.GPUShader(vertex_default, current_code)
+            
+            # Initialize the shader batch
+            # It makes sure that all the vertex attributes necessary for a specific shader are provided.
+            batch = batch_for_shader(
+                shader, 
+                'TRI_STRIP',
+                {
+                    'a_position': ((-1, -1), (1, -1), (1, 1), (-1, 1), (-1, -1)),
+                },
+            )
+
+            # Bind the shader object. Required to be able to change uniforms of this shader.
+            shader.bind()
+                        
+            try:
+                # texture = gpu.texture.from_image(image)
+                # shader.uniform_sampler("tex0", texture)
+                image.gl_load()
+                bgl.glActiveTexture(bgl.GL_TEXTURE0)
+                bgl.glBindTexture(bgl.GL_TEXTURE_2D, image.bindcode)
+                shader.uniform_int("tex0", 0)
+            except ValueError:
+                pass
+
+            try:
+                # texture = gpu.texture.from_image(lut_image)
+                # shader.uniform_sampler("lut", texture)
+                lut_image.gl_load()
+                bgl.glActiveTexture(bgl.GL_TEXTURE1)
+                bgl.glBindTexture(bgl.GL_TEXTURE_2D, lut_image.bindcode)
+                shader.uniform_int("lut", 1)
+            except ValueError: 
+                pass
+
+            try:
+                pass
+                shader.uniform_float('u_resolution', (width, height))
+            except ValueError: 
+                pass
+            
+            # Run the drawing program with the parameters assigned to the batch.
+            batch.draw(shader)
+
+            # The Buffer object is simply a block of memory that is delineated and initialized by the user.
+            buffer = fb.read_color(0, 0, width, height, 4, 0, 'UBYTE')
+            flattened_pixel_array = numpy.array(buffer.to_list()).flatten()
+            pixels = (flattened_pixel_array/255).tolist()
+
+        # Free the offscreen object. The framebuffer, texture and render objects will no longer be accessible.
+        offscreen.free()
+
+        # Return the final buffer-pixels
+        return pixels, width, height
+    
+    @classmethod
+    def image_to_KK_bgl(cls, image, lut_name):
+        self = cls
+        width = image.size[0]
+        height = image.size[1]
+
+        # Some Sauce
+        vertex_default = '''
+        in vec2 a_position;
+        in vec2 a_texcoord;
+
+        in vec4 color;
+        out vec4 col;
+
+        void main() {
+            gl_Position = vec4(a_position, 0.0, 1.0);
+            col = color;
+        }
+        '''
+
+        # The Secret Sauce
+        current_code = '''
+        uniform sampler2D tex0;
+        uniform sampler2D lut;
+        uniform vec2    u_resolution;
+
+        in vec4 col;
+        out vec4 out_Color;
+
+        vec3 to_srgb(vec3 c){
+            c.rgb = max( 1.055 * pow( c.rgb, vec3(0.416666667,0.416666667,0.416666667) ) - 0.055, 0 );
+            return c;
+        }
+
+        vec3 apply_lut(vec3 color) {
+            const vec3 coord_scale = vec3(0.0302734375, 0.96875, 31.0);
+            const vec3 coord_offset = vec3( 0.5/1024, 0.5/32, 0.0);
+            const vec2 texel_height_X0 = vec2( 0.03125, 0.0 );
+            
+            vec3 coord = color * coord_scale + coord_offset;
+            
+            vec3 coord_frac = fract( coord );
+            vec3 coord_floor = coord - coord_frac;
+            vec2 coord_bot = coord.xy + coord_floor.zz * texel_height_X0;
+            vec2 coord_top = coord_bot + texel_height_X0;
+
+            vec3 lutcol_bot = texture( lut, coord_bot ).rgb; //Changed from texture2D to texture just in case (apparently depreciated in opengl 3.1?)
+            vec3 lutcol_top = texture( lut, coord_top ).rgb;
+            
+            vec3 lutColor = mix(lutcol_bot, lutcol_top, coord_frac.z);
+            
+            return lutColor;
+        }
+
+        void main() {
+            vec4 texRGBA = texture(tex0, gl_FragCoord.xy / u_resolution);
+
+            vec3 texColor = to_srgb(texRGBA.rgb);
+
+            vec3 newColor = apply_lut(texColor);
+
+            newColor = to_srgb(newColor);
+            
+            out_Color = vec4(newColor.rgb, texRGBA.a);
+        }
+        '''
+
+        # This object gives access to off screen buffers.
+        offscreen = gpu.types.GPUOffScreen(width, height)
+
+        # Context manager to ensure balanced bind calls, even in the case of an error.
+        # Only run if valid
+        with offscreen.bind():
             
             # Clear buffers to preset values
             bgl.glClear(bgl.GL_COLOR_BUFFER_BIT)
@@ -1180,7 +1379,7 @@ class modify_material(bpy.types.Operator):
             
             bgl.glUniform1i(bgl.glGetUniformLocation(shader.program, "tex0"), 0)
             bgl.glUniform1i(bgl.glGetUniformLocation(shader.program, "lut"), 1)
-                        
+            
             try:
                 # Make sure image has a bindcode
                 if image.bindcode == 0:
@@ -1238,10 +1437,10 @@ class modify_material(bpy.types.Operator):
             # The Buffer object is simply a block of memory that is delineated and initialized by the user.
             buffer = bgl.Buffer(bgl.GL_BYTE, width * height * 4)
             
-            # Select a color buffer source for pixels.
+            # # Select a color buffer source for pixels.
             bgl.glReadBuffer(bgl.GL_BACK)
             
-            # Read a block of pixels from the frame buffer.
+            # # Read a block of pixels from the frame buffer.
             bgl.glReadPixels(0, 0, width, height, bgl.GL_RGBA, bgl.GL_UNSIGNED_BYTE, buffer)
 
         # Free the offscreen object. The framebuffer, texture and render objects will no longer be accessible.
