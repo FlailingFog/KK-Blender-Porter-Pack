@@ -61,7 +61,7 @@ def main(prep_type, simp_type):
             ob.modifiers['Right Eye UV warp'].show_viewport = False
 
     #remove the second Template Eyewhite slot if there are two of the same name in a row
-    eye_index = 0
+    index = 0
     for mat_slot_index in range(len(body.material_slots)):
         if body.material_slots[mat_slot_index].name == 'KK Eyewhites (sirome)':
             index = mat_slot_index
