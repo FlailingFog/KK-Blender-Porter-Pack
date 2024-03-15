@@ -18,13 +18,13 @@ The absolute latest version of KKBP can be downloaded [here](https://github.com/
 | Blender   | Install [the latest version of KKBP](https://github.com/FlailingFog/KK-Blender-Porter-Pack/releases) for Blender 3.6<br /> Install [KKBP 6.4.2](https://github.com/FlailingFog/KK-Blender-Porter-Pack/releases/tag/V6.4.2) for Blender 3.4 <br />Install [KKBP 6.2.1](https://github.com/FlailingFog/KK-Blender-Porter-Pack/releases/tag/V6.2.0) for Blender 3.3 | 
 | PMX Importer | Install either [CATS](https://github.com/GiveMeAllYourCats/cats-blender-plugin) or [mmd_tools](https://github.com/UuuNyaa/blender_mmd_tools) to Blender <br />(it doesn't matter which)
 
-The last known working configuration as of writing this text is HF Patch v3.22, Koikatsu 5.1, Blender 3.6.2, KKBP for Blender 6.6.2, KKBP Exporter v4.30, mmd_tools 2.9.2, Material Combiner 2.1.2.4.
+The last known working configuration as of writing this text is HF Patch v3.22, Koikatsu 5.1, Blender 3.6.9, KKBP for Blender 6.6.3, KKBP Exporter v4.30, mmd_tools 2.9.2, Material Combiner 2.1.2.4.
 
 #### Exporting from Koikatsu and importing to Blender:
 <details><summary>Click to expand!</summary> 
 
 Install KKBP for Koikatsu by copying the KKBP_Exporter.DLL into the plugins folder: C:/Koikatsu install directory/BepInEx/plugins/  
-<sub>**(Don't mix KKBP Exporters and KKBP Blender Plugins from different releases! For example, if you are using KKBP release 6.6.2, you must use KK-Blender-Porter-Pack-V6.6.2.zip with KKBP_Exporter_V4.30.zip)**<sub/>
+**Don't mix KKBP Exporters and KKBP Blender Plugins from different releases! For example, if you are using KKBP release 6.6.3, you must use KK-Blender-Porter-Pack-V6.6.3.zip with KKBP_Exporter_V4.30.zip**
 |    Game   | Plugin version | 
 | ----------- | ----------- | 
 | Koikatsu<br />Koikatsu Party  | Use the .dll file in the net3.5 folder     | 
@@ -64,8 +64,7 @@ If you're still having trouble please [create a new issue](https://github.com/Fl
 ## Contributing
 If you're interested in contributing, please check [the issues page](https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues) or [make a pull request.](https://github.com/FlailingFog/KK-Blender-Porter-Pack/pulls)  
 If you're interested in editing the wiki, [check this folder](https://github.com/FlailingFog/KK-Blender-Porter-Pack/tree/master/wiki).  
-If you're interested in translating the plugin interface into your language, [check this folder for examples.](https://github.com/FlailingFog/KK-Blender-Porter-Pack/tree/master/interface)  
-<sup>(Current languages are EN, JP, ZH.)</sup>  
+If you're interested in translating the plugin interface into another language, [check this folder for examples](https://github.com/FlailingFog/KK-Blender-Porter-Pack/tree/master/interface). Current languages are EN, JP, ZH.  
 This project does not accept donations.
 
 ## Similar Projects
