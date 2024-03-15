@@ -88,10 +88,9 @@ translation_dictionary = {
     'shape_C_tt'    : "使用恋活形态键。这不会以任何方式改变形态键",
     'shader_A'       : '使用Eevee',
     'shader_B'       : "使用Cycles",
-    'shader_C'       : "使用LBS",
-    'shader_C_tt'    : "为Lightning Boy shader 2.1.3使用修改的着色器设置",
+    'shader_C'       : "使用Eevee mod",
     
-     'atlas'         : '图集类型',
+    'atlas'         : '图集类型',
 
     'export_fbx'    : '导出FBX',
     'export_fbx_tt' : '将所有可见对象导出为FBX文件。这与文件-菜单中的FBX导出功能相同',

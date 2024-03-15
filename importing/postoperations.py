@@ -178,9 +178,9 @@ class post_operations(bpy.types.Operator):
     def apply_lbs(self):
         if not bpy.context.scene.kkbp.shader_dropdown == 'C':
             return
-        c.import_from_library_file('NodeTree', ['Raw Shading (face)', 'Cycles', 'Cycles no shadows', 'LBS', 'LBS face normals'], bpy.context.scene.kkbp.use_material_fake_user)
+        c.import_from_library_file('NodeTree', ['Raw Shading (face)', 'Cycles', 'Cycles no shadows', 'LBS', 'LBS (face)'], bpy.context.scene.kkbp.use_material_fake_user)
 
-        c.kklog('Applying Lightning Boy Shader adjustments...')
+        c.kklog('Applying Eevee Shader adjustments...')
         #Import lbs node group and replace rim group with the lbs group
         keep_list = ['KK Eyebrows (mayuge)', 'KK EyeL (hitomi)', 'KK EyeR (hitomi)', 'KK Eyeline up']
         for tree in [mat.node_tree for mat in bpy.data.materials if ('KK ' in mat.name and mat.name not in keep_list)]:
@@ -193,64 +193,6 @@ class post_operations(bpy.types.Operator):
                 links.new(nodes['Shader'].outputs[3], nodes['Rim'].inputs[2])
                 #if nodes['Shader'].node_tree.name != 'Body Shader':
                 #    links.new(nodes['RawShade'].outputs['Normal passthrough'], nodes['Rim'].inputs[3])
-        #construct LBS node group from scratch because it can't be included with the KK shader
-        nodes = bpy.data.node_groups['LBS'].nodes
-        links = bpy.data.node_groups['LBS'].links
-        try:
-            LBS = nodes.new('LBSShaderNode')
-        except:
-            #stop if Lightning Boy Shader is not installed
-            c.kklog("An error occured when adding a Lightning Boy Shader node. Make sure it's installed. Skipping operation...", 'error')
-            return
-        def expand(node):
-            node.hide = False
-            for sock in node.inputs:
-                sock.hide = False
-        LBS.initialize_group = ".Lightning Boy Shader"
-        LBS.inputs['.transparency'].default_value = 0.001
-        LBS.inputs['.transparency'].enabled = False
-        LBS.inputs[0].enabled = False
-        LBS.layers = 4
-        LBS.location = 444.6600, 61.8538
-        expand(LBS)
-        output = [out for out in nodes if out.type == 'GROUP_OUTPUT'][0]
-        output.location = 694.6600, -10.6462
-        input =  [out for out in nodes if out.type == 'GROUP_INPUT'][0]
-        input.location = -538.7341, 24.3778
-        reroute_alpha = nodes.new('NodeReroute')
-        reroute_alpha.location = 121.4401, -429.1375
-        links.new(input.outputs[2], reroute_alpha.inputs[0])
-        links.new(reroute_alpha.outputs[0], LBS.inputs[-3]) #connect alpha through reroute
-        reroute_dark = nodes.new('NodeReroute')
-        reroute_dark.location = 121.4401, -398.1375
-        links.new(input.outputs[1], reroute_dark.inputs[0])
-        links.new(reroute_dark.outputs[0], LBS.inputs[-4]) #connect dark
-        links.new(LBS.outputs[0], output.inputs[0]) #connect LBS out
-
-        key = nodes.new('LBSBaseNode')
-        key.initialize_group = '.Key Light*'
-        key.location = 49.4401, -144.1374
-        expand(key)
-        links.new(input.outputs['Color light'], key.inputs[0])
-        links.new(input.outputs['Normal'], key.inputs[5])
-        links.new(key.outputs[0], LBS.inputs[-5]) #connect light
-
-        ao = nodes.new('LBSBaseNode')
-        ao.initialize_group = '.Ambient Occlusion (SS)'
-        ao.location = 49.4401, 109.8626
-        expand(ao)
-        links.new(input.outputs['Color dark'], ao.inputs[0])
-        links.new(ao.outputs[0], LBS.inputs[-6]) #connect light
-
-        rim = nodes.new('LBSBaseNode')
-        rim.initialize_group = '.2D Rim Light*'
-        rim.location = 49.4401, 423.8625
-        expand(rim)
-        curves = [out for out in nodes if out.type == 'CURVE_RGB'][0]
-        curves.location = -215.5599, 289.3625
-        links.new(input.outputs['Color light'], curves.inputs[0])
-        links.new(curves.outputs[0], rim.inputs[0])
-        links.new(rim.outputs[0], LBS.inputs[-7]) #connect 2d rim
 
         #turn on ambient occlusion and bloom in render settings
         bpy.context.scene.eevee.use_gtao = True
@@ -260,16 +202,8 @@ class post_operations(bpy.types.Operator):
 
         #face has special normal setup to work with gfn. make a copy and add the normals inside of the copy
         #this group prevents Amb Occ issues around nose, and mouth interior
-        face_nodes = bpy.data.node_groups['LBS'].copy()
+        face_nodes = bpy.data.node_groups['LBS (face)']
         face_nodes.use_fake_user = True
-        face_nodes.name = 'LBS (Face)'
-        nodes = bpy.data.node_groups['LBS (Face)'].nodes
-        links = bpy.data.node_groups['LBS (Face)'].links
-        face_norms = nodes.new('ShaderNodeGroup')
-        face_norms.node_tree = bpy.data.node_groups['LBS face normals']
-        face_norms.location = 410, 190
-        links.new(face_norms.outputs[0], rim.inputs[-1])
-        links.new(face_norms.outputs[0], key.inputs[-1])
 
         #select entire face and body and reset vectors to prevent Amb Occ seam around the neck 
         body = bpy.data.objects['Body']
