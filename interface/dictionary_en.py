@@ -72,9 +72,6 @@ translation_dictionary = {
     'simp_drop_C'   : 'No changes (FAST)',
     'simp_drop_C_tt': 'Does not simplify anything',
 
-    'separate_hair' : 'Separate hair',
-    'separate_hair_tt' : 'Separate the hair and it\'s skeleton, this will be useful if you want to replace the hair after exporting to the target application',
-
     'bake'          : 'Bake material templates',
     'bake_light'    : "Light",
     'bake_light_tt' : "Bake light version of all textures",

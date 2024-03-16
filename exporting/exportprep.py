@@ -4,7 +4,7 @@ import bpy, traceback, time
 from .. import common as c
 from ..interface.dictionary_en import t
 
-def main(prep_type, simp_type, separate_hair):
+def main(prep_type, simp_type):
 
     armature = bpy.data.objects['Armature']
 
@@ -79,7 +79,13 @@ def main(prep_type, simp_type, separate_hair):
 
     #If simplifying the bones...
     if simp_type in ['A', 'B']:
-        show_bones()
+        #show all bones on the armature
+        allLayers = [True, True, True, True, True, True, True, True,
+                    True, True, True, True, True, True, True, True,
+                    True, True, True, True, True, True, True, True,
+                    True, True, True, True, True, True, True, True]
+        bpy.data.objects['Armature'].data.layers = allLayers
+        bpy.ops.pose.select_all(action='DESELECT')
 
         #Move pupil bones to layer 1
         armature = bpy.data.objects['Armature']
@@ -104,28 +110,6 @@ def main(prep_type, simp_type, separate_hair):
         c.kklog('Using the merge weights function in CATS to simplify bones...')
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.kkbp.cats_merge_weights()
-
-    #if separate the hair...
-    if separate_hair:
-        show_bones()
-        
-        #Select bones on layer 10
-        for bone in armature.data.bones:
-            if bone.layers[9]==True:
-                bone.select = True
-
-        #Separate the hair bones to a new armature
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.armature.separate()
-        new_armature = bpy.data.objects['Armature.001']
-        new_armature.name="Hair"
-
-        #Move hair meshes to the new armature
-        bpy.ops.object.mode_set(mode='OBJECT')
-        bpy.ops.object.select_all(action="DESELECT")
-        bpy.data.objects['Hair Outfit 00'].select_set(True)
-        bpy.context.view_layer.objects.active=new_armature
-        bpy.ops.object.parent_set(type='ARMATURE')
 
     #If exporting for VRM or VRC...
     if prep_type in ['A', 'D']:
@@ -259,16 +243,6 @@ def main(prep_type, simp_type, separate_hair):
 
     bpy.ops.object.mode_set(mode='OBJECT')
 
-def show_bones():
-    #show all bones on the armature
-    bpy.ops.object.mode_set(mode='POSE')
-    allLayers = [True, True, True, True, True, True, True, True,
-                True, True, True, True, True, True, True, True,
-                True, True, True, True, True, True, True, True,
-                True, True, True, True, True, True, True, True]
-    bpy.data.objects['Armature'].data.layers = allLayers
-    bpy.ops.pose.select_all(action='DESELECT')
-
 class export_prep(bpy.types.Operator):
     bl_idname = "kkbp.exportprep"
     bl_label = "Prep for target application"
@@ -279,11 +253,10 @@ class export_prep(bpy.types.Operator):
         scene = context.scene.kkbp
         prep_type = scene.prep_dropdown
         simp_type = scene.simp_dropdown
-        separate_hair = scene.separate_hair_bool
         last_step = time.time()
         try:
             c.toggle_console()
-            main(prep_type, simp_type, separate_hair)
+            main(prep_type, simp_type)
             scene.plugin_state = 'prepped'
             c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             c.toggle_console()
