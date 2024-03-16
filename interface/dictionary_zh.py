@@ -6,7 +6,7 @@ translation_dictionary = {
     'outline'     : '使用通用轮廓线',
     'outline_tt'  : "启用来使用一种通用轮廓材质而不是几个单独的轮廓材质。选中此选项可能会导致轮廓线透明度问题",
     
-     'keep_templates'        : "保留材质模板",
+    'keep_templates'        : "保留材质模板",
     'keep_templates_tt'     : "保持启用以将KKBP材质模板设置为假用户。这将防止它们在blender关闭时被删除。如果要在角色完成后将其应用于其他对象，则此选项非常有用",
 
     'sfw_mode'          : '和谐模式',
@@ -22,7 +22,7 @@ translation_dictionary = {
     'arm_drop_D'        : "使用pmx骨架",
     'arm_drop_D_tt'     : "使用pmx骨架。这是你从KKBP导出时得到的骨架",
 
-    'cat_drop'      : '运行类型',
+    'cat_drop'      : '分类类型',
     'cat_drop_A'    : "不要暂停分类",
     'cat_drop_A_tt' : "导入所有内容并获得包含所有模型衣服的单个对象。默认情况下隐藏任何备用衣服",
     'cat_drop_B'    : "暂停来分类",
@@ -43,10 +43,10 @@ translation_dictionary = {
     'dark_D_tt' : "使深色比浅色更饱和",
     'dark_E'    : '亮度',
     'dark_E_tt' : "使深色比浅色暗",
-    'dark_F'    : '实验性',
-    'dark_F_tt' : "使用实验方法设置深色",
+    'dark_F'    : '自动',
+    'dark_F_tt' : "使用自动方法设置深色",
 
-     'prep_drop'         : "导出类型",
+    'prep_drop'         : "导出类型",
     'prep_drop_A'       : "Unity - VRM兼容",
     'prep_drop_A_tt'    : """删除轮廓...
 移除重复的眼白材质槽（如果存在），
@@ -60,7 +60,7 @@ translation_dictionary = {
 移除“Upper Chest”骨骼，
 编辑骨骼层次以允许Unity自动检测正确骨骼""",
 
-    'simp_drop'     : '骨架简化型',
+    'simp_drop'     : '骨骼简化类型',
     'simp_drop_A'   : '非常简单（慢）',
     'simp_drop_A_tt': '如果希望骨骼数很少，请使用此选项。将瞳孔骨骼移动到第1层，并简化骨架层3-5、11-12和17-19上的骨骼（留下约110个骨骼，不包括裙子骨骼）',
     'simp_drop_B'   : '简单',
@@ -86,9 +86,11 @@ translation_dictionary = {
     'shape_B_tt'    : "保存用于生成恋活形态键的部分形态键。这些本身是无用的",
     'shape_C'       : "跳过修改形态键",
     'shape_C_tt'    : "使用恋活形态键。这不会以任何方式改变形态键",
+
     'shader_A'       : '使用Eevee',
     'shader_B'       : "使用Cycles",
-    'shader_C'       : "使用Eevee mod",
+    'shader_C'       : "使用修改的Eevee",
+    'shader_C_tt'    : "使用为Eevee修改的着色器",
     
     'atlas'         : '图集类型',
 
@@ -100,7 +102,18 @@ translation_dictionary = {
     'finish_cat'    : '完成分类',
     'recalc_dark'   : '重新计算暗色',
     'prep'          : '准备目标应用程序',
-    'apply_temp'    : '应用烘焙模板',
+    'apply_temp'    : '切换烘焙模板',
+
+    'studio_object'             : '导入工作室物体',
+    'animation_library'         : '创建动画库',
+    'animation_library_tt'      : "使用当前文件和角色创建一个动画库。不会保存当前文件，以防您需要再次使用它。打开包含用 SB3Utility 导出的动画文件的文件夹",
+    'animation_library_scale'   : '缩放手臂',
+    'animation_library_scale_tt': '勾选此项可将手臂的Y轴缩放5%，这将使某些姿势更接近游戏中的样子',
+    'map_library'               : '创建一个地图资源库',
+    'map_library_tt'            : "使用解包的地图资源创建地图库。使用SB3Utility打开包含地图的目录。每张地图将花费40-500秒打开",
+    'finalize_materials'        : '优化材质',
+    'finalize_materials_tt'     : """!!   在使用此功能之前，请先烘焙您的材质，然后使用 "切换烘焙模板"按钮来切换 "浅色 "和 "深色 "材质 !!
+    用简单的混合节点替代KKBP材质节点以提高动画播放的性能。产生的备份会加上 '-ORG'""",
 
     'rigify_convert': "转换为Rigify",
     'sep_eye'       : "分离眼睛和眉毛",
