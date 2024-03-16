@@ -89,8 +89,8 @@ translation_dictionary = {
 
     'shader_A'       : '使用Eevee',
     'shader_B'       : "使用Cycles",
-    'shader_C'       : "使用LBS",
-    'shader_C_tt'    : "使用为Lightning Boy shader 2.1.3修改的着色器设置",
+    'shader_C'       : "使用修改的Eevee",
+    'shader_C_tt'    : "使用为Eevee修改的着色器",
     
     'atlas'         : '图集类型',
 
