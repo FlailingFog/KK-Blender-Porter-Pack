@@ -68,6 +68,9 @@ translation_dictionary = {
     'simp_drop_C'   : '无更改（快）',
     'simp_drop_C_tt': '不简化任何东西',
 
+    'separate_hair' : '分离头发',
+    'separate_hair_tt' : '将头发同其骨骼一起分离，如果您要在导出模型到目标应用程序后更换不同的发型，这将有用处',
+
     'bake'          : '烘焙材质模板',
     'bake_light'    : "亮色",
     'bake_light_tt' : "烘焙所有纹理的亮色版本",

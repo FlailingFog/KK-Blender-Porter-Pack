@@ -86,6 +86,10 @@ class PlaceholderProperties(PropertyGroup):
             ("C", t('simp_drop_C'), t('simp_drop_C_tt')),
         ), name="", default=bpy.context.preferences.addons[__package__].preferences.simp_dropdown, description=t('simp_drop'))
     
+    separate_hair_bool : BoolProperty(
+    description=t('separate_hair_tt'),
+    default = False)
+    
     bake_light_bool : BoolProperty(
     description=t('bake_light_tt'),
     default = True)
@@ -250,9 +254,10 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         row.operator('kkbp.exportprep', text = t('prep'), icon = 'GROUP')
         row.enabled = scene.plugin_state not in ['prepped']
         row = col.row(align=True)
-        split = row.split(align=True, factor=splitfac)
+        split = row.split(align=True, factor=0.33)
         split.prop(context.scene.kkbp, "simp_dropdown")
         split.prop(context.scene.kkbp, "prep_dropdown")
+        split.prop(context.scene.kkbp, "separate_hair_bool", toggle=True, text = t('separate_hair'))
         row.enabled = scene.plugin_state not in ['prepped']
 
         col = box.column(align=True)

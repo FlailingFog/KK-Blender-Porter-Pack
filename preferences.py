@@ -71,6 +71,10 @@ class KKBPPreferences(bpy.types.AddonPreferences):
             ("C", t('simp_drop_C'), t('simp_drop_C_tt')),
         ), name="", default="A", description=t('simp_drop'))
     
+    separate_hair_bool : BoolProperty(
+    description=t('separate_hair_tt'),
+    default = True)
+    
     bake_light_bool : BoolProperty(
     description=t('bake_light_tt'),
     default = True)
