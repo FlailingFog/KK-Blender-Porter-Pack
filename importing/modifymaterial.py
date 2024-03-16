@@ -32,6 +32,8 @@ Dark color conversion code taken from Xukmi https://github.com/xukmi/KKShadersPl
 '''
 
 import bpy, sys, os, bgl, gpu, numpy, math, time
+from gpu_extras.batch import batch_for_shader
+from gpu_extras.presets import draw_texture_2d
 from pathlib import Path
 from .. import common as c
 
@@ -980,10 +982,10 @@ class modify_material(bpy.types.Operator):
 
                 # Need to run image_to_KK twice for the first image due to a weird bug
                 if first:
-                    self.image_to_KK(image, self.lut_light)
+                    self.image_to_KK_gpu(image, self.lut_light)
                     first = False
 
-                new_pixels, width, height = self.image_to_KK(image, self.lut_light)
+                new_pixels, width, height = self.image_to_KK_gpu(image, self.lut_light)
                 image.pixels = new_pixels
                 #image.save()
         c.print_timer('convert_main_textures')
@@ -1042,52 +1044,53 @@ class modify_material(bpy.types.Operator):
     def set_uv_type(mat, group, uvnode, uvtype):
             bpy.data.materials[mat].node_tree.nodes[group].node_tree.nodes[uvnode].uv_map = uvtype
 
-    @staticmethod
-    def batch_for_shader(shader, type, content, *, indices=None):
-        """
-        The batch_for_shader function from Blender 3.3.2
-        Return a batch already configured and compatible with the shader.
+    # @staticmethod
+    # def batch_for_shader(shader, type, content, *, indices=None):
+    #     """
+    #     The batch_for_shader function from Blender 3.3.2
+    #     Return a batch already configured and compatible with the shader.
 
-        :arg shader: shader for which a compatible format will be computed.
-        :type shader: :class:`gpu.types.GPUShader`
-        :arg type: "'POINTS', 'LINES', 'TRIS' or 'LINES_ADJ'".
-        :type type: str
-        :arg content: Maps the name of the shader attribute with the data to fill the vertex buffer.
-        :type content: dict
-        :return: compatible batch
-        :rtype: :class:`gpu.types.Batch`
-        """
-        from gpu.types import (
-            GPUBatch,
-            GPUIndexBuf,
-            GPUVertBuf,
-        )
+    #     :arg shader: shader for which a compatible format will be computed.
+    #     :type shader: :class:`gpu.types.GPUShader`
+    #     :arg type: "'POINTS', 'LINES', 'TRIS' or 'LINES_ADJ'".
+    #     :type type: str
+    #     :arg content: Maps the name of the shader attribute with the data to fill the vertex buffer.
+    #     :type content: dict
+    #     :return: compatible batch
+    #     :rtype: :class:`gpu.types.Batch`
+    #     """
+    #     from gpu.types import (
+    #         GPUBatch,
+    #         GPUIndexBuf,
+    #         GPUVertBuf,
+    #     )
 
-        for data in content.values():
-            vbo_len = len(data)
-            break
-        else:
-            raise ValueError("Empty 'content'")
+    #     for data in content.values():
+    #         vbo_len = len(data)
+    #         break
+    #     else:
+    #         raise ValueError("Empty 'content'")
 
-        vbo_format = shader.format_calc()
-        vbo = GPUVertBuf(vbo_format, vbo_len)
+    #     vbo_format = shader.format_calc()
+    #     vbo = GPUVertBuf(vbo_format, vbo_len)
 
-        for id, data in content.items():
-            if len(data) != vbo_len:
-                raise ValueError("Length mismatch for 'content' values")
-            vbo.attr_fill(id, data)
+    #     for id, data in content.items():
+    #         if len(data) != vbo_len:
+    #             raise ValueError("Length mismatch for 'content' values")
+    #         vbo.attr_fill(id, data)
 
-        if indices is None:
-            return GPUBatch(type=type, buf=vbo)
-        else:
-            ibo = GPUIndexBuf(type=type, seq=indices)
-            return GPUBatch(type=type, buf=vbo, elem=ibo)
+    #     if indices is None:
+    #         return GPUBatch(type=type, buf=vbo)
+    #     else:
+    #         ibo = GPUIndexBuf(type=type, seq=indices)
+    #         return GPUBatch(type=type, buf=vbo, elem=ibo)
 
     @classmethod
-    def image_to_KK(cls, image, lut_name):
+    def image_to_KK_gpu(cls, image, lut_name):
         self = cls
         width = image.size[0]
         height = image.size[1]
+        lut_image = bpy.data.images[lut_name]
 
         # Some Sauce
         vertex_default = '''
@@ -1108,7 +1111,7 @@ class modify_material(bpy.types.Operator):
         uniform sampler2D tex0;
         uniform sampler2D lut;
         uniform vec2    u_resolution;
-        
+
         in vec4 col;
         out vec4 out_Color;
 
@@ -1116,7 +1119,101 @@ class modify_material(bpy.types.Operator):
             c.rgb = max( 1.055 * pow( c.rgb, vec3(0.416666667,0.416666667,0.416666667) ) - 0.055, 0 );
             return c;
         }
-        
+
+        vec3 apply_lut(vec3 color) {
+            const vec3 coord_scale = vec3(0.0302734375, 0.96875, 31.0);
+            const vec3 coord_offset = vec3( 0.5/1024, 0.5/32, 0.0);
+            const vec2 texel_height_X0 = vec2( 0.03125, 0.0 );
+            
+            vec3 coord = color * coord_scale + coord_offset;
+            
+            vec3 coord_frac = fract( coord );
+            vec3 coord_floor = coord - coord_frac;
+            vec2 coord_bot = coord.xy + coord_floor.zz * texel_height_X0;
+            vec2 coord_top = coord_bot + texel_height_X0;
+
+            vec3 lutcol_bot = texture( lut, coord_bot ).rgb;
+            vec3 lutcol_top = texture( lut, coord_top ).rgb;
+            
+            vec3 lutColor = mix(lutcol_bot, lutcol_top, coord_frac.z);
+            
+            return lutColor;
+        }
+
+        void main() {
+            vec4 texRGBA = texture(tex0, gl_FragCoord.xy / u_resolution);
+
+            vec3 texColor = to_srgb(texRGBA.rgb);
+
+            vec3 newColor = apply_lut(texColor);
+
+            newColor = to_srgb(newColor);
+            
+            out_Color = vec4(newColor.rgb, texRGBA.a);
+        }
+        '''
+
+        # create Offscreen
+        offscreen = gpu.types.GPUOffScreen(width, height)
+        offscreen.bind()
+        # Custom Shader
+        shader = gpu.types.GPUShader(vertex_default, current_code)
+        batch = batch_for_shader(shader, 'TRI_STRIP', {'a_position': ((-1, -1), (1, -1), (1, 1), (-1, 1), (-1, -1)),})
+        # Clear Frame Buffer
+        fb = gpu.state.active_framebuffer_get()
+        fb.clear(color=(0.0, 0.0, 0.0, 0.0))
+        shader.bind()
+        shader.uniform_sampler("tex0", gpu.texture.from_image(image))
+        shader.uniform_sampler("lut", gpu.texture.from_image(lut_image))
+        shader.uniform_float("u_resolution", (width,height))
+        # Draw Shader
+        batch.draw(shader)
+        # Save Frame Buffer to Image
+        fb = gpu.state.active_framebuffer_get()
+        offscreen.unbind()
+        buffer = fb.read_color(0, 0, width, height, 4, 0, 'FLOAT')
+        buffer.dimensions = width * height * 4
+        imageData = numpy.frombuffer(buffer, dtype=numpy.float32)
+        pixels = imageData.tolist()
+        image.pixels = pixels
+
+        # Return the final buffer-pixels
+        return pixels, width, height
+    
+    @classmethod
+    def image_to_KK_bgl(cls, image, lut_name):
+        self = cls
+        width = image.size[0]
+        height = image.size[1]
+
+        # Some Sauce
+        vertex_default = '''
+        in vec2 a_position;
+        in vec2 a_texcoord;
+
+        in vec4 color;
+        out vec4 col;
+
+        void main() {
+            gl_Position = vec4(a_position, 0.0, 1.0);
+            col = color;
+        }
+        '''
+
+        # The Secret Sauce
+        current_code = '''
+        uniform sampler2D tex0;
+        uniform sampler2D lut;
+        uniform vec2    u_resolution;
+
+        in vec4 col;
+        out vec4 out_Color;
+
+        vec3 to_srgb(vec3 c){
+            c.rgb = max( 1.055 * pow( c.rgb, vec3(0.416666667,0.416666667,0.416666667) ) - 0.055, 0 );
+            return c;
+        }
+
         vec3 apply_lut(vec3 color) {
             const vec3 coord_scale = vec3(0.0302734375, 0.96875, 31.0);
             const vec3 coord_offset = vec3( 0.5/1024, 0.5/32, 0.0);
@@ -1152,7 +1249,7 @@ class modify_material(bpy.types.Operator):
 
         # This object gives access to off screen buffers.
         offscreen = gpu.types.GPUOffScreen(width, height)
-        
+
         # Context manager to ensure balanced bind calls, even in the case of an error.
         # Only run if valid
         with offscreen.bind():
@@ -1167,7 +1264,7 @@ class modify_material(bpy.types.Operator):
             
             # Initialize the shader batch
             # It makes sure that all the vertex attributes necessary for a specific shader are provided.
-            batch = modify_material.batch_for_shader(
+            batch = batch_for_shader(
                 shader, 
                 'TRI_STRIP', #https://wiki.blender.org/wiki/Reference/Release_Notes/3.2/Python_API for TRI_FAN depreciation
                 {
@@ -1180,7 +1277,7 @@ class modify_material(bpy.types.Operator):
             
             bgl.glUniform1i(bgl.glGetUniformLocation(shader.program, "tex0"), 0)
             bgl.glUniform1i(bgl.glGetUniformLocation(shader.program, "lut"), 1)
-                        
+            
             try:
                 # Make sure image has a bindcode
                 if image.bindcode == 0:
@@ -1238,10 +1335,10 @@ class modify_material(bpy.types.Operator):
             # The Buffer object is simply a block of memory that is delineated and initialized by the user.
             buffer = bgl.Buffer(bgl.GL_BYTE, width * height * 4)
             
-            # Select a color buffer source for pixels.
+            # # Select a color buffer source for pixels.
             bgl.glReadBuffer(bgl.GL_BACK)
             
-            # Read a block of pixels from the frame buffer.
+            # # Read a block of pixels from the frame buffer.
             bgl.glReadPixels(0, 0, width, height, bgl.GL_RGBA, bgl.GL_UNSIGNED_BYTE, buffer)
 
         # Free the offscreen object. The framebuffer, texture and render objects will no longer be accessible.
@@ -1327,7 +1424,7 @@ class modify_material(bpy.types.Operator):
             
             # Initialize the shader batch
             # It makes sure that all the vertex attributes necessary for a specific shader are provided.
-            batch = modify_material.batch_for_shader(
+            batch = batch_for_shader(
                 shader, 
                 'TRI_STRIP', { #https://wiki.blender.org/wiki/Reference/Release_Notes/3.2/Python_API for TRI_FAN depreciation
                     'a_position': ((-1, -1), (1, -1), (1, 1), (-1, 1), (-1, -1))
