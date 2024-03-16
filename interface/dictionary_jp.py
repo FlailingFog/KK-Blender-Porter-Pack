@@ -89,7 +89,7 @@ translation_dictionary = {
 
     'shader_A'       : 'Eeveeにする',
     'shader_B'       : "Cyclesにする",
-    'shader_C'       : "LBSにする",
+    'shader_C'       : "Eevee modにする",
 
     'atlas'         : 'アトラスタイプ',
 

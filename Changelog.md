@@ -1,3 +1,7 @@
+### Changes for V6.6.3
+* Blender export bug fix by **AnalogKnight**!
+* Removed LBS support
+
 ### Changes for V6.6.2
 * KKBP Exporter improvements by **MediaMoots**!
     * The exporter can now export with pushups enabled

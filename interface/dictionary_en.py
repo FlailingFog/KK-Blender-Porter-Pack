@@ -93,8 +93,8 @@ translation_dictionary = {
 
     'shader_A'       : 'Use Eevee',
     'shader_B'       : "Use Cycles",
-    'shader_C'       : "Use LBS",
-    'shader_C_tt'    : "Uses a modified shader setup for Lightning Boy Shader 2.1.3",
+    'shader_C'       : "Use Eevee mod",
+    'shader_C_tt'    : "Uses a modified shader setup for Eevee",
 
     'atlas'         : 'Atlas type',
 
