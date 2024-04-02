@@ -1677,14 +1677,16 @@ class modify_material(bpy.types.Operator):
                 hairMat = mat_slot.material
                 if 'Outline' not in hairType:
                     shader_inputs = hairMat.node_tree.nodes['Shader'].node_tree.nodes['colorsLight' if light else 'colorsDark'].inputs
-                    shader_inputs['Light Hair rim color' if light else 'Dark Hair rim color'].default_value = hair_root_colors[hairType.replace('KK ', '')]
-                    shader_inputs['Dark fade color'].default_value  = hair_root_colors[hairType.replace('KK ', '')]
-                    shader_inputs['Light fade color'].default_value = hair_tip_colors[hairType.replace('KK ', '')]
+                    if hairType.replace('KK ', '') in hair_root_colors:
+                        shader_inputs['Light Hair rim color' if light else 'Dark Hair rim color'].default_value = hair_root_colors[hairType.replace('KK ', '')]
+                        shader_inputs['Dark fade color'].default_value  = hair_root_colors[hairType.replace('KK ', '')]
+                    if hairType.replace('KK ', '') in hair_tip_colors:
+                        shader_inputs['Light fade color'].default_value = hair_tip_colors[hairType.replace('KK ', '')]
                     shader_inputs['Manually set the hair color detail? (1 = yes)'].default_value = 0
                     shader_inputs['Use fade mask? (1 = yes)'].default_value = 0.5
-                    if lut_selection == 'F' and not light:
+                    if lut_selection == 'F' and not light and hairType.replace('KK ', '') in hair_dark_colors:
                         shader_inputs['Dark Hair color'].default_value = hair_dark_colors[hairType.replace('KK ', '')]
-                    else:
+                    elif hairType.replace('KK ', '') in hair_light_colors:
                         shader_inputs['Light Hair color' if light else 'Dark Hair color'].default_value = hair_light_colors[hairType.replace('KK ', '')]
                     if hairMat.node_tree.nodes['Gentex'].node_tree.nodes['hairMainTex'].image:
                         hairMat.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use Maintex?'].default_value = 1
