@@ -24,9 +24,11 @@ class finalize_materials(bpy.types.Operator):
                     if ' light.png' in mat.node_tree.nodes['Image Texture'].image.name:
                         light_image = mat.node_tree.nodes['Image Texture'].image.name
                         dark_image  = mat.node_tree.nodes['Image Texture'].image.name.replace('light', 'dark')
+                        normal_image  = mat.node_tree.nodes['Image Texture'].image.name.replace('light', 'normal')
                     else:
                         dark_image = mat.node_tree.nodes['Image Texture'].image.name
                         light_image  = mat.node_tree.nodes['Image Texture'].image.name.replace('dark', 'light')
+                        normal_image  = mat.node_tree.nodes['Image Texture'].image.name.replace('dark', 'normal')
                     #mat_dict[mat.name] = [light_image, dark_image]
 
                     #rename material to -ORG, and replace it with a new material
@@ -53,6 +55,8 @@ class finalize_materials(bpy.types.Operator):
                     new_node.name = simple.name
                     new_node.nodes['MapMain'].image = bpy.data.images[light_image]
                     new_node.nodes['Darktex'].image = bpy.data.images[dark_image]
+                    if bpy.data.images.get(normal_image):
+                        new_node.nodes['MapNorm'].image = bpy.data.images[normal_image]
                     
                     #replace instances of ORG material with new finalized one
                     mat.use_fake_user = True
