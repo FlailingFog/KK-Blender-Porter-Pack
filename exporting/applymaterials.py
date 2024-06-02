@@ -114,7 +114,7 @@ def replace_images(folderpath, apply_type):
         imageName = currentImage[0]
         imagePath = folderpath + imageName
 
-        bpy.ops.image.open(filepath=imagePath, use_udim_detecting=False)
+        bpy.data.images.load(filepath=imagePath)
         bpy.data.images[imageName].pack()
         
         imageNode = transpMix.inputs[0].links[0].from_node

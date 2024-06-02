@@ -295,8 +295,8 @@ def set_default_stage():
     armature = get_armature()
     if armature:
         set_active(armature)
-        if version_2_79_or_older():
-            armature.layers[0] = True
+        # if version_2_79_or_older():
+        #     armature.layers[0] = True
 
     # Fix broken armatures
     if not bpy.context.scene.armature:

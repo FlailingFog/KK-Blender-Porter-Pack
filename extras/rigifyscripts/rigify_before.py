@@ -46,12 +46,12 @@ def main():
     
     selectedLayers = []
     for i in range(32):
-        if metarig.data.layers[i] == True:
+        if metarig.data.collections.get(str(i)) == True:
             selectedLayers.append(i)
         if i == koikatsuCommons.originalIkLayerIndex:
-            metarig.data.layers[i] = True
+            metarig.data.collections.get(str(i)).is_visible = True
         else:
-            metarig.data.layers[i] = False
+            metarig.data.collections.get(str(i)).is_visible = False
             
     hasSkirt = True    
     if koikatsuCommons.skirtParentBoneName not in metarig.pose.bones:

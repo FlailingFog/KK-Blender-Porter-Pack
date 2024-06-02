@@ -51,7 +51,7 @@ def import_studio_objects(directory):
         
         #pack certain images for later
         if '_md-DXT' in str(image) or '_mc-DXT' in str(image) or '_t-DXT' in str(image):
-            bpy.ops.image.open(filepath=str(image), use_udim_detecting=False)
+            bpy.data.images.load(filepath=str(image))
             bpy.data.images[image.name].pack()
         
         #save the images in this directory for later
@@ -120,7 +120,7 @@ def import_studio_objects(directory):
                                 new_path = image.filepath.replace(".dds", ".png").replace(".DDS", ".png")
                                 new_image_name = image.name.replace(".dds", ".png").replace(".DDS", ".png")
                                 image.save_render(bpy.path.abspath(new_path))
-                                bpy.ops.image.open(filepath=bpy.path.abspath(new_path), use_udim_detecting=False)
+                                bpy.data.images.load(filepath=bpy.path.abspath(new_path))
                                 bpy.data.images[new_image_name].pack()
                                 node.image = bpy.data.images[new_image_name]
 

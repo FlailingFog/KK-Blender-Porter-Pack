@@ -83,7 +83,7 @@ def better_fbx_map_import(directory):
                     new_path = main_image.filepath.replace(".dds", ".png").replace(".DDS", ".png")
                     new_image_name = main_image.name.replace(".dds", ".png").replace(".DDS", ".png")
                     main_image.save_render(bpy.path.abspath(new_path))
-                    bpy.ops.image.open(filepath=bpy.path.abspath(new_path), use_udim_detecting=False)
+                    bpy.data.images.load(filepath=bpy.path.abspath(new_path))
                     bpy.data.images[new_image_name].pack()
 
                     #create darktex

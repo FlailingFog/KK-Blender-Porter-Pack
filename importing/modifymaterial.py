@@ -31,7 +31,8 @@ Color and image saturation code taken from MediaMoots https://github.com/Flailin
 Dark color conversion code taken from Xukmi https://github.com/xukmi/KKShadersPlus/tree/main/Shaders
 '''
 
-import bpy, sys, os, bgl, gpu, numpy, math, time
+import bpy, sys, os, gpu, numpy, math, time, numpy as np
+from gpu_extras.batch import batch_for_shader
 from pathlib import Path
 from .. import common as c
 
@@ -329,31 +330,10 @@ class modify_material(bpy.types.Operator):
         '''Load all images from the pmx folder'''
         c.switch(self.body, 'object')
 
-        #get images for body object
+        #get all images from the pmx directory
         directory = bpy.context.scene.kkbp.import_dir + ('/' if (sys.platform == 'linux' or sys.platform == 'darwin') else '\\')
-        fileList = Path(directory).glob('*.*')
+        fileList = Path(directory).rglob('*.*')
         files = [file for file in fileList if file.is_file()]
-        #c.kklog('this is my directory')
-        #c.kklog(directory)
-        #c.kklog('gettin this filelist')
-        #c.kklog(files)
-        #get images from outfit directory based on outfit ID numbers
-        id_list = []
-        for obj in [obj for obj in bpy.data.objects if obj.get('KKBP outfit ID') != None and obj.type == 'MESH']:
-            if obj['KKBP outfit ID'] not in id_list:
-                id_list.append(obj['KKBP outfit ID'])
-        #c.kklog(id_list)
-        for outfit_id in id_list:
-            #c.kklog(directory)
-            #c.kklog(directory + 'Outfit ' + str(outfit_id))
-            #c.kklog(Path(directory + 'Outfit ' + str(outfit_id)))
-
-            fileList = Path(directory + 'Outfit ' + str(outfit_id)).glob('*.*')
-            files_to_append = [file for file in fileList if file.is_file()]
-            #c.kklog('gettin this additional clothes fileList')
-            #c.kklog(files_to_append)
-            for outfit_file in files_to_append:
-                files.append(outfit_file)
 
         #get shadow colors for each material and store the dictionary on the body object
         json_material_data = c.get_json_file('KK_MaterialData.json')
@@ -371,46 +351,72 @@ class modify_material(bpy.types.Operator):
             for entry in data:
                 if '_ShadowColor ' in entry:
                     color_dict[line['MaterialName']] = data[entry]
+                    color_dict[line['MaterialName'].replace('_MT', '_ST')] = data[entry] #put the shadow color into the ST entry too
                     break
                 #default to [.764, .880, 1] if shadow color is not available for the material
                 color_dict[line['MaterialName']] = {"r":0.764,"g":0.880,"b":1,"a":1}
         self.body['KKBP shadow colors'] = color_dict
+        if len(color_dict) == 0:
+            c.kklog('No shadow colors were found for this model. KKBP will default to the shadow color of {"r":0.764,"g":0.880,"b":1} Make sure the KK_MaterialData.json file in your pmx folder has values in the "ShaderPropColorValues" field.', type='error')
 
         #open all images into blender and create dark variants if the image is a maintex
-        #c.kklog('gettin these files')
-        #c.kklog(files)
         for image in files:
-            bpy.ops.image.open(filepath=str(image), use_udim_detecting=False)
+            bpy.data.images.load(filepath=str(image))
             try:
                 bpy.data.images[image.name].pack()
             except:
                 c.kklog('This image was not automatically loaded in because its name exceeds 64 characters: ' + image.name, type = 'error')
             try:
-                skip_list = ['cf_m_gageye', 'cf_m_eyeline', 'cf_m_mayuge', 'cf_m_namida_00', 'cf_m_noseline_00', 'cf_m_sirome_00', 'cf_m_tooth', '_cf_Ohitomi_', 'cf_m_emblem']
+                skip_list = ['cf_m_gageye', 
+                             'cf_m_eyeline', 
+                             'cf_m_mayuge', 
+                             'cf_m_namida_00', 
+                             'cf_m_noseline_00', 
+                             'cf_m_sirome_00', 
+                             'cf_m_tooth', 
+                             '_cf_Ohitomi_', 
+                             'cf_m_emblem',
+                             '_MT'] #skip MTs because there will be STs instead
                 convert_this = True
                 for item in skip_list:
                     if item in image.name:
                         convert_this = False
-                if '_MT_CT' in image.name and convert_this:
+                if '_ST_CT' in image.name and convert_this:
                     material_name = image.name[:-10]
-                    shadow_color = [self.body['KKBP shadow colors'][material_name]['r'], self.body['KKBP shadow colors'][material_name]['g'], self.body['KKBP shadow colors'][material_name]['b']]
+                    try:
+                        shadow_color = [self.body['KKBP shadow colors'][material_name]['r'],
+                                        self.body['KKBP shadow colors'][material_name]['g'], 
+                                        self.body['KKBP shadow colors'][material_name]['b']]
+                    except:
+                        c.kklog('Trying MT shadow color instead...')
+                        shadow_color = [self.body['KKBP shadow colors'][material_name.replace('_ST', '_MT')]['r'],
+                                        self.body['KKBP shadow colors'][material_name.replace('_ST', '_MT')]['g'], 
+                                        self.body['KKBP shadow colors'][material_name.replace('_ST', '_MT')]['b']]
                     darktex = self.create_darktex(bpy.data.images[image.name], shadow_color) #create the darktex now and load it in later
             except:
-                c.kklog('Tried to create a dark version of {} but it was missing a shadow color. Defaulting to shadow color of [.764, .880, 1].'.format(image.name), type='warn')
-                skip_list = ['cf_m_gageye', 'cf_m_eyeline', 'cf_m_mayuge', 'cf_m_namida_00', 'cf_m_noseline_00', 'cf_m_sirome_00', 'cf_m_tooth', '_cf_Ohitomi_', 'cf_m_emblem']
+                c.kklog('Tried to create a dark version of {} but it was missing a shadow color. Defaulting to shadow color of R=0.764, G=0.880, B=1].'.format(image.name), type='warn')
+                skip_list = ['cf_m_gageye', 
+                             'cf_m_eyeline', 
+                             'cf_m_mayuge', 
+                             'cf_m_namida_00', 
+                             'cf_m_noseline_00', 
+                             'cf_m_sirome_00', 
+                             'cf_m_tooth', 
+                             '_cf_Ohitomi_', 
+                             'cf_m_emblem']
                 convert_this = True
                 for item in skip_list:
                     if item in image.name:
                         convert_this = False
-                if '_MT_CT' in image.name and convert_this:
+                if '_ST_CT' in image.name and convert_this:
                     material_name = image.name[:-10]
                     darktex = self.create_darktex(bpy.data.images[image.name], [.764, .880, 1]) #create the darktex now and load it in later
         c.print_timer('load_images_and_shadow_colors')
 
     def link_textures_for_body(self):
         '''Load the textures for the body materials to the correct spot'''
-        self.image_load('KK Body', 'Gentex', 'BodyMain', self.body['SMR materials']['o_body_a'][0] + '_MT_CT.png')
-        self.image_load('KK Body', 'Gentex', 'Darktex', self.body['SMR materials']['o_body_a'][0] + '_MT_DT.png')
+        self.image_load('KK Body', 'Gentex', 'BodyMain', self.body['SMR materials']['o_body_a'][0] + '_ST_CT.png')
+        self.image_load('KK Body', 'Gentex', 'Darktex', self.body['SMR materials']['o_body_a'][0] + '_ST_DT.png')
         #check there's a maintex, if not there fallback to colors
         if not self.body.material_slots['KK Body'].material.node_tree.nodes['Gentex'].node_tree.nodes['BodyMain'].image:
             self.body.material_slots['KK Body'].material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use maintex instead?'].default_value = 0
@@ -427,7 +433,7 @@ class modify_material(bpy.types.Operator):
         self.image_load('KK Body', 'Gentex', 'BodyMD', 'cm_m_body_DM.png') #cmm male
         self.image_load('KK Body', 'Gentex', 'BodyLine', 'cm_m_body_LM.png')
         
-        self.image_load('KK Body', 'NSFWTextures', 'Genital', self.body['SMR materials']['o_body_a'][0] + '_MT.png') #chara main texture
+        self.image_load('KK Body', 'NSFWTextures', 'Genital', self.body['SMR materials']['o_body_a'][0] + '_ST.png') #chara main texture
         self.image_load('KK Body', 'NSFWTextures', 'Underhair', self.body['SMR materials']['o_body_a'][0] + '_ot2.png') #pubic hair
 
         self.image_load('KK Body', 'NSFWTextures', 'NipR', self.body['SMR materials']['o_body_a'][0] + '_ot1.png') #cfm female
@@ -460,8 +466,8 @@ class modify_material(bpy.types.Operator):
             #disable transparency if no alpha mask is present
             self.body.material_slots['KK Body'].material.node_tree.nodes['Shader'].node_tree.nodes['BodyTransp'].inputs['Built in transparency toggle'].default_value = 0
 
-        self.image_load('KK Face', 'Gentex', 'FaceMain', self.body['SMR materials']['cf_O_face'][0] + '_MT_CT.png')
-        self.image_load('KK Face', 'Gentex', 'Darktex', self.body['SMR materials']['cf_O_face'][0] + '_MT_DT.png')
+        self.image_load('KK Face', 'Gentex', 'FaceMain', self.body['SMR materials']['cf_O_face'][0] + '_ST_CT.png')
+        self.image_load('KK Face', 'Gentex', 'Darktex', self.body['SMR materials']['cf_O_face'][0] + '_ST_DT.png')
         #default to colors if there's no face maintex
         if not self.body.material_slots['KK Face'].material.node_tree.nodes['Gentex'].node_tree.nodes['FaceMain'].image:
             self.body.material_slots['KK Face'].material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Use maintex instead?'].default_value = 0
@@ -470,7 +476,7 @@ class modify_material(bpy.types.Operator):
         self.image_load('KK Face', 'Gentex', 'FaceMC', self.body['SMR materials']['cf_O_face'][0] + '_CM.png')
         self.image_load('KK Face', 'Gentex', 'FaceMD', self.body['SMR materials']['cf_O_face'][0] + '_DM.png')
         self.image_load('KK Face', 'Gentex', 'BlushMask', self.body['SMR materials']['cf_O_face'][0] + '_T4.png')
-        self.image_load('KK Face', 'Gentex', 'FaceTongue', self.body['SMR materials']['cf_O_face'][0] + '_MT.png') #face main texture
+        self.image_load('KK Face', 'Gentex', 'FaceTongue', self.body['SMR materials']['cf_O_face'][0] + '_ST.png') #face main texture
         
         self.image_load('KK Face', 'Gentex', 'linemask', self.body['SMR materials']['cf_O_face'][0] + '_LM.png')
         self.image_load('KK Face', 'Gentex', 'lowerlip', self.body['SMR materials']['cf_O_face'][0] + '_T5.png')
@@ -485,23 +491,23 @@ class modify_material(bpy.types.Operator):
         
         self.image_load('KK Eyebrows (mayuge)', 'Gentex', 'Eyebrow', self.body['SMR materials']['cf_O_mayuge'][0] + '_MT_CT.png')
         self.image_load('KK Nose', 'Gentex', 'Nose', self.body['SMR materials']['cf_O_noseline'][0] + '_MT_CT.png')
-        self.image_load('KK Teeth (tooth)', 'Gentex', 'Teeth', self.body['SMR materials']['cf_O_tooth'][0] + '_MT_CT.png')
-        self.image_load('KK Eyewhites (sirome)', 'Gentex', 'Eyewhite', self.body['SMR materials']['cf_Ohitomi_R'][0] + '_MT_CT.png')
+        self.image_load('KK Teeth (tooth)', 'Gentex', 'Teeth', self.body['SMR materials']['cf_O_tooth'][0] + '_ST_CT.png')
+        self.image_load('KK Eyewhites (sirome)', 'Gentex', 'Eyewhite', self.body['SMR materials']['cf_Ohitomi_R'][0] + '_ST_CT.png')
         
         self.image_load('KK Eyeline up', 'Gentex', 'EyelineUp', self.body['SMR materials']['cf_O_eyeline'][0] + '_MT_CT.png')
         self.image_load('KK Eyeline up', 'Gentex', 'EyelineUp.001', self.body['SMR materials']['cf_O_eyeline'][0] + '_MT_CT.png')
         self.image_load('KK Eyeline up', 'Gentex', 'EyelineDown', self.body['SMR materials']['cf_O_eyeline_low'][0] + '_MT_CT.png')
         self.image_load('KK Eyeline up', 'Gentex', 'EyelineDown.001', self.body['SMR materials']['cf_O_eyeline_low'][0] + '_MT_CT.png')
-        self.image_load('KK Eyeline up', 'Gentex', 'EyelineKage', 'cf_m_eyeline_kage_MT.png')
-        self.image_load('KK Eyeline up', 'Gentex', 'EyelineKage', 'Eyeline_Over_MT_CT.png')
+        self.image_load('KK Eyeline up', 'Gentex', 'EyelineKage', 'cf_m_eyeline_kage_ST.png')
+        self.image_load('KK Eyeline up', 'Gentex', 'EyelineKage', 'Eyeline_Over_ST_CT.png')
         
-        self.image_load('KK EyeR (hitomi)', 'Gentex', 'eyeAlpha', self.body['SMR materials']['cf_Ohitomi_R02'][0] + '_MT_CT.png')
+        self.image_load('KK EyeR (hitomi)', 'Gentex', 'eyeAlpha', self.body['SMR materials']['cf_Ohitomi_R02'][0] + '_ST_CT.png')
         self.image_load('KK EyeR (hitomi)', 'Gentex', 'EyeHU', self.body['SMR materials']['cf_Ohitomi_R02'][0] + '_ot1.png')
         self.image_load('KK EyeR (hitomi)', 'Gentex', 'EyeHD', self.body['SMR materials']['cf_Ohitomi_R02'][0] + '_ot2.png')
         self.image_load('KK EyeR (hitomi)', 'Gentex', 'expression0', self.body['SMR materials']['cf_Ohitomi_R'][0] + '_cf_t_expression_00_EXPR.png')
         self.image_load('KK EyeR (hitomi)', 'Gentex', 'expression1', self.body['SMR materials']['cf_Ohitomi_R'][0] + '_cf_t_expression_01_EXPR.png')
 
-        self.image_load('KK EyeL (hitomi)', 'Gentex', 'eyeAlpha', self.body['SMR materials']['cf_Ohitomi_L02'][0] + '_MT_CT.png')
+        self.image_load('KK EyeL (hitomi)', 'Gentex', 'eyeAlpha', self.body['SMR materials']['cf_Ohitomi_L02'][0] + '_ST_CT.png')
         self.image_load('KK EyeL (hitomi)', 'Gentex', 'EyeHU', self.body['SMR materials']['cf_Ohitomi_L02'][0] + '_ot1.png')
         self.image_load('KK EyeL (hitomi)', 'Gentex', 'EyeHD', self.body['SMR materials']['cf_Ohitomi_L02'][0] + '_ot2.png')
         self.image_load('KK EyeL (hitomi)', 'Gentex', 'expression0', self.body['SMR materials']['cf_Ohitomi_L02'][0] + '_cf_t_expression_00_EXPR.png')
@@ -519,8 +525,8 @@ class modify_material(bpy.types.Operator):
                 hairMat.material.node_tree.nodes['Gentex'].node_tree = newNode
                 newNode.name = hairType + ' Textures'
             
-                self.image_load(hairMat.name, 'Gentex', 'hairMainTex',  hairType+'_MT_CT.png')
-                self.image_load(hairMat.name, 'Gentex', 'hairDarkTex',  hairType+'_MT_DT.png')
+                self.image_load(hairMat.name, 'Gentex', 'hairMainTex',  hairType+'_ST_CT.png')
+                self.image_load(hairMat.name, 'Gentex', 'hairDarkTex',  hairType+'_ST_DT.png')
                 self.image_load(hairMat.name, 'Gentex', 'hairDetail', hairType+'_DM.png')
                 self.image_load(hairMat.name, 'Gentex', 'hairFade',   hairType+'_CM.png')
                 self.image_load(hairMat.name, 'Gentex', 'hairShine',  hairType+'_HGLS.png')
@@ -560,10 +566,10 @@ class modify_material(bpy.types.Operator):
                     genMat.material.node_tree.nodes['Genpos'].node_tree = posNode
                     posNode.name = genType + ' Position'
 
-                    self.image_load(genMat.name, 'Gentex', 'Maintexplain', genType+ '_MT.png')
-                    self.image_load(genMat.name, 'Gentex', 'Maintex', genType+ '_MT.png')
-                    self.image_load(genMat.name, 'Gentex', 'Maintex', genType+'_MT_CT.png')
-                    self.image_load(genMat.name, 'Gentex', 'Darktex', genType+'_MT_DT.png')
+                    self.image_load(genMat.name, 'Gentex', 'Maintexplain', genType+ '_ST.png')
+                    self.image_load(genMat.name, 'Gentex', 'Maintex', genType+ '_ST.png')
+                    self.image_load(genMat.name, 'Gentex', 'Maintex', genType+'_ST_CT.png')
+                    self.image_load(genMat.name, 'Gentex', 'Darktex', genType+'_ST_DT.png')
                     self.image_load(genMat.name, 'Gentex', 'MainCol', genType+'_CM.png')
                     self.image_load(genMat.name, 'Gentex', 'MainDet', genType+'_DM.png')
                     self.image_load(genMat.name, 'Gentex', 'MainNorm', genType+'_NMP.png')
@@ -643,22 +649,22 @@ class modify_material(bpy.types.Operator):
 
         #load all gag eyes in if it exists
         if bpy.data.objects.get('Gag Eyes'):
-            self.image_load('KK Gag00', 'Gentex', '00gag00', self.body['SMR materials']['cf_O_gag_eye_00'][0] + '_cf_t_gageye_00_MT_CT.png')
-            self.image_load('KK Gag00', 'Gentex', '00gag02', self.body['SMR materials']['cf_O_gag_eye_00'][0] + '_cf_t_gageye_02_MT_CT.png')
-            self.image_load('KK Gag00', 'Gentex', '00gag04', self.body['SMR materials']['cf_O_gag_eye_00'][0] + '_cf_t_gageye_04_MT_CT.png')
-            self.image_load('KK Gag00', 'Gentex', '00gag05', self.body['SMR materials']['cf_O_gag_eye_00'][0] + '_cf_t_gageye_05_MT_CT.png')
-            self.image_load('KK Gag00', 'Gentex', '00gag06', self.body['SMR materials']['cf_O_gag_eye_00'][0] + '_cf_t_gageye_06_MT_CT.png')
+            self.image_load('KK Gag00', 'Gentex', '00gag00', self.body['SMR materials']['cf_O_gag_eye_00'][0] + '_cf_t_gageye_00_ST_CT.png')
+            self.image_load('KK Gag00', 'Gentex', '00gag02', self.body['SMR materials']['cf_O_gag_eye_00'][0] + '_cf_t_gageye_02_ST_CT.png')
+            self.image_load('KK Gag00', 'Gentex', '00gag04', self.body['SMR materials']['cf_O_gag_eye_00'][0] + '_cf_t_gageye_04_ST_CT.png')
+            self.image_load('KK Gag00', 'Gentex', '00gag05', self.body['SMR materials']['cf_O_gag_eye_00'][0] + '_cf_t_gageye_05_ST_CT.png')
+            self.image_load('KK Gag00', 'Gentex', '00gag06', self.body['SMR materials']['cf_O_gag_eye_00'][0] + '_cf_t_gageye_06_ST_CT.png')
 
-            self.image_load('KK Gag01', 'Gentex', '01gag03', self.body['SMR materials']['cf_O_gag_eye_01'][0] + '_cf_t_gageye_03_MT_CT.png')
-            self.image_load('KK Gag01', 'Gentex', '01gag01', self.body['SMR materials']['cf_O_gag_eye_01'][0] + '_cf_t_gageye_01_MT_CT.png')
+            self.image_load('KK Gag01', 'Gentex', '01gag03', self.body['SMR materials']['cf_O_gag_eye_01'][0] + '_cf_t_gageye_03_ST_CT.png')
+            self.image_load('KK Gag01', 'Gentex', '01gag01', self.body['SMR materials']['cf_O_gag_eye_01'][0] + '_cf_t_gageye_01_ST_CT.png')
 
-            self.image_load('KK Gag02', 'Gentex', '02gag07', self.body['SMR materials']['cf_O_gag_eye_02'][0] + '_cf_t_gageye_07_MT_CT.png')
-            self.image_load('KK Gag02', 'Gentex', '02gag08', self.body['SMR materials']['cf_O_gag_eye_02'][0] + '_cf_t_gageye_08_MT_CT.png')
-            self.image_load('KK Gag02', 'Gentex', '02gag09', self.body['SMR materials']['cf_O_gag_eye_02'][0] + '_cf_t_gageye_09_MT_CT.png')
+            self.image_load('KK Gag02', 'Gentex', '02gag07', self.body['SMR materials']['cf_O_gag_eye_02'][0] + '_cf_t_gageye_07_ST_CT.png')
+            self.image_load('KK Gag02', 'Gentex', '02gag08', self.body['SMR materials']['cf_O_gag_eye_02'][0] + '_cf_t_gageye_08_ST_CT.png')
+            self.image_load('KK Gag02', 'Gentex', '02gag09', self.body['SMR materials']['cf_O_gag_eye_02'][0] + '_cf_t_gageye_09_ST_CT.png')
 
         #load the tears texture in
         if bpy.data.objects.get('Tears'):
-            self.image_load('KK Tears', 'Gentex', 'Maintex', self.body['SMR materials']['cf_O_namida_L'][0] + '_MT_CT.png')
+            self.image_load('KK Tears', 'Gentex', 'Maintex', self.body['SMR materials']['cf_O_namida_L'][0] + '_ST_CT.png')
         c.print_timer('link_textures_for_tongue_tear_gag')
 
     def import_and_setup_gfn(self):
@@ -692,12 +698,11 @@ class modify_material(bpy.types.Operator):
             bpy.context.view_layer.objects.active = empty
             empty.select_set(True)
             bpy.ops.object.move_to_collection(collection_index=1)
-            empty.hide = True
+            empty.hide_set(True)
             empty.hide_render = True
         except:
             #i don't feel like dealing with any errors related to this
             c.kklog('The GFN empty wasnt setup correctly. Oh well.', 'warn')
-            pass
         c.print_timer('import_and_setup_gfn')
 
     def setup_gag_eye_material_drivers(self):
@@ -962,30 +967,7 @@ class modify_material(bpy.types.Operator):
         #night_lut.save()
 
     def convert_main_textures(self):
-        ignore_list = [
-            "cf_m_eyeline_00_up_MT_CT.png",
-            "cf_m_eyeline_down_MT_CT.png",
-            "cf_m_noseline_00_MT_CT.png",
-            "cf_m_mayuge_00_MT_CT.png",
-            "cf_m_eyeline_kage_MT.png",
-        ]
-
         bpy.data.use_autopack = True #enable autopack on file save
-        
-        images = bpy.data.images
-        first = True
-        for image in images:
-            if "_MT" in image.name and image.name not in ignore_list:
-                image.reload()
-
-                # Need to run image_to_KK twice for the first image due to a weird bug
-                if first:
-                    self.image_to_KK(image, self.lut_light)
-                    first = False
-
-                new_pixels, width, height = self.image_to_KK(image, self.lut_light)
-                image.pixels = new_pixels
-                #image.save()
         c.print_timer('convert_main_textures')
 
     def load_json_colors(self):
@@ -1042,350 +1024,89 @@ class modify_material(bpy.types.Operator):
     def set_uv_type(mat, group, uvnode, uvtype):
             bpy.data.materials[mat].node_tree.nodes[group].node_tree.nodes[uvnode].uv_map = uvtype
 
-    @staticmethod
-    def batch_for_shader(shader, type, content, *, indices=None):
-        """
-        The batch_for_shader function from Blender 3.3.2
-        Return a batch already configured and compatible with the shader.
+    def color_to_KK(self, color, lut_name):
+        '''Accepts an 8bit int rgba color, returns a 1.0 float rgba'''
+        #this function still seems to work as long as the image is a single pixel
+        try:
+            image = bpy.data.images['color_placeholder']
+        except:
+            bpy.ops.image.new(name = 'color_placeholder', width=1, height=1)
+            image = bpy.data.images['color_placeholder']
 
-        :arg shader: shader for which a compatible format will be computed.
-        :type shader: :class:`gpu.types.GPUShader`
-        :arg type: "'POINTS', 'LINES', 'TRIS' or 'LINES_ADJ'".
-        :type type: str
-        :arg content: Maps the name of the shader attribute with the data to fill the vertex buffer.
-        :type content: dict
-        :return: compatible batch
-        :rtype: :class:`gpu.types.Batch`
-        """
-        from gpu.types import (
-            GPUBatch,
-            GPUIndexBuf,
-            GPUVertBuf,
-        )
-
-        for data in content.values():
-            vbo_len = len(data)
-            break
-        else:
-            raise ValueError("Empty 'content'")
-
-        vbo_format = shader.format_calc()
-        vbo = GPUVertBuf(vbo_format, vbo_len)
-
-        for id, data in content.items():
-            if len(data) != vbo_len:
-                raise ValueError("Length mismatch for 'content' values")
-            vbo.attr_fill(id, data)
-
-        if indices is None:
-            return GPUBatch(type=type, buf=vbo)
-        else:
-            ibo = GPUIndexBuf(type=type, seq=indices)
-            return GPUBatch(type=type, buf=vbo, elem=ibo)
-
-    @classmethod
-    def image_to_KK(cls, image, lut_name):
-        self = cls
-        width = image.size[0]
-        height = image.size[1]
+        image.pixels[0:3] = color
+        nx = image.size[0]
+        ny = image.size[1]
+        lut = bpy.data.images[lut_name]
 
         # Some Sauce
         vertex_default = '''
         in vec2 a_position;
         in vec2 a_texcoord;
-        
         in vec4 color;
         out vec4 col;
-        
         void main() {
             gl_Position = vec4(a_position, 0.0, 1.0);
             col = color;
         }
         '''
-
         # The Secret Sauce
         current_code = '''
         uniform sampler2D tex0;
         uniform sampler2D lut;
         uniform vec2    u_resolution;
-        
         in vec4 col;
         out vec4 out_Color;
-
         vec3 to_srgb(vec3 c){
             c.rgb = max( 1.055 * pow( c.rgb, vec3(0.416666667,0.416666667,0.416666667) ) - 0.055, 0 );
             return c;
         }
-        
         vec3 apply_lut(vec3 color) {
             const vec3 coord_scale = vec3(0.0302734375, 0.96875, 31.0);
             const vec3 coord_offset = vec3( 0.5/1024, 0.5/32, 0.0);
             const vec2 texel_height_X0 = vec2( 0.03125, 0.0 );
-            
             vec3 coord = color * coord_scale + coord_offset;
-            
             vec3 coord_frac = fract( coord );
             vec3 coord_floor = coord - coord_frac;
             vec2 coord_bot = coord.xy + coord_floor.zz * texel_height_X0;
             vec2 coord_top = coord_bot + texel_height_X0;
-
-            vec3 lutcol_bot = texture( lut, coord_bot ).rgb; //Changed from texture2D to texture just in case (apparently depreciated in opengl 3.1?)
+            vec3 lutcol_bot = texture( lut, coord_bot ).rgb;
             vec3 lutcol_top = texture( lut, coord_top ).rgb;
-            
             vec3 lutColor = mix(lutcol_bot, lutcol_top, coord_frac.z);
-            
-            return lutColor;
+            return lutcol_bot;
         }
-
         void main() {
             vec4 texRGBA = texture(tex0, gl_FragCoord.xy / u_resolution);
-
             vec3 texColor = to_srgb(texRGBA.rgb);
-
             vec3 newColor = apply_lut(texColor);
-
             newColor = to_srgb(newColor);
-            
             out_Color = vec4(newColor.rgb, texRGBA.a);
         }
         '''
 
-        # This object gives access to off screen buffers.
-        offscreen = gpu.types.GPUOffScreen(width, height)
+        # create Offscreen
+        offscreen = gpu.types.GPUOffScreen(nx, ny)
+        offscreen.bind()
+        # Custom Shader
+        shader = gpu.types.GPUShader(vertex_default, current_code)
+        batch = batch_for_shader(shader, 'TRI_STRIP', {'a_position': ((-1, -1), (1, -1), (1, 1), (-1, 1), (-1, -1)),})
+        fb = gpu.state.active_framebuffer_get()
+        fb.clear(color=(0.0, 0.0, 0.0, 0.0))
+        shader.bind()
+        shader.uniform_sampler("tex0", gpu.texture.from_image(image))
+        shader.uniform_sampler("lut", gpu.texture.from_image(lut))
+        shader.uniform_float("u_resolution", (nx,ny))
+        # Draw Shader
+        batch.draw(shader)
+        # Save Frame Buffer to Image
+        fb = gpu.state.active_framebuffer_get()
+        offscreen.unbind()
+        buffer = fb.read_color(0, 0, nx, ny, 4, 0, 'FLOAT')
+        buffer.dimensions = nx * ny * 4
+        imageData = np.frombuffer(buffer, dtype=np.float32)
         
-        # Context manager to ensure balanced bind calls, even in the case of an error.
-        # Only run if valid
-        with offscreen.bind():
-            
-            # Clear buffers to preset values
-            bgl.glClear(bgl.GL_COLOR_BUFFER_BIT)
-
-            # Initialize the shader
-            # GPUShader combines multiple GLSL shaders into a program used for drawing. 
-            # It must contain a vertex and fragment shaders, with an optional geometry shader.
-            shader = gpu.types.GPUShader(vertex_default, current_code)
-            
-            # Initialize the shader batch
-            # It makes sure that all the vertex attributes necessary for a specific shader are provided.
-            batch = modify_material.batch_for_shader(
-                shader, 
-                'TRI_STRIP', #https://wiki.blender.org/wiki/Reference/Release_Notes/3.2/Python_API for TRI_FAN depreciation
-                {
-                    'a_position': ((-1, -1), (1, -1), (1, 1), (-1, 1), (-1, -1)),
-                },
-            )
-
-            # Bind the shader object. Required to be able to change uniforms of this shader.
-            shader.bind()
-            
-            bgl.glUniform1i(bgl.glGetUniformLocation(shader.program, "tex0"), 0)
-            bgl.glUniform1i(bgl.glGetUniformLocation(shader.program, "lut"), 1)
-                        
-            try:
-                # Make sure image has a bindcode
-                if image.bindcode == 0:
-                    for i in range(0, 20):
-                        image.gl_load()
-                        if image.bindcode != 0:
-                            break
-
-                # https://docs.blender.org/api/current/bgl.html
-                bgl.glActiveTexture(bgl.GL_TEXTURE0)
-                bgl.glBindTexture(bgl.GL_TEXTURE_2D, image.bindcode)
-                bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_WRAP_S, bgl.GL_CLAMP_TO_EDGE)
-                bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_WRAP_T, bgl.GL_CLAMP_TO_EDGE)
-                bgl.glTexParameterf(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MIN_FILTER, bgl.GL_LINEAR)
-                bgl.glTexParameterf(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MAG_FILTER, bgl.GL_LINEAR)
-                
-                # Specify the value of a uniform variable for the current program object. 
-                # In this case, an image.
-                shader.uniform_int("tex0", 0)
-            except ValueError:
-                pass
-            
-            try:
-                lut_image = bpy.data.images[lut_name]
-
-                # Make sure image has a bindcode
-                if lut_image.bindcode == 0:
-                    for i in range(0, 20):
-                        lut_image.gl_load()
-                        if lut_image.bindcode != 0:
-                            break
-
-                # https://docs.blender.org/api/current/bgl.html
-                bgl.glActiveTexture(bgl.GL_TEXTURE1)
-                bgl.glBindTexture(bgl.GL_TEXTURE_2D, lut_image.bindcode)
-                bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_WRAP_S, bgl.GL_CLAMP_TO_EDGE)
-                bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_WRAP_T, bgl.GL_CLAMP_TO_EDGE)
-                bgl.glTexParameterf(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MIN_FILTER, bgl.GL_LINEAR)
-                bgl.glTexParameterf(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MAG_FILTER, bgl.GL_LINEAR)
-                
-                # Specify the value of a uniform variable for the current program object. 
-                # In this case, an image.
-                shader.uniform_int("lut", 1)
-            except ValueError: 
-                pass
-
-            try:
-                shader.uniform_float('u_resolution', (width, height))
-            except ValueError: 
-                pass
-            
-            # Run the drawing program with the parameters assigned to the batch.
-            batch.draw(shader)
-
-            # The Buffer object is simply a block of memory that is delineated and initialized by the user.
-            buffer = bgl.Buffer(bgl.GL_BYTE, width * height * 4)
-            
-            # Select a color buffer source for pixels.
-            bgl.glReadBuffer(bgl.GL_BACK)
-            
-            # Read a block of pixels from the frame buffer.
-            bgl.glReadPixels(0, 0, width, height, bgl.GL_RGBA, bgl.GL_UNSIGNED_BYTE, buffer)
-
-        # Free the offscreen object. The framebuffer, texture and render objects will no longer be accessible.
-        offscreen.free()
-
-        # Return the final buffer-pixels
-        pixels = [v / 255 for v in buffer]
-        return pixels, width, height
-
-    def color_to_KK(self, color, lut_name):
-        '''Accepts an 8bit int rgba color, returns a 1.0 float rgba'''
-        #print(color)
-        color = color[:3] #drop alpha
-        width = 1
-        height = 1
-
-        # Some Sauce
-        vertex_default = '''
-        in vec2 a_position;
-        
-        in vec4 color;
-        out vec4 col;
-
-        void main() {
-            gl_Position = vec4(a_position, 0.0, 1.0);
-            col = color;
-        }
-        '''
-
-        # The Secret Sauce
-        current_code = '''
-        uniform vec3 inputColor;
-        uniform sampler2D lut;
-        
-        in vec4 col;
-        out vec4 out_Color;
-
-        vec3 to_srgb(vec3 c){
-            c.rgb = max( 1.055 * pow( c.rgb, vec3(0.416666667,0.416666667,0.416666667) ) - 0.055, 0 );
-            return c;
-        }
-
-        void main() {
-            vec3 color = inputColor / 255;
-            
-            const vec3 coord_scale = vec3(0.0302734375, 0.96875, 31.0);
-            const vec3 coord_offset = vec3( 0.5/1024, 0.5/32, 0.0);
-            const vec2 texel_height_X0 = vec2( 0.03125, 0.0 );
-            
-            vec3 coord = color * coord_scale + coord_offset;
-            
-            vec3 coord_frac = fract( coord );
-            vec3 coord_floor = coord - coord_frac;
-            vec2 coord_bot = coord.xy + coord_floor.zz * texel_height_X0;
-            vec2 coord_top = coord_bot + texel_height_X0;
-
-            vec3 lutcol_bot = texture( lut, coord_bot ).rgb;
-            vec3 lutcol_top = texture( lut, coord_top ).rgb;
-            
-            vec3 lutColor = mix(lutcol_bot, lutcol_top, coord_frac.z);
-            
-            
-            vec3 shaderColor = lutColor;
-            
-            out_Color = vec4(shaderColor.rgb, 1);
-        }
-        '''
-
-        # This object gives access to off screen buffers.
-        offscreen = gpu.types.GPUOffScreen(width, height)
-        
-        # Context manager to ensure balanced bind calls, even in the case of an error.
-        # Only run if valid
-        with offscreen.bind():
-            
-            # Clear buffers to preset values
-            bgl.glClear(bgl.GL_COLOR_BUFFER_BIT)
-
-            # Initialize the shader
-            # GPUShader combines multiple GLSL shaders into a program used for drawing. 
-            # It must contain a vertex and fragment shaders, with an optional geometry shader.
-            shader = gpu.types.GPUShader(vertex_default, current_code)
-            
-            # Initialize the shader batch
-            # It makes sure that all the vertex attributes necessary for a specific shader are provided.
-            batch = modify_material.batch_for_shader(
-                shader, 
-                'TRI_STRIP', { #https://wiki.blender.org/wiki/Reference/Release_Notes/3.2/Python_API for TRI_FAN depreciation
-                    'a_position': ((-1, -1), (1, -1), (1, 1), (-1, 1), (-1, -1))
-                },
-            )
-
-            # Bind the shader object. Required to be able to change uniforms of this shader.
-            shader.bind()
-            
-            try:
-                # Specify the value of a uniform variable for the current program object. 
-                # In this case, a color tuple.
-                shader.uniform_float('inputColor', color)
-            except ValueError:
-                pass
-            
-            try:
-                lut_image = bpy.data.images[lut_name]
-
-                # Make sure image has a bindcode
-                if lut_image.bindcode == 0:
-                    for i in range(0, 20):
-                        lut_image.gl_load()
-                        if lut_image.bindcode != 0:
-                            break
-
-                # https://docs.blender.org/api/current/bgl.html
-                bgl.glBindTexture(bgl.GL_TEXTURE_2D, lut_image.bindcode)
-                bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_WRAP_S, bgl.GL_CLAMP_TO_EDGE)
-                bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_WRAP_T, bgl.GL_CLAMP_TO_EDGE)
-                bgl.glTexParameterf(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MIN_FILTER, bgl.GL_LINEAR)
-                bgl.glTexParameterf(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MAG_FILTER, bgl.GL_LINEAR)
-                
-                # Specify the value of a uniform variable for the current program object. 
-                # In this case, an image.
-                shader.uniform_int("lut", 0)
-            except ValueError: 
-                pass
-            
-            # Run the drawing program with the parameters assigned to the batch.
-            batch.draw(shader)
-
-            # The Buffer object is simply a block of memory that is delineated and initialized by the user.
-            buffer = bgl.Buffer(bgl.GL_BYTE, width * height * 3)
-            
-            # Select a color buffer source for pixels.
-            bgl.glReadBuffer(bgl.GL_BACK)
-            
-            # Read a block of pixels from the frame buffer.
-            bgl.glReadPixels(0, 0, width, height, bgl.GL_RGB, bgl.GL_UNSIGNED_BYTE, buffer)
-
-        # Free the offscreen object. The framebuffer, texture and render objects will no longer be accessible.
-        offscreen.free()
-
-        # Get and return the pixels from the final buffer
-        final_color = [v for v in buffer]
-        final_color = numpy.array(final_color).reshape(width, height, -1)
-        return [final_color[0][0][0] / 255, final_color[0][0][1]/ 255, final_color[0][0][2]/ 255, 1] #set alpha to 1, returning rgba
+        # Get and return the pixels from the converted image
+        final_color = imageData.tolist()
+        return final_color #return rgba
 
     def update_shaders(self, json, lut_selection, active_lut, light):
         def to_255(color):
@@ -1466,11 +1187,11 @@ class modify_material(bpy.types.Operator):
             data.extend(line['ShaderPropColorValues'])
             data.extend(line['ShaderPropFloatValues'])
             colors = dict(zip(labels, data))
+            shadow_color = {"r":0.764,"g":0.880,"b":1,"a":1} #default if it cannot be found
             for entry in colors:
                 if '_ShadowColor ' in entry:
                     shadow_color = colors[entry]
                     break
-                shadow_color = {"r":0.764,"g":0.880,"b":1,"a":1}
             
             #This is a face entry
             if line['MaterialName'] == face_material_name:
@@ -2025,7 +1746,7 @@ class modify_material(bpy.types.Operator):
             c.kklog('Created dark version of {} in {} seconds'.format(darktex.name, time.time() - ok))
             return darktex
         else:
-            bpy.ops.image.open(filepath=str(bpy.context.scene.kkbp.import_dir + '/dark_files/' + maintex.name[:-6] + 'DT.png'), use_udim_detecting=False)
+            bpy.data.images.load(filepath=str(bpy.context.scene.kkbp.import_dir + '/dark_files/' + maintex.name[:-6] + 'DT.png'))
             darktex = bpy.data.images[maintex.name[:-6] + 'DT.png']
             c.kklog('A dark version of {} already exists'.format(darktex.name))
             try:

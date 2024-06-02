@@ -131,6 +131,11 @@ translation_dictionary = {
     'apply_mats_tt'     : "Open the folder that contains the baked materials. Use the menu to load the Light / Dark / Normal passes",
     'import_colors_tt'  : "Open the folder containing your model.pmx file to recalculate the dark colors",
 
+    'install_dependency': "Install Dependencies",
+    'install_dependency_tt': """Click this button to automatically download Blender 3.6. This version of Blender is required to import KKBP models. 
+This process will take five to twenty minutes depending on your network speed, and will download 380MB of data from https://download.blender.org/release/ 
+After it is installed, it will take 1.08GB of space and will be stored in the KKBP addon directory. You can reclaim this space by uninstalling the KKBP addon.
+If you wish to supply your own blender 3.6 exe instead of letting the plugin download it for you, open the KKBP plugin preferences window and enter direct path to the .exe there"""
     }
 
 def t(text_entry):

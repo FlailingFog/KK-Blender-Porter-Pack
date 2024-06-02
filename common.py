@@ -1,4 +1,4 @@
-import bpy, json, datetime, traceback
+import bpy, json, datetime, traceback, os
 from pathlib import Path
 
 def toggle_console():
@@ -119,3 +119,13 @@ def import_from_library_file(category, list_of_items, use_fake_user = False):
         files=template_list,
         set_fake=use_fake_user
         )
+
+def has_blender_dependency():
+    '''Check the script directory for the blender 3.6 exe'''
+    if bpy.context.scene.kkbp.blender_path:
+        return True
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    blender_dir = os.path.join(script_dir, 'importing', 'dependencies', "blender-3.6.9-windows-x64", "blender.exe")
+    if os.path.isfile(blender_dir):
+        return True
+    return False

@@ -1,7 +1,9 @@
 #The preferences for the plugin 
 
 import bpy
-from bpy.props import BoolProperty, EnumProperty
+from bpy.props import BoolProperty, EnumProperty, StringProperty
+
+from .interface.dictionary_en import t
 
 from .interface.dictionary_en import t
 
@@ -9,6 +11,10 @@ class KKBPPreferences(bpy.types.AddonPreferences):
     # this must match the add-on name, use '__package__'
     # when defining this in a submodule of a python package.
     bl_idname = __package__
+
+    #this will let the plugin know if the blender 3.6 zip needs to be downloaded, 
+    # or where it is located if the user has already downloaded it
+    blender_path: StringProperty(default = '', name="Blender 3.6 path", description="Direct path to the Blender 3.6 exe")
 
     sfw_mode : BoolProperty(
     description=t('sfw_mode_tt'),
@@ -103,6 +109,11 @@ class KKBPPreferences(bpy.types.AddonPreferences):
         
         box = layout.box()
         col = box.column(align=True)
+        row = col.row(align=True)
+        row.prop(self, "blender_path")
+        row = col.row(align=True)
+        row.label(text=' ')
+
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.prop(self, "armature_dropdown")

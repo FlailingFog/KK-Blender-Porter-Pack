@@ -80,30 +80,34 @@ def main(prep_type, simp_type):
     #If simplifying the bones...
     if simp_type in ['A', 'B']:
         #show all bones on the armature
-        allLayers = [True, True, True, True, True, True, True, True,
-                    True, True, True, True, True, True, True, True,
-                    True, True, True, True, True, True, True, True,
-                    True, True, True, True, True, True, True, True]
-        bpy.data.objects['Armature'].data.layers = allLayers
+        bpy.ops.armature.collection_show_all()
         bpy.ops.pose.select_all(action='DESELECT')
 
         #Move pupil bones to layer 1
         armature = bpy.data.objects['Armature']
         if armature.data.bones.get('Left Eye'):
-            armature.data.bones['Left Eye'].layers[0] = True
-            armature.data.bones['Left Eye'].layers[10] = False
-            armature.data.bones['Right Eye'].layers[0] = True
-            armature.data.bones['Right Eye'].layers[10] = False
-
+            armature.data.bones['Left Eye'].collections.clear()
+            armature.data.collections['0'].assign(armature.data.bones.get('Left Eye'))
+            armature.data.bones['Right Eye'].collections.clear()
+            armature.data.collections['0'].assign(armature.data.bones.get('Right Eye'))
+        
         #Select bones on layer 11
         for bone in armature.data.bones:
-            if bone.layers[10]==True:
+            if bone.collections.get('10'):
                 bone.select = True
         
         #if very simple selected, also get 3-5,12,17-19
         if simp_type in ['A']:
             for bone in armature.data.bones:
-                select_bool = bone.layers[2] or bone.layers[3] or bone.layers[4] or bone.layers[11] or bone.layers[12] or bone.layers[16] or bone.layers[17] or bone.layers[18]
+                select_bool = (bone.collections.get('2')  or 
+                               bone.collections.get('3')  or 
+                               bone.collections.get('4')  or 
+                               bone.collections.get('11') or 
+                               bone.collections.get('12') or 
+                               bone.collections.get('16') or 
+                               bone.collections.get('17') or 
+                               bone.collections.get('18')
+                               )
                 if select_bool:
                     bone.select = True
         

@@ -68,7 +68,7 @@ class post_operations(bpy.types.Operator):
                     self.armature = object
     
     def hide_unused_objects(self):
-        bpy.data.objects['Armature'].hide = False
+        bpy.data.objects['Armature'].hide_set(False)
         #don't hide any outfits if not automatically categorizing
         if not bpy.context.scene.kkbp.categorize_dropdown in ['A']:
             return
@@ -83,20 +83,20 @@ class post_operations(bpy.types.Operator):
                     outfit = ob
                     break
         if outfit:
-            outfit.hide = False
+            outfit.hide_set(False)
             for child in outfit.children:
-                child.hide = False
+                child.hide_set(False)
         for type in [self.outfits, self.outfit_alternates]:
             for clothes_object in type:
                 if clothes_object != outfit:
-                    clothes_object.hide = True
+                    clothes_object.hide_set(True)
                     for child in clothes_object.children:
-                        child.hide = True
+                        child.hide_set(True)
         #hide rigged tongue and all clothes alts
         if bpy.data.objects.get('Tongue (Rigged)'):
-            bpy.data.objects['Tongue (Rigged)'].hide = True
+            bpy.data.objects['Tongue (Rigged)'].hide_set(True)
         for object in self.outfit_alternates:
-            object.hide = True
+            object.hide_set(True)
 
     def apply_cycles(self):
         if not bpy.context.scene.kkbp.shader_dropdown == 'B':
@@ -236,7 +236,7 @@ class post_operations(bpy.types.Operator):
         #make sure the new bones on the generated rig retain the KKBP outfit id entry
         rig = bpy.context.active_object
         for bone in rig.data.bones:
-            if bone.layers[0] == True or bone.layers[2] == True:
+            if bone.collections.get('0') or bone.collections.get('2') == True:
                 if rig.data.bones.get('ORG-' + bone.name):
                     if rig.data.bones['ORG-' + bone.name].get('KKBP outfit ID'):
                         bone['KKBP outfit ID'] = rig.data.bones['ORG-' + bone.name]['KKBP outfit ID']
@@ -247,7 +247,7 @@ class post_operations(bpy.types.Operator):
         bpy.ops.object.select_all(action='DESELECT')
         bpy.context.view_layer.objects.active = rig
         empty = bpy.data.objects['GFN Empty']
-        empty.hide = False
+        empty.hide_set(False)
         empty.select_set(True)
         bpy.ops.object.mode_set(mode='POSE')
         bpy.ops.pose.select_all(action='DESELECT')
@@ -261,7 +261,7 @@ class post_operations(bpy.types.Operator):
         bpy.context.view_layer.objects.active = empty
         empty.select_set(True)
         bpy.ops.object.move_to_collection(collection_index=1)
-        empty.hide = True
+        empty.hide_set(True)
         empty.hide_render = True
 
         self.armature.hide_set(True)

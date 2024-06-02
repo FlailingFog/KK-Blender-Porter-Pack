@@ -135,7 +135,7 @@ def main():
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.rootBoneName, 0.35)
     
     for bone in generatedRig.pose.bones:
-        if generatedRig.data.bones[bone.name].layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.faceLayerName + koikatsuCommons.mchLayerSuffix)] == True:
+        if generatedRig.data.bones[bone.name].collections.get(str(koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.faceLayerName + koikatsuCommons.mchLayerSuffix))):
             koikatsuCommons.setBoneCustomShapeScale(generatedRig, bone.name, 0.15)
         
     headBone = generatedRig.pose.bones[koikatsuCommons.originalBonePrefix + koikatsuCommons.headBoneName]
@@ -193,10 +193,10 @@ def main():
     bpy.ops.object.mode_set(mode='EDIT')
 
     for bone in generatedRig.data.edit_bones:
-        if generatedRig.data.bones[bone.name].layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.junkLayerName)] == True:
+        if generatedRig.data.bones[bone.name].collections.get(str(koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.junkLayerName))):
             koikatsuCommons.deleteBone(generatedRig, bone.name)
             continue
-        if generatedRig.data.bones[bone.name].layers[koikatsuCommons.defLayerIndex] == True:
+        if generatedRig.data.bones[bone.name].collections.get(str(koikatsuCommons.defLayerIndex)):
             bone.use_deform = True
             
     generatedRig.data.edit_bones[koikatsuCommons.eyesTrackTargetParentBoneName].parent = None
