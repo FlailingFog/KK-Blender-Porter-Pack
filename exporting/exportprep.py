@@ -16,12 +16,15 @@ def main(prep_type, simp_type):
     c.kklog('Moving unused objects to their own collection...')
     no_move_objects = ['Bonelyfans', 'Shadowcast', 'Hitboxes', 'Body', 'Armature']
     for object in bpy.context.scene.objects:
-        #print(object.name)
-        move_this_one = object.name not in no_move_objects and 'Widget' not in object.name and object.hide
-        if move_this_one:
-            object.hide = False
-            object.select_set(True)
-            bpy.context.view_layer.objects.active=object
+        try:
+            #print(object.name)
+            move_this_one = object.name not in no_move_objects and 'Widget' not in object.name and object.hide_get()
+            if move_this_one:
+                object.hide = False
+                object.select_set(True)
+                bpy.context.view_layer.objects.active=object
+        except:
+            c.kklog("During export prep, couldn't move object '{}' for some reason...".format(object), type='error')
     if bpy.context.selected_objects:
         bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name='Unused clothing items')
     #hide the new collection

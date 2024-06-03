@@ -53,9 +53,13 @@ class kkbp_import(bpy.types.Operator):
             c.kklog('User chose wrong pmx file. Defaulting to pmx file located at ' + str(bpy.context.scene.kkbp.import_dir), 'warn')
 
         #force pmx armature selection if exportCurrentPose in the Exporter Config json is true
-        force_current_pose = c.get_json_file('KK_KKBPExporterConfig.json')['exportCurrentPose']
-        if force_current_pose:
-            bpy.context.scene.kkbp.armature_dropdown = 'C'
+        try:
+            force_current_pose = c.get_json_file('KK_KKBPExporterConfig.json')['exportCurrentPose']
+            if force_current_pose:
+                bpy.context.scene.kkbp.armature_dropdown = 'C'
+        except:
+            #config file didn't exist I guess? don't touch armature dropdown in this case
+            pass
 
         #run functions based on selection
         if bpy.context.scene.kkbp.categorize_dropdown == 'A': #Automatic separation

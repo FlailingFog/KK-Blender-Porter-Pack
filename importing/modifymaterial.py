@@ -272,22 +272,24 @@ class modify_material(bpy.types.Operator):
         #Make the tongue material unique so parts of the General Template aren't overwritten
         tongue_template = bpy.data.materials['KK General'].copy()
         tongue_template.name = 'KK Tongue'
-        self.body.material_slots['KK General'].material = tongue_template
+        # check if that actually worked
+        if self.body.material_slots.get('KK General'):
+            self.body.material_slots['KK General'].material = tongue_template
         
-        #Make the texture group unique
-        newNode = tongue_template.node_tree.nodes['Gentex'].node_tree.copy()
-        tongue_template.node_tree.nodes['Gentex'].node_tree = newNode
-        newNode.name = 'Tongue Textures'
-        
-        #Make the tongue shader group unique
-        newNode = tongue_template.node_tree.nodes['Shader'].node_tree.copy()
-        tongue_template.node_tree.nodes['Shader'].node_tree = newNode
-        newNode.name = 'Tongue Shader'
+            #Make the texture group unique
+            newNode = tongue_template.node_tree.nodes['Gentex'].node_tree.copy()
+            tongue_template.node_tree.nodes['Gentex'].node_tree = newNode
+            newNode.name = 'Tongue Textures'
+            
+            #Make the tongue shader group unique
+            newNode = tongue_template.node_tree.nodes['Shader'].node_tree.copy()
+            tongue_template.node_tree.nodes['Shader'].node_tree = newNode
+            newNode.name = 'Tongue Shader'
 
-        #give the rigged tongue the existing material template
-        if bpy.data.objects.get('Tongue (rigged)'):
-            tongue = bpy.data.objects['Tongue (rigged)']
-            tongue.material_slots[0].material = bpy.data.materials['KK Tongue']
+            #give the rigged tongue the existing material template
+            if bpy.data.objects.get('Tongue (rigged)'):
+                tongue = bpy.data.objects['Tongue (rigged)']
+                tongue.material_slots[0].material = bpy.data.materials['KK Tongue']
 
         #give the gag eyes a material template if they exist and have shapekeys setup
         if bpy.data.objects.get('Gag Eyes'):
@@ -1027,21 +1029,14 @@ class modify_material(bpy.types.Operator):
     def color_to_KK(self, color, lut_name):
         '''Accepts an 8bit int rgba color, returns a 1.0 float rgba'''
         #this function still seems to work as long as the image is a single pixel
-        try:
-            image = bpy.data.images['color_placeholder']
-        except:
-            bpy.ops.image.new(name = 'color_placeholder', width=1, height=1)
-            image = bpy.data.images['color_placeholder']
 
-        image.pixels[0:3] = color
-        nx = image.size[0]
-        ny = image.size[1]
+        nx = 1
+        ny = 1
         lut = bpy.data.images[lut_name]
 
         # Some Sauce
         vertex_default = '''
         in vec2 a_position;
-        in vec2 a_texcoord;
         in vec4 color;
         out vec4 col;
         void main() {
@@ -1051,16 +1046,16 @@ class modify_material(bpy.types.Operator):
         '''
         # The Secret Sauce
         current_code = '''
-        uniform sampler2D tex0;
+        uniform vec3 inputColor;
         uniform sampler2D lut;
-        uniform vec2    u_resolution;
         in vec4 col;
         out vec4 out_Color;
         vec3 to_srgb(vec3 c){
             c.rgb = max( 1.055 * pow( c.rgb, vec3(0.416666667,0.416666667,0.416666667) ) - 0.055, 0 );
             return c;
         }
-        vec3 apply_lut(vec3 color) {
+        void main() {
+            vec3 color = inputColor / 255;
             const vec3 coord_scale = vec3(0.0302734375, 0.96875, 31.0);
             const vec3 coord_offset = vec3( 0.5/1024, 0.5/32, 0.0);
             const vec2 texel_height_X0 = vec2( 0.03125, 0.0 );
@@ -1072,19 +1067,13 @@ class modify_material(bpy.types.Operator):
             vec3 lutcol_bot = texture( lut, coord_bot ).rgb;
             vec3 lutcol_top = texture( lut, coord_top ).rgb;
             vec3 lutColor = mix(lutcol_bot, lutcol_top, coord_frac.z);
-            return lutcol_bot;
-        }
-        void main() {
-            vec4 texRGBA = texture(tex0, gl_FragCoord.xy / u_resolution);
-            vec3 texColor = to_srgb(texRGBA.rgb);
-            vec3 newColor = apply_lut(texColor);
-            newColor = to_srgb(newColor);
-            out_Color = vec4(newColor.rgb, texRGBA.a);
+            vec3 shaderColor = lutColor;
+            out_Color = vec4(shaderColor.rgb, 1);
         }
         '''
 
         # create Offscreen
-        offscreen = gpu.types.GPUOffScreen(nx, ny)
+        offscreen = gpu.types.GPUOffScreen(1, 1)
         offscreen.bind()
         # Custom Shader
         shader = gpu.types.GPUShader(vertex_default, current_code)
@@ -1092,16 +1081,15 @@ class modify_material(bpy.types.Operator):
         fb = gpu.state.active_framebuffer_get()
         fb.clear(color=(0.0, 0.0, 0.0, 0.0))
         shader.bind()
-        shader.uniform_sampler("tex0", gpu.texture.from_image(image))
+        shader.uniform_float("inputColor", color)
         shader.uniform_sampler("lut", gpu.texture.from_image(lut))
-        shader.uniform_float("u_resolution", (nx,ny))
         # Draw Shader
         batch.draw(shader)
         # Save Frame Buffer to Image
         fb = gpu.state.active_framebuffer_get()
         offscreen.unbind()
-        buffer = fb.read_color(0, 0, nx, ny, 4, 0, 'FLOAT')
-        buffer.dimensions = nx * ny * 4
+        buffer = fb.read_color(0, 0, 1, 1, 4, 0, 'FLOAT')
+        buffer.dimensions = 1 * 1 * 4
         imageData = np.frombuffer(buffer, dtype=np.float32)
         
         # Get and return the pixels from the converted image
