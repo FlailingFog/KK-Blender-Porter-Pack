@@ -12,9 +12,9 @@ class KKBPPreferences(bpy.types.AddonPreferences):
     # when defining this in a submodule of a python package.
     bl_idname = __package__
 
-    #this will let the plugin know if the blender 3.6 zip needs to be downloaded, 
+    #this will let the plugin know if the blender 2.80 zip needs to be downloaded, 
     # or where it is located if the user has already downloaded it
-    blender_path: StringProperty(default = '', name="Blender 3.6 path", description="Direct path to the Blender 3.6 exe")
+    blender_path: StringProperty(default = '', name="Blender 2.80 / 3.6 exe path", description="Direct path to blender.exe from any Blender version between 2.80 and 3.6")
 
     sfw_mode : BoolProperty(
     description=t('sfw_mode_tt'),

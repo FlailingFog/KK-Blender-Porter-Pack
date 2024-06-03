@@ -121,11 +121,15 @@ def import_from_library_file(category, list_of_items, use_fake_user = False):
         )
 
 def has_blender_dependency():
-    '''Check the script directory for the blender 3.6 exe'''
+    '''Check the script directory for the blender exe'''
     if bpy.context.scene.kkbp.blender_path:
         return True
     script_dir = os.path.dirname(os.path.realpath(__file__))
     blender_dir = os.path.join(script_dir, 'importing', 'dependencies', "blender-3.6.9-windows-x64", "blender.exe")
     if os.path.isfile(blender_dir):
         return True
+    else:
+        blender_dir = os.path.join(script_dir, 'importing', 'dependencies', "blender-2.80-windows64", "blender.exe")
+        if os.path.isfile(blender_dir):
+            return True
     return False

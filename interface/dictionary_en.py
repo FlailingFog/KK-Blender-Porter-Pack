@@ -132,10 +132,11 @@ translation_dictionary = {
     'import_colors_tt'  : "Open the folder containing your model.pmx file to recalculate the dark colors",
 
     'install_dependency': "Install Dependencies",
-    'install_dependency_tt': """Click this button to automatically download Blender 3.6. This version of Blender is required to import KKBP models. 
-This process will take five to twenty minutes depending on your network speed, and will download 380MB of data from https://download.blender.org/release/ 
-After it is installed, it will take 1.08GB of space and will be stored in the KKBP addon directory. You can reclaim this space by uninstalling the KKBP addon.
-If you wish to supply your own blender 3.6 exe instead of letting the plugin download it for you, open the KKBP plugin preferences window and enter direct path to the .exe there"""
+    'install_dependency_tt': """Click this button to automatically download Blender 2.80. This version of Blender is required to import KKBP models. 
+This process will take a few minutes depending on your network speed, and will download 111MB of data from https://download.blender.org/release/ 
+After it is installed, it will take 304MB of space and will be stored in the KKBP addon directory. You can reclaim this space by uninstalling the KKBP addon.
+If you want to use Blender 3.6 instead, click on the 3.6 button below. This version is a lot larger than Blender 2.80, but may have better hardware compatibility. 
+If you wish to supply your own blender 2.80 exe instead of letting the plugin download it for you, open the KKBP plugin preferences window and enter direct path to the .exe there. Any version between 2.80 and 3.6 should work"""
     }
 
 def t(text_entry):
