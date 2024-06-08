@@ -1016,12 +1016,14 @@ def getRigifyLayerIndexByName(rigifyLayerName):
             return index
 
 def setRigifyLayer(rig, index, rigifyLayer):
-    rig.data.rigify_layers[index].name = rigifyLayer.name
-    rig.data.rigify_layers[index].row = rigifyLayer.row
-    rig.data.rigify_layers[index].group = rigifyLayer.group
+    if rig.data.collections_all.get(str(index)):
+        rig.data.collections_all[str(index)].rigify_ui_title = rigifyLayer.name
+        rig.data.collections_all[str(index)].rigify_ui_row = rigifyLayer.row
+        rig.data.collections_all[str(index)].rigify_color_set_id = rigifyLayer.group
     
 def setRootRigifyLayer(rig, boneGroupIndex):
-    rig.data.rigify_layers[rootLayerIndex].group = boneGroupIndex
+    if rig.data.collections_all.get(str(rootLayerIndex)):
+        rig.data.collections_all[str(rootLayerIndex)].rigify_color_set_id = boneGroupIndex
 
 mmdOriginalBoneLayerName = "Original bones"        
 mmdRenamedRequiredDictionaryLayerName = "Renamed required dictionary"
@@ -1145,7 +1147,12 @@ def setBoneManagerLayersFromRigifyLayers(rig):
 def assignSingleBoneLayer(rig, boneName, layerIndex):
     bone = rig.data.bones[boneName]
     bone.collections.clear()
-    rig.data.collections[layerIndex].assign(bone)
+    if rig.data.collections.get(str(layerIndex)):
+        rig.data.collections[str(layerIndex)].assign(bone)
+    else:
+        rig.data.collections.new(str(layerIndex))
+        rig.data.collections[str(layerIndex)].assign(bone)
+
             
 def assignSingleBoneLayerToList(rig, boneNamesList, layerIndex):
     for boneName in boneNamesList:
