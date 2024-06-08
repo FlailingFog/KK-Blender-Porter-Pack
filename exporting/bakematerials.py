@@ -455,7 +455,7 @@ class bake_materials(bpy.types.Operator):
             c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             #reset viewport shading back to material preview
             my_areas = bpy.context.workspace.screens[0].areas
-            my_shading = 'MATERIAL'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
+            my_shading = 'SOLID'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
             for area in my_areas:
                 for space in area.spaces:
                     if space.type == 'VIEW_3D':

@@ -108,6 +108,10 @@ class modify_mesh(bpy.types.Operator):
                (bpy.context.scene.kkbp.categorize_dropdown == 'D' or 'cf_Ohitomi_R' not in body_material['SMRName'])):
                 mat_name = body_material['SMRMaterialNames'][0] + smr_postfix_map[body_material['SMRName']]  
                 self.body['SMR materials'][body_material['SMRName']] = [mat_name]
+            if body_material['SMRName'] in ['cf_Ohitomi_L02']:
+                self.body['SMR materials'][body_material['SMRName']] = [body_material['SMRMaterialNames'][0] + ('_cf_Ohitomi_L02' if bpy.context.scene.kkbp.V421_export else '')]
+            if body_material['SMRName'] in ['cf_Ohitomi_R02']:
+                self.body['SMR materials'][body_material['SMRName']] = [body_material['SMRMaterialNames'][0] + ('_cf_Ohitomi_R02' if bpy.context.scene.kkbp.V421_export else '')]
         c.print_timer('get_body_material_names')
         
     def separate_rigged_tongue(self):
@@ -128,22 +132,27 @@ class modify_mesh(bpy.types.Operator):
         
         #Select all materials that are hair and separate for each outfit
         material_data = c.get_json_file('KK_MaterialData.json')
-        # texture_data = c.get_json_file('KK_TextureData.json')
-        # texture_files = []
-        # for file in texture_data:
-        #     texture_files.append(file['textureName'])
+        if bpy.context.scene.kkbp.V421_export:
+            texture_data = c.get_json_file('KK_TextureData.json')
+            texture_files = []
+            for file in texture_data:
+                texture_files.append(file['textureName'])
         for outfit in self.outfits:
             outfit_materials = [mat_slot.material.name for mat_slot in outfit.material_slots]
             hair_mat_list = []
             for line in material_data:
-                # if mat['ShaderName'] in ["Shader Forge/main_hair_front", "Shader Forge/main_hair", 'Koikano/hair_main_sun_front', 'Koikano/hair_main_sun', 'xukmi/HairPlus', 'xukmi/HairFrontPlus']:
-                #     if (mat['MaterialName'] + '_HGLS.png') in texture_files or ((mat['MaterialName'] + '_NMP.png') not in texture_files and (mat['MaterialName'] + '_MT_CT.png') not in texture_files and (mat['MaterialName'] + '_MT.png') not in texture_files):
-                #         hair_mat_list.append(mat['MaterialName'])
-                #only hair shaders have the HairGloss parameter, this should be able to replace commented out method shown above
-                material_name = line['MaterialName']
-                gloss_present = [name for name in line['ShaderPropNames'] if '_HairGloss ' in name]
-                if gloss_present and material_name in outfit_materials:
-                    hair_mat_list.append(material_name)
+                if bpy.context.scene.kkbp.V421_export:
+                    #use this older method for V421 exports
+                    if line['ShaderName'] in ["Shader Forge/main_hair_front", "Shader Forge/main_hair", 'Koikano/hair_main_sun_front', 'Koikano/hair_main_sun', 'xukmi/HairPlus', 'xukmi/HairFrontPlus']:
+                        if (line['MaterialName'] + '_HGLS.png') in texture_files or ((line['MaterialName'] + '_NMP.png') not in texture_files and (line['MaterialName'] + '_MT_CT.png') not in texture_files and (line['MaterialName'] + '_MT.png') not in texture_files):
+                            hair_mat_list.append(line['MaterialName'])
+                else:
+                    #only hair shaders have the HairGloss parameter, this should be able to replace commented out method shown above
+                    material_name = line['MaterialName']
+                    gloss_present = [name for name in line['ShaderPropNames'] if '_HairGloss ' in name]
+                    if gloss_present and material_name in outfit_materials:
+                        hair_mat_list.append(material_name)
+
             if hair_mat_list:
                 self.separate_materials(outfit, hair_mat_list)
                 hair = bpy.data.objects[outfit.name + '.001']

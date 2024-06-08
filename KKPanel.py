@@ -22,6 +22,9 @@ class PlaceholderProperties(PropertyGroup):
     #this will let the plugin know where the user is in the import / export process
     plugin_state:StringProperty(default='')
 
+    #This lets the plugin know if the model was exported with KKBP exporter V4.21 instead of V4.30
+    V421_export: BoolProperty(default=False)
+
     #this lets the plugin time various actions
     timer : FloatProperty(default=0)
 

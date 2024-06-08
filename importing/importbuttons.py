@@ -59,6 +59,8 @@ class kkbp_import(bpy.types.Operator):
                 bpy.context.scene.kkbp.armature_dropdown = 'C'
         except:
             #config file didn't exist I guess? don't touch armature dropdown in this case
+            #also mark this model as a V4.21 export
+            bpy.context.scene.kkbp.V421_export = True
             pass
 
         #run functions based on selection

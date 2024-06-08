@@ -34,7 +34,7 @@ class post_operations(bpy.types.Operator):
             self.apply_sfw()
             
             c.clean_orphaned_data()
-            c.set_viewport_shading('MATERIAL')
+            c.set_viewport_shading('SOLID')
 
             return {'FINISHED'}
         except Exception as error:

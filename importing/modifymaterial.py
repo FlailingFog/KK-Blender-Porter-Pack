@@ -332,31 +332,46 @@ class modify_material(bpy.types.Operator):
         '''Load all images from the pmx folder'''
         c.switch(self.body, 'object')
 
+        def get_line_starter():
+            return 'materialName' if bpy.context.scene.kkbp.V421_export else 'MaterialName'
+
         #get all images from the pmx directory
         directory = bpy.context.scene.kkbp.import_dir + ('/' if (sys.platform == 'linux' or sys.platform == 'darwin') else '\\')
         fileList = Path(directory).rglob('*.*')
         files = [file for file in fileList if file.is_file()]
 
         #get shadow colors for each material and store the dictionary on the body object
-        json_material_data = c.get_json_file('KK_MaterialData.json')
-        color_dict = {}
-        supporting_entries = ['Shader Forge/create_body', 'Shader Forge/create_head', 'Shader Forge/create_eyewhite', 'Shader Forge/create_eye', 'Shader Forge/create_topN']
-        for line in json_material_data:
-            if line['MaterialName'] in supporting_entries:
-                line['MaterialName'] = line['MaterialName'].replace('create_','').replace('_create','')
-            labels = line['ShaderPropNames']
-            data = line['ShaderPropTextures']
-            data.extend(line['ShaderPropTextureValues'])
-            data.extend(line['ShaderPropColorValues'])
-            data.extend(line['ShaderPropFloatValues'])
-            data = dict(zip(labels, data))
-            for entry in data:
-                if '_ShadowColor ' in entry:
-                    color_dict[line['MaterialName']] = data[entry]
-                    color_dict[line['MaterialName'].replace('_MT', '_ST')] = data[entry] #put the shadow color into the ST entry too
-                    break
-                #default to [.764, .880, 1] if shadow color is not available for the material
-                color_dict[line['MaterialName']] = {"r":0.764,"g":0.880,"b":1,"a":1}
+        if bpy.context.scene.kkbp.V421_export:
+            json_material_data = c.get_json_file('KK_CharacterColors.json')
+            color_dict = {}
+            for line in json_material_data:
+                try:
+                    color_dict[line[get_line_starter()]] =                          {'r':line['shadowColor']['r']/255, 'g':line['shadowColor']['g']/255, 'b':line['shadowColor']['b']/255}
+                    color_dict[line[get_line_starter()].replace('_MT', '_ST')] =    {'r':line['shadowColor']['r']/255, 'g':line['shadowColor']['g']/255, 'b':line['shadowColor']['b']/255}
+                except:
+                     #default to [.764, .880, 1] if shadow color is not available for the material
+                    color_dict[line[get_line_starter()]] =                          {"r":0.764,"g":0.880,"b":1,"a":1}
+                    color_dict[line[get_line_starter()].replace('_MT', '_ST')] =    {"r":0.764,"g":0.880,"b":1,"a":1}
+        else:
+            json_material_data = c.get_json_file('KK_MaterialData.json')
+            color_dict = {}
+            supporting_entries = ['Shader Forge/create_body', 'Shader Forge/create_head', 'Shader Forge/create_eyewhite', 'Shader Forge/create_eye', 'Shader Forge/create_topN']
+            for line in json_material_data:
+                if line[get_line_starter()] in supporting_entries:
+                    line[get_line_starter()] = line[get_line_starter()].replace('create_','').replace('_create','')
+                labels = line['ShaderPropNames']
+                data = line['ShaderPropTextures']
+                data.extend(line['ShaderPropTextureValues'])
+                data.extend(line['ShaderPropColorValues'])
+                data.extend(line['ShaderPropFloatValues'])
+                data = dict(zip(labels, data))
+                for entry in data:
+                    if '_ShadowColor ' in entry:
+                        color_dict[line[get_line_starter()]] = data[entry]
+                        color_dict[line[get_line_starter()].replace('_MT', '_ST')] = data[entry] #put the shadow color into the ST entry too
+                        break
+                    #default to [.764, .880, 1] if shadow color is not available for the material
+                    color_dict[line[get_line_starter()]] = {"r":0.764,"g":0.880,"b":1,"a":1}
         self.body['KKBP shadow colors'] = color_dict
         if len(color_dict) == 0:
             c.kklog('No shadow colors were found for this model. KKBP will default to the shadow color of {"r":0.764,"g":0.880,"b":1} Make sure the KK_MaterialData.json file in your pmx folder has values in the "ShaderPropColorValues" field.', type='error')
@@ -973,7 +988,10 @@ class modify_material(bpy.types.Operator):
         c.print_timer('convert_main_textures')
 
     def load_json_colors(self):
-        json_color_data = c.get_json_file('KK_MaterialData.json')
+        if bpy.context.scene.kkbp.V421_export:
+            json_color_data = c.get_json_file('KK_CharacterColors.json')
+        else:
+            json_color_data = c.get_json_file('KK_MaterialData.json')
         self.update_shaders(json_color_data, self.lut_selection, self.lut_light, light = True) # Set light colors
         self.update_shaders(json_color_data, self.lut_selection, self.lut_dark, light = False) # Set dark colors
         c.print_timer('load_json_colors')
@@ -1027,8 +1045,8 @@ class modify_material(bpy.types.Operator):
             bpy.data.materials[mat].node_tree.nodes[group].node_tree.nodes[uvnode].uv_map = uvtype
 
     def color_to_KK(self, color, lut_name):
-        '''Accepts an 8bit int rgba color, returns a 1.0 float rgba'''
-        #this function still seems to work as long as the image is a single pixel
+        '''Accepts an 8bit int rgba color array, returns a 1.0 float rgba'''
+        #this function still seems to work in Blender 4.0 as long as the image is a single pixel
 
         nx = 1
         ny = 1
@@ -1105,6 +1123,10 @@ class modify_material(bpy.types.Operator):
                 rgb = [color[0], color[1], color[2]] #rgb is already an 8bit int
             #print(color)
             return rgb
+        
+        def to_array(color):
+            rgb = [color['r'], color['g'], color['b']]
+            return rgb
 
         node_groups = bpy.data.node_groups
 
@@ -1142,10 +1164,15 @@ class modify_material(bpy.types.Operator):
         item_shader_node_groups = []
         
         def entry_exists(material_name):
+            if bpy.context.scene.kkbp.V421_export:
+                return -1
             for idx, line in enumerate(json):
                 if line["MaterialName"] == material_name:
                     return idx
             return -1
+        
+        def get_line_starter():
+            return 'materialName' if bpy.context.scene.kkbp.V421_export else 'MaterialName'
         
         ### Get json groups based on shader type, and reformat them to work with the existing script
         supporting_entries = ['Shader Forge/create_body', 'Shader Forge/create_head', 'Shader Forge/create_eyewhite', 'Shader Forge/create_eye', 'Shader Forge/create_topN']
@@ -1156,163 +1183,246 @@ class modify_material(bpy.types.Operator):
         eyeline_material_name = body['SMR materials']['cf_O_eyeline'][0]
         kage_material_name = 'cf_m_eyeline_kage'
         tongue_material_names = [body['SMR materials']['o_tang'][0], body['SMR materials']['o_tang_rigged'][0]]
-        hair_material_names = [] 
+        hair_material_names = []
         for ob in self.hairs:
             hair_material_names.extend([mat.material.name.replace('KK ','') for mat in ob.material_slots])
         
         hair_base_colors = {}
         hair_root_colors = {}
         hair_tip_colors = {}
+        brow_color = to_array({"r":0,"g":1,"b":1,"a":1})
+        eyeline_color = to_array({"r":0,"g":1,"b":1,"a":1})
 
         for idx, line in enumerate(json):
             #Skip supporting entries for now
-            if line['ShaderName'] in supporting_entries:
-                continue
-            
-            labels = line['ShaderPropNames']
-            data = line['ShaderPropTextures'].copy()
-            data.extend(line['ShaderPropTextureValues'])
-            data.extend(line['ShaderPropColorValues'])
-            data.extend(line['ShaderPropFloatValues'])
-            colors = dict(zip(labels, data))
-            shadow_color = {"r":0.764,"g":0.880,"b":1,"a":1} #default if it cannot be found
-            for entry in colors:
-                if '_ShadowColor ' in entry:
-                    shadow_color = colors[entry]
-                    break
+            if not bpy.context.scene.kkbp.V421_export:
+                if line['ShaderName'] in supporting_entries:
+                    continue
+            if bpy.context.scene.kkbp.V421_export:
+                if line.get('shadowColor'):
+                    shadow_color = {'r':line['shadowColor']['r']/255, 
+                                    'g':line['shadowColor']['g']/255, 
+                                    'b':line['shadowColor']['b']/255,
+                                    'a':line['shadowColor']['a']/255}
+            else:
+                labels = line['ShaderPropNames']
+                data = line['ShaderPropTextures'].copy()
+                data.extend(line['ShaderPropTextureValues'])
+                data.extend(line['ShaderPropColorValues'])
+                data.extend(line['ShaderPropFloatValues'])
+                colors = dict(zip(labels, data))
+                shadow_color = {"r":0.764,"g":0.880,"b":1,"a":1} #default if it cannot be found
+                for entry in colors:
+                    if '_ShadowColor ' in entry:
+                        shadow_color = colors[entry]
+                        break
             
             #This is a face entry
-            if line['MaterialName'] == face_material_name:
-                face_colors.append(self.color_to_KK(to_255(colors.get("_overcolor1 Color 1", {"r":1,"g":0,"b":0,"a":1})), active_lut)) #lipstick
-                face_colors.append(self.color_to_KK(to_255(colors.get("_overcolor2 Color 2", {"r":1,"g":0,"b":0,"a":1})), active_lut)) #Light blush color
-                #print('face colors: ' + str(face_colors))
+            if line[get_line_starter()] == face_material_name:
+                if bpy.context.scene.kkbp.V421_export:
+                    face_colors.append(self.color_to_KK(to_array(line.get("colorInfo")[6]), active_lut)) #lipstick
+                    face_colors.append(self.color_to_KK(to_array(line.get("colorInfo")[5]), active_lut)) #Light blush color
+                else:
+                    face_colors.append(self.color_to_KK(to_255(colors.get("_overcolor1 Color 1", {"r":1,"g":0,"b":0,"a":1})), active_lut)) #lipstick
+                    face_colors.append(self.color_to_KK(to_255(colors.get("_overcolor2 Color 2", {"r":1,"g":0,"b":0,"a":1})), active_lut)) #Light blush color
+                    #print('face colors: ' + str(face_colors))
                 continue
 
             #This is a body entry
-            if line['MaterialName'] == body_material_name:
-                nip_base  = to_255(colors.get("_overcolor1 Color 1", {"r":0,"g":1,"b":1,"a":1}))
-                nip_1     = to_255(colors.get("_overcolor2 Color 2", {"r":0,"g":1,"b":1,"a":1}))
-                nip_2     = to_255(colors.get("_overcolor3 Color 3", {"r":0,"g":1,"b":1,"a":1}))
-                underhair = to_255({"r":0,"g":0,"b":0,"a":1})
-
-                #if this entry has a "create" equivalent, get additional colors from it
-                existing_index = entry_exists(line['MaterialName'] + '_create')
-                if existing_index == -1:
-                    body_light = {"r":1,"g":1,"b":1,"a":1}
-                    skin_type  = to_255({"r":1,"g":1,"b":1,"a":1})
-                    nail_color = to_255({"r":1,"g":1,"b":1,"a":1})
+            if line[get_line_starter()] == body_material_name:
+                if bpy.context.scene.kkbp.V421_export:
+                    def format_me(b):
+                        return {'r':b['r']/255, 'g':b['g']/255, 'b':b['b']/255, 'a':b['a']/255}
+                    def wtf(a):
+                        return [a['r']*255, a['g']*255, a['b']*255]
+                    body_colors.append(self.color_to_KK(to_array(line.get("colorInfo")[0]), active_lut)) #light body color
+                    body_colors.append(self.color_to_KK(to_array(line.get("colorInfo")[1]), active_lut)) # skin type color
+                    body_colors.append(self.color_to_KK(to_array(line.get("colorInfo")[2]), active_lut)) # nail color
+                    body_colors.append(self.color_to_KK(to_array(line.get("colorInfo")[3]), active_lut)) # nip base
+                    body_colors.append(self.color_to_KK(to_array(line.get("colorInfo")[4]), active_lut)) # under hair color
+                    body_colors.append(self.color_to_KK(wtf(self.skin_dark_color(format_me(line.get("colorInfo")[0]))), active_lut))
                 else:
-                    labels =    json[existing_index]['ShaderPropNames']
-                    data   =    json[existing_index]['ShaderPropTextures'].copy()
-                    data.extend(json[existing_index]['ShaderPropTextureValues'])
-                    data.extend(json[existing_index]['ShaderPropColorValues'])
-                    data.extend(json[existing_index]['ShaderPropFloatValues'])
-                    colors = dict(zip(labels, data))
-                    body_light = colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1})
-                    skin_type  = to_255(colors.get("_Color2 Color 1", {"r":0,"g":1,"b":1,"a":1}))
-                    nail_color = to_255(colors.get("_Color5 Color 4", {"r":0,"g":1,"b":1,"a":1}))
+                    nip_base  = to_255(colors.get("_overcolor1 Color 1", {"r":0,"g":1,"b":1,"a":1}))
+                    nip_1     = to_255(colors.get("_overcolor2 Color 2", {"r":0,"g":1,"b":1,"a":1}))
+                    nip_2     = to_255(colors.get("_overcolor3 Color 3", {"r":0,"g":1,"b":1,"a":1}))
+                    underhair = to_255({"r":0,"g":0,"b":0,"a":1})
 
-                body_colors.append(self.color_to_KK(to_255(body_light), active_lut))    # light body color
-                body_colors.append(self.color_to_KK(skin_type,  active_lut))            # skin type color
-                body_colors.append(self.color_to_KK(nail_color, active_lut))            # nail color
-                body_colors.append(self.color_to_KK(nip_base,   active_lut))            # nip base
-                body_colors.append(self.color_to_KK(underhair,  active_lut))            # under hair color
-                body_colors.append(self.color_to_KK(to_255(self.skin_dark_color(body_light)), active_lut)) # dark body color
-                #print('Body colors: ' + str(body_colors))
+                    #if this entry has a "create" equivalent, get additional colors from it
+                    existing_index = entry_exists(line[get_line_starter()] + '_create')
+                    if existing_index == -1:
+                        body_light = {"r":1,"g":1,"b":1,"a":1}
+                        skin_type  = to_255({"r":1,"g":1,"b":1,"a":1})
+                        nail_color = to_255({"r":1,"g":1,"b":1,"a":1})
+                    else:
+                        labels =    json[existing_index]['ShaderPropNames']
+                        data   =    json[existing_index]['ShaderPropTextures'].copy()
+                        data.extend(json[existing_index]['ShaderPropTextureValues'])
+                        data.extend(json[existing_index]['ShaderPropColorValues'])
+                        data.extend(json[existing_index]['ShaderPropFloatValues'])
+                        colors = dict(zip(labels, data))
+                        body_light = colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1})
+                        skin_type  = to_255(colors.get("_Color2 Color 1", {"r":0,"g":1,"b":1,"a":1}))
+                        nail_color = to_255(colors.get("_Color5 Color 4", {"r":0,"g":1,"b":1,"a":1}))
+
+                    body_colors.append(self.color_to_KK(to_255(body_light), active_lut))    # light body color
+                    body_colors.append(self.color_to_KK(skin_type,  active_lut))            # skin type color
+                    body_colors.append(self.color_to_KK(nail_color, active_lut))            # nail color
+                    body_colors.append(self.color_to_KK(nip_base,   active_lut))            # nip base
+                    body_colors.append(self.color_to_KK(underhair,  active_lut))            # under hair color
+                    body_colors.append(self.color_to_KK(to_255(self.skin_dark_color(body_light)), active_lut)) # dark body color
+                    #print('Body colors: ' + str(body_colors))
                 continue
 
             #This is hair
-            if line['MaterialName'] in hair_material_names:
-                hair_base_colors[line['MaterialName']] = colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1})
-                hair_shadow_color = shadow_color
-                hair_root_colors[line['MaterialName']]   = to_255(colors.get("_Color2 Color 1", {"r":0,"g":1,"b":1,"a":1}))
-                hair_tip_colors[line['MaterialName']]    = to_255(colors.get("_Color3 Color 2", {"r":0,"g":1,"b":1,"a":1}))
+            if line[get_line_starter()] in hair_material_names:
+                if bpy.context.scene.kkbp.V421_export:
+                    hair_base_colors[line[get_line_starter()]] = {
+                        'r' : json[5]['colorInfo'][0]['r'] / 255,
+                        'g' : json[5]['colorInfo'][0]['g'] / 255,
+                        'b' : json[5]['colorInfo'][0]['b'] / 255,
+                        'a' : json[5]['colorInfo'][0]['a'] / 255
+                    }
+                    hair_shadow_color = shadow_color
+                    hair_root_colors[line[get_line_starter()]] = to_array(json[5]['colorInfo'][1])
+                    hair_tip_colors[line[get_line_starter()]] = to_array(json[5]['colorInfo'][2])
+                else:
+                    hair_base_colors[line[get_line_starter()]] = colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1})
+                    hair_shadow_color = shadow_color
+                    hair_root_colors[line[get_line_starter()]]   = to_255(colors.get("_Color2 Color 1", {"r":0,"g":1,"b":1,"a":1}))
+                    hair_tip_colors[line[get_line_starter()]]    = to_255(colors.get("_Color3 Color 2", {"r":0,"g":1,"b":1,"a":1}))
                 #if this is a unique hair color, and the shader group is not unique from having a maintex, give it a unique group
-                hairType = line['MaterialName']
+                hairType = line[get_line_starter()]
                 hairMat = bpy.data.materials.get('KK ' + hairType)
                 using_default_group = hairMat.node_tree.nodes['Shader'].node_tree.name == 'Hair Shader'
-                if (hair_base_colors[line['MaterialName']] not in hair_colors_already_used) and (using_default_group) and (len(hair_colors_already_used) > 0):
+                if (hair_base_colors[line[get_line_starter()]] not in hair_colors_already_used) and (using_default_group) and (len(hair_colors_already_used) > 0):
                     newNode = hairMat.node_tree.nodes['Shader'].node_tree.copy()
                     hairMat.node_tree.nodes['Shader'].node_tree = newNode
                     newNode.name = hairType + ' Hair Shader'
-                    hair_colors_already_used.append(hair_base_colors[line['MaterialName']])
+                    hair_colors_already_used.append(hair_base_colors[line[get_line_starter()]])
                 elif len(hair_colors_already_used) == 0:
-                    hair_colors_already_used.append(hair_base_colors[line['MaterialName']]) #keep the first hair color so it still shows up as "Hair Shader"
+                    hair_colors_already_used.append(hair_base_colors[line[get_line_starter()]]) #keep the first hair color so it still shows up as "Hair Shader"
+                continue
 
             #This is eyeline
-            if line['MaterialName'] == eyeline_material_name:
-                eyeline_color = to_255(colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1}))
+            if line[get_line_starter()] == eyeline_material_name:
+                if bpy.context.scene.kkbp.V421_export:
+                    eyeline_color = to_array(colors.get("colorInfo")[1])
+                else:
+                    eyeline_color = to_255(colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1}))
                 continue
 
             #This is an eyebrow
-            if line['MaterialName'] == brow_material_name:
-                brow_color = to_255(colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1}))
+            if line[get_line_starter()] == brow_material_name:
+                if bpy.context.scene.kkbp.V421_export:
+                    brow_color = to_array(line.get("colorInfo")[0])
+                else:
+                    brow_color = to_255(colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1}))
                 continue
             
             #This is the tongue
-            if line['MaterialName'] in tongue_material_names:
-                try:
-                    tongue_color1 = to_255(colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1}))
-                    tongue_color2 = to_255(colors.get("_Color2 Color 1", {"r":0,"g":1,"b":1,"a":1}))
-                    tongue_color3 = to_255(colors.get("_Color3 Color 2", {"r":0,"g":1,"b":1,"a":1}))
-                except:
-                    c.kklog('Could not load tongue colors', 'error')
-                    print(colors)
+            if line[get_line_starter()] in tongue_material_names:
+                if bpy.context.scene.kkbp.V421_export:
+                    try:
+                        tongue_color1 = to_array(line.get("colorInfo", {"r":0,"g":1,"b":1,"a":1})[0])
+                        tongue_color2 = tongue_color1
+                        tongue_color3 = tongue_color1
+                    except:
+                        c.kklog('Could not load tongue colors', 'error')
+                        print(line)
+                else:
+                    try:
+                        tongue_color1 = to_255(colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1}))
+                        tongue_color2 = to_255(colors.get("_Color2 Color 1", {"r":0,"g":1,"b":1,"a":1}))
+                        tongue_color3 = to_255(colors.get("_Color3 Color 2", {"r":0,"g":1,"b":1,"a":1}))                   
+                    except:
+                        c.kklog('Could not load tongue colors', 'error')
+                        print(colors)
+                continue
             
             #This is the kage
-            if line['MaterialName'] == kage_material_name:
-                kage_color = to_255(colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1}))
+            if line[get_line_starter()] == kage_material_name:
+                if bpy.context.scene.kkbp.V421_export:
+                    kage_color = to_array(line.get("colorInfo", {"r":0,"g":1,"b":1,"a":1})[0])
+                else:
+                    kage_color = to_255(colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1}))
+                continue
 
             #This is an item
-            shader_name = line['MaterialName']
+            shader_name = line[get_line_starter()]
             if (shader_name + ' Shader') in node_groups:
-                
-                #if this entry has a "create" equivalent, get the rgb colors from it
-                #if it doesn't then get the colors from that entry
-                existing_index = entry_exists('create_' + shader_name)
-                if existing_index == -1:
-                    labels =    line['ShaderPropNames']
-                    data   =    line['ShaderPropTextures'].copy()
-                    data.extend(line['ShaderPropTextureValues'])
-                    data.extend(line['ShaderPropColorValues'])
-                    data.extend(line['ShaderPropFloatValues'])
-                    colors = dict(zip(labels, data))
-                    color1 = colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1})
-                    color2 = colors.get("_Color2 Color 1", {"r":0,"g":1,"b":1,"a":1})
-                    color3 = colors.get("_Color3 Color 2", {"r":0,"g":1,"b":1,"a":1})
-                    pater1 = {"r":0,"g":1,"b":1,"a":1}
-                    pater2 = {"r":0,"g":1,"b":1,"a":1}
-                    pater3 = {"r":0,"g":1,"b":1,"a":1}
+                if bpy.context.scene.kkbp.V421_export:
+                    colorInfo = line.get('colorInfo').copy()
+                    if not colorInfo:
+                        colorInfo = [
+                            {"r":0,"g":255,"b":255,"a":255},
+                            {"r":0,"g":255,"b":255,"a":255},
+                            {"r":0,"g":255,"b":255,"a":255}
+                        ]
+                    patternColors = line.get('patternColors').copy()
+                    if not patternColors:
+                        patternColors = [
+                            {"r":0,"g":255,"b":255,"a":255},
+                            {"r":0,"g":255,"b":255,"a":255},
+                            {"r":0,"g":255,"b":255,"a":255}
+                        ]
+                    for b in [colorInfo, patternColors]:
+                        # c.kklog(b)
+                        for index, a in enumerate(b):
+                            # c.kklog(a)
+                            b[index] = {'r':a['r']/255, 'g':a['g']/255, 'b':a['b']/255, 'a':a['a']/255}
+                    reformatted_data = {
+                        "MaterialName":line.get('materialName'),
+                        "colorInfo":colorInfo,
+                        "patternColors":patternColors,
+                        'shadowColor':shadow_color
+                    }
+                    # c.kklog(reformatted_data)
                 else:
-                    labels =    json[existing_index]['ShaderPropNames']
-                    data   =    json[existing_index]['ShaderPropTextures'].copy()
-                    data.extend(json[existing_index]['ShaderPropTextureValues'])
-                    data.extend(json[existing_index]['ShaderPropColorValues'])
-                    data.extend(json[existing_index]['ShaderPropFloatValues'])
-                    colors = dict(zip(labels, data))
+                    #if this entry has a "create" equivalent, get the rgb colors from it
+                    #if it doesn't then get the colors from that entry
+                    existing_index = entry_exists('create_' + shader_name)
+                    if existing_index == -1:
+                        labels =    line['ShaderPropNames']
+                        data   =    line['ShaderPropTextures'].copy()
+                        data.extend(line['ShaderPropTextureValues'])
+                        data.extend(line['ShaderPropColorValues'])
+                        data.extend(line['ShaderPropFloatValues'])
+                        colors = dict(zip(labels, data))
+                        color1 = colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1})
+                        color2 = colors.get("_Color2 Color 1", {"r":0,"g":1,"b":1,"a":1})
+                        color3 = colors.get("_Color3 Color 2", {"r":0,"g":1,"b":1,"a":1})
+                        pater1 = {"r":0,"g":1,"b":1,"a":1}
+                        pater2 = {"r":0,"g":1,"b":1,"a":1}
+                        pater3 = {"r":0,"g":1,"b":1,"a":1}
+                    else:
+                        labels =    json[existing_index]['ShaderPropNames']
+                        data   =    json[existing_index]['ShaderPropTextures'].copy()
+                        data.extend(json[existing_index]['ShaderPropTextureValues'])
+                        data.extend(json[existing_index]['ShaderPropColorValues'])
+                        data.extend(json[existing_index]['ShaderPropFloatValues'])
+                        colors = dict(zip(labels, data))
 
-                    color1 = colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1})
-                    color2 = colors.get("_Color2 Color 2", {"r":0,"g":1,"b":1,"a":1})
-                    color3 = colors.get("_Color3 Color 4", {"r":0,"g":1,"b":1,"a":1})
-                    pater1 = colors.get("_Color1_2 Color 1", {"r":0,"g":1,"b":1,"a":1})
-                    pater2 = colors.get("_Color2_2 Color 3", {"r":0,"g":1,"b":1,"a":1})
-                    pater3 = colors.get("_Color3_2 Color 5", {"r":0,"g":1,"b":1,"a":1})
+                        color1 = colors.get("_Color Color 0", {"r":0,"g":1,"b":1,"a":1})
+                        color2 = colors.get("_Color2 Color 2", {"r":0,"g":1,"b":1,"a":1})
+                        color3 = colors.get("_Color3 Color 4", {"r":0,"g":1,"b":1,"a":1})
+                        pater1 = colors.get("_Color1_2 Color 1", {"r":0,"g":1,"b":1,"a":1})
+                        pater2 = colors.get("_Color2_2 Color 3", {"r":0,"g":1,"b":1,"a":1})
+                        pater3 = colors.get("_Color3_2 Color 5", {"r":0,"g":1,"b":1,"a":1})
 
-                reformatted_data = {
-                    "MaterialName":
-                        shader_name,
-                    "colorInfo":[
-                        color1,
-                        color2,
-                        color3],
-                    "patternColors":[
-                        pater1,
-                        pater2,
-                        pater3],
-                    'shadowColor':
-                        shadow_color}
-                #print(existing_index)
-                #print(reformatted_data)
+                    reformatted_data = {
+                        "MaterialName":
+                            shader_name,
+                        "colorInfo":[
+                            color1,
+                            color2,
+                            color3],
+                        "patternColors":[
+                            pater1,
+                            pater2,
+                            pater3],
+                        'shadowColor':
+                            shadow_color}
+                
                 item_data.append(reformatted_data)
                 item_shader_node_groups.append(node_groups[(shader_name + ' Shader')])
                 continue
@@ -1442,8 +1552,8 @@ class modify_material(bpy.types.Operator):
                     if i < len(color_input_names):
                         color = colorItem
                         shadow_color = item['shadowColor']
-                        #print(color)
-                        #print(shadow_color)
+                        # c.kklog(color)
+                        # c.kklog(shadow_color)
                         color_channel = self.color_to_KK(to_255(self.clothes_dark_color(color = color, shadow_color = shadow_color)), 'Lut_TimeDay.png')
                         shader_inputs[color_input_names[i]].default_value = color_channel
                 shader_inputs['Use colored maintex?'].default_value = 0
@@ -1613,6 +1723,7 @@ class modify_material(bpy.types.Operator):
         #print(shadow_color)
         ################### variable setup
         _ambientshadowG = float4(0.15, 0.15, 0.15, 0.15) #constant from experimentation
+        # print(color)
         diffuse = float4(color['r'],color['g'],color['b'],1) #maintex color
         _ShadowColor = float4(shadow_color['r'],shadow_color['g'],shadow_color['b'],1) #the shadow color from material editor
         ##########################
