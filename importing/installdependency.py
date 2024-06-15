@@ -21,11 +21,15 @@ class install_dependency(bpy.types.Operator):
         #clear the dependencies folder
         c.toggle_console()
         c.kklog('Clearing the dependencies folder...')
-        for f in os.listdir(os.path.join(os.path.dirname(__file__), 'dependencies')):
-            try:
-                os.remove(os.path.join(os.path.dirname(__file__), 'dependencies', f))
-            except:
-                pass
+        try:
+            for f in os.listdir(os.path.join(os.path.dirname(__file__), 'dependencies')):
+                try:
+                    os.remove(os.path.join(os.path.dirname(__file__), 'dependencies', f))
+                except:
+                    pass
+        except:
+            #the dependencies folder did not exist
+            pass
         
         #get the blender zip and unzip it to the dependencies folder
         c.kklog('Downloading blender zip file from https://download.blender.org/release/Blender3.6/blender-3.6.9-windows-x64.zip. This could take five to twenty minutes depending on your network speed...')
@@ -54,11 +58,15 @@ class install_dependency28(bpy.types.Operator):
         #clear the dependencies folder
         c.toggle_console()
         c.kklog('Clearing the dependencies folder...')
-        for f in os.listdir(os.path.join(os.path.dirname(__file__), 'dependencies')):
-            try:
-                os.remove(os.path.join(os.path.dirname(__file__), 'dependencies', f))
-            except:
-                pass
+        try:
+            for f in os.listdir(os.path.join(os.path.dirname(__file__), 'dependencies')):
+                try:
+                    os.remove(os.path.join(os.path.dirname(__file__), 'dependencies', f))
+                except:
+                    pass
+        except:
+            #the dependencies folder did not exist
+            pass
         
         #get the blender zip and unzip it to the dependencies folder
         c.kklog('Downloading blender zip file from https://download.blender.org/release/Blender2.80/blender-2.80-windows64.zip. This could take five to ten minutes depending on your network speed...')
