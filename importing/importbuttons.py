@@ -4,12 +4,15 @@ This file performs the following operations
 ·	Set view transform to Standard
 ·	Create KK log in the scripting tab
 ·	Save the import folder path
+·	Opens Blender 3.6 / 2.80 to run a saturation script on all textures
+.   Textures are saved to the "saturated" subfolder in the same folder as the pmx file
 ·	Import all pmx files from folder path
 ·	If the pmx file is an outfit, save the ID to the empty object of that pmx file
 .   Invokes the other import operations based on what options were chosen on the panel
 '''
 
-import bpy, os, time
+import bpy, os, time, glob
+from subprocess import Popen, PIPE
 
 from ..interface.dictionary_en import t
 from .. import common as c
@@ -50,9 +53,15 @@ class kkbp_import(bpy.types.Operator):
             c.kklog('User chose wrong pmx file. Defaulting to pmx file located at ' + str(bpy.context.scene.kkbp.import_dir), 'warn')
 
         #force pmx armature selection if exportCurrentPose in the Exporter Config json is true
-        force_current_pose = c.get_json_file('KK_KKBPExporterConfig.json')['exportCurrentPose']
-        if force_current_pose:
-            bpy.context.scene.kkbp.armature_dropdown = 'C'
+        try:
+            force_current_pose = c.get_json_file('KK_KKBPExporterConfig.json')['exportCurrentPose']
+            if force_current_pose:
+                bpy.context.scene.kkbp.armature_dropdown = 'C'
+        except:
+            #config file didn't exist I guess? don't touch armature dropdown in this case
+            #also mark this model as a V4.21 export
+            bpy.context.scene.kkbp.V421_export = True
+            pass
 
         #run functions based on selection
         if bpy.context.scene.kkbp.categorize_dropdown == 'A': #Automatic separation
@@ -79,6 +88,9 @@ class kkbp_import(bpy.types.Operator):
 
         #run functions based on selection
         c.toggle_console()
+        self.convert_and_import_textures()
+        c.toggle_console()
+        c.toggle_console() #have to toggle it twice after running the second blender instance
         self.import_pmx_models()
         for index, function in enumerate(functions):
             print('Import function {} running'.format(index))
@@ -120,3 +132,17 @@ class kkbp_import(bpy.types.Operator):
                             bpy.data.texts.remove(bpy.data.texts['Model_e'])
         c.initialize_timer()
         c.print_timer('Import PMX')
+    
+    def convert_and_import_textures(self):
+        c.kklog('Opening older version of Blender to convert model textures...')
+        time.sleep(5)
+        # You have to supply a blend file or it won't execute the script automatically. Choose the video editing template blend because it's the first one I tried
+        version_path = [i for i in glob.glob(os.path.dirname(bpy.context.scene.kkbp.blender_path) + '/*/')][0]
+        blender_file = os.path.join(version_path, 'scripts', 'startup', 'bl_app_templates_system', 'Video_Editing', 'startup.blend')
+        secondscriptname = os.path.join(os.path.dirname(__file__), 'converttextures.py')
+        process = Popen([bpy.context.scene.kkbp.blender_path, blender_file, "-P", secondscriptname, os.path.dirname(__file__), bpy.context.scene.kkbp.import_dir], stdout=PIPE, universal_newlines=True)
+        r = process.stdout.readline()[:-1]
+        while r:
+            if '|' in r:
+                c.kklog(r.replace('|','')) # these are lines printed from the second script
+            r = process.stdout.readline()[:-1]

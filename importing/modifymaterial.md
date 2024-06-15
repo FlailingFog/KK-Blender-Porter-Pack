@@ -2,6 +2,9 @@
     _MT_CT -> _MainTex_ColorTexture
     _MT_DT -> _MainTex_DarkenedColorTexture (aka DarkTex)
     _MT -> _MainTex (aka Plain MainTex)
+    _ST_CT -> _Saturated_MainTex_ColorTexture
+    _ST_DT -> _Saturated_MainTex_DarkenedColorTexture (aka Saturated DarkTex)
+    _ST -> _Saturated_MainTex (aka Plain Saturated MainTex)
     _AM -> _AlphaMask
     _CM -> _ColorMask
     _DM -> _DetailMask

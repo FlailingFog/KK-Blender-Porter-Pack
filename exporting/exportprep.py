@@ -16,12 +16,15 @@ def main(prep_type, simp_type):
     c.kklog('Moving unused objects to their own collection...')
     no_move_objects = ['Bonelyfans', 'Shadowcast', 'Hitboxes', 'Body', 'Armature']
     for object in bpy.context.scene.objects:
-        #print(object.name)
-        move_this_one = object.name not in no_move_objects and 'Widget' not in object.name and object.hide
-        if move_this_one:
-            object.hide = False
-            object.select_set(True)
-            bpy.context.view_layer.objects.active=object
+        try:
+            #print(object.name)
+            move_this_one = object.name not in no_move_objects and 'Widget' not in object.name and object.hide_get()
+            if move_this_one:
+                object.hide = False
+                object.select_set(True)
+                bpy.context.view_layer.objects.active=object
+        except:
+            c.kklog("During export prep, couldn't move object '{}' for some reason...".format(object), type='error')
     if bpy.context.selected_objects:
         bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name='Unused clothing items')
     #hide the new collection
@@ -80,30 +83,34 @@ def main(prep_type, simp_type):
     #If simplifying the bones...
     if simp_type in ['A', 'B']:
         #show all bones on the armature
-        allLayers = [True, True, True, True, True, True, True, True,
-                    True, True, True, True, True, True, True, True,
-                    True, True, True, True, True, True, True, True,
-                    True, True, True, True, True, True, True, True]
-        bpy.data.objects['Armature'].data.layers = allLayers
+        bpy.ops.armature.collection_show_all()
         bpy.ops.pose.select_all(action='DESELECT')
 
         #Move pupil bones to layer 1
         armature = bpy.data.objects['Armature']
         if armature.data.bones.get('Left Eye'):
-            armature.data.bones['Left Eye'].layers[0] = True
-            armature.data.bones['Left Eye'].layers[10] = False
-            armature.data.bones['Right Eye'].layers[0] = True
-            armature.data.bones['Right Eye'].layers[10] = False
-
+            armature.data.bones['Left Eye'].collections.clear()
+            armature.data.collections['0'].assign(armature.data.bones.get('Left Eye'))
+            armature.data.bones['Right Eye'].collections.clear()
+            armature.data.collections['0'].assign(armature.data.bones.get('Right Eye'))
+        
         #Select bones on layer 11
         for bone in armature.data.bones:
-            if bone.layers[10]==True:
+            if bone.collections.get('10'):
                 bone.select = True
         
         #if very simple selected, also get 3-5,12,17-19
         if simp_type in ['A']:
             for bone in armature.data.bones:
-                select_bool = bone.layers[2] or bone.layers[3] or bone.layers[4] or bone.layers[11] or bone.layers[12] or bone.layers[16] or bone.layers[17] or bone.layers[18]
+                select_bool = (bone.collections.get('2')  or 
+                               bone.collections.get('3')  or 
+                               bone.collections.get('4')  or 
+                               bone.collections.get('11') or 
+                               bone.collections.get('12') or 
+                               bone.collections.get('16') or 
+                               bone.collections.get('17') or 
+                               bone.collections.get('18')
+                               )
                 if select_bool:
                     bone.select = True
         
