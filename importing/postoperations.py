@@ -219,12 +219,60 @@ class post_operations(bpy.types.Operator):
     @classmethod
     def apply_rigify(cls):
         self = cls
+        #correct some bone layering errors. I don't feel like tracking these down, so do it here before the rigify script
+        layer0_bones = [
+            'MasterFootIK.L',
+            'MasterFootIK.R',
+            'Eyesx',
+            'cf_pv_root_upper',
+            'cf_pv_elbo_R',
+            'cf_pv_elbo_L',
+            'cf_pv_knee_L',
+            'cf_pv_knee_R',
+            'cf_pv_hand_L',
+            'cf_pv_hand_R',
+        ]
+        layer1_bones = [
+            'Left toe',
+            'Right toe',
+            'cf_pv_foot_L',
+            'FootPin.L',
+            'ToePin.L',
+            'cf_pv_foot_R',
+            'FootPin.R',
+            'ToePin.R',
+        ]
+        def set_armature_layer(bone_name, show_layer, hidden = False):
+            '''Assigns a bone to a bone collection.'''
+            bone = self.armature.data.bones.get(bone_name)
+            if bone:
+                show_layer = str(show_layer)
+                bone.collections.clear()
+                if self.armature.data.bones.get(bone_name):
+                    if self.armature.data.collections.get(show_layer):
+                        self.armature.data.collections[show_layer].assign(self.armature.data.bones.get(bone_name))
+                    else:
+                        self.armature.data.collections.new(show_layer)
+                        self.armature.data.collections[show_layer].assign(self.armature.data.bones.get(bone_name))
+                    self.armature.data.bones[bone_name].hide = hidden
+                
+        original_mode = bpy.context.object.mode
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+        for bone in layer0_bones:
+            set_armature_layer(bone, 0)
+        for bone in layer1_bones:
+            set_armature_layer(bone, 1)
+        bpy.ops.object.mode_set(mode = original_mode)
+        
         if not bpy.context.scene.kkbp.armature_dropdown == 'B':
             return
         c.kklog('Running Rigify conversion scripts...')
         c.switch(self.armature, 'object')
         try:
             bpy.ops.kkbp.rigbefore('INVOKE_DEFAULT')
+            #remove the left ankle and right ankle's super copy prop
+            self.armature.pose.bones['Left ankle'].rigify_type = ""
+            self.armature.pose.bones['Right ankle'].rigify_type = ""
         except:
             if 'Calling operator "bpy.ops.pose.rigify_layer_init" error, could not be found' in traceback.format_exc():
                 c.kklog("There was an issue preparing the rigify metarig. \nMake sure the Rigify addon is installed and enabled. Skipping operation...", 'error')
@@ -232,6 +280,7 @@ class post_operations(bpy.types.Operator):
             return
         
         bpy.ops.pose.rigify_generate()
+        print(stophere)
         bpy.ops.kkbp.rigafter('INVOKE_DEFAULT')
         #make sure the new bones on the generated rig retain the KKBP outfit id entry
         rig = bpy.context.active_object

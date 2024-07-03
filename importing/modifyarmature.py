@@ -708,7 +708,7 @@ class modify_armature(bpy.types.Operator):
 
     def reorganize_armature_layers(self):
         '''Moves all bones to different armature layers'''
-        c.switch(self.armature, 'pose')
+        c.switch(self.armature, 'object')
         
         core_list   = self.get_bone_list('core_list')
         non_ik      = self.get_bone_list('non_ik')
@@ -1941,14 +1941,20 @@ class modify_armature(bpy.types.Operator):
 
     def set_armature_layer(self, bone_name, show_layer, hidden = False):
         '''Assigns a bone to a bone collection.'''
-        show_layer = str(show_layer)
-        if self.armature.data.bones.get(bone_name):
-            if self.armature.data.collections.get(show_layer):
-                self.armature.data.collections[show_layer].assign(self.armature.data.bones.get(bone_name))
-            else:
-                self.armature.data.collections.new(show_layer)
-                self.armature.data.collections[show_layer].assign(self.armature.data.bones.get(bone_name))
-            self.armature.data.bones[bone_name].hide = hidden
+        bone = self.armature.data.bones.get(bone_name)
+        if bone:
+            original_mode = bpy.context.object.mode
+            bpy.ops.object.mode_set(mode = 'OBJECT')
+            show_layer = str(show_layer)
+            bone.collections.clear()
+            if self.armature.data.bones.get(bone_name):
+                if self.armature.data.collections.get(show_layer):
+                    self.armature.data.collections[show_layer].assign(self.armature.data.bones.get(bone_name))
+                else:
+                    self.armature.data.collections.new(show_layer)
+                    self.armature.data.collections[show_layer].assign(self.armature.data.bones.get(bone_name))
+                self.armature.data.bones[bone_name].hide = hidden
+            bpy.ops.object.mode_set(mode = original_mode)
 
     @staticmethod
     def get_bone_list(kind):

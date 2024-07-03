@@ -1144,7 +1144,16 @@ def setBoneManagerLayersFromRigifyLayers(rig):
     setBoneManagerLayer(rig, mchLayerIndex, BoneManagerLayer(mchLayerName, mchLayerRow))
     setBoneManagerLayer(rig, orgLayerIndex, BoneManagerLayer(orgLayerName, orgLayerRow))
     
+def assignSingleBoneLayer_except(rig, boneName, layerIndex):
+    try:
+        assignSingleBoneLayer(rig, boneName, layerIndex)
+    except:
+        pass
+        #bone didn't exist
+
 def assignSingleBoneLayer(rig, boneName, layerIndex):
+    original_mode = bpy.context.object.mode
+    bpy.ops.object.mode_set(mode = 'OBJECT')
     bone = rig.data.bones[boneName]
     bone.collections.clear()
     if rig.data.collections.get(str(layerIndex)):
@@ -1152,6 +1161,20 @@ def assignSingleBoneLayer(rig, boneName, layerIndex):
     else:
         rig.data.collections.new(str(layerIndex))
         rig.data.collections[str(layerIndex)].assign(bone)
+    bpy.ops.object.mode_set(mode = original_mode)
+
+def assignMultipleBoneLayer(rig, boneName, layerIndexes):
+    original_mode = bpy.context.object.mode
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    bone = rig.data.bones[boneName]
+    bone.collections.clear()
+    for layerIndex in layerIndexes:
+        if rig.data.collections.get(str(layerIndex)):
+            rig.data.collections[str(layerIndex)].assign(bone)
+        else:
+            rig.data.collections.new(str(layerIndex))
+            rig.data.collections[str(layerIndex)].assign(bone)
+    bpy.ops.object.mode_set(mode = original_mode)
 
             
 def assignSingleBoneLayerToList(rig, boneNamesList, layerIndex):
