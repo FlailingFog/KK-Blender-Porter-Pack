@@ -280,7 +280,7 @@ class post_operations(bpy.types.Operator):
             return
         
         bpy.ops.pose.rigify_generate()
-        print(stophere)
+
         bpy.ops.kkbp.rigafter('INVOKE_DEFAULT')
         #make sure the new bones on the generated rig retain the KKBP outfit id entry
         rig = bpy.context.active_object
@@ -302,6 +302,8 @@ class post_operations(bpy.types.Operator):
         bpy.ops.pose.select_all(action='DESELECT')
         rig.data.bones['head'].select = True
         rig.data.bones.active = rig.data.bones['head']
+        #show layer 7 to use ops parent
+        rig.data.collections_all['7'].is_visible = True
         bpy.ops.object.parent_set(type='BONE')
         bpy.ops.pose.select_all(action='DESELECT')
         bpy.ops.object.mode_set(mode='OBJECT')

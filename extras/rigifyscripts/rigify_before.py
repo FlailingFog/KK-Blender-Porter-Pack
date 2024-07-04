@@ -1837,7 +1837,7 @@ def main():
                 if skirtBoneName not in usefulBoneNames:
                     usefulBoneNames.append(skirtBoneName)
                 metarig.pose.bones[skirtBoneName].custom_shape = None
-                koikatsuCommons.assignSingleBoneLayer(metarig, skirtBoneName, 23)
+                koikatsuCommons.assignSingleBoneLayer(metarig, skirtBoneName, 23 if (('master' in skirtBoneName) or ('_ik' in skirtBoneName)) else 24)
                 if secondaryIndex == 0:
                     metarig.pose.bones[skirtBoneName].rigify_type = "limbs.super_finger"
                     metarig.pose.bones[skirtBoneName].rigify_parameters.make_extra_ik_control = True
@@ -1858,6 +1858,7 @@ def main():
         if boneName in accessoryBoneConnectedParentNames:
             bone.rigify_type = "limbs.super_finger"
             bone.rigify_parameters.make_extra_ik_control = True
+            koikatsuCommons.assignSingleBoneLayer(metarig, boneName, 1)
             # bone.rigify_parameters.tweak_layers[1] = False
             # bone.rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.hairLayerName + koikatsuCommons.detailLayerSuffix)] = True
         elif boneName in accessoryBoneConnectedChildNames:
@@ -1989,7 +1990,55 @@ def main():
                 metarig.data.collections.new(str(index))
                 metarig.data.collections[str(index)].is_visible = False
     metarig.data.collections
-            
+
+    #clean up missing rigify layers because I edited the script
+    def get_rigify_index(collection_name):
+        if 'None' == collection_name:
+            return metarig.data.collections_all.get(str(collection_name)).index
+        else:
+            return metarig.data.collections_all.get(str(collection_name)).index
+
+    bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(1), row=2) #move hair detail to same layer
+    bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(2), row=2) #move hair mch to same layer
+    bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(3), row=3) #move eyes primary
+    bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(4), row=3) #move eyes secondary
+    bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(5), row=4) #move face
+    metarig.data.collections_all['5'].rigify_ui_title_name = 'Face'
+    bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(6), row=5) #move face mch
+    metarig.data.collections_all['6'].rigify_ui_title_name = 'Face (MCH)'
+    bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(7), row=6) #move torso
+    metarig.data.collections_all['7'].rigify_ui_title_name = 'Torso'
+    bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index('None'), row=7) #move torso detail
+    metarig.data.collections_all['None'].rigify_ui_title_name = 'Torso (Detail)'
+    bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(8), row=7) #move torso tweak
+    metarig.data.collections_all['8'].rigify_ui_title_name = 'Torso (Tweak)'
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(9), row=8) #move arm L IK
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(12), row=8) #move arm L IK
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(10), row=9) #arm L fk
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(13), row=9) #arm R FK
+    metarig.data.collections_all['13'].rigify_ui_title_name = 'Arm.R FK'
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(11), row=10) #arm L tweak
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(14), row=10) #arm R tweak
+    metarig.data.collections_all['14'].rigify_ui_title_name = 'Arm.R (Tweak)'
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(15), row=11)
+    metarig.data.collections_all['15'].rigify_ui_title_name = 'Fingers'
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(16), row=12) #mvoe fingers detail
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(17), row=13) #move leg L IK
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(20), row=13) #move leg R IK
+    metarig.data.collections_all['20'].rigify_ui_title_name = 'Leg.R IK'
+    metarig.data.collections_all['21'].rigify_ui_title_name = 'Leg.R FK'
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(18), row=14) #move leg L FK
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(21), row=14) #move leg R FK
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(19), row=15) #move leg L tweak
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(22), row=15) #move leg R tweak
+    metarig.data.collections_all['22'].rigify_ui_title_name = 'Leg.R (Tweak)'
+    metarig.data.collections_all['19'].rigify_ui_title_name = 'Leg.L (Tweak)'
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(23), row=16) #move skirt
+    metarig.data.collections_all['23'].rigify_ui_title_name = 'Skirt'
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(24), row=17) #move skirt detail
+    metarig.data.collections_all['24'].rigify_ui_title_name = 'Skirt (Detail)'
+    metarig.data.collections_all['27'].rigify_ui_title_name = 'Junk'
+
     #bpy.ops.bone_layer_man.get_rigify_layers()
     #koikatsuCommons.setBoneManagerLayersFromRigifyLayers(metarig)
 
