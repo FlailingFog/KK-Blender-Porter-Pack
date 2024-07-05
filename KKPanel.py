@@ -26,8 +26,9 @@ class PlaceholderProperties(PropertyGroup):
     V421_export: BoolProperty(default=False)
 
     #this lets the plugin time various actions
+    total_timer : FloatProperty(default=0)
     timer : FloatProperty(default=0)
-
+    
     bake_mult: IntProperty(
         min=1, max = 6,
         default=1,

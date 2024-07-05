@@ -927,7 +927,7 @@ def main():
     """
         
     # bpy.ops.pose.rigify_layer_init()
-    # bpy.ops.armature.rigify_add_bone_groups()
+    bpy.ops.armature.rigify_add_color_sets()
     bpy.ops.armature.rigify_collection_select(index=2)
     bpy.ops.armature.rigify_collection_set_ui_row(index=2, row=1)
         
@@ -2038,6 +2038,26 @@ def main():
     bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(24), row=17) #move skirt detail
     metarig.data.collections_all['24'].rigify_ui_title_name = 'Skirt (Detail)'
     metarig.data.collections_all['27'].rigify_ui_title_name = 'Junk'
+
+    #set new checkbox for the toe lock
+    # metarig.pose.bones['Left leg'].rigify_parameters.extra_toe_roll  = True
+    # metarig.pose.bones['Right leg'].rigify_parameters.extra_toe_roll = True
+
+    #add missing color groups
+    bpy.context.object.data.collections_all["5"].rigify_color_set_name = "Tweak"
+    bpy.context.object.data.collections_all["6"].rigify_color_set_name = "Root"
+    bpy.context.object.data.collections_all["7"].rigify_color_set_name = "Special"
+    bpy.context.object.data.collections_all["8"].rigify_color_set_name = "Tweak"
+    bpy.context.object.data.collections_all["13"].rigify_color_set_name = "FK"
+    bpy.context.object.data.collections_all["14"].rigify_color_set_name = "Tweak"
+    bpy.context.object.data.collections_all["15"].rigify_color_set_name = "Extra"
+    bpy.context.object.data.collections_all["19"].rigify_color_set_name = "Tweak"
+    bpy.context.object.data.collections_all["20"].rigify_color_set_name = "IK"
+    bpy.context.object.data.collections_all["21"].rigify_color_set_name = "FK"
+    bpy.context.object.data.collections_all["22"].rigify_color_set_name = "Tweak"
+    bpy.context.object.data.collections_all["23"].rigify_color_set_name = "Extra"
+    bpy.context.object.data.collections_all["24"].rigify_color_set_name = "FK"
+    bpy.context.object.data.collections_all["None"].rigify_color_set_name = "FK"
 
     #bpy.ops.bone_layer_man.get_rigify_layers()
     #koikatsuCommons.setBoneManagerLayersFromRigifyLayers(metarig)

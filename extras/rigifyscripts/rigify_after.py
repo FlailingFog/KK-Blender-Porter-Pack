@@ -207,129 +207,77 @@ def main():
     #koikatsuCommons.setBoneManagerLayersFromRigifyLayers(generatedRig)
 
     #move some bones to the correct layer at the end because I don't feel like figuring out what went wrong
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'cf_j_tang_02', 3)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'cf_j_tang_03', 3)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'cf_j_tang_04', 3)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'cf_j_tang_05', 3)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'cf_j_tang_02.001', 3)
+    theme_dict = {
+        'purple':[1.000000, 0.266356, 0.955974],
+        'red':(0.8, 0, 0),
+        'yellow':(0.956863, 0.788235, 0.047059),
+        'blue':(0.005605, 0.104617, 0.947307),
+        'green':(0.026241, 0.693872, 0.004025),
+        'orange':(0.968628, 0.250980, 0.094118)
+    }
+    for bone in ['cf_j_tang_02', 'cf_j_tang_03', 'cf_j_tang_04', 'cf_j_tang_05', 'cf_j_tang_02.001']:
+        koikatsuCommons.assignSingleBoneLayer_except(generatedRig, bone, 3)
+        if generatedRig.data.bones.get(bone):
+            generatedRig.data.bones[bone].color.custom.normal = theme_dict['green']
+            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['green']
 
     #Torso detail
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'tweak_Neck', 8)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Upper Chest_fk', 8)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'tweak_Upper Chest', 8)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Chest_fk', 8)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'tweak_Chest', 8)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Spine_fk', 8)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'tweak_Spine', 8)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Hips_fk', 8)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'tweak_Hips', 8)
+    for bone in ['tweak_Neck', 'Upper Chest_fk', 'tweak_Upper Chest', 'Chest_fk', 'tweak_Upper Chest', 'Chest_fk','tweak_Chest','Spine_fk','tweak_Spine','Hips_fk','tweak_Hips']:
+        koikatsuCommons.assignSingleBoneLayer_except(generatedRig, bone, 8)
+        if generatedRig.data.bones.get(bone):
+            generatedRig.data.bones[bone].color.custom.normal = theme_dict['blue']
+            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['blue']
 
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Left wrist_fk', 10)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Left elbow_fk', 10)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Left arm_fk', 10)
+    for bone in ['Left wrist_fk', 'Left elbow_fk', 'Left arm_fk', 'Right arm_fk', 'Right elbow_fk', 'Right wrist_fk']:
+        koikatsuCommons.assignSingleBoneLayer_except(generatedRig, bone, 10 if 'Left' in bone else 13)
+        if generatedRig.data.bones.get(bone):
+            generatedRig.data.bones[bone].color.custom.normal = theme_dict['green']
+            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['green']
 
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Right arm_fk', 13)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Right elbow_fk', 13)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Right wrist_fk', 13)
+    for bone in ['Left arm_tweak', 'Left arm_tweak.001', 'Left arm_tweak.002', 'Left elbow_tweak', 'Left elbow_tweak.001', 'Left elbow_tweak.002', 'Left wrist_tweak',
+                 'Right arm_tweak', 'Right arm_tweak.001', 'Right arm_tweak.002', 'Right elbow_tweak', 'Right elbow_tweak.001', 'Right elbow_tweak.002', 'Right wrist_tweak']:
+        koikatsuCommons.assignSingleBoneLayer_except(generatedRig, bone, 11 if 'Left' in bone else 14)
+        if generatedRig.data.bones.get(bone):
+            generatedRig.data.bones[bone].color.custom.normal = theme_dict['blue']
+            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['blue']
 
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Left arm_tweak', 11)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Left arm_tweak.001', 11)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Left arm_tweak.002', 11)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Left elbow_tweak', 11)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Left elbow_tweak.001', 11)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Left elbow_tweak.002', 11)
+    for bone in ['Thumb0_L', 'Thumb1_L', 'Thumb2_L', 'Thumb0_L.001', 'IndexFinger1_L', 'IndexFinger2_L', 'IndexFinger3_L', 'IndexFinger1_L.001', 'MiddleFinger1_L', 'MiddleFinger2_L', 'MiddleFinger3_L', 'MiddleFinger1_L.001', 'RingFinger1_L', 'RingFinger2_L', 'RingFinger3_L', 'RingFinger1_L.001', 'LittleFinger1_L', 'LittleFinger2_L', 'LittleFinger3_L', 'LittleFinger1_L.001', 'Thumb0_R', 'Thumb1_R', 'Thumb2_R', 'Thumb0_R.001', 'IndexFinger1_R', 'IndexFinger2_R', 'IndexFinger3_R', 'IndexFinger1_R.001', 'MiddleFinger1_R', 'MiddleFinger2_R', 'MiddleFinger3_R', 'MiddleFinger1_R.001', 'RingFinger1_R', 'RingFinger2_R', 'RingFinger3_R', 'RingFinger1_R.001', 'LittleFinger1_R', 'LittleFinger2_R', 'LittleFinger3_R', 'LittleFinger1_R.001']:
+        koikatsuCommons.assignSingleBoneLayer_except(generatedRig, bone, 16)
+        if generatedRig.data.bones.get(bone):
+            generatedRig.data.bones[bone].color.custom.normal = theme_dict['green']
+            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['green']
 
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Right arm_tweak', 14)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Right arm_tweak.001', 14)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Right arm_tweak.002', 14)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Right elbow_tweak', 14)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Right elbow_tweak.001', 14)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Right elbow_tweak.002', 14)
+    for bone in ['Left leg_fk', 'Left knee_fk', 'Left ankle_fk', 'Left toe_fk', 'Right leg_fk', 'Right knee_fk', 'Right ankle_fk', 'Right toe_fk']:
+        koikatsuCommons.assignSingleBoneLayer_except(generatedRig, bone, 18 if 'Left' in bone else 21)
+        if generatedRig.data.bones.get(bone):
+            generatedRig.data.bones[bone].color.custom.normal = theme_dict['green']
+            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['green']
 
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Thumb0_L', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Thumb1_L', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Thumb2_L', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Thumb0_L.001', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'IndexFinger1_L', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'IndexFinger2_L', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'IndexFinger3_L', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'IndexFinger1_L.001', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'MiddleFinger1_L', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'MiddleFinger2_L', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'MiddleFinger3_L', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'MiddleFinger1_L.001', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'RingFinger1_L', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'RingFinger2_L', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'RingFinger3_L', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'RingFinger1_L.001', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'LittleFinger1_L', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'LittleFinger2_L', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'LittleFinger3_L', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'LittleFinger1_L.001', 16)
+    for bone in ['Left leg_tweak', 'Left leg_tweak.001', 'Left leg_tweak.002', 'Left knee_tweak', 'Left knee_tweak.001', 'Left knee_tweak.002', 'Left ankle_tweak', 'Right leg_tweak', 'Right leg_tweak.001', 'Right leg_tweak.002', 'Right knee_tweak', 'Right knee_tweak.001', 'Right knee_tweak.002', 'Right ankle_tweak']:
+        koikatsuCommons.assignSingleBoneLayer_except(generatedRig, bone, 19 if 'Left' in bone else 22)
+        if generatedRig.data.bones.get(bone):
+            generatedRig.data.bones[bone].color.custom.normal = theme_dict['blue']
+            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['blue']
 
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Thumb0_R', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Thumb1_R', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Thumb2_R', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Thumb0_R.001', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'IndexFinger1_R', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'IndexFinger2_R', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'IndexFinger3_R', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'IndexFinger1_R.001', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'MiddleFinger1_R', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'MiddleFinger2_R', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'MiddleFinger3_R', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'MiddleFinger1_R.001', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'RingFinger1_R', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'RingFinger2_R', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'RingFinger3_R', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'RingFinger1_R.001', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'LittleFinger1_R', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'LittleFinger2_R', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'LittleFinger3_R', 16)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'LittleFinger1_R.001', 16)
+    for bone in ['cf_j_sk_00_00_ik', 'cf_j_sk_01_00_ik', 'cf_j_sk_02_00_ik', 'cf_j_sk_03_00_ik', 'cf_j_sk_04_00_ik', 'cf_j_sk_05_00_ik', 'cf_j_sk_06_00_ik', 'cf_j_sk_07_00_ik', 'cf_j_sk_00_00_master', 'cf_j_sk_01_00_master', 'cf_j_sk_02_00_master', 'cf_j_sk_03_00_master', 'cf_j_sk_04_00_master', 'cf_j_sk_05_00_master', 'cf_j_sk_06_00_master', 'cf_j_sk_07_00_master']:
+        koikatsuCommons.assignSingleBoneLayer_except(generatedRig, bone, 23)
+        if generatedRig.data.bones.get(bone):
+            generatedRig.data.bones[bone].color.custom.normal = theme_dict['red']
+            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['red']
 
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Left leg_fk', 18)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Left knee_fk', 18)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Left ankle_fk', 18)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Left toe_fk', 18)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Right leg_fk', 21)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Right knee_fk', 21)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Right ankle_fk', 21)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Right toe_fk', 21)
+    bpy.context.object.pose.bones["root"].color.palette = 'CUSTOM'
+    generatedRig.data.bones['root'].color.custom.normal = theme_dict['yellow']
+    generatedRig.pose.bones['root'].color.custom.normal = theme_dict['yellow']
+    generatedRig.data.bones['root'].color.custom.select = (0.313989, 0.783538, 1.000000)
+    generatedRig.pose.bones['root'].color.custom.select = (0.313989, 0.783538, 1.000000)
+    generatedRig.data.bones['root'].color.custom.active = (0.552011, 1.000000, 1.000000)
+    generatedRig.pose.bones['root'].color.custom.active = (0.552011, 1.000000, 1.000000)
 
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Left leg_tweak', 19)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Left leg_tweak.001', 19)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Left leg_tweak.002', 19)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Left knee_tweak', 19)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Left knee_tweak.001', 19)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Left knee_tweak.002', 19)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Left ankle_tweak', 19)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Right leg_tweak', 22)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Right leg_tweak.001', 22)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Right leg_tweak.002', 22)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Right knee_tweak', 22)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Right knee_tweak.001', 22)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Right knee_tweak.002', 22)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'Right ankle_tweak', 22)
-
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'cf_j_sk_00_00_ik', 23)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'cf_j_sk_01_00_ik', 23)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'cf_j_sk_02_00_ik', 23)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'cf_j_sk_03_00_ik', 23)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'cf_j_sk_04_00_ik', 23)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'cf_j_sk_05_00_ik', 23)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'cf_j_sk_06_00_ik', 23)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'cf_j_sk_07_00_ik', 23)
-
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'cf_j_sk_00_00_master', 23)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'cf_j_sk_01_00_master', 23)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'cf_j_sk_02_00_master', 23)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'cf_j_sk_03_00_master', 23)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'cf_j_sk_04_00_master', 23)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'cf_j_sk_05_00_master', 23)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'cf_j_sk_06_00_master', 23)
-    koikatsuCommons.assignSingleBoneLayer_except(generatedRig, 'cf_j_sk_07_00_master', 23)
-
+    #set layer visibility
+    for layer in ['None']:
+        generatedRig.data.collections_all[str(layer)].is_visible = False
+    for layer in [9,12,17,20]:
+        generatedRig.data.collections_all[str(layer)].is_visible = True
 
 class rigify_after(bpy.types.Operator):
     bl_idname = "kkbp.rigafter"

@@ -155,6 +155,7 @@ def saturate(image, lut_image):
     return image
 
 if __name__ == '__main__':
+    #use datetime instead of time() because the latter doesn't work 
     timer = datetime.datetime.now().minute * 60 + datetime.datetime.now().second + datetime.datetime.now().microsecond / 1e6
 
     #Set the view transform or the files will not save correctly

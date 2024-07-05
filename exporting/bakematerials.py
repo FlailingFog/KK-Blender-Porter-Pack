@@ -115,47 +115,24 @@ def setup_geometry_nodes_and_fillerplane(camera):
     driver.expression = "((r_y)/(r_x)*(cOS)) if (((r_y)/(r_x)) < 1) else (cOS)"
 
     ###########################
-    #give the object a geometry node modifier
-    geonodes = object_to_bake.modifiers.new('Flattener', 'NODES')
-
     #import the premade flattener node to unwrap the mesh into the UV structure
     script_dir=Path(__file__).parent
     template_path=(script_dir / '../KK Shader V6.6.blend').resolve()
     filepath = str(template_path)
     innerpath = 'NodeTree'
-    node = 'Flatten to UV map'
+    geonodename = 'Geometry Nodes'
     bpy.ops.wm.append(
-            filepath=os.path.join(filepath, innerpath, node),
+            filepath=os.path.join(filepath, innerpath, geonodename),
             directory=os.path.join(filepath, innerpath),
-            filename=node
+            filename=geonodename
             )
 
-    #create the node group from scratch in 3.5.0
-    geonodename = 'Flat geo group'
-    bpy.data.node_groups.new(geonodename, type = 'GeometryNodeTree')
-    object_to_bake.modifiers['Flattener'].node_group = bpy.data.node_groups[geonodename]
-    nodes = bpy.data.node_groups[geonodename].nodes
-    links = bpy.data.node_groups[geonodename].links
-    #add input node
-    input = nodes.new('NodeGroupInput')
-    bpy.data.node_groups[geonodename].inputs.new(name= "Geometry input", type = 'NodeSocketGeometry')
-    bpy.data.node_groups[geonodename].inputs.new(name= "UVMap input", type = 'NodeSocketVector')
-    #add output node
-    output = nodes.new('NodeGroupOutput')
-    bpy.data.node_groups[geonodename].outputs.new(name= "Flat output", type = 'NodeSocketGeometry')
-    #add flattener group
-    nodes = bpy.data.node_groups[geonodename].nodes
-    group = nodes.new('GeometryNodeGroup')
-    group.node_tree = bpy.data.node_groups['Flatten to UV map']
-    #connect input to group
-    links = bpy.data.node_groups[geonodename].links
-    links.new(input.outputs['Geometry input'], group.inputs[0])
-    links.new(input.outputs['UVMap input'], group.inputs[1])
-    #connect group to output
-    links.new(group.outputs[0], output.inputs[0])
-    identifier = geonodes.node_group.inputs[1].identifier
-    geonodes[identifier+'_attribute_name'] = 'uv_main'
-    geonodes[identifier+'_use_attribute'] = True
+    #give the object a geometry node modifier
+    geonodes_mod = object_to_bake.modifiers.new('Flattener', 'NODES')
+    geonodes_mod.node_group = bpy.data.node_groups['Geometry Nodes']
+    identifier = [str(i) for i in geonodes_mod.keys()][0]
+    geonodes_mod[identifier+'_attribute_name'] = 'uv_main'
+    geonodes_mod[identifier+'_use_attribute'] = True
 
     #Make the originally selected object active again
     bpy.ops.object.select_all(action='DESELECT')
@@ -377,15 +354,17 @@ def cleanup():
     for block in bpy.data.cameras:
         if block.users == 0:
             bpy.data.cameras.remove(block)
-    for ob in [obj for obj in bpy.context.view_layer.objects if obj.type == 'MESH']:
-        #delete the geometry modifier
-        if ob.modifiers.get('Flattener'):
-            ob.modifiers.remove(ob.modifiers['Flattener'])
-            #delete the two scale drivers
-            ob.animation_data.drivers.remove(ob.animation_data.drivers[0])
-            ob.animation_data.drivers.remove(ob.animation_data.drivers[0])
-            ob.scale = (1,1,1)
-    bpy.data.node_groups.remove(bpy.data.node_groups['Flat geo group'])
+    for ob in [obj for obj in bpy.context.view_layer.objects]:
+        if ob: #getting a weird Nonetype error, so do it this way instead
+            if ob.type == 'MESH':
+                #delete the geometry modifier
+                if ob.modifiers.get('Flattener'):
+                    ob.modifiers.remove(ob.modifiers['Flattener'])
+                    #delete the two scale drivers
+                    ob.animation_data.drivers.remove(ob.animation_data.drivers[0])
+                    ob.animation_data.drivers.remove(ob.animation_data.drivers[0])
+                    ob.scale = (1,1,1)
+    bpy.data.node_groups.remove(bpy.data.node_groups['Geometry Nodes'])
     #disable alpha on the output
     bpy.context.scene.render.film_transparent = False
     bpy.context.scene.render.filter_size = 1.5
@@ -407,7 +386,9 @@ class bake_materials(bpy.types.Operator):
             last_step = time.time()
             c.toggle_console()
             c.kklog('Switching to EEVEE for material baking...')
-            bpy.context.scene.render.engine = 'BLENDER_EEVEE'
+            bpy.context.scene.render.engine = 'BLENDER_EEVEE_NEXT'
+            bpy.ops.object.mode_set(mode='OBJECT')
+
             #set viewport shading to solid for better performance
             my_areas = bpy.context.workspace.screens[0].areas
             my_shading = 'SOLID'  # 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'

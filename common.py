@@ -42,12 +42,16 @@ def get_json_file(filename:str):
         return json_data
 
 def initialize_timer():
+    bpy.context.scene.kkbp.total_timer = datetime.datetime.now().minute * 60 + datetime.datetime.now().second + datetime.datetime.now().microsecond / 1e6
+    bpy.context.scene.kkbp.timer = datetime.datetime.now().minute * 60 + datetime.datetime.now().second + datetime.datetime.now().microsecond / 1e6
+
+def reset_timer():
     bpy.context.scene.kkbp.timer = datetime.datetime.now().minute * 60 + datetime.datetime.now().second + datetime.datetime.now().microsecond / 1e6
 
 def print_timer(operation_name:str):
     '''Prints the time between now and the last operation that was timed'''
     kklog('{} operation took {} seconds'.format(operation_name, abs(round(((datetime.datetime.now().minute * 60 + datetime.datetime.now().second + datetime.datetime.now().microsecond / 1e6) - bpy.context.scene.kkbp.timer), 3))))
-    initialize_timer()
+    reset_timer()
 
 def handle_error(error_causer:bpy.types.Operator, error:Exception):
     kklog('Unknown python error occurred. \n          Make sure the default model imports correctly before troubleshooting on this model!\n\n\n', type = 'error')

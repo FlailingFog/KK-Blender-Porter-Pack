@@ -11,7 +11,7 @@ This file performs the following operations
 .   Invokes the other import operations based on what options were chosen on the panel
 '''
 
-import bpy, os, time, glob
+import bpy, os, time, glob, datetime
 from subprocess import Popen, PIPE
 
 from ..interface.dictionary_en import t
@@ -97,7 +97,7 @@ class kkbp_import(bpy.types.Operator):
             function()
         c.toggle_console()
         bpy.context.scene.kkbp.plugin_state = 'imported'
-        c.kklog('KKBP import finished')
+        c.kklog('KKBP import finished in {} minutes'.format(round(((datetime.datetime.now().minute * 60 + datetime.datetime.now().second + datetime.datetime.now().microsecond / 1e6) - bpy.context.scene.kkbp.total_timer) / 60, 2)))
         return {'FINISHED'}
         
     def invoke(self, context, event):
