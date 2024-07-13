@@ -285,40 +285,47 @@ class EXPORTING_PT_panel(bpy.types.Panel):
             splitfac = 0.5
             
             box = layout.box()
-            col = box.column(align=True)
-            row = col.row(align=True)
-            row.operator('kkbp.exportprep', text = t('prep'), icon = 'GROUP')
-            row.enabled = scene.plugin_state not in ['prepped']
-            row = col.row(align=True)
-            split = row.split(align=True, factor=splitfac)
-            split.prop(context.scene.kkbp, "simp_dropdown")
-            split.prop(context.scene.kkbp, "prep_dropdown")
-            row.enabled = scene.plugin_state not in ['prepped']
 
             col = box.column(align=True)
             row = col.row(align=True)
             row.operator('kkbp.bakematerials', text = t('bake'), icon='VIEW_CAMERA')
+            row.enabled = scene.plugin_state in ['imported', 'prepped']
             row = col.row(align=True)
             split = row.split(align=True, factor=0.33)
             split.prop(context.scene.kkbp, "bake_light_bool", toggle=True, text = t('bake_light'))
             split.prop(context.scene.kkbp, "bake_dark_bool", toggle=True, text = t('bake_dark'))
             split.prop(context.scene.kkbp, "bake_norm_bool", toggle=True, text = t('bake_norm'))
+            row.enabled = scene.plugin_state in ['imported', 'prepped']
             row = col.row(align=True)
             split = row.split(align=True, factor=splitfac)
             split.prop(context.scene.kkbp, 'old_bake_bool', toggle=True, text = t('old_bake'))
             split.prop(context.scene.kkbp, "bake_mult", text = t('bake_mult'))
+            row.enabled = scene.plugin_state in ['imported', 'prepped']
 
             col = box.column(align=True)
             row = col.row(align=True)
             row.operator('kkbp.applymaterials', text = t('apply_temp'), icon = 'FILE_REFRESH')
+            row.enabled = scene.plugin_state in ['imported', 'prepped']
             row = col.row(align=True)
             split = row.split(align = True, factor=splitfac)
             split.label(text=t('atlas'))
             split.prop(context.scene.kkbp, "atlas_dropdown")
-        
+            row.enabled = scene.plugin_state in ['imported', 'prepped']
+
+            col = box.column(align=True)
+            row = col.row(align=True)
+            row.operator('kkbp.exportprep', text = t('prep'), icon = 'GROUP')
+            row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown == 'A'
+            row = col.row(align=True)
+            split = row.split(align=True, factor=splitfac)
+            split.prop(context.scene.kkbp, "simp_dropdown")
+            split.prop(context.scene.kkbp, "prep_dropdown")
+            row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown == 'A'
+
             col = box.column(align=True)
             row = col.row(align=True)
             row.operator('kkbp.exportfbx', text = t('export_fbx'), icon = 'FILEBROWSER')
+            row.enabled = scene.plugin_state in ['imported', 'prepped']
 
 class EXTRAS_PT_panel(bpy.types.Panel):
     bl_label = 'KKBP Extras'

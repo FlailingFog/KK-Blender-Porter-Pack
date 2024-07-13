@@ -27,6 +27,7 @@
 import bpy
 
 from . import common as Common
+from ...common import kklog
 #from .register import register_wrap
 #from .translations import t
 
@@ -81,6 +82,7 @@ def merge_weights(armature, parenting_list):
         Common.set_active(mesh)
 
         for bone, parent in parenting_list.items():
+            kklog('Merging bone: {}'.format(bone))
             if not mesh.vertex_groups.get(bone):
                 continue
             if not mesh.vertex_groups.get(parent):

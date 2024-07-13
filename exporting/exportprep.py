@@ -20,7 +20,7 @@ def main(prep_type, simp_type):
             #print(object.name)
             move_this_one = object.name not in no_move_objects and 'Widget' not in object.name and object.hide_get()
             if move_this_one:
-                object.hide = False
+                object.hide_set(False)
                 object.select_set(True)
                 bpy.context.view_layer.objects.active=object
         except:

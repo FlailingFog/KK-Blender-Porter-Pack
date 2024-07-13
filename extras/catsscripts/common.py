@@ -215,10 +215,7 @@ def get_active():
 def select(obj, sel=True):
     if sel:
         hide(obj, False)
-    if version_2_79_or_older():
-        obj.select = sel
-    else:
-        obj.select_set(sel)
+    obj.select_set(sel)
 
 
 def is_selected(obj):
@@ -228,15 +225,9 @@ def is_selected(obj):
 
 
 def hide(obj, val=True):
-    if hasattr(obj, 'hide'):
-        obj.hide = val
-    if not version_2_79_or_older():
-        obj.hide_set(val)
-
+    obj.hide_set(val)
 
 def is_hidden(obj):
-    if version_2_79_or_older():
-        return obj.hide
     return obj.hide_get()
 
 
