@@ -463,7 +463,7 @@ class modify_material(bpy.types.Operator):
         
         self.set_uv_type('KK Body', 'NSFWpos', 'nippleuv', 'uv_nipple_and_shine')
         self.set_uv_type('KK Body', 'NSFWpos', 'underuv', 'uv_underhair')
-
+        
         #find the appropriate alpha mask
         alpha_mask = None
         if bpy.data.images.get(self.body['SMR materials']['o_body_a'][0] + '_AM.png'):
@@ -529,6 +529,20 @@ class modify_material(bpy.types.Operator):
         self.image_load('KK EyeL (hitomi)', 'Gentex', 'EyeHD', self.body['SMR materials']['cf_Ohitomi_L02'][0] + '_ot2.png')
         self.image_load('KK EyeL (hitomi)', 'Gentex', 'expression0', self.body['SMR materials']['cf_Ohitomi_L02'][0] + '_cf_t_expression_00_EXPR.png')
         self.image_load('KK EyeL (hitomi)', 'Gentex', 'expression1', self.body['SMR materials']['cf_Ohitomi_L02'][0] + '_cf_t_expression_01_EXPR.png')
+        
+        self.load_baked_material('KK Body')
+        self.load_baked_material('KK EyeR (hitomi)')
+        self.load_baked_material('KK EyeL (hitomi)')
+        self.load_baked_material('KK Eyewhites (sirome)')
+        self.load_baked_material('KK Eyebrows (mayuge)')
+        self.load_baked_material('KK Eyeline up')
+        self.load_baked_material('KK Eyeline down')
+        self.load_baked_material('KK Teeth (tooth)')
+        self.load_baked_material('KK Fangs (tooth.001)')
+        self.load_baked_material('KK Nose')
+        self.load_baked_material('KK Face')
+        self.load_baked_material('KK Eyeline Kage')
+
         c.print_timer('link_textures_for_body')
 
     def link_textures_for_hair(self):
@@ -560,6 +574,8 @@ class modify_material(bpy.types.Operator):
                 if hairMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairAlpha'].image == None and hairMat.material.node_tree.nodes['Gentex'].node_tree.nodes['hairMainTex'].image == None:
                     getOut = hairMat.material.node_tree.nodes['Gentex'].node_tree.nodes['Group Output'].inputs['Hair alpha'].links[0]
                     hairMat.material.node_tree.nodes['Gentex'].node_tree.links.remove(getOut)
+                
+                self.load_baked_material(hairMat.material.name)
                 
         c.print_timer('link_textures_for_hair')
 
@@ -654,6 +670,9 @@ class modify_material(bpy.types.Operator):
                         genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use colored maintex?'].default_value = 1
                         genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 1
                         genMat.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use Maintex?'].default_value = 1
+                    
+                    self.load_baked_material(genMat.material.name)
+                    
         c.print_timer('link_textures_for_clothes')
 
     def link_textures_for_tongue_tear_gag(self):
@@ -684,6 +703,13 @@ class modify_material(bpy.types.Operator):
             self.image_load('KK Tears', 'Gentex', 'Maintex', self.body['SMR materials']['cf_O_namida_L'][0] + '_ST_CT.png')
         c.print_timer('link_textures_for_tongue_tear_gag')
 
+    def load_baked_material(self, mat_name):
+        '''attempts to load the baked version of this material'''
+        if bpy.data.images.get(mat_name + ' light.png'):
+            c.kklog('This finalized material image was found and loaded: ' + mat_name + ' light.png')
+            bpy.data.materials[mat_name].node_tree.nodes['baked_file'].image = bpy.data.images.get(mat_name + ' light.png')
+            bpy.data.materials[mat_name].node_tree.nodes['baked_group'].inputs[3].default_value = 1
+        
     def import_and_setup_gfn(self):
         '''Sets up the Generated Face Normals (GFN) empty for smooth face normals'''
         #setup face normals

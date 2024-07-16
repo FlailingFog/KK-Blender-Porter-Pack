@@ -127,7 +127,7 @@ translation_dictionary = {
     'kkbp_import_tt'   : "Imports a Koikatsu model (.pmx format) and applies fixes to it",
     'mat_import_tt'     : "Finish separating objects, apply the textures and colors",
     'export_prep_tt'    : "Only available for the KKBP Armature. Check the dropdown for more info",
-    'bake_mats_tt'      : "Open the folder you want to bake the material templates to",
+    'bake_mats_tt'      : "Finalize baked materials. These will be stored in the original .pmx folder",
     'apply_mats_tt'     : "Open the folder that contains the baked materials. Use the menu to load the Light / Dark / Normal passes",
     'import_colors_tt'  : "Open the folder containing your model.pmx file to recalculate the dark colors",
 

@@ -249,7 +249,23 @@ class IMPORTING_PT_panel(bpy.types.Panel):
             split.prop(context.scene.kkbp, "use_single_outline", toggle=True, text = t('outline'))
             split.prop(context.scene.kkbp, "sfw_mode", toggle=True, text = t('sfw_mode'))
             row.enabled = scene.plugin_state not in ['imported', 'prepped']
-        
+            
+            col = box.column(align=True)
+            row = col.row(align=True)
+            row.operator('kkbp.bakematerials', text = t('bake'), icon='VIEW_CAMERA')
+            row.enabled = scene.plugin_state in ['imported', 'prepped']
+            row = col.row(align=True)
+            split = row.split(align=True, factor=0.33)
+            split.prop(context.scene.kkbp, "bake_light_bool", toggle=True, text = t('bake_light'))
+            split.prop(context.scene.kkbp, "bake_dark_bool", toggle=True, text = t('bake_dark'))
+            split.prop(context.scene.kkbp, "bake_norm_bool", toggle=True, text = t('bake_norm'))
+            row.enabled = scene.plugin_state in ['imported', 'prepped']
+            row = col.row(align=True)
+            split = row.split(align=True, factor=splitfac)
+            split.prop(context.scene.kkbp, 'old_bake_bool', toggle=True, text = t('old_bake'))
+            split.prop(context.scene.kkbp, "bake_mult", text = t('bake_mult'))
+            row.enabled = scene.plugin_state in ['imported', 'prepped']
+
         else:
             #the blender plugin was not found. check for it
             if not c.has_blender_dependency():
@@ -286,31 +302,15 @@ class EXPORTING_PT_panel(bpy.types.Panel):
             
             box = layout.box()
 
-            col = box.column(align=True)
-            row = col.row(align=True)
-            row.operator('kkbp.bakematerials', text = t('bake'), icon='VIEW_CAMERA')
-            row.enabled = scene.plugin_state in ['imported', 'prepped']
-            row = col.row(align=True)
-            split = row.split(align=True, factor=0.33)
-            split.prop(context.scene.kkbp, "bake_light_bool", toggle=True, text = t('bake_light'))
-            split.prop(context.scene.kkbp, "bake_dark_bool", toggle=True, text = t('bake_dark'))
-            split.prop(context.scene.kkbp, "bake_norm_bool", toggle=True, text = t('bake_norm'))
-            row.enabled = scene.plugin_state in ['imported', 'prepped']
-            row = col.row(align=True)
-            split = row.split(align=True, factor=splitfac)
-            split.prop(context.scene.kkbp, 'old_bake_bool', toggle=True, text = t('old_bake'))
-            split.prop(context.scene.kkbp, "bake_mult", text = t('bake_mult'))
-            row.enabled = scene.plugin_state in ['imported', 'prepped']
-
-            col = box.column(align=True)
-            row = col.row(align=True)
-            row.operator('kkbp.applymaterials', text = t('apply_temp'), icon = 'FILE_REFRESH')
-            row.enabled = scene.plugin_state in ['imported', 'prepped']
-            row = col.row(align=True)
-            split = row.split(align = True, factor=splitfac)
-            split.label(text=t('atlas'))
-            split.prop(context.scene.kkbp, "atlas_dropdown")
-            row.enabled = scene.plugin_state in ['imported', 'prepped']
+            # col = box.column(align=True)
+            # row = col.row(align=True)
+            # row.operator('kkbp.applymaterials', text = t('apply_temp'), icon = 'FILE_REFRESH')
+            # row.enabled = scene.plugin_state in ['imported', 'prepped']
+            # row = col.row(align=True)
+            # split = row.split(align = True, factor=splitfac)
+            # split.label(text=t('atlas'))
+            # split.prop(context.scene.kkbp, "atlas_dropdown")
+            # row.enabled = scene.plugin_state in ['imported', 'prepped']
 
             col = box.column(align=True)
             row = col.row(align=True)
@@ -375,12 +375,12 @@ class EXTRAS_PT_panel(bpy.types.Panel):
             split.label(text=t('map_library'))
             split.operator('kkbp.createmapassetlib', text = '', icon = 'WORLD')
 
-            box = layout.box()
-            col = box.column(align=True)
-            row = col.row(align=True)
-            split = row.split(align=True, factor=splitfac)
-            split.label(text=t('finalize_materials'))
-            split.operator('kkbp.finalizematerials', text = '', icon='SHADERFX')
+            # box = layout.box()
+            # col = box.column(align=True)
+            # row = col.row(align=True)
+            # split = row.split(align=True, factor=splitfac)
+            # split.label(text=t('finalize_materials'))
+            # split.operator('kkbp.finalizematerials', text = '', icon='SHADERFX')
 
             box = layout.box()
             col = box.column(align=True)

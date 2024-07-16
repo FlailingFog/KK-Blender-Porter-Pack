@@ -13,12 +13,8 @@ Notes:
 - fillerplane driver + shader code taken from https://blenderartists.org/t/scripts-create-camera-image-plane/580839
 '''
 
-import bpy, os, traceback, time
-from pathlib import Path
+import bpy, os, traceback, time, pathlib, numpy, mathutils, bmesh
 from .. import common as c
-from bpy.props import StringProperty, BoolProperty
-from bpy_extras.io_utils import ImportHelper
-from bpy.types import Operator
 
 from ..interface.dictionary_en import t
 
@@ -116,7 +112,7 @@ def setup_geometry_nodes_and_fillerplane(camera):
 
     ###########################
     #import the premade flattener node to unwrap the mesh into the UV structure
-    script_dir=Path(__file__).parent
+    script_dir=pathlib.Path(__file__).parent
     template_path=(script_dir / '../KK Shader V6.6.blend').resolve()
     filepath = str(template_path)
     innerpath = 'NodeTree'
@@ -151,7 +147,7 @@ def sanitizeMaterialName(text):
 
 def bake_pass(resolutionMultiplier, folderpath, bake_type):
     #get list of already baked files
-    fileList = Path(folderpath).glob('*.*')
+    fileList = pathlib.Path(folderpath).glob('*.*')
     files = [file for file in fileList if file.is_file()]
     #print(files)
     exportType = 'PNG'
@@ -185,13 +181,13 @@ def bake_pass(resolutionMultiplier, folderpath, bake_type):
 
         #Don't bake this material if the material already has the atlas nodes loaded in and the mix shader is set to 1 and the image already exists (user is re-baking a mat)
         if currentmaterial.node_tree.nodes.get('KK Mix'):
-            if currentmaterial.node_tree.nodes['KK Mix'].inputs[0].default_value > 0.5 and Path(folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + bake_type + '.png') in files:
+            if currentmaterial.node_tree.nodes['KK Mix'].inputs[0].default_value > 0.5 and pathlib.Path(folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + bake_type + '.png') in files:
                 continue
             else:
                 currentmaterial.node_tree.nodes['KK Mix'].inputs[0].default_value = 0
         
         #Don't bake this material if the material does not have the atlas nodes loaded in yet and the image already exists (baking was interrupted)
-        if not currentmaterial.node_tree.nodes.get('KK Mix') and Path(folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + bake_type + '.png') in files:
+        if not currentmaterial.node_tree.nodes.get('KK Mix') and pathlib.Path(folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + bake_type + '.png') in files:
             continue
 
         #Turn off the normals for the raw shading node group input if this isn't a normal pass
@@ -369,20 +365,281 @@ def cleanup():
     bpy.context.scene.render.film_transparent = False
     bpy.context.scene.render.filter_size = 1.5
 
+def replace_all_baked_materials():
+    #now all needed images are loaded into the file. Match each material to it's image textures
+    for mat in bpy.data.materials:
+        finalize_this_mat = 'KK ' in mat.name and 'Outline ' not in mat.name and ' Outline' not in mat.name
+        if finalize_this_mat:
+            if mat.node_tree.nodes.get('Image Texture'):
+                if ' light.png' in mat.node_tree.nodes['Image Texture'].image.name:
+                    light_image = mat.node_tree.nodes['Image Texture'].image.name
+                    dark_image  = mat.node_tree.nodes['Image Texture'].image.name.replace('light', 'dark')
+                    normal_image  = mat.node_tree.nodes['Image Texture'].image.name.replace('light', 'normal')
+                else:
+                    dark_image = mat.node_tree.nodes['Image Texture'].image.name
+                    light_image  = mat.node_tree.nodes['Image Texture'].image.name.replace('dark', 'light')
+                    normal_image  = mat.node_tree.nodes['Image Texture'].image.name.replace('dark', 'normal')
+                #mat_dict[mat.name] = [light_image, dark_image]
+
+                #rename material to -ORG, and replace it with a new material
+                mat.name += '-ORG'
+                try:
+                    simple = bpy.data.materials['KK Simple'].copy()
+                except:
+                    script_dir=pathlib.Path(__file__).parent
+                    template_path=(script_dir / '../KK Shader V6.6.blend').resolve()
+                    filepath = str(template_path)
+                    innerpath = 'Material'
+                    templateList = ['KK Simple']
+                    for template in templateList:
+                        bpy.ops.wm.append(
+                            filepath=os.path.join(filepath, innerpath, template),
+                            directory=os.path.join(filepath, innerpath),
+                            filename=template,
+                            set_fake=False
+                            )
+                    simple = bpy.data.materials['KK Simple'].copy()
+                simple.name = mat.name.replace('-ORG','')
+                new_node = simple.node_tree.nodes['Gentex'].node_tree.copy()
+                simple.node_tree.nodes['Gentex'].node_tree = new_node
+                new_node.name = simple.name
+                new_node.nodes['MapMain'].image = bpy.data.images[light_image]
+                if bpy.data.images.get(dark_image):
+                    new_node.nodes['Darktex'].image = bpy.data.images[dark_image]
+                if bpy.data.images.get(normal_image):
+                    new_node.nodes['MapNorm'].image = bpy.data.images[normal_image]
+                
+                #replace instances of ORG material with new finalized one
+                mat.use_fake_user = True
+                alpha_blend_mats = [
+                    'KK Nose',
+                    'KK Eyebrows (mayuge)',
+                    'KK Eyeline up',
+                    'KK Eyeline Kage',
+                    'KK Eyeline down',
+                    'KK Eyewhites (sirome)',
+                    'KK EyeL (hitomi)',
+                    'KK EyeR (hitomi)',
+                ]
+                for obj in bpy.data.objects:
+                    for mat_slot in obj.material_slots:
+                        if mat_slot.name.replace('-ORG','') == simple.name:
+                            mat_slot.material = simple
+                            if simple.name in alpha_blend_mats:
+                                mat_slot.material.blend_method = 'BLEND'
+
+def create_material_atlas():
+    '''Merges the finalized material png files into a single png file'''
+
+    def update_uvs(object_name, material_name, x, y, type = '+'):
+        object = bpy.data.objects[object_name]
+        c.switch(object, 'EDIT')
+        object.active_material_index = object.data.materials.find(material_name)
+        bpy.ops.object.material_slot_select()
+        me = object.data
+        bm = bmesh.from_edit_mesh(me)
+        uv_layer = bm.loops.layers.uv.verify()
+        # adjust uv coordinates
+        for face in bm.faces:
+            for loop in face.loops:
+                if loop.vert.select:
+                    loop_uv = loop[uv_layer]
+                    if type == '+':
+                        loop_uv.uv[0] += x
+                        loop_uv.uv[1] += y
+                    elif type == '*':
+                        loop_uv.uv[0] *= x
+                        loop_uv.uv[1] *= y
+                    elif type == '/':
+                        loop_uv.uv[0] /= x
+                        loop_uv.uv[1] /= y
+                    elif type == '-':
+                        loop_uv.uv[0] -= x
+                        loop_uv.uv[1] -= y
+        bmesh.update_edit_mesh(me)
+        c.switch(object, 'OBJECT')
+    
+    def get_max_min_uvs(object_name, material_name):
+        object = bpy.data.objects[object_name]
+        material = mat_slot.material
+        c.switch(object, 'EDIT')
+        bpy.context.object.active_material_index = object.data.materials.find(material_name)
+        bpy.ops.object.material_slot_select()
+        bm = bmesh.from_edit_mesh(object.data)
+        uv_layer = bm.loops.layers.uv.verify()
+        x_max_uv = 0
+        y_max_uv = 0
+        x_min_uv = 0
+        y_min_uv = 0
+        for face in bm.faces:
+            for loop in face.loops:
+                if loop.vert.select:
+                    loop_uv = loop[uv_layer]
+                    x_max_uv = loop_uv.uv[0] if x_max_uv < loop_uv.uv[0] else x_max_uv
+                    y_max_uv = loop_uv.uv[1] if y_max_uv < loop_uv.uv[1] else y_max_uv
+                    x_min_uv = loop_uv.uv[0] if x_min_uv > loop_uv.uv[0] else x_min_uv
+                    y_min_uv = loop_uv.uv[1] if y_min_uv > loop_uv.uv[1] else y_min_uv
+        c.switch(object, 'OBJECT')
+        return  x_max_uv, y_max_uv, x_min_uv, y_min_uv
+
+    #first correct the tongue uv locations
+    update_uvs('Body', 'KK Tongue', 0, 1, '+')
+
+    x_total_length = 0
+    y_max_length = 0
+    for object in bpy.data.objects:
+        for mat_slot in object.material_slots:
+            material = mat_slot.material
+            image = mat_slot.material.node_tree.nodes['baked_file'].image
+            if not image:
+                continue
+            #some uvs are absolutely fucked. The baked image will need to grow to expand to whatever the UV limits go to if they are higher than 1.
+            x_max_uv, y_max_uv, x_min_uv, y_min_uv = get_max_min_uvs(object.name, material.name)
+            #if any uvs are less than 0, shift everything to at least 0, 0
+            if x_min_uv < 0 or y_min_uv < 0:
+                print('fixing negative uv irregularities')
+                image = mat_slot.material.node_tree.nodes['baked_file'].image
+                update_uvs(object.name, material.name, x_min_uv, y_min_uv, '-')
+                #pad left and bottom
+                x_new_length = int(image.size[0] - x_min_uv * image.size[0])
+                y_new_length = int(image.size[1] - y_min_uv * image.size[1])
+                #make sure dimensions are divisble by 2
+                if x_new_length % 2:
+                    x_new_length +=1
+                if y_new_length % 2:
+                    y_new_length +=1
+                #get the pixels of the current image, then create the padding needed
+                new_image_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
+                x_current_dimension = image.size[0]
+                y_current_dimension = image.size[1]
+                vertical_padding = list(numpy.zeros((y_new_length - y_current_dimension) * x_current_dimension * 4))
+                vertical_padding = numpy.reshape(vertical_padding, (-1, x_current_dimension * 4))
+                new_image_pixels = numpy.vstack((vertical_padding, new_image_pixels)) #put padding before image to appear on the bottom
+                #create the horizontal padding needed
+                x_current_dimension = image.size[0]
+                y_current_dimension = y_new_length
+                horizontal_padding = list(numpy.zeros((y_current_dimension) * (x_new_length - x_current_dimension) * 4))
+                horizontal_padding = numpy.reshape(horizontal_padding, (-1, (x_new_length - x_current_dimension) * 4))
+                new_image_pixels = numpy.hstack((horizontal_padding, new_image_pixels)) #put padding before image to appear on the left
+                x_current_dimension = x_new_length
+                new_image = bpy.data.images.new(image.name.replace('.png', 'n.png'), x_current_dimension, y_current_dimension)
+                new_image.pixels = new_image_pixels.flatten()
+                mat_slot.material.node_tree.nodes['baked_file'].image = new_image
+            #update mesh and try looking at the positive uvs now
+            if x_max_uv > 1 or y_max_uv > 1:
+                print('fixing positive uv irregularities')
+                image = mat_slot.material.node_tree.nodes['baked_file'].image
+                update_uvs(object.name, material.name, x_max_uv, y_max_uv, '/')
+                #get the pixels of the current image, then create the padding needed
+                new_image_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
+                x_new_length = int(image.size[0] * x_max_uv)
+                y_new_length = int(image.size[1] * y_max_uv)
+                #make sure dimensions are divisble by 2
+                if x_new_length % 2:
+                    x_new_length +=1
+                if y_new_length % 2:
+                    y_new_length +=1
+                x_current_dimension = image.size[0]
+                y_current_dimension = image.size[1]
+                #create the vertical padding needed
+                vertical_padding = list(numpy.zeros((y_new_length - y_current_dimension) * x_current_dimension * 4))
+                vertical_padding = numpy.reshape(vertical_padding, (-1, x_current_dimension * 4))
+                new_image_pixels = numpy.vstack((new_image_pixels, vertical_padding))
+                #create the horizontal padding needed
+                x_current_dimension = image.size[0]
+                y_current_dimension = y_new_length
+                horizontal_padding = list(numpy.zeros((y_current_dimension) * (x_new_length - x_current_dimension) * 4))
+                horizontal_padding = numpy.reshape(horizontal_padding, (-1, (x_new_length - x_current_dimension) * 4))
+                new_image_pixels = numpy.hstack((new_image_pixels, horizontal_padding))
+                x_current_dimension = x_new_length
+                new_image = bpy.data.images.new(image.name.replace('.png', 'p.png'), x_current_dimension, y_current_dimension)
+                new_image.pixels = new_image_pixels.flatten()
+                mat_slot.material.node_tree.nodes['baked_file'].image = new_image
+            image = mat_slot.material.node_tree.nodes['baked_file'].image
+            #get the image length
+            x_length = image.size[0]
+            x_total_length += x_length
+            y_length = image.size[1]
+            y_max_length = y_length if y_length > y_max_length else y_max_length
+
+    #all the images need to be filled in with empty pixels before it is stitched in
+    for object in bpy.data.objects:
+        for mat_slot in object.material_slots:
+            material = mat_slot.material
+            image = mat_slot.material.node_tree.nodes['baked_file'].image
+            if not image:
+                continue
+            if image.size[1] < y_max_length:
+                print('extending image upwards ', image)
+                new_image_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
+                empty_pixels = list(numpy.zeros((y_max_length - image.size[1]) * image.size[0] * 4))
+                empty_pixels = numpy.reshape(empty_pixels, (-1, image.size[0] * 4))
+                temp = numpy.vstack((new_image_pixels, empty_pixels)) #put the empty pixels at the end of the stack so it appears on the top of the image
+                new_image = bpy.data.images.new(image.name.replace('.png', 'f.png'), image.size[0], y_max_length)
+                new_image.pixels = temp.flatten()
+                mat_slot.material.node_tree.nodes['baked_file'].image = new_image
+                #then scale down vertically the uvs that were modified by extending the image
+                division_factor = image.size[1] / y_max_length
+                update_uvs(object.name, material.name, 1, division_factor, '*')
+
+    #give each image an index before stacking them
+    indexed_images = {}
+    for object in bpy.data.objects:
+        for mat_slot in object.material_slots:
+            material = mat_slot.material
+            image = mat_slot.material.node_tree.nodes['baked_file'].image
+            if not image:
+                continue
+            indexed_images[image.name] = [object.name, material.name]
+
+    #take each image and stack them next to each other
+    for image_name in indexed_images:
+        image = bpy.data.images[image_name]
+        try:
+            reshaped_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
+            final_image = numpy.hstack((final_image, reshaped_pixels)) #stack the image to the right of the previous one
+        except Exception as really:
+            print(really)
+            final_image = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
+
+    #scale and translate all of the uvs based on the image's index and dimensions
+    for index, image_name in enumerate(indexed_images):
+        object_name = indexed_images[image_name][0]
+        material_name = indexed_images[image_name][1]
+        image = bpy.data.images[image_name]
+        reshaped_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
+        #scale the uvs to bring them to the atlas scale
+        x_length = image.size[0]
+        y_length = image.size[1]
+        x_scale = x_length / (reshaped_pixels.shape[1]/4)
+        y_scale = y_length / (reshaped_pixels.shape[0])
+        update_uvs(object_name, material_name, x_scale, y_scale)
+        #now that the uvs are in atlas scale, move them to the right if they need to
+        x_location = 0
+        index -= 1
+        while index >= 0:
+            #get the previous indexes image dimensions and add them to the total length
+            previous_image_name = list(indexed_images.keys())[index]
+            previouis_image = bpy.data.images[previous_image_name]
+            x_dimension = previouis_image.size[0]
+            x_location += (x_dimension / (final_image.shape[1]/4))
+            index -= 1
+        update_uvs(object_name, material_name, x_location, 0, '+')
+
+    atlas = bpy.data.images.new('Atlas', x_total_length, y_max_length)
+    atlas.pixels = final_image.flatten()
+
 class bake_materials(bpy.types.Operator):
     bl_idname = "kkbp.bakematerials"
     bl_label = "Store images here"
     bl_description = t('bake_mats_tt')
     bl_options = {'REGISTER', 'UNDO'}
-    
-    directory : StringProperty(maxlen=1024, default='', subtype='FILE_PATH', options={'HIDDEN'})
-    filter_glob : StringProperty(default='', options={'HIDDEN'})
-    data = None
-    mats_uv = None
-    structure = None
-    
+        
     def execute(self, context):
         try:
+            #just use the pmx folder for the baked files
+            scene = context.scene.kkbp
+            folderpath = os.path.join(context.scene.kkbp.import_dir, 'baked_files', '')
             last_step = time.time()
             c.toggle_console()
             c.kklog('Switching to EEVEE for material baking...')
@@ -405,9 +662,6 @@ class bake_materials(bpy.types.Operator):
                             links = mat.node_tree.links
                             links.new(mat.node_tree.nodes['Shader'].outputs[0], mat.node_tree.nodes['Rim'].inputs[0]) #connect color out to rim input
 
-            print(self.directory)
-            folderpath =  self.directory
-            scene = context.scene.kkbp
             resolutionMultiplier = scene.bake_mult
             for ob in [obj for obj in bpy.context.view_layer.objects if obj.type == 'MESH']:
                 camera = setup_camera()
@@ -430,9 +684,9 @@ class bake_materials(bpy.types.Operator):
                     ob.hide_viewport = False
                 cleanup()
             c.toggle_console()
-            #run the apply materials script right after baking
-            scene.import_dir = folderpath #use import dir as a temp directory holder
-            bpy.ops.kkbp.applymaterials('EXEC_DEFAULT')
+            replace_all_baked_materials()
+            create_material_atlas()
+
             c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             #reset viewport shading back to material preview
             my_areas = bpy.context.workspace.screens[0].areas
@@ -454,10 +708,6 @@ class bake_materials(bpy.types.Operator):
                         space.shading.type = my_shading 
             self.report({'ERROR'}, traceback.format_exc())
             return {"CANCELLED"}
-
-    def invoke(self, context, event):
-        context.window_manager.fileselect_add(self)
-        return {'RUNNING_MODAL'}
 
 if __name__ == "__main__":
     bpy.utils.register_class(bake_materials)

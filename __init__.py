@@ -1,6 +1,6 @@
 #The init file for the plugin
 bl_info = {
-    "name" : "KK Blender Porter",
+    "name" : "KKBP (Koikatsu Blender Porter)",
     "author" : "a blendlet and some blenderchads",
     "location" : "View 3D > Tool Shelf > KKBP and Image Editor > Tool Shelf > KKBP",
     "description" : "Scripts to automate cleanup of a Koikatsu export",
@@ -30,7 +30,6 @@ def reg_unreg(register_bool):
     from .importing.postoperations import post_operations
 
     from .exporting.bakematerials import bake_materials
-    from .exporting.applymaterials import apply_materials
     from .exporting.exportprep import export_prep
     from .exporting.exportfbx import export_fbx
 
@@ -45,7 +44,6 @@ def reg_unreg(register_bool):
     from .extras.updatebones import update_bones
     from .extras.imageconvert import image_convert
     from .extras.imageconvert import image_dark_convert
-    from .extras.finalizematerials import finalize_materials
     from .extras.rigifywrapper import rigify_convert
     from .extras.rigifyscripts.rigify_before import rigify_before
     from .extras.rigifyscripts.rigify_after import rigify_after
@@ -61,7 +59,6 @@ def reg_unreg(register_bool):
     )
 
     classes = (
-        apply_materials,
         bake_materials, 
         export_prep,
         export_fbx,
@@ -77,7 +74,6 @@ def reg_unreg(register_bool):
         export_separate_meshes,
         toggle_ik,
         update_bones,
-        finalize_materials,
         rigify_convert,
         rigify_before,
         rigify_after,
