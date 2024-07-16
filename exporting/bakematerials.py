@@ -508,6 +508,8 @@ def create_material_atlas():
                     x_new_length +=1
                 if y_new_length % 2:
                     y_new_length +=1
+                #also scale the uvs to the new length
+                update_uvs(object.name, material.name, image.size[0]/x_new_length, image.size[1]/y_new_length, '*')
                 #get the pixels of the current image, then create the padding needed
                 new_image_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
                 x_current_dimension = image.size[0]
@@ -519,7 +521,7 @@ def create_material_atlas():
                 x_current_dimension = image.size[0]
                 y_current_dimension = y_new_length
                 horizontal_padding = list(numpy.zeros((y_current_dimension) * (x_new_length - x_current_dimension) * 4))
-                horizontal_padding = numpy.reshape(horizontal_padding, (-1, (x_new_length - x_current_dimension) * 4))
+                horizontal_padding = numpy.reshape(horizontal_padding, (y_current_dimension, -1))
                 new_image_pixels = numpy.hstack((horizontal_padding, new_image_pixels)) #put padding before image to appear on the left
                 x_current_dimension = x_new_length
                 new_image = bpy.data.images.new(image.name.replace('.png', 'n.png'), x_current_dimension, y_current_dimension)
@@ -529,11 +531,11 @@ def create_material_atlas():
             if x_max_uv > 1 or y_max_uv > 1:
                 print('fixing positive uv irregularities')
                 image = mat_slot.material.node_tree.nodes['baked_file'].image
-                update_uvs(object.name, material.name, x_max_uv, y_max_uv, '/')
+                update_uvs(object.name, material.name, x_max_uv if x_max_uv > 1 else 1, y_max_uv if y_max_uv > 1 else 1, '/')
                 #get the pixels of the current image, then create the padding needed
                 new_image_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
-                x_new_length = int(image.size[0] * x_max_uv)
-                y_new_length = int(image.size[1] * y_max_uv)
+                x_new_length = int(image.size[0] * (x_max_uv if x_max_uv > 1 else 1))
+                y_new_length = int(image.size[1] * (y_max_uv if y_max_uv > 1 else 1))
                 #make sure dimensions are divisble by 2
                 if x_new_length % 2:
                     x_new_length +=1
@@ -548,10 +550,11 @@ def create_material_atlas():
                 #create the horizontal padding needed
                 x_current_dimension = image.size[0]
                 y_current_dimension = y_new_length
-                horizontal_padding = list(numpy.zeros((y_current_dimension) * (x_new_length - x_current_dimension) * 4))
-                horizontal_padding = numpy.reshape(horizontal_padding, (-1, (x_new_length - x_current_dimension) * 4))
-                new_image_pixels = numpy.hstack((new_image_pixels, horizontal_padding))
-                x_current_dimension = x_new_length
+                if x_new_length > x_current_dimension:
+                    horizontal_padding = list(numpy.zeros((y_current_dimension) * (x_new_length - x_current_dimension) * 4))
+                    horizontal_padding = numpy.reshape(horizontal_padding, (-1, (x_new_length - x_current_dimension) * 4))
+                    new_image_pixels = numpy.hstack((new_image_pixels, horizontal_padding))
+                    x_current_dimension = x_new_length
                 new_image = bpy.data.images.new(image.name.replace('.png', 'p.png'), x_current_dimension, y_current_dimension)
                 new_image.pixels = new_image_pixels.flatten()
                 mat_slot.material.node_tree.nodes['baked_file'].image = new_image
@@ -601,7 +604,7 @@ def create_material_atlas():
         except Exception as really:
             print(really)
             final_image = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
-
+    
     #scale and translate all of the uvs based on the image's index and dimensions
     for index, image_name in enumerate(indexed_images):
         object_name = indexed_images[image_name][0]
@@ -611,17 +614,17 @@ def create_material_atlas():
         #scale the uvs to bring them to the atlas scale
         x_length = image.size[0]
         y_length = image.size[1]
-        x_scale = x_length / (reshaped_pixels.shape[1]/4)
-        y_scale = y_length / (reshaped_pixels.shape[0])
-        update_uvs(object_name, material_name, x_scale, y_scale)
+        x_scale = x_length / (final_image.shape[1]/4)
+        y_scale = y_length / (final_image.shape[0])
+        update_uvs(object_name, material_name, x_scale, y_scale, '*')
         #now that the uvs are in atlas scale, move them to the right if they need to
         x_location = 0
         index -= 1
         while index >= 0:
             #get the previous indexes image dimensions and add them to the total length
             previous_image_name = list(indexed_images.keys())[index]
-            previouis_image = bpy.data.images[previous_image_name]
-            x_dimension = previouis_image.size[0]
+            previous_image = bpy.data.images[previous_image_name]
+            x_dimension = previous_image.size[0]
             x_location += (x_dimension / (final_image.shape[1]/4))
             index -= 1
         update_uvs(object_name, material_name, x_location, 0, '+')
