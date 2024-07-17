@@ -51,13 +51,6 @@ from . import common as Common
 #from mmd_tools_local.panels import util_tools as mmd_util_tools
 #from mmd_tools_local.panels import view_prop as mmd_view_prop
 
-# TODO:
-#  - Add check if hips bone really needs to be rotated
-#  - Reset Pivot
-#  - Manual bone selection button for root bones
-#  - Checkbox for eye blinking/moving
-#  - Translate progress bar
-
 
 def version_2_79_or_older():
     return bpy.app.version < (2, 80)
@@ -155,7 +148,6 @@ def get_top_parent(child):
 
 
 def unhide_all_unnecessary():
-    # TODO: Documentation? What does "unnecessary" mean?
     try:
         bpy.ops.object.hide_view_clear()
     except RuntimeError:
@@ -1806,7 +1798,7 @@ def update_material_list(self=None, context=None):
 
 
 def unify_materials():
-    textures = []  # TODO
+    textures = [] 
 
     for ob in get_objects():
         if ob.type == "MESH":

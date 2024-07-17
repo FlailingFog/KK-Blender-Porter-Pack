@@ -15,6 +15,7 @@ Notes:
 
 import bpy, os, traceback, time, pathlib, numpy, mathutils, bmesh
 from .. import common as c
+from . import rpack
 
 from ..interface.dictionary_en import t
 
@@ -140,6 +141,7 @@ def setup_geometry_nodes_and_fillerplane(camera):
 # and then puts a render of the image plane into the specified folder
 
 def sanitizeMaterialName(text):
+    '''Mat names need to be sanitized else you can't delete the files with windows explorer'''
     for ch in ['\\','`','*','<','>','.',':','?','|','/','\"']:
         if ch in text:
             text = text.replace(ch,'')
@@ -431,6 +433,8 @@ def replace_all_baked_materials():
 def create_material_atlas():
     '''Merges the finalized material png files into a single png file'''
 
+    # TODO make a copy of the object before messing with the UVs
+
     def update_uvs(object_name, material_name, x, y, type = '+'):
         object = bpy.data.objects[object_name]
         c.switch(object, 'EDIT')
@@ -527,7 +531,7 @@ def create_material_atlas():
                 new_image = bpy.data.images.new(image.name.replace('.png', 'n.png'), x_current_dimension, y_current_dimension)
                 new_image.pixels = new_image_pixels.flatten()
                 mat_slot.material.node_tree.nodes['baked_file'].image = new_image
-            #update mesh and try looking at the positive uvs now
+            #try looking at the positive uvs now
             if x_max_uv > 1 or y_max_uv > 1:
                 print('fixing positive uv irregularities')
                 image = mat_slot.material.node_tree.nodes['baked_file'].image
@@ -565,25 +569,25 @@ def create_material_atlas():
             y_length = image.size[1]
             y_max_length = y_length if y_length > y_max_length else y_max_length
 
-    #all the images need to be filled in with empty pixels before it is stitched in
-    for object in bpy.data.objects:
-        for mat_slot in object.material_slots:
-            material = mat_slot.material
-            image = mat_slot.material.node_tree.nodes['baked_file'].image
-            if not image:
-                continue
-            if image.size[1] < y_max_length:
-                print('extending image upwards ', image)
-                new_image_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
-                empty_pixels = list(numpy.zeros((y_max_length - image.size[1]) * image.size[0] * 4))
-                empty_pixels = numpy.reshape(empty_pixels, (-1, image.size[0] * 4))
-                temp = numpy.vstack((new_image_pixels, empty_pixels)) #put the empty pixels at the end of the stack so it appears on the top of the image
-                new_image = bpy.data.images.new(image.name.replace('.png', 'f.png'), image.size[0], y_max_length)
-                new_image.pixels = temp.flatten()
-                mat_slot.material.node_tree.nodes['baked_file'].image = new_image
-                #then scale down vertically the uvs that were modified by extending the image
-                division_factor = image.size[1] / y_max_length
-                update_uvs(object.name, material.name, 1, division_factor, '*')
+    # #all the images need to be filled in with empty pixels before it is stitched in
+    # for object in bpy.data.objects:
+    #     for mat_slot in object.material_slots:
+    #         material = mat_slot.material
+    #         image = mat_slot.material.node_tree.nodes['baked_file'].image
+    #         if not image:
+    #             continue
+    #         if image.size[1] < y_max_length:
+    #             print('extending image upwards ', image)
+    #             new_image_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
+    #             empty_pixels = list(numpy.zeros((y_max_length - image.size[1]) * image.size[0] * 4))
+    #             empty_pixels = numpy.reshape(empty_pixels, (-1, image.size[0] * 4))
+    #             temp = numpy.vstack((new_image_pixels, empty_pixels)) #put the empty pixels at the end of the stack so it appears on the top of the image
+    #             new_image = bpy.data.images.new(image.name.replace('.png', 'f.png'), image.size[0], y_max_length)
+    #             new_image.pixels = temp.flatten()
+    #             mat_slot.material.node_tree.nodes['baked_file'].image = new_image
+    #             #then scale down vertically the uvs that were modified by extending the image
+    #             division_factor = image.size[1] / y_max_length
+    #             update_uvs(object.name, material.name, 1, division_factor, '*')
 
     #give each image an index before stacking them
     indexed_images = {}
@@ -595,16 +599,46 @@ def create_material_atlas():
                 continue
             indexed_images[image.name] = [object.name, material.name]
 
-    #take each image and stack them next to each other
+    #use rectangle-packer to find the best locations for each image, then store it into the indexed dict
+    sizes = []
     for image_name in indexed_images:
         image = bpy.data.images[image_name]
-        try:
-            reshaped_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
-            final_image = numpy.hstack((final_image, reshaped_pixels)) #stack the image to the right of the previous one
-        except Exception as really:
-            print(really)
-            final_image = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
-    
+        sizes.append((image.size[0] * 4, image.size[1]))
+    positions = rpack.pack(sizes)
+    for index, image_name in enumerate(indexed_images):
+        print(image_name)
+        indexed_images[image_name].append(positions[index])
+
+    #create a new numpy array the size of the bounding box
+    bounding_box = rpack.bbox_size(sizes, positions)
+    print('sizes', sizes)
+    print('positions', positions)
+    print('bounding x', bounding_box[0])
+    print('bounding y', bounding_box[1])
+    atlas_array = numpy.zeros(bounding_box[0] * bounding_box[1] * 4)
+    atlas_array = numpy.reshape(atlas_array, (-1, bounding_box[0] * 4))
+    print('atlas x', atlas_array.shape[1])
+    print('atlas y', atlas_array.shape[0])
+
+    #insert each individual image into the final image at the correct coordinates
+    for index, image_name in enumerate(indexed_images):
+        image = bpy.data.images[image_name]
+        reshaped_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
+        print(image)
+        print('atlas x', atlas_array.shape[1])
+        print('atlas y',atlas_array.shape[0])
+        print('image x',reshaped_pixels.shape[1])
+        print('image y',reshaped_pixels.shape[0])
+        a1,a0=indexed_images[image_name][2]
+        print('atlas start y', a0)
+        print('atlas end y', a0+reshaped_pixels.shape[0])
+        print('atlas start x', a1)
+        print('atlas end x', a1+reshaped_pixels.shape[1])
+        atlas_array[a0:a0+reshaped_pixels.shape[0],a1:a1+reshaped_pixels.shape[1]] = reshaped_pixels
+
+    atlas = bpy.data.images.new('Atlas', bounding_box[0], bounding_box[1])
+    atlas.pixels = atlas_array.flatten()
+
     #scale and translate all of the uvs based on the image's index and dimensions
     for index, image_name in enumerate(indexed_images):
         object_name = indexed_images[image_name][0]
@@ -629,8 +663,7 @@ def create_material_atlas():
             index -= 1
         update_uvs(object_name, material_name, x_location, 0, '+')
 
-    atlas = bpy.data.images.new('Atlas', x_total_length, y_max_length)
-    atlas.pixels = final_image.flatten()
+    
 
 class bake_materials(bpy.types.Operator):
     bl_idname = "kkbp.bakematerials"
