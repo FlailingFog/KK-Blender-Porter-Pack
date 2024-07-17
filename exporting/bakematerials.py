@@ -433,7 +433,50 @@ def replace_all_baked_materials():
 def create_material_atlas():
     '''Merges the finalized material png files into a single png file'''
 
-    # TODO make a copy of the object before messing with the UVs
+    # https://blender.stackexchange.com/questions/127403/change-active-collection
+    #Recursivly transverse layer_collection for a particular name
+    def recurLayerCollection(layerColl, collName):
+        found = None
+        if (layerColl.name == collName):
+            return layerColl
+        for layer in layerColl.children:
+            found = recurLayerCollection(layer, collName)
+            if found:
+                return found
+    #Change the Active LayerCollection to 'My Collection'
+    layer_collection = bpy.context.view_layer.layer_collection
+    layerColl = recurLayerCollection(layer_collection, 'Collection')
+    bpy.context.view_layer.active_layer_collection = layerColl
+
+    # https://blender.stackexchange.com/questions/157828/how-to-duplicate-a-certain-collection-using-python
+    from collections import  defaultdict
+    def copy_objects(from_col, to_col, linked, dupe_lut):
+        for o in from_col.objects:
+            dupe = o.copy()
+            if not linked and o.data:
+                dupe.data = dupe.data.copy()
+            to_col.objects.link(dupe)
+            dupe_lut[o] = dupe
+    def copy(parent, collection, linked=False):
+        dupe_lut = defaultdict(lambda : None)
+        def _copy(parent, collection, linked=False):
+            cc = bpy.data.collections.new(collection.name)
+            copy_objects(collection, cc, linked, dupe_lut)
+            for c in collection.children:
+                _copy(cc, c, linked)
+            parent.children.link(cc)
+        _copy(parent, collection, linked)
+        print(dupe_lut)
+        for o, dupe in tuple(dupe_lut.items()):
+            parent = dupe_lut[o.parent]
+            if parent:
+                dupe.parent = parent
+    context = bpy.context
+    scene = context.scene
+    col = context.collection
+    print(col, scene.collection)
+    assert(col is not scene.collection)
+    copy(scene.collection, col)
 
     def update_uvs(object_name, material_name, x, y, type = '+'):
         object = bpy.data.objects[object_name]
@@ -487,7 +530,7 @@ def create_material_atlas():
         return  x_max_uv, y_max_uv, x_min_uv, y_min_uv
 
     #first correct the tongue uv locations
-    update_uvs('Body', 'KK Tongue', 0, 1, '+')
+    update_uvs('Body.001', 'KK Tongue', 0, 1, '+')
 
     x_total_length = 0
     y_max_length = 0
@@ -569,26 +612,6 @@ def create_material_atlas():
             y_length = image.size[1]
             y_max_length = y_length if y_length > y_max_length else y_max_length
 
-    # #all the images need to be filled in with empty pixels before it is stitched in
-    # for object in bpy.data.objects:
-    #     for mat_slot in object.material_slots:
-    #         material = mat_slot.material
-    #         image = mat_slot.material.node_tree.nodes['baked_file'].image
-    #         if not image:
-    #             continue
-    #         if image.size[1] < y_max_length:
-    #             print('extending image upwards ', image)
-    #             new_image_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
-    #             empty_pixels = list(numpy.zeros((y_max_length - image.size[1]) * image.size[0] * 4))
-    #             empty_pixels = numpy.reshape(empty_pixels, (-1, image.size[0] * 4))
-    #             temp = numpy.vstack((new_image_pixels, empty_pixels)) #put the empty pixels at the end of the stack so it appears on the top of the image
-    #             new_image = bpy.data.images.new(image.name.replace('.png', 'f.png'), image.size[0], y_max_length)
-    #             new_image.pixels = temp.flatten()
-    #             mat_slot.material.node_tree.nodes['baked_file'].image = new_image
-    #             #then scale down vertically the uvs that were modified by extending the image
-    #             division_factor = image.size[1] / y_max_length
-    #             update_uvs(object.name, material.name, 1, division_factor, '*')
-
     #give each image an index before stacking them
     indexed_images = {}
     for object in bpy.data.objects:
@@ -611,32 +634,32 @@ def create_material_atlas():
 
     #create a new numpy array the size of the bounding box
     bounding_box = rpack.bbox_size(sizes, positions)
-    print('sizes', sizes)
-    print('positions', positions)
-    print('bounding x', bounding_box[0])
-    print('bounding y', bounding_box[1])
-    atlas_array = numpy.zeros(bounding_box[0] * bounding_box[1] * 4)
-    atlas_array = numpy.reshape(atlas_array, (-1, bounding_box[0] * 4))
-    print('atlas x', atlas_array.shape[1])
-    print('atlas y', atlas_array.shape[0])
+    # print('sizes', sizes)
+    # print('positions', positions)
+    # print('bounding x', bounding_box[0])
+    # print('bounding y', bounding_box[1])
+    atlas_array = numpy.zeros(bounding_box[0] * bounding_box[1])
+    atlas_array = numpy.reshape(atlas_array, (-1, bounding_box[0]))
+    # print('atlas x', atlas_array.shape[1])
+    # print('atlas y', atlas_array.shape[0])
 
     #insert each individual image into the final image at the correct coordinates
     for index, image_name in enumerate(indexed_images):
         image = bpy.data.images[image_name]
         reshaped_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
         print(image)
-        print('atlas x', atlas_array.shape[1])
-        print('atlas y',atlas_array.shape[0])
-        print('image x',reshaped_pixels.shape[1])
-        print('image y',reshaped_pixels.shape[0])
+        # print('atlas x', atlas_array.shape[1])
+        # print('atlas y',atlas_array.shape[0])
+        # print('image x',reshaped_pixels.shape[1])
+        # print('image y',reshaped_pixels.shape[0])
         a1,a0=indexed_images[image_name][2]
-        print('atlas start y', a0)
-        print('atlas end y', a0+reshaped_pixels.shape[0])
-        print('atlas start x', a1)
-        print('atlas end x', a1+reshaped_pixels.shape[1])
+        # print('atlas start y', a0)
+        # print('atlas end y', a0+reshaped_pixels.shape[0])
+        # print('atlas start x', a1)
+        # print('atlas end x', a1+reshaped_pixels.shape[1])
         atlas_array[a0:a0+reshaped_pixels.shape[0],a1:a1+reshaped_pixels.shape[1]] = reshaped_pixels
 
-    atlas = bpy.data.images.new('Atlas', bounding_box[0], bounding_box[1])
+    atlas = bpy.data.images.new('Atlas', int(atlas_array.shape[1]/4), atlas_array.shape[0])
     atlas.pixels = atlas_array.flatten()
 
     #scale and translate all of the uvs based on the image's index and dimensions
@@ -644,26 +667,16 @@ def create_material_atlas():
         object_name = indexed_images[image_name][0]
         material_name = indexed_images[image_name][1]
         image = bpy.data.images[image_name]
-        reshaped_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
         #scale the uvs to bring them to the atlas scale
         x_length = image.size[0]
         y_length = image.size[1]
-        x_scale = x_length / (final_image.shape[1]/4)
-        y_scale = y_length / (final_image.shape[0])
+        x_scale = x_length / atlas.size[0]
+        y_scale = y_length / atlas.size[1]
         update_uvs(object_name, material_name, x_scale, y_scale, '*')
-        #now that the uvs are in atlas scale, move them to the right if they need to
-        x_location = 0
-        index -= 1
-        while index >= 0:
-            #get the previous indexes image dimensions and add them to the total length
-            previous_image_name = list(indexed_images.keys())[index]
-            previous_image = bpy.data.images[previous_image_name]
-            x_dimension = previous_image.size[0]
-            x_location += (x_dimension / (final_image.shape[1]/4))
-            index -= 1
-        update_uvs(object_name, material_name, x_location, 0, '+')
-
-    
+        #now that the uvs are in atlas scale, move them around if they need to
+        x_location = (indexed_images[image_name][2][0] / 4) / atlas.size[0]
+        y_location = indexed_images[image_name][2][1] / atlas.size[1]
+        update_uvs(object_name, material_name, x_location, y_location, '+')
 
 class bake_materials(bpy.types.Operator):
     bl_idname = "kkbp.bakematerials"
