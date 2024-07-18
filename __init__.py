@@ -55,7 +55,7 @@ def reg_unreg(register_bool):
         IMPORTING_PT_panel,
         EXPORTING_PT_panel,
         EXTRAS_PT_panel,
-        EDITOR_PT_panel
+        # EDITOR_PT_panel
     )
 
     classes = (
@@ -91,8 +91,8 @@ def reg_unreg(register_bool):
         IMPORTINGHEADER_PT_panel,
         IMPORTING_PT_panel,
         EXPORTING_PT_panel,
-        EXTRAS_PT_panel,
-        EDITOR_PT_panel)
+        EXTRAS_PT_panel)
+        # EDITOR_PT_panel)
 
     for cls in classes:
         register_class(cls) if register_bool else unregister_class(cls)

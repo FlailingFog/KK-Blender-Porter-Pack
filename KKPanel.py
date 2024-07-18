@@ -432,27 +432,27 @@ class EXTRAS_PT_panel(bpy.types.Panel):
             #     split.operator('kkbp.linkshapekeys', icon = icon)
 
 
-#The panel inside of the image editor
-class EDITOR_PT_panel(bpy.types.Panel):
-    bl_label = 'Convert Image'
-    bl_category = "KKBP"
-    bl_space_type = "IMAGE_EDITOR"
-    bl_region_type = "UI"
-    def draw(self,context):
-        scene = context.scene.kkbp
-        if scene.blender_path:
-            layout = self.layout
-            splitfac = 0.6
+# #The panel inside of the image editor
+# class EDITOR_PT_panel(bpy.types.Panel):
+#     bl_label = 'Convert Image'
+#     bl_category = "KKBP"
+#     bl_space_type = "IMAGE_EDITOR"
+#     bl_region_type = "UI"
+#     def draw(self,context):
+#         scene = context.scene.kkbp
+#         if scene.blender_path:
+#             layout = self.layout
+#             splitfac = 0.6
 
-            box = layout.box()
-            col = box.column(align=True)
-            row = col.row(align = True)
-            row.operator('kkbp.imageconvert', text = t('convert_image'), icon = 'IMAGE')
+#             box = layout.box()
+#             col = box.column(align=True)
+#             row = col.row(align = True)
+#             row.operator('kkbp.imageconvert', text = t('convert_image'), icon = 'IMAGE')
 
-            row = col.row(align=True)
-            row.prop(context.scene.kkbp, "image_dropdown")
-            row = col.row(align=True)
-            row.operator('kkbp.imagedarkconvert', text = 'Create KKBP dark version', icon = 'IMAGE')
+#             row = col.row(align=True)
+#             row.prop(context.scene.kkbp, "image_dropdown")
+#             row = col.row(align=True)
+#             row.operator('kkbp.imagedarkconvert', text = 'Create KKBP dark version', icon = 'IMAGE')
 
 def register():
     bpy.utils.register_class(PlaceholderProperties)
@@ -460,10 +460,10 @@ def register():
     bpy.utils.register_class(IMPORTING_PT_panel)
     bpy.utils.register_class(EXPORTING_PT_panel)
     bpy.utils.register_class(EXTRAS_PT_panel)
-    bpy.utils.register_class(EDITOR_PT_panel)
+    # bpy.utils.register_class(EDITOR_PT_panel)
 
 def unregister():
-    bpy.utils.unregister_class(EDITOR_PT_panel)
+    # bpy.utils.unregister_class(EDITOR_PT_panel)
     bpy.utils.unregister_class(EXTRAS_PT_panel)
     bpy.utils.unregister_class(EXPORTING_PT_panel)
     bpy.utils.unregister_class(IMPORTING_PT_panel)

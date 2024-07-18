@@ -372,15 +372,15 @@ def replace_all_baked_materials():
     for mat in bpy.data.materials:
         finalize_this_mat = 'KK ' in mat.name and 'Outline ' not in mat.name and ' Outline' not in mat.name
         if finalize_this_mat:
-            if mat.node_tree.nodes.get('Image Texture'):
-                if ' light.png' in mat.node_tree.nodes['Image Texture'].image.name:
-                    light_image = mat.node_tree.nodes['Image Texture'].image.name
-                    dark_image  = mat.node_tree.nodes['Image Texture'].image.name.replace('light', 'dark')
-                    normal_image  = mat.node_tree.nodes['Image Texture'].image.name.replace('light', 'normal')
+            if mat.node_tree.nodes.get('baked_file'):
+                if ' light.png' in mat.node_tree.nodes['baked_file'].image.name:
+                    light_image = mat.node_tree.nodes['baked_file'].image.name
+                    dark_image  = mat.node_tree.nodes['baked_file'].image.name.replace('light', 'dark')
+                    normal_image  = mat.node_tree.nodes['baked_file'].image.name.replace('light', 'normal')
                 else:
-                    dark_image = mat.node_tree.nodes['Image Texture'].image.name
-                    light_image  = mat.node_tree.nodes['Image Texture'].image.name.replace('dark', 'light')
-                    normal_image  = mat.node_tree.nodes['Image Texture'].image.name.replace('dark', 'normal')
+                    dark_image = mat.node_tree.nodes['baked_file'].image.name
+                    light_image  = mat.node_tree.nodes['baked_file'].image.name.replace('dark', 'light')
+                    normal_image  = mat.node_tree.nodes['baked_file'].image.name.replace('dark', 'normal')
                 #mat_dict[mat.name] = [light_image, dark_image]
 
                 #rename material to -ORG, and replace it with a new material
@@ -508,7 +508,6 @@ def create_material_atlas():
     
     def get_max_min_uvs(object_name, material_name):
         object = bpy.data.objects[object_name]
-        material = mat_slot.material
         c.switch(object, 'EDIT')
         bpy.context.object.active_material_index = object.data.materials.find(material_name)
         bpy.ops.object.material_slot_select()
@@ -529,15 +528,21 @@ def create_material_atlas():
         c.switch(object, 'OBJECT')
         return  x_max_uv, y_max_uv, x_min_uv, y_min_uv
 
-    #first correct the tongue uv locations
+    #first correct the tongue uv locations because easily fixable for every model
     update_uvs('Body.001', 'KK Tongue', 0, 1, '+')
 
-    x_total_length = 0
-    y_max_length = 0
-    for object in bpy.data.objects:
-        for mat_slot in object.material_slots:
+    for object in [o for o in bpy.data.objects if bpy.data.collections['Collection.001'] in o.users_collection]:
+        x_total_length = 0
+        y_max_length = 0
+        for mat_slot in [m for m in object.material_slots if ('KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name)]:
             material = mat_slot.material
-            image = mat_slot.material.node_tree.nodes['baked_file'].image
+            #TODO do something to create two atlases for the body
+            print(material)
+            if material.node_tree.nodes.get('baked_file'):
+                image = material.node_tree.nodes['baked_file'].image
+            else:
+                print('no baked1')
+                image = None
             if not image:
                 continue
             #some uvs are absolutely fucked. The baked image will need to grow to expand to whatever the UV limits go to if they are higher than 1.
@@ -612,75 +617,76 @@ def create_material_atlas():
             y_length = image.size[1]
             y_max_length = y_length if y_length > y_max_length else y_max_length
 
-    #give each image an index before stacking them
-    indexed_images = {}
-    for object in bpy.data.objects:
-        for mat_slot in object.material_slots:
+        #skip if this object had no images to atlas
+        if y_max_length == 0:
+            continue
+
+        #give each image an index before stacking them
+        indexed_images = {}
+        for mat_slot in [m for m in object.material_slots if ('KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name)]:
             material = mat_slot.material
-            image = mat_slot.material.node_tree.nodes['baked_file'].image
+            print(material)
+            if mat_slot.material.node_tree.nodes.get('baked_file'):
+                image = mat_slot.material.node_tree.nodes['baked_file'].image
+            else:
+                print('no baked2')
+                image = None
             if not image:
                 continue
             indexed_images[image.name] = [object.name, material.name]
 
-    #use rectangle-packer to find the best locations for each image, then store it into the indexed dict
-    sizes = []
-    for image_name in indexed_images:
-        image = bpy.data.images[image_name]
-        sizes.append((image.size[0] * 4, image.size[1]))
-    positions = rpack.pack(sizes)
-    for index, image_name in enumerate(indexed_images):
-        print(image_name)
-        indexed_images[image_name].append(positions[index])
+        #use rectangle-packer to find the best locations for each image, then store it into the indexed dict
+        sizes = []
+        for image_name in indexed_images:
+            image = bpy.data.images[image_name]
+            sizes.append((image.size[0] * 4, image.size[1]))
+        positions = rpack.pack(sizes)
+        for index, image_name in enumerate(indexed_images):
+            print(image_name)
+            indexed_images[image_name].append(positions[index])
 
-    #create a new numpy array the size of the bounding box
-    bounding_box = rpack.bbox_size(sizes, positions)
-    # print('sizes', sizes)
-    # print('positions', positions)
-    # print('bounding x', bounding_box[0])
-    # print('bounding y', bounding_box[1])
-    atlas_array = numpy.zeros(bounding_box[0] * bounding_box[1])
-    atlas_array = numpy.reshape(atlas_array, (-1, bounding_box[0]))
-    # print('atlas x', atlas_array.shape[1])
-    # print('atlas y', atlas_array.shape[0])
+        #create a new numpy array the size of the bounding box
+        bounding_box = rpack.bbox_size(sizes, positions)
+        atlas_array = numpy.zeros(bounding_box[0] * bounding_box[1])
+        atlas_array = numpy.reshape(atlas_array, (-1, bounding_box[0]))
 
-    #insert each individual image into the final image at the correct coordinates
-    for index, image_name in enumerate(indexed_images):
-        image = bpy.data.images[image_name]
-        reshaped_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
-        print(image)
-        # print('atlas x', atlas_array.shape[1])
-        # print('atlas y',atlas_array.shape[0])
-        # print('image x',reshaped_pixels.shape[1])
-        # print('image y',reshaped_pixels.shape[0])
-        a1,a0=indexed_images[image_name][2]
-        # print('atlas start y', a0)
-        # print('atlas end y', a0+reshaped_pixels.shape[0])
-        # print('atlas start x', a1)
-        # print('atlas end x', a1+reshaped_pixels.shape[1])
-        atlas_array[a0:a0+reshaped_pixels.shape[0],a1:a1+reshaped_pixels.shape[1]] = reshaped_pixels
+        #insert each individual image into the final image at the correct coordinates
+        for index, image_name in enumerate(indexed_images):
+            image = bpy.data.images[image_name]
+            reshaped_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
+            print(image)
+            a1,a0=indexed_images[image_name][2]
+            atlas_array[a0:a0+reshaped_pixels.shape[0],a1:a1+reshaped_pixels.shape[1]] = reshaped_pixels
 
-    atlas = bpy.data.images.new('Atlas', int(atlas_array.shape[1]/4), atlas_array.shape[0])
-    atlas.pixels = atlas_array.flatten()
+        atlas = bpy.data.images.new('{} Atlas'.format(object.name), int(atlas_array.shape[1]/4), atlas_array.shape[0])
+        atlas.pixels = atlas_array.flatten()
 
-    #scale and translate all of the uvs based on the image's index and dimensions
-    for index, image_name in enumerate(indexed_images):
-        object_name = indexed_images[image_name][0]
-        material_name = indexed_images[image_name][1]
-        image = bpy.data.images[image_name]
-        #scale the uvs to bring them to the atlas scale
-        x_length = image.size[0]
-        y_length = image.size[1]
-        x_scale = x_length / atlas.size[0]
-        y_scale = y_length / atlas.size[1]
-        update_uvs(object_name, material_name, x_scale, y_scale, '*')
-        #now that the uvs are in atlas scale, move them around if they need to
-        x_location = (indexed_images[image_name][2][0] / 4) / atlas.size[0]
-        y_location = indexed_images[image_name][2][1] / atlas.size[1]
-        update_uvs(object_name, material_name, x_location, y_location, '+')
+        #scale and translate all of the uvs based on the image's index and dimensions
+        for index, image_name in enumerate(indexed_images):
+            object_name = indexed_images[image_name][0]
+            material_name = indexed_images[image_name][1]
+            image = bpy.data.images[image_name]
+            #scale the uvs to bring them to the atlas scale
+            x_length = image.size[0]
+            y_length = image.size[1]
+            x_scale = x_length / atlas.size[0]
+            y_scale = y_length / atlas.size[1]
+            update_uvs(object_name, material_name, x_scale, y_scale, '*')
+            #now that the uvs are in atlas scale, move them around if they need to
+            x_location = (indexed_images[image_name][2][0] / 4) / atlas.size[0]
+            y_location = indexed_images[image_name][2][1] / atlas.size[1]
+            update_uvs(object_name, material_name, x_location, y_location, '+')
+        
+    #rename the new collection and hide original
+    bpy.data.collections['Collection.001'].name = 'Model with atlas'
+    layer_collection = bpy.context.view_layer.layer_collection
+    layerColl = recurLayerCollection(layer_collection, 'Scene Collection')
+    bpy.context.view_layer.active_layer_collection = layerColl
+    bpy.context.scene.view_layers[0].active_layer_collection.children[0].exclude = True
 
 class bake_materials(bpy.types.Operator):
     bl_idname = "kkbp.bakematerials"
-    bl_label = "Store images here"
+    bl_label = "Bake and generate atlased model"
     bl_description = t('bake_mats_tt')
     bl_options = {'REGISTER', 'UNDO'}
         
@@ -732,9 +738,9 @@ class bake_materials(bpy.types.Operator):
                     obj.hide_render = False
                     ob.hide_viewport = False
                 cleanup()
-            c.toggle_console()
-            replace_all_baked_materials()
+            # replace_all_baked_materials()
             create_material_atlas()
+            c.toggle_console()
 
             c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             #reset viewport shading back to material preview
