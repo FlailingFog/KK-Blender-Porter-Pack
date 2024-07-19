@@ -22,7 +22,7 @@ class KKBPPreferences(bpy.types.AddonPreferences):
 
     fix_seams : BoolProperty(
     description=t('seams_tt'),
-    default = True)
+    default = False)
     
     use_single_outline : BoolProperty(
     description= t('outline_tt'),

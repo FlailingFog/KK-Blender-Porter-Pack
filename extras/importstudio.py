@@ -298,7 +298,7 @@ def import_studio_objects(directory):
                             darktex = modify_material.create_darktex(bpy.data.images[image.name], [.764, .880, 1]) #create the darktex now and load it in later
                             bpy.context.scene.kkbp.import_dir = ''
 
-                            image_load('Gentex', 'Darktex', darktex.name)
+                            image_load('Gentex', 'dark', darktex.name)
                             material_slot.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use dark maintex?'].default_value = 1
                             material_slot.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 1
                             

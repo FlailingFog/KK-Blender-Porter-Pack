@@ -107,14 +107,14 @@ def better_fbx_map_import(directory):
                         image.pixels = new_pixels
                     
                     #then load it in
-                    new_node.nodes['MapMain'].image = main_image
-                    new_node.nodes['Darktex'].image = dark_image
+                    new_node.nodes['light'].image = main_image
+                    new_node.nodes['dark'].image = dark_image
                 
                 norm_image_link = [node for node in obj.material_slots[0].material.node_tree.nodes if node.type == 'BSDF_PRINCIPLED'][0].inputs[22]
 
                 if norm_image_link.is_linked:
                     norm_image = norm_image_link.links[0].from_node.inputs[2].links[0].from_node.image
-                    new_node.nodes['MapNorm'].image == norm_image
+                    new_node.nodes['norm'].image == norm_image
                 obj.material_slots[0].material = template
 
 def main(folder):
