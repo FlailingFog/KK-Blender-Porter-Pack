@@ -367,68 +367,81 @@ def cleanup():
     bpy.context.scene.render.film_transparent = False
     bpy.context.scene.render.filter_size = 1.5
 
-def replace_all_baked_materials():
+def replace_all_baked_materials(folderpath):
+
+    #load all baked images into blender
+    fileList = pathlib.Path(folderpath).glob('*.*')
+    files = [file for file in fileList if file.is_file()]
+
+    for bake_type in ['light', 'dark']:
+        for mat in [m for m in bpy.data.materials if 'KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name]:
+            image_path = pathlib.Path(folderpath + sanitizeMaterialName(mat.name) + ' ' + bake_type + '.png')
+            if image_path in files:
+                bpy.data.images.load(filepath=str(image_path))
+                bpy.data.images[sanitizeMaterialName(mat.name) + ' ' + bake_type + '.png'].pack()
+                
     #now all needed images are loaded into the file. Match each material to it's image textures
     for mat in bpy.data.materials:
         finalize_this_mat = 'KK ' in mat.name and 'Outline ' not in mat.name and ' Outline' not in mat.name
         if finalize_this_mat:
+            print('Finalizing {}'.format(mat))
             if mat.node_tree.nodes.get('baked_file'):
-                if ' light.png' in mat.node_tree.nodes['baked_file'].image.name:
-                    light_image = mat.node_tree.nodes['baked_file'].image.name
-                    dark_image  = mat.node_tree.nodes['baked_file'].image.name.replace('light', 'dark')
-                    normal_image  = mat.node_tree.nodes['baked_file'].image.name.replace('light', 'normal')
-                else:
-                    dark_image = mat.node_tree.nodes['baked_file'].image.name
-                    light_image  = mat.node_tree.nodes['baked_file'].image.name.replace('dark', 'light')
-                    normal_image  = mat.node_tree.nodes['baked_file'].image.name.replace('dark', 'normal')
-                #mat_dict[mat.name] = [light_image, dark_image]
+                if mat.node_tree.nodes['baked_file'].image:
+                    if ' light.png' in mat.node_tree.nodes['baked_file'].image.name:
+                        light_image = mat.node_tree.nodes['baked_file'].image.name
+                        dark_image  = mat.node_tree.nodes['baked_file'].image.name.replace('light', 'dark')
+                        normal_image  = mat.node_tree.nodes['baked_file'].image.name.replace('light', 'normal')
+                    else:
+                        dark_image = mat.node_tree.nodes['baked_file'].image.name
+                        light_image  = mat.node_tree.nodes['baked_file'].image.name.replace('dark', 'light')
+                        normal_image  = mat.node_tree.nodes['baked_file'].image.name.replace('dark', 'normal')
+                    #mat_dict[mat.name] = [light_image, dark_image]
 
-                #rename material to -ORG, and replace it with a new material
-                mat.name += '-ORG'
-                try:
-                    simple = bpy.data.materials['KK Simple'].copy()
-                except:
-                    script_dir=pathlib.Path(__file__).parent
-                    template_path=(script_dir / '../KK Shader V6.6.blend').resolve()
-                    filepath = str(template_path)
-                    innerpath = 'Material'
-                    templateList = ['KK Simple']
-                    for template in templateList:
-                        bpy.ops.wm.append(
-                            filepath=os.path.join(filepath, innerpath, template),
-                            directory=os.path.join(filepath, innerpath),
-                            filename=template,
-                            set_fake=False
-                            )
-                    simple = bpy.data.materials['KK Simple'].copy()
-                simple.name = mat.name.replace('-ORG','')
-                new_node = simple.node_tree.nodes['Gentex'].node_tree.copy()
-                simple.node_tree.nodes['Gentex'].node_tree = new_node
-                new_node.name = simple.name
-                new_node.nodes['MapMain'].image = bpy.data.images[light_image]
-                if bpy.data.images.get(dark_image):
-                    new_node.nodes['Darktex'].image = bpy.data.images[dark_image]
-                if bpy.data.images.get(normal_image):
-                    new_node.nodes['MapNorm'].image = bpy.data.images[normal_image]
-                
-                #replace instances of ORG material with new finalized one
-                mat.use_fake_user = True
-                alpha_blend_mats = [
-                    'KK Nose',
-                    'KK Eyebrows (mayuge)',
-                    'KK Eyeline up',
-                    'KK Eyeline Kage',
-                    'KK Eyeline down',
-                    'KK Eyewhites (sirome)',
-                    'KK EyeL (hitomi)',
-                    'KK EyeR (hitomi)',
-                ]
-                for obj in bpy.data.objects:
-                    for mat_slot in obj.material_slots:
-                        if mat_slot.name.replace('-ORG','') == simple.name:
-                            mat_slot.material = simple
-                            if simple.name in alpha_blend_mats:
-                                mat_slot.material.blend_method = 'BLEND'
+                    #rename material to -ORG, and replace it with a new material
+                    mat.name += '-ORG'
+                    try:
+                        simple = bpy.data.materials['KK Simple'].copy()
+                    except:
+                        script_dir=pathlib.Path(__file__).parent
+                        template_path=(script_dir / '../KK Shader V6.6.blend').resolve()
+                        filepath = str(template_path)
+                        innerpath = 'Material'
+                        templateList = ['KK Simple']
+                        for template in templateList:
+                            bpy.ops.wm.append(
+                                filepath=os.path.join(filepath, innerpath, template),
+                                directory=os.path.join(filepath, innerpath),
+                                filename=template,
+                                set_fake=False
+                                )
+                        simple = bpy.data.materials['KK Simple'].copy()
+                    simple.name = mat.name.replace('-ORG','')
+                    new_node = simple.node_tree.nodes['Gentex'].node_tree.copy()
+                    simple.node_tree.nodes['Gentex'].node_tree = new_node
+                    new_node.name = simple.name
+                    new_node.nodes['MapMain'].image = bpy.data.images[light_image]
+                    if bpy.data.images.get(dark_image):
+                        new_node.nodes['Darktex'].image = bpy.data.images[dark_image]
+                    if bpy.data.images.get(normal_image):
+                        new_node.nodes['MapNorm'].image = bpy.data.images[normal_image]
+                    #replace instances of ORG material with new finalized one
+                    mat.use_fake_user = True
+                    alpha_blend_mats = [
+                        'KK Nose',
+                        'KK Eyebrows (mayuge)',
+                        'KK Eyeline up',
+                        'KK Eyeline Kage',
+                        'KK Eyeline down',
+                        'KK Eyewhites (sirome)',
+                        'KK EyeL (hitomi)',
+                        'KK EyeR (hitomi)',
+                    ]
+                    for obj in bpy.data.objects:
+                        for mat_slot in obj.material_slots:
+                            if mat_slot.name.replace('-ORG','') == simple.name:
+                                mat_slot.material = simple
+                                if simple.name in alpha_blend_mats:
+                                    mat_slot.material.blend_method = 'BLEND'
 
 def create_material_atlas():
     '''Merges the finalized material png files into a single png file'''
@@ -676,7 +689,22 @@ def create_material_atlas():
             x_location = (indexed_images[image_name][2][0] / 4) / atlas.size[0]
             y_location = indexed_images[image_name][2][1] / atlas.size[1]
             update_uvs(object_name, material_name, x_location, y_location, '+')
-        
+
+        #replace all images with the atlas
+        indexed_images = {}
+        for mat_slot in [m for m in object.material_slots if ('KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name)]:
+            material = mat_slot.material
+            print(material)
+            if mat_slot.material.node_tree.nodes.get('baked_file'):
+                image = mat_slot.material.node_tree.nodes['baked_file'].image
+            else:
+                print('no baked2')
+                image = None
+            if not image:
+                continue
+            else:
+                mat_slot.material.node_tree.nodes['baked_file'].image = bpy.data.images['{} Atlas'.format(object.name)]
+
     #rename the new collection and hide original
     bpy.data.collections['Collection.001'].name = 'Model with atlas'
     layer_collection = bpy.context.view_layer.layer_collection
@@ -738,8 +766,8 @@ class bake_materials(bpy.types.Operator):
                     obj.hide_render = False
                     ob.hide_viewport = False
                 cleanup()
-            # replace_all_baked_materials()
-            create_material_atlas()
+            replace_all_baked_materials(folderpath)
+            # create_material_atlas()
             c.toggle_console()
 
             c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
