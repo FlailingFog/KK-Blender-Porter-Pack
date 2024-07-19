@@ -13,9 +13,8 @@ Notes:
 - fillerplane driver + shader code taken from https://blenderartists.org/t/scripts-create-camera-image-plane/580839
 '''
 
-import bpy, os, traceback, time, pathlib, numpy, mathutils, bmesh
+import bpy, os, traceback, time, pathlib, numpy, mathutils, bmesh, rpack
 from .. import common as c
-from . import rpack
 
 from ..interface.dictionary_en import t
 
@@ -177,8 +176,8 @@ def bake_pass(resolutionMultiplier, folderpath, bake_type):
 
         #print(currentmaterial)
 
-        #Don't bake this material if it's an outline material
-        if 'Outline ' in currentmaterial.name or 'KK Outline' in currentmaterial.name or 'KK Body Outline' in currentmaterial.name:
+        #Don't bake this material if it's an outline material or atlas material
+        if 'Outline ' in currentmaterial.name or 'KK Outline' in currentmaterial.name or 'KK Body Outline' in currentmaterial.name or ' Atlas' in currentmaterial.name:
             continue
 
         #Don't bake this material if the material already has the atlas nodes loaded in and the mix shader is set to 1 and the image already exists (user is re-baking a mat)
@@ -374,7 +373,7 @@ def replace_all_baked_materials(folderpath):
     files = [file for file in fileList if file.is_file()]
 
     for bake_type in ['light', 'dark', 'norm']:
-        for mat in [m for m in bpy.data.materials if 'KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name]:
+        for mat in [m for m in bpy.data.materials if 'KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name and ' Atlas' not in m.name]:
             image_path = pathlib.Path(folderpath + sanitizeMaterialName(mat.name) + ' ' + bake_type + '.png')
             if image_path in files:
                 bpy.data.images.load(filepath=str(image_path))
@@ -382,7 +381,7 @@ def replace_all_baked_materials(folderpath):
                 
     #now all needed images are loaded into the file. Match each material to it's image textures
     for mat in bpy.data.materials:
-        finalize_this_mat = 'KK ' in mat.name and 'Outline ' not in mat.name and ' Outline' not in mat.name
+        finalize_this_mat = 'KK ' in mat.name and 'Outline ' not in mat.name and ' Outline' not in mat.name and ' Atlas' not in mat.name
         if finalize_this_mat:
             # print('Finalizing {}'.format(mat))
             if mat.node_tree.nodes.get('baked_file'):
@@ -443,7 +442,7 @@ def replace_all_baked_materials(folderpath):
                                 if simple.name in alpha_blend_mats:
                                     mat_slot.material.blend_method = 'BLEND'
 
-def create_material_atlas():
+def create_material_atlas(folderpath):
     '''Merges all the finalized material png files into a single atlas file, copies the current model and applies the atlas to the copy'''
 
     # https://blender.stackexchange.com/questions/127403/change-active-collection
@@ -471,7 +470,6 @@ def create_material_atlas():
                 for bake_type in ['light', 'dark', 'norm']:
                     simplified_mat.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image = bpy.data.images.get(simplified_name + ' ' + bake_type + '.png')
 
-    #TODO delete collection and materials if already exists and recreate fresh each time
     if bpy.data.collections.get('Model with atlas'):
         print('deleting previous collection "Model with atlas" and regenerating atlas model...')
         def del_collection(coll):
@@ -574,12 +572,13 @@ def create_material_atlas():
     #first correct the tongue uv locations because easily fixable for every model
     update_uvs('Body.001', 'KK Tongue', 0, 1, '+')
 
+    #TODO fix eyewhite R uvs not moving
+
     for object in [o for o in bpy.data.objects if (bpy.data.collections['Collection.001'] in o.users_collection and o.type == 'MESH')]:
         x_total_length = 0
         y_max_length = 0
         for mat_slot in [m for m in object.material_slots if ('KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name)]:
             material = mat_slot.material
-            #TODO do something to create two atlases for the body
             
             print('')
             print(material)
@@ -750,8 +749,9 @@ def create_material_atlas():
 
             atlas = bpy.data.images.new('{} Atlas {}'.format(object.name, bake_type), int(atlas_array.shape[1]/4), atlas_array.shape[0])
             atlas.pixels = atlas_array.flatten()
+            atlas.save_render(os.path.join(folderpath.replace('baked_files', 'atlas_files'), atlas.name.replace('.001', '') + '.png'))
             
-            #replace all images with the atlas
+            #replace all images with the atlas in a new atlas material
             for mat_slot in [m for m in object.material_slots if ('KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name)]:
                 material = mat_slot.material
                 # print(material)
@@ -763,7 +763,16 @@ def create_material_atlas():
                 if not image:
                     continue
                 else:
-                    mat_slot.material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image = bpy.data.images['{} Atlas {}'.format(object.name, bake_type)]
+                    if not bpy.data.materials.get('{} Atlas'.format(material.name)):
+                        atlas_material = material.copy()
+                        atlas_material.name = '{} Atlas'.format(material.name)
+                        new_group = atlas_material.node_tree.nodes['Gentex'].node_tree.copy()
+                        new_group.name = '{} Atlas'.format(material.name)
+                    else:
+                        atlas_material =  bpy.data.materials.get('{} Atlas'.format(material.name))
+                        new_group = bpy.data.node_groups.get('{} Atlas'.format(material.name))
+                    atlas_material.node_tree.nodes['Gentex'].node_tree = new_group
+                    new_group.nodes[bake_type].image = bpy.data.images['{} Atlas {}'.format(object.name, bake_type)]
 
             #scale and translate all of the uvs based on the image's index and dimensions
             if uv_shift_flag:
@@ -782,13 +791,37 @@ def create_material_atlas():
                     y_location = indexed_images[image_name][2][1] / atlas.size[1]
                     update_uvs(object_name, material_name, x_location, y_location, '+')
             uv_shift_flag = False
+        
+        #replace all images with the atlas in a new atlas material
+        for mat_slot in [m for m in object.material_slots if ('KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name)]:
+            material = mat_slot.material
+            if bpy.data.materials.get(material.name + '-ORG'):
+                atlas_material = bpy.data.materials.get('{} Atlas'.format(material.name))
+                mat_slot.material = atlas_material
 
-    #rename the new collection and hide original
+    #setup the new collection for exporting
     bpy.data.collections['Collection.001'].name = 'Model with atlas'
     layer_collection = bpy.context.view_layer.layer_collection
+    layerColl = recurLayerCollection(layer_collection, 'Model with atlas')
+    bpy.context.view_layer.active_layer_collection = layerColl
+    bpy.ops.collection.exporter_add(name="IO_FH_fbx")
+    bpy.data.collections["Model with atlas"].exporters[0].export_properties.object_types = {'EMPTY', 'ARMATURE', 'MESH', 'OTHER'}
+    bpy.data.collections["Model with atlas"].exporters[0].export_properties.use_mesh_modifiers = False
+    bpy.data.collections["Model with atlas"].exporters[0].export_properties.add_leaf_bones = False
+    bpy.data.collections["Model with atlas"].exporters[0].export_properties.bake_anim = False
+    bpy.data.collections["Model with atlas"].exporters[0].export_properties.apply_scale_options = 'FBX_SCALE_ALL'
+    bpy.data.collections["Model with atlas"].exporters[0].export_properties.path_mode = 'COPY'
+    bpy.data.collections["Model with atlas"].exporters[0].export_properties.embed_textures = False
+    bpy.data.collections["Model with atlas"].exporters[0].export_properties.mesh_smooth_type = 'OFF'
+    bpy.data.collections["Model with atlas"].exporters[0].export_properties.filepath = os.path.join(folderpath.replace('baked_files', 'atlas_files'), 'Exported model.fbx')
+
+    #hide the new collection
     layerColl = recurLayerCollection(layer_collection, 'Scene Collection')
     bpy.context.view_layer.active_layer_collection = layerColl
-    bpy.context.scene.view_layers[0].active_layer_collection.children[0].exclude = True
+    bpy.context.scene.view_layers[0].active_layer_collection.children[0].exclude = False
+    bpy.context.scene.view_layers[0].active_layer_collection.children[-1].exclude = True
+    #revert the original material's images or they will still be using the resized images for the new uv positions
+    remove_orphan_data()
 
 class bake_materials(bpy.types.Operator):
     bl_idname = "kkbp.bakematerials"
@@ -845,7 +878,7 @@ class bake_materials(bpy.types.Operator):
                     ob.hide_viewport = False
                 cleanup()
             replace_all_baked_materials(folderpath)
-            create_material_atlas()
+            create_material_atlas(folderpath)
             c.toggle_console()
 
             c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
