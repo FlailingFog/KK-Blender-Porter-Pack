@@ -18,10 +18,10 @@ class update_bones(bpy.types.Operator):
                 outfit_detected = False
                 print("{} for {}".format(bone.name, bone['KKBP outfit ID']))
                 for outfit_number in bone['KKBP outfit ID']:
-                    matching_outfit = bpy.data.objects.get('Outfit 0' + str(outfit_number))
+                    matching_outfit = bpy.data.objects.get('Outfit ' + outfit_number)
                     if matching_outfit:
-                        print(matching_outfit.hide)
-                        outfit_detected += not matching_outfit.hide
+                        print(matching_outfit.hide_get())
+                        outfit_detected = outfit_detected or not matching_outfit.hide_get()
                 bone.hide = False if outfit_detected else True
 
         return {'FINISHED'}

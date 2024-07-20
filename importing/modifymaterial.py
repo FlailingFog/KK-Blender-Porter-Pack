@@ -919,7 +919,7 @@ class modify_material(bpy.types.Operator):
             ob.data.materials.append(hairOutlineMat)
             #hide alts
             if ob.name[:12] == 'Hair Outfit ' and ob.name != 'Hair Outfit 00':
-                ob.hide = True
+                ob.hide_set(True)
                 ob.hide_render = True
         c.print_timer('add_outlines_to_hair')
 
