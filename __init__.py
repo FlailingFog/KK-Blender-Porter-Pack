@@ -31,7 +31,6 @@ def reg_unreg(register_bool):
 
     from .exporting.bakematerials import bake_materials
     from .exporting.exportprep import export_prep
-    from .exporting.exportfbx import export_fbx
 
     from .extras.importstudio import import_studio
     from .extras.animationlibrary.createmapassetlibrary import map_asset_lib
@@ -60,7 +59,6 @@ def reg_unreg(register_bool):
     classes = (
         bake_materials, 
         export_prep,
-        export_fbx,
         image_convert, 
         image_dark_convert,
 

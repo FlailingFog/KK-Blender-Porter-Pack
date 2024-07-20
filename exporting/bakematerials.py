@@ -576,6 +576,15 @@ def create_material_atlas(folderpath):
     #TODO fix eyewhite R uvs not moving
 
     for object in [o for o in bpy.data.objects if (bpy.data.collections['Collection.001'] in o.users_collection and o.type == 'MESH')]:
+        #correct the modifier
+        if object.modifiers.get('mmd_bone_order_override') or object.modifiers.get('Armature'):
+            try:
+                object.modifiers['mmd_bone_order_override'].object = bpy.data.objects['RIG-Armature.001']
+                object.modifiers['Armature'].object = bpy.data.objects['RIG-Armature.001']
+            except:
+                object.modifiers['mmd_bone_order_override'].object = bpy.data.objects['Armature.001']
+                object.modifiers['Armature'].object = bpy.data.objects['Armature.001']
+
         x_total_length = 0
         y_max_length = 0
         for mat_slot in [m for m in object.material_slots if ('KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name)]:

@@ -1940,8 +1940,12 @@ def main():
                 usefulBoneNames.append(relatedBoneName)       
     
     for bone in metarig.pose.bones:
-        if bpy.app.version[0] >= 3:
-            bone['mmd_bone'] = None
+        # if bpy.app.version[0] >= 3:
+        #     try:
+        #         bone['mmd_bone'] = None
+        #     except:
+        #         #oh well
+        #         pass
         if bone.name not in usefulBoneNames:
             koikatsuCommons.assignSingleBoneLayer(metarig, bone.name, koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.junkLayerName))
             continue

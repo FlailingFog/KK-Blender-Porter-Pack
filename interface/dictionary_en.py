@@ -66,9 +66,9 @@ translation_dictionary = {
 
     'simp_drop'     : 'Armature simplification type',
     'simp_drop_A'   : 'Very simple (SLOW)',
-    'simp_drop_A_tt': 'Use this option if you want a very low bone count. Moves the pupil bones to layer 1 and simplifies bones on armature layers 3-5, 11-12, and 17-19 (Leaves you with ~110 bones not counting the skirt bones)',
+    'simp_drop_A_tt': 'Use this option if you want a very low bone count. Moves the pupil bones to layer 1 and simplifies bones on armature layers 3-5, 11-12, and 17-19 (Leaves you with ~100 bones not counting the skirt bones)',
     'simp_drop_B'   : 'Simple',
-    'simp_drop_B_tt': 'Moves the pupil bones to layer 1 and simplifies the useless bones on armature layer 11 (Leaves you with ~1000 bones)',
+    'simp_drop_B_tt': 'Moves the pupil bones to layer 1 and simplifies the useless bones on armature layer 11 (Leaves you with ~500 bones)',
     'simp_drop_C'   : 'No changes (FAST)',
     'simp_drop_C_tt': 'Does not simplify anything',
 
