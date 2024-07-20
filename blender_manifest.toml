@@ -12,7 +12,6 @@ tags = ["Import-Export"]
 blender_version_min = "4.2.0"
 license = ["SPDX:GPL-2.0-or-later"]
 platforms = ["windows-x64"]
-wheels = ["./wheels/rectangle_packer-2.0.2-cp311-cp311-win_amd64",]
 
 [permissions]
 files = "Import Koikatsu model files and export edited texture files"

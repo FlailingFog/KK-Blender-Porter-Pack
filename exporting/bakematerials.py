@@ -13,8 +13,9 @@ Notes:
 - fillerplane driver + shader code taken from https://blenderartists.org/t/scripts-create-camera-image-plane/580839
 '''
 
-import bpy, os, traceback, time, pathlib, numpy, mathutils, bmesh, rpack
+import bpy, os, traceback, time, pathlib, numpy, mathutils, bmesh
 from .. import common as c
+from . import rpack
 
 from ..interface.dictionary_en import t
 

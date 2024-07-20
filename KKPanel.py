@@ -210,7 +210,7 @@ class IMPORTING_PT_panel(bpy.types.Panel):
             col = box.column(align=True)
             
             row = col.row(align=True)
-            row.operator('kkbp.kkbpimport', text = t('import_model'), icon='MODIFIER')
+            row.operator('kkbp.kkbpimport', text = t('import_model'), icon='FILE_FOLDER')
             row.enabled = scene.plugin_state not in ['imported', 'prepped']
             
             row = col.row(align=True)
@@ -252,7 +252,7 @@ class IMPORTING_PT_panel(bpy.types.Panel):
             
             col = box.column(align=True)
             row = col.row(align=True)
-            row.operator('kkbp.bakematerials', text = t('bake'), icon='VIEW_CAMERA')
+            row.operator('kkbp.bakematerials', text = t('bake'), icon='FILE_REFRESH')
             row.enabled = scene.plugin_state in ['imported', 'prepped']
             row = col.row(align=True)
             split = row.split(align=True, factor=0.33)
@@ -302,30 +302,15 @@ class EXPORTING_PT_panel(bpy.types.Panel):
             
             box = layout.box()
 
-            # col = box.column(align=True)
-            # row = col.row(align=True)
-            # row.operator('kkbp.applymaterials', text = t('apply_temp'), icon = 'FILE_REFRESH')
-            # row.enabled = scene.plugin_state in ['imported', 'prepped']
-            # row = col.row(align=True)
-            # split = row.split(align = True, factor=splitfac)
-            # split.label(text=t('atlas'))
-            # split.prop(context.scene.kkbp, "atlas_dropdown")
-            # row.enabled = scene.plugin_state in ['imported', 'prepped']
-
             col = box.column(align=True)
             row = col.row(align=True)
-            row.operator('kkbp.exportprep', text = t('prep'), icon = 'GROUP')
+            row.operator('kkbp.exportprep', text = t('prep'), icon = 'MODIFIER')
             row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown == 'A'
             row = col.row(align=True)
             split = row.split(align=True, factor=splitfac)
             split.prop(context.scene.kkbp, "simp_dropdown")
             split.prop(context.scene.kkbp, "prep_dropdown")
             row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown == 'A'
-
-            col = box.column(align=True)
-            row = col.row(align=True)
-            row.operator('kkbp.exportfbx', text = t('export_fbx'), icon = 'FILEBROWSER')
-            row.enabled = scene.plugin_state in ['imported', 'prepped']
 
 class EXTRAS_PT_panel(bpy.types.Panel):
     bl_label = 'KKBP Extras'
@@ -375,13 +360,6 @@ class EXTRAS_PT_panel(bpy.types.Panel):
             split.label(text=t('map_library'))
             split.operator('kkbp.createmapassetlib', text = '', icon = 'WORLD')
 
-            # box = layout.box()
-            # col = box.column(align=True)
-            # row = col.row(align=True)
-            # split = row.split(align=True, factor=splitfac)
-            # split.label(text=t('finalize_materials'))
-            # split.operator('kkbp.finalizematerials', text = '', icon='SHADERFX')
-
             box = layout.box()
             col = box.column(align=True)
             row = col.row(align=True)
@@ -394,18 +372,6 @@ class EXTRAS_PT_panel(bpy.types.Panel):
             split = row.split(align=True, factor=splitfac)
             split.label(text=t('rigify_convert'))
             split.operator('kkbp.rigifyconvert', text = '', icon='SOLO_OFF')
-
-            # col = box.column(align=True)
-            # row = col.row(align=True)
-            # split = row.split(align=True, factor=splitfac)
-            # split.label(text="Swap armature type")
-            # split.operator('kkbp.switcharmature', text = '', icon = 'ARROW_LEFTRIGHT')
-
-            # col = box.column(align=True)
-            # row = col.row(align=True)
-            # split = row.split(align=True, factor=splitfac)
-            # split.label(text="Toggle hand IKs")
-            # split.operator('kkbp.toggleik', text = '', icon = 'BONE_DATA')
             
             box = layout.box()
             col = box.column(align=True)
@@ -430,29 +396,6 @@ class EXTRAS_PT_panel(bpy.types.Panel):
             #     split = row.split(align=True, factor=.5)
             #     split.label(text=icon)
             #     split.operator('kkbp.linkshapekeys', icon = icon)
-
-
-# #The panel inside of the image editor
-# class EDITOR_PT_panel(bpy.types.Panel):
-#     bl_label = 'Convert Image'
-#     bl_category = "KKBP"
-#     bl_space_type = "IMAGE_EDITOR"
-#     bl_region_type = "UI"
-#     def draw(self,context):
-#         scene = context.scene.kkbp
-#         if scene.blender_path:
-#             layout = self.layout
-#             splitfac = 0.6
-
-#             box = layout.box()
-#             col = box.column(align=True)
-#             row = col.row(align = True)
-#             row.operator('kkbp.imageconvert', text = t('convert_image'), icon = 'IMAGE')
-
-#             row = col.row(align=True)
-#             row.prop(context.scene.kkbp, "image_dropdown")
-#             row = col.row(align=True)
-#             row.operator('kkbp.imagedarkconvert', text = 'Create KKBP dark version', icon = 'IMAGE')
 
 def register():
     bpy.utils.register_class(PlaceholderProperties)
