@@ -80,12 +80,13 @@ def merge_weights(armature, parenting_list):
     Common.switch('OBJECT')
     # Merge the weights on the meshes
     stdout = io.StringIO()
-    for mesh in Common.get_meshes_objects(armature_name=armature.name, visible_only=bpy.context.scene.merge_visible_meshes_only if bpy.context.scene.get('merge_visible_meshes_only') != None else True):
+    meshes = Common.get_meshes_objects(armature_name=armature.name, visible_only=bpy.context.scene.merge_visible_meshes_only if bpy.context.scene.get('merge_visible_meshes_only') != None else True)
+    for mindex, mesh in enumerate(meshes):
         Common.set_active(mesh)
 
         for index, bone in enumerate(parenting_list):
             parent = parenting_list[bone]
-            kklog('Merging bone: {}     {} / {}'.format(bone, index, len(parenting_list)))
+            kklog('Merging bone: {}     object {} / {}, bone {} / {}'.format(bone, mindex, len(meshes), index, len(parenting_list)))
             if not mesh.vertex_groups.get(bone):
                 continue
             if not mesh.vertex_groups.get(parent):

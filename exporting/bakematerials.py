@@ -432,7 +432,8 @@ def replace_all_baked_materials(folderpath):
                         'KK Eyeline up',
                         'KK Eyeline Kage',
                         'KK Eyeline down',
-                        'KK Eyewhites (sirome)',
+                        'KK EyewhitesL (sirome)',
+                        'KK EyewhitesR (sirome)',
                         'KK EyeL (hitomi)',
                         'KK EyeR (hitomi)',
                     ]
@@ -573,17 +574,13 @@ def create_material_atlas(folderpath):
     #first correct the tongue uv locations because easily fixable for every model
     update_uvs('Body.001', 'KK Tongue', 0, 1, '+')
 
-    #TODO fix eyewhite R uvs not moving
-
     for object in [o for o in bpy.data.objects if (bpy.data.collections['Collection.001'] in o.users_collection and o.type == 'MESH')]:
         #correct the modifier
         if object.modifiers.get('mmd_bone_order_override') or object.modifiers.get('Armature'):
             try:
-                object.modifiers['mmd_bone_order_override'].object = bpy.data.objects['RIG-Armature.001']
-                object.modifiers['Armature'].object = bpy.data.objects['RIG-Armature.001']
+                object.modifiers[0].object = bpy.data.objects['RIG-Armature.001']
             except:
-                object.modifiers['mmd_bone_order_override'].object = bpy.data.objects['Armature.001']
-                object.modifiers['Armature'].object = bpy.data.objects['Armature.001']
+                object.modifiers[0].object = bpy.data.objects['Armature.001']
 
         x_total_length = 0
         y_max_length = 0
@@ -759,7 +756,12 @@ def create_material_atlas(folderpath):
 
             atlas = bpy.data.images.new('{} Atlas {}'.format(object.name, bake_type), int(atlas_array.shape[1]/4), atlas_array.shape[0])
             atlas.pixels = atlas_array.flatten()
-            atlas.save_render(os.path.join(folderpath.replace('baked_files', 'atlas_files'), atlas.name.replace('.001', '') + '.png'))
+            path = os.path.join(folderpath.replace('baked_files', 'atlas_files'), atlas.name.replace('.001', '') + '.png')
+            atlas.save_render(path)
+            atlas.filepath_raw = path
+            atlas.file_format = 'PNG'
+            atlas.save()
+            atlas.pack()
             
             #replace all images with the atlas in a new atlas material
             for mat_slot in [m for m in object.material_slots if ('KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name)]:
@@ -848,7 +850,11 @@ class bake_materials(bpy.types.Operator):
             c.toggle_console()
             c.kklog('Switching to EEVEE for material baking...')
             bpy.context.scene.render.engine = 'BLENDER_EEVEE_NEXT'
-            bpy.ops.object.mode_set(mode='OBJECT')
+            try:
+                bpy.ops.object.mode_set(mode='OBJECT')
+            except:
+                #no active object error
+                c.switch(bpy.data.objects['Body'], 'OBJECT')
 
             #set viewport shading to solid for better performance
             my_areas = bpy.context.workspace.screens[0].areas

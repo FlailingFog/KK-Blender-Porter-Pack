@@ -197,7 +197,8 @@ class modify_material(bpy.types.Operator):
         'KK Eyeline down',
         'KK Eyeline Kage',
         'KK Eyeline up',
-        'KK Eyewhites (sirome)',
+        'KK EyewhitesL (sirome)',
+        'KK EyewhitesR (sirome)',
         'KK Face',
         'KK General',
         'KK Hair',
@@ -225,8 +226,8 @@ class modify_material(bpy.types.Operator):
         swap_body_material(self.body['SMR materials']['cf_O_eyeline_low'],'KK Eyeline down')
         swap_body_material(['cf_m_eyeline_kage'],'KK Eyeline Kage')
         swap_body_material(['Eyeline_Over'],'KK Eyeline Kage')
-        swap_body_material(self.body['SMR materials']['cf_Ohitomi_L'],'KK Eyewhites (sirome)')
-        swap_body_material(self.body['SMR materials']['cf_Ohitomi_R'],'KK Eyewhites (sirome)')
+        swap_body_material(self.body['SMR materials']['cf_Ohitomi_L'],'KK EyewhitesL (sirome)')
+        swap_body_material(self.body['SMR materials']['cf_Ohitomi_R'],'KK EyewhitesR (sirome)')
         swap_body_material(self.body['SMR materials']['cf_Ohitomi_L02'],'KK EyeL (hitomi)')
         swap_body_material(self.body['SMR materials']['cf_Ohitomi_R02'],'KK EyeR (hitomi)')
         swap_body_material(self.body['SMR materials']['o_body_a'],'KK Body')
@@ -509,7 +510,8 @@ class modify_material(bpy.types.Operator):
         self.image_load('KK Eyebrows (mayuge)', 'Gentex', 'Eyebrow', self.body['SMR materials']['cf_O_mayuge'][0] + '_MT_CT.png')
         self.image_load('KK Nose', 'Gentex', 'Nose', self.body['SMR materials']['cf_O_noseline'][0] + '_MT_CT.png')
         self.image_load('KK Teeth (tooth)', 'Gentex', 'Teeth', self.body['SMR materials']['cf_O_tooth'][0] + '_ST_CT.png')
-        self.image_load('KK Eyewhites (sirome)', 'Gentex', 'Eyewhite', self.body['SMR materials']['cf_Ohitomi_R'][0] + '_ST_CT.png')
+        self.image_load('KK EyewhitesL (sirome)', 'Gentex', 'Eyewhite', self.body['SMR materials']['cf_Ohitomi_R'][0] + '_ST_CT.png')
+        self.image_load('KK EyewhitesR (sirome)', 'Gentex', 'Eyewhite', self.body['SMR materials']['cf_Ohitomi_R'][0] + '_ST_CT.png')
         
         self.image_load('KK Eyeline up', 'Gentex', 'EyelineUp', self.body['SMR materials']['cf_O_eyeline'][0] + '_MT_CT.png')
         self.image_load('KK Eyeline up', 'Gentex', 'EyelineUp.001', self.body['SMR materials']['cf_O_eyeline'][0] + '_MT_CT.png')
@@ -533,7 +535,8 @@ class modify_material(bpy.types.Operator):
         self.load_baked_material('KK Body')
         self.load_baked_material('KK EyeR (hitomi)')
         self.load_baked_material('KK EyeL (hitomi)')
-        self.load_baked_material('KK Eyewhites (sirome)')
+        self.load_baked_material('KK EyewhitesR (sirome)')
+        self.load_baked_material('KK EyewhitesL (sirome)')
         self.load_baked_material('KK Eyebrows (mayuge)')
         self.load_baked_material('KK Eyeline up')
         self.load_baked_material('KK Eyeline down')

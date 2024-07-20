@@ -10,7 +10,7 @@ def toggle_console():
         return #only available on windows so it might error out for other platforms
 
 def kklog(log_text, type = ''):
-    '''Log to the KKBP Log text in the scripting tab. Also prints to console'''
+    '''Log to the KKBP Log text in the scripting tab. Also prints to console. optional types are error or warn'''
     if not bpy.data.texts.get('KKBP Log'):
         bpy.data.texts.new(name='KKBP Log')
         if bpy.data.screens.get('Scripting'):

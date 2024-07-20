@@ -5,8 +5,24 @@ from .. import common as c
 from ..interface.dictionary_en import t
 
 def main(prep_type, simp_type):
+    try:
+        #always try to use the atlased model first
+        body = bpy.data.objects['Body.001']
+        bpy.context.view_layer.objects.active=body
+        body_name = body.name
+        armature_name = 'Armature.001'
+        if not bpy.data.objects[armature_name].data.bones.get('Pelvis'):
+            #the atlased body has already been modified. Skip.
+            c.kklog('Model with atlas has already been prepped. Skipping export prep functions...', type='warn')
+            return False
+    except:
+        #fallback to the non-atlased model if the atlased model collection is not visible
+        body = bpy.data.objects['Body']
+        bpy.context.view_layer.objects.active=body
+        body_name = body.name
+        armature_name = 'Armature'
 
-    armature = bpy.data.objects['Armature']
+    armature = bpy.data.objects[armature_name]
 
     c.kklog('\nPrepping for export...')
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -14,7 +30,7 @@ def main(prep_type, simp_type):
 
     #Assume hidden items are unused and move them to their own collection
     c.kklog('Moving unused objects to their own collection...')
-    no_move_objects = ['Bonelyfans', 'Shadowcast', 'Hitboxes', 'Body', 'Armature']
+    no_move_objects = ['Bonelyfans', 'Shadowcast', 'Hitboxes', body_name, armature_name]
     for object in bpy.context.scene.objects:
         try:
             #print(object.name)
@@ -51,7 +67,7 @@ def main(prep_type, simp_type):
             bpy.context.view_layer.objects.active=ob
             bpy.ops.object.material_slot_remove_unused()
     bpy.ops.object.select_all(action='DESELECT')
-    body = bpy.data.objects['Body']
+    body = bpy.data.objects[body_name]
     bpy.context.view_layer.objects.active=body
     body.select_set(True)
 
@@ -63,21 +79,12 @@ def main(prep_type, simp_type):
             ob.modifiers['Right Eye UV warp'].show_render = False
             ob.modifiers['Right Eye UV warp'].show_viewport = False
 
-    #remove the second Template Eyewhite slot if there are two of the same name in a row
-    index = 0
-    for mat_slot_index in range(len(body.material_slots)):
-        if body.material_slots[mat_slot_index].name == 'KK Eyewhites (sirome)':
-            index = mat_slot_index
-    if body.material_slots[index].name == body.material_slots[index-1].name:
-        body.active_material_index = index
-        bpy.ops.object.material_slot_remove()
-
     #Select the armature and make it active
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.ops.object.select_all(action='DESELECT')
-    bpy.data.objects['Armature'].hide_set(False)
-    bpy.data.objects['Armature'].select_set(True)
-    bpy.context.view_layer.objects.active=bpy.data.objects['Armature']
+    bpy.data.objects[armature_name].hide_set(False)
+    bpy.data.objects[armature_name].select_set(True)
+    bpy.context.view_layer.objects.active=bpy.data.objects[armature_name]
     bpy.ops.object.mode_set(mode='POSE')
 
     #If simplifying the bones...
@@ -87,7 +94,7 @@ def main(prep_type, simp_type):
         bpy.ops.pose.select_all(action='DESELECT')
 
         #Move pupil bones to layer 1
-        armature = bpy.data.objects['Armature']
+        armature = bpy.data.objects[armature_name]
         if armature.data.bones.get('Left Eye'):
             armature.data.bones['Left Eye'].collections.clear()
             armature.data.collections['0'].assign(armature.data.bones.get('Left Eye'))
@@ -125,23 +132,24 @@ def main(prep_type, simp_type):
         bpy.ops.object.mode_set(mode='EDIT')
 
         #Rearrange bones to match CATS output 
-        armature.data.edit_bones['Pelvis'].parent = None
-        armature.data.edit_bones['Spine'].parent = armature.data.edit_bones['Pelvis']
-        armature.data.edit_bones['Hips'].name = 'dont need lol'
-        armature.data.edit_bones['Pelvis'].name = 'Hips'
-        armature.data.edit_bones['Left leg'].parent = armature.data.edit_bones['Hips']
-        armature.data.edit_bones['Right leg'].parent = armature.data.edit_bones['Hips']
-        armature.data.edit_bones['Left ankle'].parent = armature.data.edit_bones['Left knee']
-        armature.data.edit_bones['Right ankle'].parent = armature.data.edit_bones['Right knee']
-        armature.data.edit_bones['Left shoulder'].parent = armature.data.edit_bones['Upper Chest']
-        armature.data.edit_bones['Right shoulder'].parent = armature.data.edit_bones['Upper Chest']
-        armature.data.edit_bones.remove(armature.data.edit_bones['dont need lol'])
+        if armature.data.edit_bones.get('Pelvis'):
+            armature.data.edit_bones['Pelvis'].parent = None
+            armature.data.edit_bones['Spine'].parent = armature.data.edit_bones['Pelvis']
+            armature.data.edit_bones['Hips'].name = 'dont need lol'
+            armature.data.edit_bones['Pelvis'].name = 'Hips'
+            armature.data.edit_bones['Left leg'].parent = armature.data.edit_bones['Hips']
+            armature.data.edit_bones['Right leg'].parent = armature.data.edit_bones['Hips']
+            armature.data.edit_bones['Left ankle'].parent = armature.data.edit_bones['Left knee']
+            armature.data.edit_bones['Right ankle'].parent = armature.data.edit_bones['Right knee']
+            armature.data.edit_bones['Left shoulder'].parent = armature.data.edit_bones['Upper Chest']
+            armature.data.edit_bones['Right shoulder'].parent = armature.data.edit_bones['Upper Chest']
+            armature.data.edit_bones.remove(armature.data.edit_bones['dont need lol'])
 
         bpy.ops.object.mode_set(mode='POSE')
         bpy.ops.pose.select_all(action='DESELECT')
 
         #Merge specific bones for unity rig autodetect
-        armature = bpy.data.objects['Armature']
+        armature = bpy.data.objects[armature_name]
         merge_these = ['cf_j_waist02', 'cf_s_waist01', 'cf_s_hand_L', 'cf_s_hand_R']
         #Delete the upper chest for VR chat models, since it apparently causes errors with eye tracking
         if prep_type == 'D':
@@ -250,6 +258,10 @@ def main(prep_type, simp_type):
 
     bpy.ops.object.mode_set(mode='OBJECT')
 
+    #only disable the prep button if the non-atlas model has been modified.
+    #This is because the model with atlas can be regenerated with the bake materials button
+    return armature_name == 'Armature'
+
 class export_prep(bpy.types.Operator):
     bl_idname = "kkbp.exportprep"
     bl_label = "Prep for target application"
@@ -263,8 +275,8 @@ class export_prep(bpy.types.Operator):
         last_step = time.time()
         try:
             c.toggle_console()
-            main(prep_type, simp_type)
-            scene.plugin_state = 'prepped'
+            if main(prep_type, simp_type):
+                scene.plugin_state = 'prepped'
             c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             c.toggle_console()
             return {'FINISHED'}
