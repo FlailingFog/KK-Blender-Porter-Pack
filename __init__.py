@@ -36,7 +36,6 @@ def reg_unreg(register_bool):
     from .extras.animationlibrary.createmapassetlibrary import map_asset_lib
     from .extras.animationlibrary.createanimationlibrary import anim_asset_lib
     from .extras.linkshapekeys import link_shapekeys
-    from .extras.importanimation import import_animation
     from .extras.separatemeshes import separate_meshes
     from .extras.separatemeshes import export_separate_meshes
     from .extras.toggleik import toggle_ik
@@ -47,6 +46,7 @@ def reg_unreg(register_bool):
     from .extras.rigifyscripts.rigify_before import rigify_before
     from .extras.rigifyscripts.rigify_after import rigify_after
     from .extras.catsscripts.armature_manual import MergeWeights
+    from .extras.importanimation import anim_import
 
     from . KKPanel import PlaceholderProperties
     from . KKPanel import (
@@ -62,7 +62,6 @@ def reg_unreg(register_bool):
         image_convert, 
         image_dark_convert,
 
-        import_animation, 
         import_studio,
         map_asset_lib,
         anim_asset_lib,
@@ -75,6 +74,7 @@ def reg_unreg(register_bool):
         rigify_before,
         rigify_after,
         MergeWeights,
+        anim_import,
 
         install_dependency,
         install_dependency28,

@@ -166,6 +166,11 @@ class PlaceholderProperties(PropertyGroup):
         description="""Enable this if you don't want KKBP to process the fbx animation, and instead want to use the rokoko plugin to transfer the fbx animation to your character.
         Stock / unmodified armatures only!""",
         default = False)
+    
+    animation_import_type : BoolProperty(
+        name="Enable or Disable",
+        description="""Disable this if you are importing a Koikatsu .fbx animation. Enable this if you are importing a Mixamo .fbx animation""",
+        default = False)
 
     image_dropdown : EnumProperty(
         items=(
@@ -347,12 +352,26 @@ class EXTRAS_PT_panel(bpy.types.Panel):
             col = box.column(align=True)
             row = col.row(align=True)
             split = row.split(align=True, factor=splitfac)
+            split.label(text='Import single animation file')
+            split.operator('kkbp.importanimation', text = '', icon = 'ARMATURE_DATA')
+            row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown == 'B'
+            row = col.row(align=True)
+            split = row.split(align=True, factor=splitfac)
+            split.label(text="")
+            split.prop(context.scene.kkbp, "animation_import_type", toggle=True, text = 'Import Mixamo animation' if scene.animation_import_type else 'Import Koikatsu animation')
+            row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown == 'B'
+
+            col = box.column(align=True)
+            row = col.row(align=True)
+            split = row.split(align=True, factor=splitfac)
             split.label(text=t('animation_library'))
             split.operator('kkbp.createanimassetlib', text = '', icon = 'ARMATURE_DATA')
+            row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown == 'B'
             row = col.row(align=True)
             split = row.split(align=True, factor=splitfac)
             split.label(text="")
             split.prop(context.scene.kkbp, "animation_library_scale", toggle=True, text = t('animation_library_scale'))
+            row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown == 'B'
 
             col = box.column(align=True)
             row = col.row(align=True)

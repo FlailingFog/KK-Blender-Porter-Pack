@@ -1,0 +1,215 @@
+{
+    "Rokoko_custom_names": true,
+    "version": 1,
+    "bones": {
+        "custom_bone_mixamorig:Hips": [
+            "mixamorig:Hips",
+            "torso"
+        ],
+        "custom_bone_mixamorig:Spine": [
+            "mixamorig:Spine",
+            "Spine_fk"
+        ],
+        "custom_bone_mixamorig:Spine1": [
+            "mixamorig:Spine1",
+            "Chest_fk"
+        ],
+        "custom_bone_mixamorig:Spine2": [
+            "mixamorig:Spine2",
+            "Upper Chest_fk"
+        ],
+        "custom_bone_mixamorig:LeftHand": [
+            "mixamorig:LeftHand",
+            "Left wrist_fk"
+        ],
+        "custom_bone_mixamorig:LeftArm": [
+            "mixamorig:LeftArm",
+            "Left arm_fk"
+        ],
+        "custom_bone_mixamorig:LeftForeArm": [
+            "mixamorig:LeftForeArm",
+            "Left elbow_fk"
+        ],
+        "custom_bone_mixamorig:LeftHandIndex1": [
+            "mixamorig:LeftHandIndex1",
+            "IndexFinger1_L"
+        ],
+        "custom_bone_mixamorig:LeftHandIndex2": [
+            "mixamorig:LeftHandIndex2",
+            "IndexFinger2_L"
+        ],
+        "custom_bone_cf_j_index03_L": [
+            "mixamorig:LeftHandIndex3",
+            "IndexFinger3_L"
+        ],
+        "custom_bone_cf_j_Little01_L": [
+            "mixamorig:LeftHandPinky1",
+            "LittleFinger1_L"
+        ],
+        "custom_bone_cf_j_Little02_L": [
+            "mixamorig:LeftHandPinky2",
+            "LittleFinger2_L"
+        ],
+        "custom_bone_cf_j_Little03_L": [
+            "mixamorig:LeftHandPinky3",
+            "LittleFinger3_L"
+        ],
+        "custom_bone_cf_j_middle01_L": [
+            "mixamorig:LeftHandMiddle1",
+            "MiddleFinger1_L"
+        ],
+        "custom_bone_cf_j_middle02_L": [
+            "mixamorig:LeftHandMiddle2",
+            "MiddleFinger2_L"
+        ],
+        "custom_bone_cf_j_middle03_L": [
+            "mixamorig:LeftHandMiddle3",
+            "MiddleFinger3_L"
+        ],
+        "custom_bone_cf_j_ring01_L": [
+            "mixamorig:LeftHandRing1",
+            "RingFinger1_L"
+        ],
+        "custom_bone_cf_j_ring02_L": [
+            "mixamorig:LeftHandRing2",
+            "RingFinger2_L"
+        ],
+        "custom_bone_cf_j_ring03_L": [
+            "mixamorig:LeftHandRing3",
+            "RingFinger3_L"
+        ],
+        "custom_bone_cf_j_thumb01_L": [
+            "mixamorig:LeftHandThumb1",
+            "Thumb0_L"
+        ],
+        "custom_bone_cf_j_thumb02_L": [
+            "mixamorig:LeftHandThumb2",
+            "Thumb1_L"
+        ],
+        "custom_bone_cf_j_thumb03_L": [
+            "mixamorig:LeftHandThumb3",
+            "Thumb2_L"
+        ],
+        "custom_bone_cf_j_arm_R": [
+            "mixamorig:RightArm",
+            "Right arm_fk"
+        ],
+        "custom_bone_cf_j_elbow": [
+            "mixamorig:RightForeArm",
+            "Right elbow_fk"
+        ],
+        "custom_bone_cf_j_hand_R": [
+            "mixamorig:RightHand",
+            "Right wrist_fk"
+        ],
+        "custom_bone_cf_j_index01_R": [
+            "mixamorig:RightHandIndex1",
+            "IndexFinger1_R"
+        ],
+        "custom_bone_cf_j_index02_R": [
+            "mixamorig:RightHandIndex2",
+            "IndexFinger2_R"
+        ],
+        "custom_bone_cf_j_index03_R": [
+            "mixamorig:RightHandIndex3",
+            "IndexFinger3_R"
+        ],
+        "custom_bone_cf_j_Little01_R": [
+            "mixamorig:RightHandPinky1",
+            "LittleFinger1_R"
+        ],
+        "custom_bone_cf_j_Little02_R": [
+            "mixamorig:RightHandPinky2",
+            "LittleFinger2_R"
+        ],
+        "custom_bone_cf_j_Little03_R": [
+            "mixamorig:RightHandPinky.",
+            "LittleFinger3_R"
+        ],
+        "custom_bone_cf_j_middle01_R": [
+            "mixamorig:RightHandMiddle1",
+            "MiddleFinger1_R"
+        ],
+        "custom_bone_cf_j_middle02_R": [
+            "mixamorig:RightHandMiddle2",
+            "MiddleFinger2_R"
+        ],
+        "custom_bone_cf_j_middle03_R": [
+            "mixamorig:RightHandMiddle3",
+            "MiddleFinger3_R"
+        ],
+        "custom_bone_cf_j_ring01_R": [
+            "mixamorig:RightHandRing1",
+            "RingFinger1_R"
+        ],
+        "custom_bone_cf_j_ring02_R": [
+            "mixamorig:RightHandRing2",
+            "RingFinger2_R"
+        ],
+        "custom_bone_cf_j_ring03_R": [
+            "mixamorig:RightHandRing3",
+            "RingFinger3_R"
+        ],
+        "custom_bone_cf_j_thumb01_R": [
+            "mixamorig:RightHandThumb1",
+            "Thumb0_R"
+        ],
+        "custom_bone_cf_j_thumb02_R": [
+            "mixamorig:RightHandThumb2",
+            "Thumb1_R"
+        ],
+        "custom_bone_cf_j_thumb03_R": [
+            "mixamorig:RightHandThumb3",
+            "Thumb2_R"
+        ],
+        "custom_bone_cf_j_neck": [
+            "mixamorig:Neck",
+            "neck"
+        ],
+        "custom_bone_cf_j_head": [
+            "mixamorig:Head",
+            "head"
+        ],
+        "custom_bone_mixamorig:LeftFoot": [
+            "mixamorig:LeftFoot",
+            "Left ankle_fk"
+        ],
+        "custom_bone_cf_j_toes_L": [
+            "mixamorig:LeftToeBase",
+            "Left toe_fk"
+        ],
+        "custom_bone_cf_j_thigh00_l": [
+            "mixamorig:LeftUpLeg",
+            "Left leg_fk"
+        ],
+        "custom_bone_cf_j_leg01_l": [
+            "mixamorig:LeftLeg",
+            "Left knee_fk"
+        ],
+        "custom_bone_cf_j_foot_R": [
+            "mixamorig:RightFoot",
+            "Right ankle_fk"
+        ],
+        "custom_bone_cf_j_toes_R": [
+            "mixamorig:RightToeBase",
+            "Right toe_fk"
+        ],
+        "custom_bone_cf_j_thigh00_r": [
+            "mixamorig:RightUpLeg",
+            "Right leg_fk"
+        ],
+        "custom_bone_cf_j_leg01_r": [
+            "mixamorig:RightLeg",
+            "Right knee_fk"
+        ],
+        "custom_bone_cf_j_shoulder_L": [
+            "mixamorig:LeftShoulder",
+            "Left shoulder"
+        ],
+        "custom_bone_cf_j_shoulder_R": [
+            "mixamorig:RightShoulder",
+            "Right shoulder"
+        ]
+    },
+    "shapes": {}
+}

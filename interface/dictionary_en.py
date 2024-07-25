@@ -110,7 +110,7 @@ translation_dictionary = {
 
     'studio_object'             : 'Import studio object',
     'animation_library'         : 'Create animation library',
-    'animation_library_tt'      : "Creates an animation library using the current file and current character. Will not save over the current file in case you want to reuse it. Open the folder containing the animation files exported with SB3Utility",
+    'animation_library_tt'      : "Only available for the Rigify Armature. Creates an animation library using the current file and current character. Will not save over the current file in case you want to reuse it. Open the folder containing the animation files exported with SB3Utility",
     'animation_library_scale'   : 'Scale arms',
     'animation_library_scale_tt': 'Check this to scale the arms on the y axis by 5%. This will make certain poses more accurate to the in-game one',
     'map_library'               : 'Create map asset library',
