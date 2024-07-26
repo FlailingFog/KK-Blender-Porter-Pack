@@ -361,11 +361,11 @@ class post_operations(bpy.types.Operator):
         mark_group_as_freestyle(freestyle_list)
         bpy.ops.mesh.select_all(action = 'DESELECT')
 
-        def delete_group_and_bone(group_list):
+        def delete_group_and_bone(ob, group_list):
             #delete vertex groups
             bpy.ops.mesh.select_all(action = 'DESELECT')
             for group in group_list:
-                group_found = body.vertex_groups.find(group)      
+                group_found = ob.vertex_groups.find(group)      
                 if group_found > -1:
                     bpy.context.object.vertex_groups.active_index = group_found
                     bpy.ops.object.vertex_group_select()
@@ -375,12 +375,17 @@ class post_operations(bpy.types.Operator):
             bpy.ops.mesh.select_all(action = 'DESELECT')
             bpy.ops.object.mode_set(mode = 'OBJECT')
 
-        delete_list = ['cf_s_bnip025_L', 'cf_s_bnip025_R',
+        delete_list = ['cf_s_bnip025_L', 'cf_s_bnip025_R', 'cf_s_bnip02_L', 'cf_s_bnip02_R',
         'cf_j_kokan', 'cf_j_ana', 'cf_d_ana', 'cf_d_kokan', 'cf_s_ana',
         'Vagina_Root', 'Vagina_B', 'Vagina_F', 'Vagina_001_L', 'Vagina_002_L',
         'Vagina_003_L', 'Vagina_004_L', 'Vagina_005_L',  'Vagina_001_R', 'Vagina_002_R',
         'Vagina_003_R', 'Vagina_004_R', 'Vagina_005_R']
-        delete_group_and_bone(delete_list)
+        delete_group_and_bone(body, delete_list)
+        #also do this on the clothes because the bra sticks out
+        delete_list = ['cf_s_bnip02_L', 'cf_s_bnip02_R', 'cf_s_bnip025_L', 'cf_s_bnip025_R', ]
+        for ob in [o for o in bpy.data.objects if o.get('KKBP tag') == 'outfit']:
+            c.switch(ob, 'EDIT')
+            delete_group_and_bone(ob, delete_list)
 
         #reload the sfw alpha mask
         body_material = bpy.data.objects['Body'].material_slots['KK Body'].material
@@ -405,7 +410,8 @@ class post_operations(bpy.types.Operator):
         bpy.data.materials['KK Body Outline'].node_tree.nodes['customToggle'].inputs[0].hide = True
 
         #delete nsfw bones if sfw mode enebled
-        if bpy.context.scene.kkbp.sfw_mode and bpy.context.scene.kkbp.shader_dropdown == 'B':
+        if bpy.context.scene.kkbp.sfw_mode and bpy.context.scene.kkbp.armature_dropdown == 'B':
+            self.rig.data.collections_all['29'].is_visible = True
             def delete_bone(group_list):
                 #delete bones too
                 bpy.ops.object.mode_set(mode = 'OBJECT')
@@ -449,6 +455,7 @@ class post_operations(bpy.types.Operator):
             #'cf_s_bust03_R',
             'cf_s_bust02_R',]
             delete_bone(delete_list)
+            self.rig.data.collections_all['29'].is_visible = False
 
     # %% Supporting functions
 

@@ -72,11 +72,11 @@ class PlaceholderProperties(PropertyGroup):
     
     colors_dropdown : EnumProperty(
         items=(
-            ("A", t('dark_A'), t('dark_A_tt')),
-            ("B", t('dark_B'), t('dark_B_tt')),
+            # ("A", t('dark_A'), t('dark_A_tt')),
+            # ("B", t('dark_B'), t('dark_B_tt')),
             ("C", t('dark_C'), t('dark_C_tt')),
-            ("D", t('dark_D'), t('dark_D_tt')),
-            ("E", t('dark_E'), t('dark_E_tt')),
+            # ("D", t('dark_D'), t('dark_D_tt')),
+            # ("E", t('dark_E'), t('dark_E_tt')),
             ("F", t('dark_F'), t('dark_F_tt'))
         ), name="", default=bpy.context.preferences.addons[__package__].preferences.colors_dropdown, description=t('dark'))
     
@@ -399,6 +399,7 @@ class EXTRAS_PT_panel(bpy.types.Panel):
             
             split.label(text="Export Seperate Meshes")
             split.operator('kkbp.exportseparatemeshes', text = '', icon = 'EXPORT')
+            row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.categorize_dropdown == 'D'
             
             col = box.column(align=True)
             row = col.row(align=True)

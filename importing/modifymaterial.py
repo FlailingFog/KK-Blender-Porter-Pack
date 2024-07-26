@@ -410,7 +410,8 @@ class modify_material(bpy.types.Operator):
                         shadow_color = [self.body['KKBP shadow colors'][material_name.replace('_ST', '_MT')]['r'],
                                         self.body['KKBP shadow colors'][material_name.replace('_ST', '_MT')]['g'], 
                                         self.body['KKBP shadow colors'][material_name.replace('_ST', '_MT')]['b']]
-                    darktex = self.create_darktex(bpy.data.images[image.name], shadow_color) #create the darktex now and load it in later
+                    if bpy.context.scene.kkbp.colors_dropdown != 'C':
+                        darktex = self.create_darktex(bpy.data.images[image.name], shadow_color) #create the darktex now and load it in later
             except:
                 c.kklog('Tried to create a dark version of {} but it was missing a shadow color. Defaulting to shadow color of R=0.764, G=0.880, B=1].'.format(image.name), type='warn')
                 skip_list = ['cf_m_gageye', 
@@ -428,12 +429,14 @@ class modify_material(bpy.types.Operator):
                         convert_this = False
                 if '_ST_CT' in image.name and convert_this:
                     material_name = image.name[:-10]
-                    darktex = self.create_darktex(bpy.data.images[image.name], [.764, .880, 1]) #create the darktex now and load it in later
+                    if bpy.context.scene.kkbp.colors_dropdown != 'C':
+                        darktex = self.create_darktex(bpy.data.images[image.name], [.764, .880, 1]) #create the darktex now and load it in later
         c.print_timer('load_images_and_shadow_colors')
 
     def link_textures_for_body(self):
         '''Load the textures for the body materials to the correct spot'''
         self.image_load('KK Body', 'Gentex', 'BodyMain', self.body['SMR materials']['o_body_a'][0] + '_ST_CT.png')
+        self.image_load('KK Body', 'Gentex', 'Darktex', self.body['SMR materials']['o_body_a'][0] + '_ST_CT.png')
         self.image_load('KK Body', 'Gentex', 'Darktex', self.body['SMR materials']['o_body_a'][0] + '_ST_DT.png')
         #check there's a maintex, if not there fallback to colors
         if not self.body.material_slots['KK Body'].material.node_tree.nodes['Gentex'].node_tree.nodes['BodyMain'].image:
@@ -485,6 +488,7 @@ class modify_material(bpy.types.Operator):
             self.body.material_slots['KK Body'].material.node_tree.nodes['Shader'].node_tree.nodes['BodyTransp'].inputs['Built in transparency toggle'].default_value = 0
 
         self.image_load('KK Face', 'Gentex', 'FaceMain', self.body['SMR materials']['cf_O_face'][0] + '_ST_CT.png')
+        self.image_load('KK Face', 'Gentex', 'Darktex', self.body['SMR materials']['cf_O_face'][0] + '_ST_CT.png')
         self.image_load('KK Face', 'Gentex', 'Darktex', self.body['SMR materials']['cf_O_face'][0] + '_ST_DT.png')
         #default to colors if there's no face maintex
         if not self.body.material_slots['KK Face'].material.node_tree.nodes['Gentex'].node_tree.nodes['FaceMain'].image:
