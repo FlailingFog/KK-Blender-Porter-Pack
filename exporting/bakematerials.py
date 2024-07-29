@@ -176,22 +176,26 @@ def bake_pass(resolutionMultiplier, folderpath, bake_type):
         links = currentmaterial.node_tree.links
 
         #print(currentmaterial)
+        #Don't bake this material if it doesn't have the 'baked_group' slot
+        if not currentmaterial.node_tree.nodes.get('baked_group'):
+            continue
 
         #Don't bake this material if it's an outline material or atlas material
         if 'Outline ' in currentmaterial.name or 'KK Outline' in currentmaterial.name or 'KK Body Outline' in currentmaterial.name or ' Atlas' in currentmaterial.name:
             continue
 
-        #Don't bake this material if the material already has the atlas nodes loaded in and the mix shader is set to 1 and the image already exists (user is re-baking a mat)
-        if currentmaterial.node_tree.nodes.get('KK Mix'):
-            if currentmaterial.node_tree.nodes['KK Mix'].inputs[0].default_value > 0.5 and pathlib.Path(folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + bake_type + '.png') in files:
-                continue
-            else:
-                currentmaterial.node_tree.nodes['KK Mix'].inputs[0].default_value = 0
-        
-        #Don't bake this material if the material does not have the atlas nodes loaded in yet and the image already exists (baking was interrupted)
-        if not currentmaterial.node_tree.nodes.get('KK Mix') and pathlib.Path(folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + bake_type + '.png') in files:
+        #Don't bake this material if it is a simplified material
+        if bpy.data.materials.get(currentmaterial.name + '-ORG'):
             continue
 
+        #Don't bake this material if the material already has the atlas nodes loaded in and the mix shader is set to 1 and the image already exists (user is re-baking a mat)
+        if currentmaterial.node_tree.nodes.get('baked_group'):
+            # print(files)
+            if currentmaterial.node_tree.nodes['baked_group'].inputs[3].default_value > 0.5 and pathlib.Path(folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + bake_type + '.png') in files:
+                continue
+            else:
+                currentmaterial.node_tree.nodes['baked_group'].inputs[3].default_value = 0
+        
         #Turn off the normals for the raw shading node group input if this isn't a normal pass
         if nodes.get('RawShade') and bake_type != 'normal':
             original_normal_state = nodes['RawShade'].inputs[1].default_value
@@ -234,7 +238,9 @@ def bake_pass(resolutionMultiplier, folderpath, bake_type):
                 fillerplane.material_slots[0].material = currentmaterial
 
                 #then render it
-                bpy.context.scene.render.filepath = folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + bake_type
+                matname = sanitizeMaterialName(currentmaterial.name)
+                matname = matname[:-4] if matname[-4:] == '-ORG' else matname
+                bpy.context.scene.render.filepath = folderpath + matname + ' ' + bake_type
                 bpy.context.scene.render.image_settings.file_format=exportType
                 bpy.context.scene.render.image_settings.color_mode=exportColormode
                 #bpy.context.scene.render.image_settings.color_depth='16'
@@ -288,8 +294,8 @@ def bake_pass(resolutionMultiplier, folderpath, bake_type):
         if currentmaterial.node_tree.nodes.get('RawShade') and bake_type == 'normal':
             getOut = nodes['Material Output'].inputs[0].links[0]
             currentmaterial.node_tree.links.remove(getOut)
-            if nodes.get('KK Mix'):
-                links.new(nodes['KK Mix'].outputs[0], nodes['Material Output'].inputs[0])
+            if nodes.get('baked_group'):
+                links.new(nodes['baked_group'].outputs[0], nodes['Material Output'].inputs[0])
             else:
                 links.new(nodes['Rim'].outputs[0], nodes['Material Output'].inputs[0])
         #reset material slots
@@ -375,18 +381,38 @@ def replace_all_baked_materials(folderpath):
 
     for bake_type in ['light', 'dark', 'norm']:
         for mat in [m for m in bpy.data.materials if 'KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name and ' Atlas' not in m.name]:
-            image_path = pathlib.Path(folderpath + sanitizeMaterialName(mat.name) + ' ' + bake_type + '.png')
+            matname = mat.name[:-4] if mat.name[-4:] == '-ORG' else mat.name
+            image_path = pathlib.Path(folderpath + sanitizeMaterialName(matname) + ' ' + bake_type + '.png')
             if image_path in files:
-                bpy.data.images.load(filepath=str(image_path))
-                bpy.data.images[sanitizeMaterialName(mat.name) + ' ' + bake_type + '.png'].pack()
+                image = bpy.data.images.load(filepath=str(image_path))
+                image.pack()
+                #if there was an older version of this image, get rid of it
+                if image.name[-4:] == '.001':
+                    if bpy.data.images.get(image.name[:-4]):
+                        bpy.data.images.remove(bpy.data.images[image.name[:-4]])
+                        image.name = image.name[:-4]
+                # c.kklog('Found {}'.format(sanitizeMaterialName(matname) + ' ' + bake_type + '.png'))
                 
     #now all needed images are loaded into the file. Match each material to it's image textures
-    for mat in bpy.data.materials:
+    for mat in [m for m in bpy.data.materials if m.name not in ['KK Simple', "KK Tears", "KK Shadowcast", "KK Gag02", "KK Gag01", "KK Gag00"]]:
         finalize_this_mat = 'KK ' in mat.name and 'Outline ' not in mat.name and ' Outline' not in mat.name and ' Atlas' not in mat.name
         if finalize_this_mat:
-            # print('Finalizing {}'.format(mat))
+            # c.kklog('Finalizing {}'.format(mat))
+            matname = mat.name[:-4] if mat.name[-4:] == '-ORG' else mat.name
             if mat.node_tree.nodes.get('baked_file'):
+                if not mat.node_tree.nodes['baked_file'].image:
+                    c.kklog('loading in image that was missed {}'.format(matname + ' light.png'))
+                    try:
+                        mat.node_tree.nodes['baked_file'].image = bpy.data.images[matname + ' light.png']
+                        mat.node_tree.nodes['baked_group'].inputs[3].default_value = 1
+                    except:
+                        try:
+                            mat.node_tree.nodes['baked_file'].image = bpy.data.images[matname + ' dark.png']
+                            mat.node_tree.nodes['baked_group'].inputs[3].default_value = 1
+                        except:
+                            c.kklog('Could not finalize {}'.format(mat), 'warn')
                 if mat.node_tree.nodes['baked_file'].image:
+                    mat.node_tree.nodes['baked_group'].inputs[3].default_value = 1
                     if ' light.png' in mat.node_tree.nodes['baked_file'].image.name:
                         light_image = mat.node_tree.nodes['baked_file'].image.name
                         dark_image  = mat.node_tree.nodes['baked_file'].image.name.replace('light', 'dark')
@@ -395,7 +421,7 @@ def replace_all_baked_materials(folderpath):
                         dark_image = mat.node_tree.nodes['baked_file'].image.name
                         light_image  = mat.node_tree.nodes['baked_file'].image.name.replace('dark', 'light')
                         normal_image  = mat.node_tree.nodes['baked_file'].image.name.replace('dark', 'normal')
-                    #mat_dict[mat.name] = [light_image, dark_image]
+                    #mat_dict[matname] = [light_image, dark_image]
 
                     #rename material to -ORG, and replace it with a new material
                     mat.name += '-ORG' if '-ORG' not in mat.name else ''
@@ -466,11 +492,13 @@ def create_material_atlas(folderpath):
                     cat.remove(block)
         #revert the image back from the atlas file to the baked file   
         for mat in bpy.data.materials:
+            # print(mat.name)
             if mat.name[-4:] == '-ORG':
                 simplified_name = mat.name[:-4]
-                simplified_mat = bpy.data.materials[simplified_name]
-                for bake_type in ['light', 'dark', 'norm']:
-                    simplified_mat.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image = bpy.data.images.get(simplified_name + ' ' + bake_type + '.png')
+                if bpy.data.materials.get(simplified_name):
+                    simplified_mat = bpy.data.materials[simplified_name]
+                    for bake_type in ['light', 'dark', 'norm']:
+                        simplified_mat.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image = bpy.data.images.get(simplified_name + ' ' + bake_type + '.png')
 
     if bpy.data.collections.get('Model with atlas'):
         print('deleting previous collection "Model with atlas" and regenerating atlas model...')
@@ -762,7 +790,12 @@ def create_material_atlas(folderpath):
             atlas.file_format = 'PNG'
             atlas.save()
             atlas.pack()
-            
+            #if there was an older version of this image, get rid of it
+            if atlas.name[-4:] == '.001':
+                if bpy.data.images.get(atlas.name[:-4]):
+                    bpy.data.images.remove(bpy.data.images[atlas.name[:-4]])
+                    atlas.name = atlas.name[:-4]
+
             #replace all images with the atlas in a new atlas material
             for mat_slot in [m for m in object.material_slots if ('KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name)]:
                 material = mat_slot.material

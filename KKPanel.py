@@ -218,8 +218,8 @@ class IMPORTING_PT_panel(bpy.types.Panel):
             row.operator('kkbp.kkbpimport', text = t('import_model'), icon='FILE_FOLDER')
             row.enabled = scene.plugin_state not in ['imported', 'prepped']
             
-            row = col.row(align=True)
-            row.label(text="")
+            # row = col.row(align=True)
+            # row.label(text="")
             
             row = col.row(align = True)
             box = row.box()
