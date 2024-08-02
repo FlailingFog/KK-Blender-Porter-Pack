@@ -23,7 +23,7 @@ This file performs the following operations
 
 ·	Sets up the gag eye material drivers using the values from the gag eye shapekeys
 ·	Adds an outline modifier and outline materials to the face, body, hair and outfit meshes (based on single outline mode choice)
-·	Sets up the GFN empty
+·	Sets up the normal smoothing geometry nodes group
 
 ·	Autopack all files
 
@@ -62,7 +62,7 @@ class modify_material(bpy.types.Operator):
             self.link_textures_for_clothes()
             self.link_textures_for_tongue_tear_gag()
 
-            self.import_and_setup_gfn()
+            self.import_and_setup_smooth_normals()
             self.setup_gag_eye_material_drivers()
 
             self.add_outlines_to_body()
@@ -183,6 +183,7 @@ class modify_material(bpy.types.Operator):
 
     def replace_materials_for_body(self):
         c.switch(self.body, 'object')
+        self.body.visible_shadow = False
         templateList = [
         'KK Body',
         'KK Outline',
@@ -239,6 +240,7 @@ class modify_material(bpy.types.Operator):
     def replace_materials_for_hair(self):
         '''Replace all of the Hair materials with hair templates and name accordingly'''
         for hair in self.hairs:
+            hair.visible_shadow = False
             for original_material in hair.material_slots:
                 template = bpy.data.materials['KK Hair'].copy()
                 template.name = 'KK ' + original_material.name
@@ -249,6 +251,7 @@ class modify_material(bpy.types.Operator):
         #Replace all other materials with the general template and name accordingly
         for cat in [self.outfits, self.outfit_alternates]:
             for ob in cat:
+                ob.visible_shadow = False
                 for original_material in ob.material_slots:
                     template = bpy.data.materials['KK General'].copy()
                     template.name = 'KK ' + original_material.name
@@ -717,43 +720,32 @@ class modify_material(bpy.types.Operator):
             bpy.data.materials[mat_name].node_tree.nodes['baked_file'].image = bpy.data.images.get(mat_name + ' light.png')
             bpy.data.materials[mat_name].node_tree.nodes['baked_group'].inputs[3].default_value = 1
         
-    def import_and_setup_gfn(self):
-        '''Sets up the Generated Face Normals (GFN) empty for smooth face normals'''
+    def import_and_setup_smooth_normals(self):
+        '''Sets up the Smooth Normals geo nodes setup for smoother face, body, hair and clothes normals'''
         #setup face normals
         try:
-            #import gfn face node group, cycles node groups as well
-            c.import_from_library_file('NodeTree', ['Raw Shading (face)'], bpy.context.scene.kkbp.use_material_fake_user)
-            c.switch(self.armature, 'edit')
-            head_location = (self.armature.data.edit_bones['Head'].tail.x+1, self.armature.data.edit_bones['Head'].tail.y+1, self.armature.data.edit_bones['Head'].tail.z+1)
-            bpy.ops.object.mode_set(mode='OBJECT')
-            bpy.ops.object.empty_add(type='CUBE', align='WORLD', location=head_location)
-            empty = bpy.context.view_layer.objects.active
-            empty.location.x -= 1
-            empty.location.y -= 1
-            empty.location.z -= 1
-            empty.scale = (0.15, 0.15, 0.15)
-            empty.name = 'GFN Empty'
-            bpy.ops.object.select_all(action='DESELECT')
-            bpy.context.view_layer.objects.active = self.armature
-            empty.select_set(True)
-            bpy.ops.object.mode_set(mode='POSE')
-            bpy.ops.pose.select_all(action='DESELECT')
-            self.armature.data.bones['Head'].select = True
-            self.armature.data.bones.active = self.armature.data.bones['Head']
-            bpy.ops.object.parent_set(type='BONE')
-            bpy.ops.pose.select_all(action='DESELECT')
-            bpy.ops.object.mode_set(mode='OBJECT')
-            bpy.ops.object.select_all(action='DESELECT')
-            bpy.data.node_groups['Generated Face Normals'].nodes['GFNEmpty'].object = empty
-            bpy.context.view_layer.objects.active = empty
-            empty.select_set(True)
-            bpy.ops.object.move_to_collection(collection_index=1)
-            empty.hide_set(True)
-            empty.hide_render = True
+            #import all the node groups
+            c.import_from_library_file('NodeTree', ['Raw Shading (smooth normals)', 'Raw Shading (smooth body normals)', 'Smooth Normals', 'Other Smooth Normals'], bpy.context.scene.kkbp.use_material_fake_user)
+            c.switch(self.body, 'object')
+            geo_nodes = self.body.modifiers.new(name = 'Normal Smoothing', type = 'NODES')
+            geo_nodes.node_group = bpy.data.node_groups['Smooth Normals']
+            geo_nodes.show_viewport = False
+            geo_nodes.show_render = False
+            for ob in self.hairs:
+                geo_nodes = ob.modifiers.new(name = 'Normal Smoothing', type = 'NODES')
+                geo_nodes.node_group = bpy.data.node_groups['Other Smooth Normals']
+                geo_nodes.show_viewport = False
+                geo_nodes.show_render = False
+            for cat in [self.outfits, self.outfit_alternates]:
+                for ob in cat:
+                    geo_nodes = ob.modifiers.new(name = 'Normal Smoothing', type = 'NODES')
+                    geo_nodes.node_group = bpy.data.node_groups['Other Smooth Normals']
+                    geo_nodes.show_viewport = False
+                    geo_nodes.show_render = False
         except:
-            #i don't feel like dealing with any errors related to this
-            c.kklog('The GFN empty wasnt setup correctly. Oh well.', 'warn')
-        c.print_timer('import_and_setup_gfn')
+            #i still don't feel like dealing with any errors related to this
+            c.kklog('The normal smoothing wasnt setup correctly. Oh well.', 'warn')
+        c.print_timer('import_and_setup_smooth_normals')
 
     def setup_gag_eye_material_drivers(self):
         '''setup gag eye drivers'''
@@ -1034,8 +1026,9 @@ class modify_material(bpy.types.Operator):
         bpy.data.scenes[0].display_settings.display_device = 'sRGB'
         bpy.data.scenes[0].view_settings.view_transform = 'Standard'
         bpy.data.scenes[0].view_settings.look = 'None'
+        #disable shadows in the scene. The toon shading in 4.2 is fucking broken but the broken-ness can be hidden with this setting
+        bpy.data.scenes[0].eevee.use_shadows = False
         c.print_timer('set_color_management')
-
 
     # %% Supporting functions
 

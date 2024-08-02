@@ -135,7 +135,11 @@ class kkbp_import(bpy.types.Operator):
         c.kklog('Opening older version of Blender to convert model textures...')
         time.sleep(5)
         # You have to supply a blend file or it won't execute the script automatically. Choose the video editing template blend because it's the first one I tried
-        version_path = [i for i in glob.glob(os.path.dirname(bpy.context.scene.kkbp.blender_path) + '/*/')][0]
+        if 'blender.exe' in bpy.context.scene.kkbp.blender_path:
+            version_path = [i for i in glob.glob(os.path.dirname(bpy.context.scene.kkbp.blender_path) + '/*/')][0]
+        else:
+            bpy.context.scene.kkbp.blender_path = bpy.context.scene.kkbp.blender_path + '/blender.exe'
+            version_path = [i for i in glob.glob(os.path.dirname(bpy.context.scene.kkbp.blender_path) + '/*/')][0]
         blender_file = os.path.join(version_path, 'scripts', 'startup', 'bl_app_templates_system', 'Video_Editing', 'startup.blend')
         secondscriptname = os.path.join(os.path.dirname(__file__), 'converttextures.py')
         process = Popen([bpy.context.scene.kkbp.blender_path, blender_file, "-P", secondscriptname, os.path.dirname(__file__), bpy.context.scene.kkbp.import_dir], stdout=PIPE, universal_newlines=True)

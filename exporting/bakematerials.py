@@ -190,7 +190,6 @@ def bake_pass(resolutionMultiplier, folderpath, bake_type):
 
         #Don't bake this material if the material already has the atlas nodes loaded in and the mix shader is set to 1 and the image already exists (user is re-baking a mat)
         if currentmaterial.node_tree.nodes.get('baked_group'):
-            # print(files)
             if currentmaterial.node_tree.nodes['baked_group'].inputs[3].default_value > 0.5 and pathlib.Path(folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + bake_type + '.png') in files:
                 continue
             else:
@@ -378,12 +377,16 @@ def replace_all_baked_materials(folderpath):
     #load all baked images into blender
     fileList = pathlib.Path(folderpath).glob('*.*')
     files = [file for file in fileList if file.is_file()]
+    print(files)
+    print('----------------')
 
-    for bake_type in ['light', 'dark', 'norm']:
+    for bake_type in ['light', 'dark', 'normal']:
         for mat in [m for m in bpy.data.materials if 'KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name and ' Atlas' not in m.name]:
             matname = mat.name[:-4] if mat.name[-4:] == '-ORG' else mat.name
-            image_path = pathlib.Path(folderpath + sanitizeMaterialName(matname) + ' ' + bake_type + '.png')
+            image_path = pathlib.Path(folderpath + '/' + sanitizeMaterialName(matname) + ' ' + bake_type + '.png')
+            print(image_path)
             if image_path in files:
+                print(image_path)
                 image = bpy.data.images.load(filepath=str(image_path))
                 image.pack()
                 #if there was an older version of this image, get rid of it
@@ -447,9 +450,10 @@ def replace_all_baked_materials(folderpath):
                     new_node.name = simple.name
                     new_node.nodes['light'].image = bpy.data.images[light_image]
                     if bpy.data.images.get(dark_image):
+                        print('Loaded ', dark_image)
                         new_node.nodes['dark'].image = bpy.data.images[dark_image]
                     if bpy.data.images.get(normal_image):
-                        new_node.nodes['norm'].image = bpy.data.images[normal_image]
+                        new_node.nodes['normal'].image = bpy.data.images[normal_image]
                     #replace instances of ORG material with new finalized one
                     mat.use_fake_user = True
                     alpha_blend_mats = [
@@ -469,7 +473,7 @@ def replace_all_baked_materials(folderpath):
                                 mat_slot.material = simple
                                 if simple.name in alpha_blend_mats:
                                     mat_slot.material.blend_method = 'BLEND'
-
+                                    
 def create_material_atlas(folderpath):
     '''Merges all the finalized material png files into a single atlas file, copies the current model and applies the atlas to the copy'''
 
@@ -485,11 +489,6 @@ def create_material_atlas(folderpath):
                 return found
     
     def remove_orphan_data():
-        #delete orphan data
-        for cat in [bpy.data.armatures, bpy.data.objects, bpy.data.meshes, bpy.data.materials, bpy.data.images, bpy.data.node_groups]:
-            for block in cat:
-                if block.users == 0:
-                    cat.remove(block)
         #revert the image back from the atlas file to the baked file   
         for mat in bpy.data.materials:
             # print(mat.name)
@@ -497,8 +496,13 @@ def create_material_atlas(folderpath):
                 simplified_name = mat.name[:-4]
                 if bpy.data.materials.get(simplified_name):
                     simplified_mat = bpy.data.materials[simplified_name]
-                    for bake_type in ['light', 'dark', 'norm']:
+                    for bake_type in ['light', 'dark', 'normal']:
                         simplified_mat.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image = bpy.data.images.get(simplified_name + ' ' + bake_type + '.png')
+        #delete orphan data
+        for cat in [bpy.data.armatures, bpy.data.objects, bpy.data.meshes, bpy.data.materials, bpy.data.images, bpy.data.node_groups]:
+            for block in cat:
+                if block.users == 0:
+                    cat.remove(block)
 
     if bpy.data.collections.get('Model with atlas'):
         print('deleting previous collection "Model with atlas" and regenerating atlas model...')
@@ -617,7 +621,7 @@ def create_material_atlas(folderpath):
             
             print('')
             print(material)
-            for bake_type in ['light', 'dark', 'norm']:
+            for bake_type in ['light', 'dark', 'normal']:
                 try:
                     image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
                     break
@@ -636,7 +640,7 @@ def create_material_atlas(folderpath):
                 print('fixing negative uv irregularities {}'.format(bake_type))
                 #do this for all three images
                 uv_shift_flag = True
-                for bake_type in ['light', 'dark', 'norm']:
+                for bake_type in ['light', 'dark', 'normal']:
                     image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
                     if not image:
                         print('no image for {} {}'.format(material.name, bake_type))
@@ -682,7 +686,7 @@ def create_material_atlas(folderpath):
             if x_max_uv > 1 or y_max_uv > 1:
                 #do this for all three images
                 uv_shift_flag = True
-                for bake_type in ['light', 'dark', 'norm']:
+                for bake_type in ['light', 'dark', 'normal']:
                     print('fixing positive uv irregularities {}'.format(bake_type))
                     image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
                     if not image:
@@ -721,7 +725,7 @@ def create_material_atlas(folderpath):
                     material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image = new_image
                     uv_shift_flag = False
             
-            for bake_type in ['light', 'dark', 'norm']:
+            for bake_type in ['light', 'dark', 'normal']:
                 try:
                     image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
                     break
@@ -741,7 +745,7 @@ def create_material_atlas(folderpath):
 
         #give each image an index before stacking them
         uv_shift_flag = True
-        for bake_type in ['light', 'dark', 'norm']:
+        for bake_type in ['light', 'dark', 'normal']:
             indexed_images = {}
             for mat_slot in [m for m in object.material_slots if ('KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name)]:
                 material = mat_slot.material

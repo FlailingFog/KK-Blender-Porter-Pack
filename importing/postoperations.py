@@ -194,17 +194,6 @@ class post_operations(bpy.types.Operator):
                 #if nodes['Shader'].node_tree.name != 'Body Shader':
                 #    links.new(nodes['RawShade'].outputs['Normal passthrough'], nodes['Rim'].inputs[3])
 
-        #turn on ambient occlusion and bloom in render settings
-        bpy.context.scene.eevee.use_gtao = True
-
-        #turn on bloom in render settings
-        bpy.context.scene.eevee.use_bloom = True
-
-        #face has special normal setup to work with gfn. make a copy and add the normals inside of the copy
-        #this group prevents Amb Occ issues around nose, and mouth interior
-        face_nodes = bpy.data.node_groups['LBS (face)']
-        face_nodes.use_fake_user = True
-
         #select entire face and body and reset vectors to prevent Amb Occ seam around the neck 
         body = bpy.data.objects['Body']
         bpy.ops.object.select_all(action='DESELECT')
@@ -291,29 +280,6 @@ class post_operations(bpy.types.Operator):
                         bone['KKBP outfit ID'] = rig.data.bones['ORG-' + bone.name]['KKBP outfit ID']
                         if rig.data.bones.get('DEF-' + bone.name):
                             rig.data.bones['DEF-' + bone.name]['KKBP outfit ID'] = rig.data.bones['ORG-' + bone.name]['KKBP outfit ID']
-
-        #make sure the gfn empty is reparented to the head bone
-        bpy.ops.object.select_all(action='DESELECT')
-        bpy.context.view_layer.objects.active = rig
-        empty = bpy.data.objects['GFN Empty']
-        empty.hide_set(False)
-        empty.select_set(True)
-        bpy.ops.object.mode_set(mode='POSE')
-        bpy.ops.pose.select_all(action='DESELECT')
-        rig.data.bones['head'].select = True
-        rig.data.bones.active = rig.data.bones['head']
-        #show layer 7 to use ops parent
-        rig.data.collections_all['7'].is_visible = True
-        bpy.ops.object.parent_set(type='BONE')
-        bpy.ops.pose.select_all(action='DESELECT')
-        bpy.ops.object.mode_set(mode='OBJECT')
-        bpy.ops.object.select_all(action='DESELECT')
-        bpy.data.node_groups['Generated Face Normals'].nodes['GFNEmpty'].object = empty
-        bpy.context.view_layer.objects.active = empty
-        empty.select_set(True)
-        bpy.ops.object.move_to_collection(collection_index=1)
-        empty.hide_set(True)
-        empty.hide_render = True
 
         self.armature.hide_set(True)
         bpy.ops.object.select_all(action='DESELECT')

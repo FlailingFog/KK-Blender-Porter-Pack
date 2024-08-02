@@ -14,7 +14,7 @@ class KKBPPreferences(bpy.types.AddonPreferences):
 
     #this will let the plugin know if the blender 2.80 zip needs to be downloaded, 
     # or where it is located if the user has already downloaded it
-    blender_path: StringProperty(default = '', name="Blender 2.80 / 3.6 exe path", description="Direct path to blender.exe from any Blender version between 2.80 and 3.6")
+    blender_path: StringProperty(default = '', name="Direct path to 2.80 / 3.6 blender.exe", description="Direct path to blender.exe from any Blender version between 2.80 and 3.6")
 
     sfw_mode : BoolProperty(
     description=t('sfw_mode_tt'),
