@@ -15,4 +15,4 @@ platforms = ["windows-x64"]
 
 [permissions]
 files = "Import Koikatsu model files and export edited texture files"
-network = "Download Blender 2.80 from download.blender.org/release/"
+network = "Download Blender 2.90 from download.blender.org/release/"

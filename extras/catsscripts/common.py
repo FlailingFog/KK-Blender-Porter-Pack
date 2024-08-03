@@ -1725,7 +1725,7 @@ def mix_weights(mesh, vg_from, vg_to, mix_strength=1.0, mix_mode='ADD', delete_o
     apply_modifier(mod)
     if delete_old_vg:
         mesh.vertex_groups.remove(mesh.vertex_groups.get(vg_from))
-    mesh.active_shape_key_index = 0  # This line fixes a visual bug in 2.80 which causes random weights to be stuck after being merged
+    mesh.active_shape_key_index = 0  # This line fixes a visual bug in 2.90 which causes random weights to be stuck after being merged
 
 
 def get_user_preferences():

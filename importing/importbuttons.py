@@ -4,7 +4,7 @@ This file performs the following operations
 ·	Set view transform to Standard
 ·	Create KK log in the scripting tab
 ·	Save the import folder path
-·	Opens Blender 3.6 / 2.80 to run a saturation script on all textures
+·	Opens Blender 3.6 / 2.90 to run a saturation script on all textures
 .   Textures are saved to the "saturated" subfolder in the same folder as the pmx file
 ·	Import all pmx files from folder path
 ·	If the pmx file is an outfit, save the ID to the empty object of that pmx file

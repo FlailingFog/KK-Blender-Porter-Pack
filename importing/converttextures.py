@@ -1,5 +1,5 @@
 '''
-This file can be run by any blender version between 2.80 and 3.6 to import and saturate all of the pmx textures
+This file can be run by any blender version between 2.90 and 3.6 to import and saturate all of the pmx textures
 '''
 import bpy, sys, os, bgl, gpu, numpy, datetime
 from gpu_extras.batch import batch_for_shader

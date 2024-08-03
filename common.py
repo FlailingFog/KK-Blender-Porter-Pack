@@ -133,7 +133,7 @@ def has_blender_dependency():
     if os.path.isfile(blender_dir):
         return True
     else:
-        blender_dir = os.path.join(script_dir, 'importing', 'dependencies', "blender-2.80-windows64", "blender.exe")
+        blender_dir = os.path.join(script_dir, 'importing', 'dependencies', "blender-2.90.0-windows64", "blender.exe")
         if os.path.isfile(blender_dir):
             return True
     return False

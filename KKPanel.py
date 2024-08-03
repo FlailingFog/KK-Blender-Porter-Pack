@@ -202,7 +202,7 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         if os.path.isfile(blender_dir):
             bpy.context.scene.kkbp.blender_path = blender_dir
         else:
-            blender_dir = os.path.join(script_dir, 'importing', 'dependencies', "blender-2.80-windows64", "blender.exe")
+            blender_dir = os.path.join(script_dir, 'importing', 'dependencies', "blender-2.90.0-windows64", "blender.exe")
             if os.path.isfile(blender_dir):
                 bpy.context.scene.kkbp.blender_path = blender_dir
 
@@ -287,7 +287,7 @@ class IMPORTING_PT_panel(bpy.types.Panel):
                     row.alignment = 'EXPAND'
                     row.label(text=text)
                 row = col.row(align=True)
-                row.operator('kkbp.installdependency28', text = t('install_dependency') + ' (Blender 2.80)', icon='MODIFIER')
+                row.operator('kkbp.installdependency28', text = t('install_dependency') + ' (Blender 2.90)', icon='MODIFIER')
                 row = col.row(align=True)
                 row.operator('kkbp.installdependency', text = t('install_dependency') + ' (Blender 3.6.9)', icon='MODIFIER')
 
