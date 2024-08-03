@@ -171,7 +171,7 @@ def bake_pass(resolutionMultiplier, folderpath, bake_type):
         raw.nodes['breaknode'].inputs[6].default_value = (1,1,1,1) if bake_type == 'light' else (0,0,0,1)
 
     #go through each material slot
-    for currentmaterial in object_to_bake.data.materials:
+    for index, currentmaterial in enumerate(object_to_bake.data.materials):
         nodes = currentmaterial.node_tree.nodes
         links = currentmaterial.node_tree.links
 
@@ -246,6 +246,7 @@ def bake_pass(resolutionMultiplier, folderpath, bake_type):
                 
                 #bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
                 # print('rendering this file:' + bpy.context.scene.render.filepath)
+                print('Rendering {} / {}'.format(index+1, len(object_to_bake.data.materials)))
                 bpy.ops.render.render(write_still = True)
                 
                 #reset folderpath after render

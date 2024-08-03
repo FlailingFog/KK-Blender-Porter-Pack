@@ -166,7 +166,11 @@ class modify_mesh(bpy.types.Operator):
         if not bpy.context.scene.kkbp.categorize_dropdown in ['A', 'B']:
             return
         #the KK_ReferenceInfoData json lists the clothes variations' object paths in the ENUM order in the modifymesh markdown file
-        ref_data = c.get_json_file('KK_ReferenceInfoData.json')
+        try:
+            ref_data = c.get_json_file('KK_ReferenceInfoData.json')
+        except:
+            #this file did not have any contents for some reason
+            return
         #the smr json contains the link between the object path and the clothing material. The material is used for separation
         smr_data = c.get_json_file('KK_SMRData.json')
         #the clothesdata json can identify what objects are the indoor shoes
