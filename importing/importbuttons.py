@@ -142,7 +142,7 @@ class kkbp_import(bpy.types.Operator):
             version_path = [i for i in glob.glob(os.path.dirname(bpy.context.scene.kkbp.blender_path) + '/*/')][0]
         blender_file = os.path.join(version_path, 'scripts', 'startup', 'bl_app_templates_system', 'Video_Editing', 'startup.blend')
         secondscriptname = os.path.join(os.path.dirname(__file__), 'converttextures.py')
-        process = Popen([bpy.context.scene.kkbp.blender_path, blender_file, "-P", secondscriptname, os.path.dirname(__file__), bpy.context.scene.kkbp.import_dir], stdout=PIPE, universal_newlines=True)
+        process = Popen([bpy.context.scene.kkbp.blender_path, blender_file, "-P", secondscriptname, os.path.dirname(__file__), bpy.context.scene.kkbp.import_dir, '1'], stdout=PIPE, universal_newlines=True)
         r = process.stdout.readline()[:-1]
         while r:
             if '|' in r:

@@ -161,8 +161,9 @@ if __name__ == '__main__':
     #Set the view transform or the files will not save correctly
     bpy.context.scene.view_settings.view_transform = 'Standard'
 
-    pmx_import_dir = sys.argv[-1]
-    addon_dir = sys.argv[-2]
+    filter = int(sys.argv[-1])
+    pmx_import_dir = sys.argv[-2]
+    addon_dir = sys.argv[-3]
 
     lut_image = os.path.join(addon_dir, 'luts', 'Lut_TimeDay.png')
     lut_image = bpy.data.images.load(str(lut_image))
@@ -178,8 +179,11 @@ if __name__ == '__main__':
 
     directory = pmx_import_dir
     fileList = Path(directory).rglob('*.png')
-    files = [file for file in fileList if file.is_file() and "_MT" in file.name and file.name not in ignore_list]
-
+    if filter:
+        files = [file for file in fileList if file.is_file() and "_MT" in file.name and file.name not in ignore_list]
+    else:
+        files = [file for file in fileList if file.is_file()]
+    # print('|', str(os.path.join(directory, "saturated_files")))
     first = True
     for image_file in files:
         #skip this file if it has already been converted
@@ -197,6 +201,7 @@ if __name__ == '__main__':
             #saturate the image, save and remove the file
             saturate(image, lut_image)
             image.save_render(str(os.path.join(directory, "saturated_files", image_file.name.replace('_MT', '_ST'))))
+            # print('|', str(os.path.join(directory, "saturated_files", image_file.name.replace('_MT', '_ST'))))
             bpy.data.images.remove(image)
     
     print('|Image conversion operation took {} seconds'.format(abs(round(((datetime.datetime.now().minute * 60 + datetime.datetime.now().second + datetime.datetime.now().microsecond / 1e6) - timer), 3))))

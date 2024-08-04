@@ -1,7 +1,9 @@
-import bpy, os
+import bpy, os, time, glob
 from pathlib import Path
 from bpy.props import StringProperty
 from ..importing.modifymaterial import modify_material
+from .. import common as c
+from subprocess import Popen, PIPE
 
 def import_studio_objects(directory):
     #Stop if no files were detected
@@ -12,12 +14,8 @@ def import_studio_objects(directory):
     def nodeError(self, context):
         self.layout.label(text="You need a node group named \"Custom_studio\" with at least three inputs and one output to use the Custom shader.")
         self.layout.label(text="Input 1: Maintex || Input 2: Image Alpha || Input 3: Normal || Input 4 (optional): Detailmask || Input 5 (optional): Colormask")
-    
-    #Stop if the KK shader was not detected
-    def kkError(self, context):
-        self.layout.label(text="You need to append the KK Shader from the KK Shader.blend file to use this shader.")
-        self.layout.label(text="Go to File > Append > choose the KK shader.blend > go into the materials folder > choose \"KK General\" ")
-    
+        
+    bpy.context.scene.view_settings.view_transform = 'Standard'
     scene = bpy.context.scene.kkbp
     shader_type = scene.dropdown_box 
     shadow_type = scene.shadows_dropdown 
@@ -119,19 +117,20 @@ def import_studio_objects(directory):
                             if ('.dds' in image.name or '.DDS' in image.name) and image.name.replace('.dds', '.png') not in already_loaded_images:
                                 new_path = image.filepath.replace(".dds", ".png").replace(".DDS", ".png")
                                 new_image_name = image.name.replace(".dds", ".png").replace(".DDS", ".png")
+                                image.colorspace_settings.name = 'sRGB'
                                 image.save_render(bpy.path.abspath(new_path))
                                 bpy.data.images.load(filepath=bpy.path.abspath(new_path))
                                 bpy.data.images[new_image_name].pack()
                                 node.image = bpy.data.images[new_image_name]
-
+                        
                     #if two objects have the same material, and the material was already operated on, skip it
                     if nodes.get('Principled BSDF') == None:
                         continue
                     
-                    emission_input = 19 if bpy.app.version[0] > 2 else 17
-                    metallic_input = 6 if bpy.app.version[0] > 2 else 4
-                    normal_input = 22 if bpy.app.version[0] > 2 else 20
-                    alpha_input = 21 if bpy.app.version[0] > 2 else 19
+                    emission_input = 26
+                    metallic_input = 1
+                    normal_input = 5
+                    alpha_input = 4
 
                     #standardize dist and subsurf because the number of nodes on the principled bsdf changes with these choices
                     nodes['Principled BSDF'].distribution = 'GGX'
@@ -193,15 +192,12 @@ def import_studio_objects(directory):
                     elif shader_type == 'C':
                     #if set to KK shader
                         if image_alpha != 'noalpha':
-                            #print('i got no alpha')
                             image_alpha = image_alpha.image
                         if image != 'noimage':
-                            #print('i got no image')
                             image = image.image
                         else:
                             #if there's no image, try to fallback to the maintex
                             try:
-                                #print('i fell into this')
                                 image = bpy.data.images.get(detected_maintex)
                             except:
                                 pass
@@ -294,11 +290,12 @@ def import_studio_objects(directory):
                             material_slot.material.node_tree.nodes['Shader'].node_tree.nodes['alphatoggle'].inputs['maintex alpha'].default_value = (1,1,1,1)   
                         else:
                             #but if there is a main image, create a darktex for it and load it in
-                            bpy.context.scene.kkbp.import_dir = os.path.dirname(bpy.data.filepath) + '\\'
+                            original_path = bpy.context.scene.kkbp.import_dir
+                            bpy.context.scene.kkbp.import_dir = directory + 'saturated_files'
                             darktex = modify_material.create_darktex(bpy.data.images[image.name], [.764, .880, 1]) #create the darktex now and load it in later
-                            bpy.context.scene.kkbp.import_dir = ''
+                            bpy.context.scene.kkbp.import_dir = original_path
 
-                            image_load('Gentex', 'dark', darktex.name)
+                            image_load('Gentex', 'Darktex', darktex.name)
                             material_slot.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Use dark maintex?'].default_value = 1
                             material_slot.material.node_tree.nodes['Shader'].node_tree.nodes['colorsDark'].inputs['Ignore colormask?'].default_value = 1
                             
@@ -356,33 +353,45 @@ def import_studio_objects(directory):
                         
                         material.node_tree.links.new(output_node.inputs[0], custom_group.outputs[0])
 
-    #convert newly imported textures using code from importcolors.py
+    #basic strat: load in the .dds files to this version of blender, set them to srgb, save them as .pngs and saturate the .pngs with the older blender version
     if use_lut:
-        image_list = [image for image in bpy.data.images if image.name not in already_loaded_images]
-        lut_light = 'Lut_TimeDay.png'
-        lut_dark = 'Lut_TimeDay.png'
-        modify_material.load_luts(lut_light, lut_dark)
-
-        first = True
+        image_list = [image for image in bpy.data.images if (image.name not in already_loaded_images and 'Template:' not in image.name)]
+        
+        def convert_and_import_textures():
+            c.kklog('Opening older version of Blender to convert model textures...')
+            time.sleep(5)
+            # You have to supply a blend file or it won't execute the script automatically. Choose the video editing template blend because it's the first one I tried
+            if 'blender.exe' in bpy.context.scene.kkbp.blender_path:
+                version_path = [i for i in glob.glob(os.path.dirname(bpy.context.scene.kkbp.blender_path) + '/*/')][0]
+            else:
+                bpy.context.scene.kkbp.blender_path = bpy.context.scene.kkbp.blender_path + '/blender.exe'
+                version_path = [i for i in glob.glob(os.path.dirname(bpy.context.scene.kkbp.blender_path) + '/*/')][0]
+            blender_file = os.path.join(version_path, 'scripts', 'startup', 'bl_app_templates_system', 'Video_Editing', 'startup.blend')
+            secondscriptname = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'importing', 'converttextures.py')
+            process = Popen([bpy.context.scene.kkbp.blender_path, blender_file, "-P", secondscriptname, os.path.dirname(os.path.dirname(__file__)) + r'\importing', directory, '0'], stdout=PIPE, universal_newlines=True)
+            r = process.stdout.readline()[:-1]
+            while r:
+                if '|' in r:
+                    c.kklog(r.replace('|','')) # these are lines printed from the second script
+                r = process.stdout.readline()[:-1]
+        convert_and_import_textures()
+        
+        #load in the saturated images and remap
         for image in image_list:
-            image_name = image.name
-
-            if ('.0' not in image_name) and ('_md-DXT' not in image_name) and ('_mc-DXT' not in image_name) and (image_name in conversion_image_list):
-                image_name = image_name.replace(".dds", ".png").replace(".DDS", ".png")
-                image = bpy.data.images[image_name]
-                print('converting ' + image_name)
-                image.reload()
-                image.colorspace_settings.name = 'sRGB'
-
-                # Need to run image_to_KK twice for the first image due to a weird bug
-                #if first:
-                modify_material.image_to_KK(image, lut_light)
-                #    first = False
-
-                new_pixels, width, height = modify_material.image_to_KK(image, lut_light)
-                image.pixels = new_pixels
-                #image.save()
-
+            if image.filepath:
+                try:
+                    saturated_image = bpy.data.images.load(image.filepath.replace(image.name, 'saturated_files\\' + image.name.replace('.dds','.png').replace('.DDS','.png')))
+                    image.user_remap(saturated_image)
+                except:
+                    # print('image: ', image, ' file: ', image.filepath.replace(image.name, image.name.replace('.dds','.png').replace('.DDS','.png')).replace('/', '\\'))
+                    saturated_image = bpy.data.images.load(image.filepath.replace(image.name, image.name.replace('.dds','.png').replace('.DDS','.png')))
+                    image.user_remap(saturated_image)
+    
+    #delete orphan data
+    for cat in [bpy.data.armatures, bpy.data.objects, bpy.data.meshes, bpy.data.materials, bpy.data.images, bpy.data.node_groups]:
+        for block in cat:
+            if block.users == 0:
+                cat.remove(block)
 
 class import_studio(bpy.types.Operator):
     bl_idname = "kkbp.importstudio"
@@ -398,6 +407,8 @@ class import_studio(bpy.types.Operator):
     
     def execute(self, context):        
         import_studio_objects(self.directory)
+        c.toggle_console()
+        c.toggle_console()
         return {'FINISHED'}
         
     def invoke(self, context, event):
