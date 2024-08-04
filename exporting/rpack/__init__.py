@@ -130,14 +130,14 @@ illustrates a solution to a problem discussed at stackoverflow_.
 """
 
 # Module metadata
-__author__ = 'Daniel Andersson'
-__maintainer__ = __author__
-__email__ = 'daniel.4ndersson@gmail.com'
-__contact__ = __email__
-__copyright__ = 'Copyright (c) 2017 Daniel Andersson'
-__license__ = 'MIT'
-__url__ = 'https://github.com/Penlect/rectangle-packer'
-__version__ = '2.0.2'
+# __author__ = 'Daniel Andersson'
+# __maintainer__ = __author__
+# __email__ = 'daniel.4ndersson@gmail.com'
+# __contact__ = __email__
+# __copyright__ = 'Copyright (c) 2017 Daniel Andersson'
+# __license__ = 'MIT'
+# __url__ = 'https://github.com/Penlect/rectangle-packer'
+# __version__ = '2.0.2'
 
 # Built-in
 from typing import Iterable, Tuple, List
