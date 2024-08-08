@@ -15,7 +15,6 @@ Notes:
 
 import bpy, os, traceback, time, pathlib, numpy, mathutils, bmesh
 from .. import common as c
-from . import rpack
 
 from ..interface.dictionary_en import t
 
@@ -769,13 +768,35 @@ def create_material_atlas(folderpath):
             for image_name in indexed_images:
                 image = bpy.data.images[image_name]
                 sizes.append((image.size[0] * 4, image.size[1]))
-            positions = rpack.pack(sizes)
+
+            # Built-in
+            from typing import Iterable, Tuple, List
+
+            # Extension modules
+            from ..rpack._core import (
+                pack as _pack,
+                bbox_size,
+            )
+
+            enclosing_size = bbox_size
+
+            def pack(sizes: Iterable[Tuple[int, int]],
+                     max_width=None, max_height=None) -> List[Tuple[int, int]]:
+                if max_width is not None and not isinstance(max_width, int):
+                    raise TypeError("max_width must be an integer")
+                if max_height is not None and not isinstance(max_height, int):
+                    raise TypeError("max_height must be an integer")
+                if not isinstance(sizes, list):
+                    sizes = list(sizes)
+                return _pack(sizes, max_width or -1, max_height or -1)
+
+            positions = pack(sizes)
             for index, image_name in enumerate(indexed_images):
                 # print(image_name)
                 indexed_images[image_name].append(positions[index])
 
             #create a new numpy array the size of the bounding box
-            bounding_box = rpack.bbox_size(sizes, positions)
+            bounding_box = bbox_size(sizes, positions)
             atlas_array = numpy.zeros(bounding_box[0] * bounding_box[1])
             atlas_array = numpy.reshape(atlas_array, (-1, bounding_box[0]))
 

@@ -1,0 +1,18 @@
+schema_version = "1.0.0"
+# https://docs.blender.org/manual/en/latest/advanced/extensions/getting_started.html
+
+id = "kkbp"
+version = "7.0.0"
+name = "KKBP (Koikatsu Blender Porter)"
+tagline = "Imports Koikatsu models into Blender"
+maintainer = "FlailingFog"
+type = "add-on"
+website = "https://github.com/FlailingFog/KK-Blender-Porter-Pack"
+tags = ["Import-Export"]
+blender_version_min = "4.2.0"
+license = ["SPDX:GPL-2.0-or-later"]
+platforms = ["windows-x64"]
+
+[permissions]
+files = "Import Koikatsu model files and export edited texture files"
+network = "Download Blender 2.90 from download.blender.org/release/"
