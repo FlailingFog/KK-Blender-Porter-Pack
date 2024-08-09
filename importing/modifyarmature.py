@@ -2074,9 +2074,7 @@ class modify_armature(bpy.types.Operator):
 
     def new_bone(self, new_bone_name):
         '''Creates a new bone on the armature with the specified name and returns the blender bone'''
-        bpy.ops.armature.bone_primitive_add()
-        bone = self.armature.data.edit_bones['Bone']
-        bone.name = new_bone_name
+        bone = self.armature.data.edit_bones.new(new_bone_name)
         return bone
 
 if __name__ == "__main__":

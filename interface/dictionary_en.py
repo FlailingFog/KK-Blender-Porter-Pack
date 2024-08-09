@@ -29,24 +29,14 @@ translation_dictionary = {
     'cat_drop'      : 'Run type',
     'cat_drop_A'    : "Single clothes object",
     'cat_drop_A_tt' : "Import everything and get a single object containing all your model's clothes. Hides any alternate clothes by default",
-    'cat_drop_B'    : "Pause to categorize",
-    'cat_drop_B_tt' : "Import everything, but pause to manually separate the clothes into groups of objects. The hair must be separated and named \"Hair\" or \"hair\". When done separating, click the Finish categorization button to finish the import. Hides any alternate clothes by default",
     'cat_drop_C'    : "Separate every object",
     'cat_drop_C_tt' : "Import everything and automatically separate every single piece of clothing into several objects",
     'cat_drop_D'    : "Separate by SMR Data",
     'cat_drop_D_tt' : "Import everyting and automatically separate every object by it's Skinned Mesh Renderer. Note: This option is only for exporting meshes so it will not apply any material templates or colors",
 
     'dark'      : "Dark colors",
-    'dark_A'    : "LUT Night",
-    'dark_A_tt' : "Makes the dark colors blue-ish",
-    'dark_B'    : "LUT Sunset",
-    'dark_B_tt' : "Makes the dark colors red-ish",
     'dark_C'    : "Do not use dark colors",
     'dark_C_tt' : "Makes the dark colors the same as the light colors",
-    'dark_D'    : "Saturation based",
-    'dark_D_tt' : "Makes the dark colors more saturated than the light ones",
-    'dark_E'    : 'Value reduction',
-    'dark_E_tt' : "Makes the dark colors darker than the light ones",
     'dark_F'    : 'Automatic dark colors',
     'dark_F_tt' : "Uses an automatic method to set the dark colors",
 
@@ -96,40 +86,29 @@ translation_dictionary = {
     'shader_C'       : "Use Eevee mod",
     'shader_C_tt'    : "Uses a modified shader setup for Eevee",
 
-    'atlas'         : 'Atlas type',
-
-    'export_fbx'    : 'Export FBX',
-    'export_fbx_tt' : 'Exports all visible objects as an fbx file. This is the same as the FBX export function in the File menu',
-
     'import_export' : 'Importing and Exporting',
+    'extras'        : 'KKBP Extras',
     'import_model'  : 'Import model',
-    'finish_cat'    : 'Finish categorization',
-    'recalc_dark'   : 'Recalculate dark colors',
     'prep'          : 'Prep for target application',
-    'apply_temp'    : 'Switch baked templates',
 
     'studio_object'             : 'Import studio object',
+    'single_animation'          : 'Import single animation file',
+    'single_animation_tt'       : 'Only available for the Rigify armature. Imports an exported Koikatsu .fbx animation file and applies it to your character. Mixamo .fbx files are also supported if you use the toggle below.',
+    'animation_koi'             : 'Import Koikatsu animation',
+    'animation_mix'             : 'Import Mixamo animation',
     'animation_library'         : 'Create animation library',
     'animation_library_tt'      : "Only available for the Rigify Armature. Creates an animation library using the current file and current character. Will not save over the current file in case you want to reuse it. Open the folder containing the animation files exported with SB3Utility",
     'animation_library_scale'   : 'Scale arms',
     'animation_library_scale_tt': 'Check this to scale the arms on the y axis by 5%. This will make certain poses more accurate to the in-game one',
     'map_library'               : 'Create map asset library',
     'map_library_tt'            : "Creates an asset library using ripped map data. Open the folder containing the map files exported with SB3Utility. Takes 40 to 500 seconds per map",
-    'finalize_materials'        : 'Optimize materials',
-    'finalize_materials_tt'     : """!! Bake your materials, then use the 'Switch baked' button for 'Light' and 'Dark' before using this button !!
-    Replaces the KKBP node groups with a simple mix node to increase animation playback performance. Backups are saved as '-ORG'""",
 
     'rigify_convert': "Convert for Rigify",
     'sep_eye'       : "Separate Eyes and Eyebrows",
 
-    'convert_image' : 'Convert image with KKBP',
-
     'kkbp_import_tt'   : "Imports a Koikatsu model (.pmx format) and applies fixes to it",
-    'mat_import_tt'     : "Finish separating objects, apply the textures and colors",
     'export_prep_tt'    : "Only available for the KKBP Armature. Check the dropdown for more info",
-    'bake_mats_tt'      : "Finalize baked materials. These will be stored in the original .pmx folder",
-    'apply_mats_tt'     : "Open the folder that contains the baked materials. Use the menu to load the Light / Dark / Normal passes",
-    'import_colors_tt'  : "Open the folder containing your model.pmx file to recalculate the dark colors",
+    'bake_mats_tt'      : "Finalize materials as .png files. These will be stored in the original .pmx folder",
 
     'install_dependency': "Install Dependencies",
     'install_dependency_tt': """Click this button to automatically download Blender 2.90. This version of Blender is required to import KKBP models. 

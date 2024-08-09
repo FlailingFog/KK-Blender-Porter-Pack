@@ -318,7 +318,7 @@ class EXPORTING_PT_panel(bpy.types.Panel):
             row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown == 'A'
 
 class EXTRAS_PT_panel(bpy.types.Panel):
-    bl_label = 'KKBP Extras'
+    bl_label = t('extras')
     bl_category = "KKBP"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -358,7 +358,7 @@ class EXTRAS_PT_panel(bpy.types.Panel):
             row = col.row(align=True)
             split = row.split(align=True, factor=splitfac)
             split.label(text="")
-            split.prop(context.scene.kkbp, "animation_import_type", toggle=True, text = 'Import Mixamo animation' if scene.animation_import_type else 'Import Koikatsu animation')
+            split.prop(context.scene.kkbp, "animation_import_type", toggle=True, text = t('animation_mix') if scene.animation_import_type else t('animation_koi'))
             row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown == 'B'
 
             col = box.column(align=True)

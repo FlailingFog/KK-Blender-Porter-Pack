@@ -302,7 +302,7 @@ def main(file):
 class anim_import(bpy.types.Operator):
     bl_idname = "kkbp.importanimation"
     bl_label = "Import .fbx animation file"
-    bl_description = 'Only available for the Rigify armature. Imports an exported Koikatsu .fbx animation file and applies it to your character. Mixamo .fbx files are also supported if you use the toggle below.'
+    bl_description = t('single_animation_tt')
     bl_options = {'REGISTER', 'UNDO'}
     
     filepath : bpy.props.StringProperty(maxlen=1024, default='', options={'HIDDEN'})
