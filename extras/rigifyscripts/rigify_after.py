@@ -276,7 +276,7 @@ def main():
     #set layer visibility
     for layer in ['None']:
         generatedRig.data.collections_all[str(layer)].is_visible = False
-    for layer in [9,12,17,20]:
+    for layer in [7,9,12,17,20]:
         generatedRig.data.collections_all[str(layer)].is_visible = True
 
 class rigify_after(bpy.types.Operator):

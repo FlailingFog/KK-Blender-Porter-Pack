@@ -114,7 +114,7 @@ def setup_geometry_nodes_and_fillerplane(camera):
     ###########################
     #import the premade flattener node to unwrap the mesh into the UV structure
     script_dir=pathlib.Path(__file__).parent
-    template_path=(script_dir / '../KK Shader V6.6.blend').resolve()
+    template_path=(script_dir / '../KK Shader V7.0.blend').resolve()
     filepath = str(template_path)
     innerpath = 'NodeTree'
     geonodename = 'Geometry Nodes'
@@ -433,7 +433,7 @@ def replace_all_baked_materials(folderpath):
                         simple = bpy.data.materials['KK Simple'].copy()
                     except:
                         script_dir=pathlib.Path(__file__).parent
-                        template_path=(script_dir / '../KK Shader V6.6.blend').resolve()
+                        template_path=(script_dir / '../KK Shader V7.0.blend').resolve()
                         filepath = str(template_path)
                         innerpath = 'Material'
                         templateList = ['KK Simple']
@@ -466,15 +466,36 @@ def replace_all_baked_materials(folderpath):
                         'KK EyewhitesL (sirome)',
                         'KK EyewhitesR (sirome)',
                         'KK EyeL (hitomi)',
-                        'KK EyeR (hitomi)',
-                    ]
+                        'KK EyeR (hitomi)']
                     for obj in bpy.data.objects:
                         for mat_slot in obj.material_slots:
                             if mat_slot.name.replace('-ORG','') == simple.name:
                                 mat_slot.material = simple
                                 if simple.name in alpha_blend_mats:
                                     mat_slot.material.blend_method = 'BLEND'
-                                    
+                    
+                    #load the lbs simple shader if using lbs
+                    if bpy.context.scene.kkbp.shader_dropdown == 'C':
+                        try:
+                            lbs_simple = bpy.data.node_groups['Simple Shader (LBS)'].copy()
+                        except:
+                            script_dir=pathlib.Path(__file__).parent
+                            template_path=(script_dir / '../KK Shader V7.0.blend').resolve()
+                            filepath = str(template_path)
+                            innerpath = 'NodeTree'
+                            templateList = ['Simple Shader (LBS)']
+                            for template in templateList:
+                                bpy.ops.wm.append(
+                                    filepath=os.path.join(filepath, innerpath, template),
+                                    directory=os.path.join(filepath, innerpath),
+                                    filename=template,
+                                    set_fake=False
+                                    )
+                            lbs_simple = bpy.data.node_groups['Simple Shader (LBS)'].copy()
+
+                        if mat.name not in alpha_blend_mats:
+                            simple.node_tree.nodes['Shader'].node_tree = lbs_simple
+                        
 def create_material_atlas(folderpath):
     '''Merges all the finalized material png files into a single atlas file, copies the current model and applies the atlas to the copy'''
 

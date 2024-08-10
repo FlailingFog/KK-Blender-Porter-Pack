@@ -212,7 +212,7 @@ def import_studio_objects(directory):
                             template = bpy.data.materials['KK General'].copy()
                         except:
                             script_dir=Path(__file__).parent
-                            template_path=(script_dir / '../KK Shader V6.6.blend').resolve()
+                            template_path=(script_dir / '../KK Shader V7.0.blend').resolve()
                             filepath = str(template_path)
 
                             innerpath = 'Material'
