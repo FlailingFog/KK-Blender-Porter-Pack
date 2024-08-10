@@ -7,6 +7,7 @@ BAKE MATERIAL TO TEXTURE SCRIPT
     - If the multiple image files have different resolutions, a texture will be created for each resolution
 - Export defaults to 8-bit PNG with an alpha channel.
 --    Defaults can be changed by editing the exportType and exportColormode variables below.
+- Creates a material atlas and applies it to a copy of the model
 
 Notes:
 - This script deletes all camera objects in the scene
@@ -616,11 +617,12 @@ def create_material_atlas(folderpath):
 
         x_total_length = 0
         y_max_length = 0
-        for mat_slot in [m for m in object.material_slots if ('KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name)]:
+        mat_slots = [m for m in object.material_slots if ('KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name)]
+        for index, mat_slot in enumerate(mat_slots):
             material = mat_slot.material
             
             print('')
-            print(material)
+            print(material,' (', index+1, '/', len(mat_slots), ')')
             for bake_type in ['light', 'dark', 'normal']:
                 try:
                     image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
@@ -633,6 +635,70 @@ def create_material_atlas(folderpath):
                 continue
             else:
                 print('found image for {}'.format(material.name))
+            
+            #pad each image with 2 pixels bottom and left. Some UVs will overlap if this isn't done
+            print('Padding image for {}'.format(material.name))
+            uv_shift_flag_a = True
+            for bake_type in ['light', 'dark', 'normal']:
+                image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
+                if not image:
+                    print('no image for {} {}'.format(material.name, bake_type))
+                    continue
+                #pad left and bottom
+                x_new_length = int(image.size[0] + 1)
+                y_new_length = int(image.size[1] + 1)
+                #also scale the uvs to the new length
+                if uv_shift_flag_a:
+                    update_uvs(object.name, material.name, image.size[0]/x_new_length, image.size[1]/y_new_length, '*')
+                #get the pixels of the current image, then create the padding needed
+                new_image_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
+                x_current_dimension = image.size[0]
+                y_current_dimension = image.size[1]
+                vertical_padding = list(numpy.zeros((y_new_length - y_current_dimension) * x_current_dimension * 4))
+                vertical_padding = numpy.reshape(vertical_padding, (-1, x_current_dimension * 4))
+                new_image_pixels = numpy.vstack((vertical_padding, new_image_pixels)) #put padding before image to appear on the bottom
+                #create the horizontal padding needed
+                x_current_dimension = image.size[0]
+                y_current_dimension = y_new_length
+                horizontal_padding = list(numpy.zeros((y_current_dimension) * (x_new_length - x_current_dimension) * 4))
+                horizontal_padding = numpy.reshape(horizontal_padding, (y_current_dimension, -1))
+                new_image_pixels = numpy.hstack((horizontal_padding, new_image_pixels)) #put padding before image to appear on the left
+                x_current_dimension = x_new_length
+                new_image = bpy.data.images.new(image.name.replace('.png', 'd.png'), x_current_dimension, y_current_dimension)
+                new_image.pixels = new_image_pixels.flatten()
+                material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image = new_image
+                uv_shift_flag_a = False
+
+            #pad each image with 2 pixels top and right. Some UVs will overlap if this isn't done
+            uv_shift_flag_a = True
+            for bake_type in ['light', 'dark', 'normal']:
+                image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
+                if not image:
+                    print('no image for {} {}'.format(material.name, bake_type))
+                    continue
+                #get the pixels of the current image, then create the padding needed
+                new_image_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
+                x_new_length = int(image.size[0] + 1)
+                y_new_length = int(image.size[1] + 1)
+                x_current_dimension = image.size[0]
+                y_current_dimension = image.size[1]
+                #create the vertical padding needed
+                vertical_padding = list(numpy.zeros((y_new_length - y_current_dimension) * x_current_dimension * 4))
+                vertical_padding = numpy.reshape(vertical_padding, (-1, x_current_dimension * 4))
+                new_image_pixels = numpy.vstack((new_image_pixels, vertical_padding))
+                #create the horizontal padding needed
+                x_current_dimension = image.size[0]
+                y_current_dimension = y_new_length
+                if x_new_length > x_current_dimension:
+                    horizontal_padding = list(numpy.zeros((y_current_dimension) * (x_new_length - x_current_dimension) * 4))
+                    horizontal_padding = numpy.reshape(horizontal_padding, (-1, (x_new_length - x_current_dimension) * 4))
+                    new_image_pixels = numpy.hstack((new_image_pixels, horizontal_padding))
+                    x_current_dimension = x_new_length
+                new_image = bpy.data.images.new(image.name.replace('.png', 'd.png'), x_current_dimension, y_current_dimension)
+                new_image.pixels = new_image_pixels.flatten()
+                material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image = new_image
+                uv_shift_flag_a = False
+
             #some uvs are absolutely fucked. The baked image will need to grow to expand to whatever the UV limits go to if they are higher than 1.
             x_max_uv, y_max_uv, x_min_uv, y_min_uv = get_max_min_uvs(object.name, material.name)
             #if any uvs are less than 0, shift everything to at least 0, 0
