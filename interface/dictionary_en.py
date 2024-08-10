@@ -93,7 +93,7 @@ translation_dictionary = {
 
     'studio_object'             : 'Import studio object',
     'single_animation'          : 'Import single animation file',
-    'single_animation_tt'       : 'Only available for the Rigify armature. Imports an exported Koikatsu .fbx animation file and applies it to your character. Mixamo .fbx files are also supported if you use the toggle below.',
+    'single_animation_tt'       : 'Only available for the Rigify armature. Imports an exported Koikatsu .fbx animation file and applies it to your character. Mixamo .fbx files are also supported if you use the toggle below',
     'animation_koi'             : 'Import Koikatsu animation',
     'animation_mix'             : 'Import Mixamo animation',
     'animation_library'         : 'Create animation library',

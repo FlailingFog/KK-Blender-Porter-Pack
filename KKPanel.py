@@ -373,11 +373,11 @@ class EXTRAS_PT_panel(bpy.types.Panel):
             split.prop(context.scene.kkbp, "animation_library_scale", toggle=True, text = t('animation_library_scale'))
             row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown == 'B'
 
-            col = box.column(align=True)
-            row = col.row(align=True)
-            split = row.split(align=True, factor=splitfac)
-            split.label(text=t('map_library'))
-            split.operator('kkbp.createmapassetlib', text = '', icon = 'WORLD')
+            # col = box.column(align=True)
+            # row = col.row(align=True)
+            # split = row.split(align=True, factor=splitfac)
+            # split.label(text=t('map_library'))
+            # split.operator('kkbp.createmapassetlib', text = '', icon = 'WORLD')
 
             box = layout.box()
             col = box.column(align=True)
