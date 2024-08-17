@@ -4,7 +4,7 @@
 
 Plugin pack for exporting and cleaning up Koikatsu characters in Blender.  
 
-The ```KKBP exporter for Koikatsu``` is used to export the character's mesh, armature and color data. The exported data is then processed by the ```KKBP importer for Blender```. Once characters are setup in Blender, they can be saved as FBX files for use in other programs. 
+The ```KKBP exporter for Koikatsu``` exports the character's mesh, armature and color data from the game. The ```KKBP importer for Blender``` processes that data to setup the character in Blender. Once characters are setup in Blender, they can be saved as FBX files for use in other programs. 
 
 **How to use the plugins:** https://flailingfog.github.io/.  
 **The wiki:** https://flailingfog.github.io/wiki.  
