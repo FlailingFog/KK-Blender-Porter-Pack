@@ -647,7 +647,11 @@ def create_material_atlas(folderpath):
             for bake_type in ['light', 'dark', 'normal']:
                 try:
                     image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
-                    break
+                    if image:
+                        if image.name == 'Template: Pattern Placeholder':
+                            image = None
+                        else:
+                            break
                 except:
                     # print('no baked1')
                     image = None
@@ -663,6 +667,10 @@ def create_material_atlas(folderpath):
             for bake_type in ['light', 'dark', 'normal']:
                 image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
                 if not image:
+                    print('no image for {} {}'.format(material.name, bake_type))
+                    continue
+                elif image.name == 'Template: Pattern Placeholder':
+                    image = None
                     print('no image for {} {}'.format(material.name, bake_type))
                     continue
                 #pad left and bottom
@@ -695,6 +703,10 @@ def create_material_atlas(folderpath):
             for bake_type in ['light', 'dark', 'normal']:
                 image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
                 if not image:
+                    print('no image for {} {}'.format(material.name, bake_type))
+                    continue
+                elif image.name == 'Template: Pattern Placeholder':
+                    image = None
                     print('no image for {} {}'.format(material.name, bake_type))
                     continue
                 #get the pixels of the current image, then create the padding needed
@@ -730,6 +742,10 @@ def create_material_atlas(folderpath):
                 for bake_type in ['light', 'dark', 'normal']:
                     image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
                     if not image:
+                        print('no image for {} {}'.format(material.name, bake_type))
+                        continue
+                    elif image.name == 'Template: Pattern Placeholder':
+                        image = None
                         print('no image for {} {}'.format(material.name, bake_type))
                         continue
                     if uv_shift_flag:
@@ -779,6 +795,10 @@ def create_material_atlas(folderpath):
                     if not image:
                         print('no image for {} {}'.format(material.name, bake_type))
                         continue
+                    elif image.name == 'Template: Pattern Placeholder':
+                        image = None
+                        print('no image for {} {}'.format(material.name, bake_type))
+                        continue
                     if uv_shift_flag:
                         print('shifting uvs for {} {}'.format(material.name, bake_type))
                         update_uvs(object.name, material.name, x_max_uv if x_max_uv > 1 else 1, y_max_uv if y_max_uv > 1 else 1, '/')
@@ -815,7 +835,11 @@ def create_material_atlas(folderpath):
             for bake_type in ['light', 'dark', 'normal']:
                 try:
                     image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
-                    break
+                    if image:
+                        if image.name == 'Template: Pattern Placeholder':
+                            image = None
+                        else:
+                            break
                 except:
                     # print('no baked1')
                     image = None
@@ -839,6 +863,8 @@ def create_material_atlas(folderpath):
                 # print(material)
                 try:
                     image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
+                    if image.name == 'Template: Pattern Placeholder':
+                        image = None
                 except:
                     # print('no baked2')
                     image = None
@@ -915,6 +941,8 @@ def create_material_atlas(folderpath):
                 # print(material)
                 try:
                     image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
+                    if image.name == 'Template: Pattern Placeholder':
+                        image = None
                 except:
                     # print('no baked3')
                     image = None

@@ -14,14 +14,14 @@
 * Normal maps are now loaded into the optimized material thanks to **FrankV724**!
 * The KKBP plugin can now generate a material atlas by itself! 
     * The plugin also automatically generates a copy of your model that uses the atlas
-    * This feature does If the atlas is too large, you can split up your objects and re-generate it
+    * This feature does not have a pixel limit, so if the atlas is too large, you can split up your objects and re-generate it
 * Streamlined the KKBP main panel!
     * There's now only one button for importing, one for optimizing materials and one for exporting
     * If a button in the panel cannot be used, it will now be grayed out. Some features (like the animation import feature) require you to use the Rigify armature
-* During very long sequences, like material baking or bone simplification, the plugin will now attempt to give you progress information
+* During very long sequences, like when finalizing materials or bone simplification, the plugin will now attempt to give you progress information
 * Generating dark colors and textures can now be skipped to slightly speed up import times
 * Blue pixels on textures should now be fixed
-    * This seemed to be an issue on certain blender versions. You can now point the KKBP importer to use any version of blender.exe between 2.80 and 3.6 to generate the textures, so if the built in downloads for 2.90 or 3.6.9 are not working you can experiment with different blender versions until you find one that is working.
+    * This appeared to be an issue with certain blender versions. You can now manually download any version of blender.exe between 2.80 and 3.6 and make the KKBP importer use the version you downloaded for generating the textures, so if the built in downloads for 2.90 or 3.6.9 are not working you can experiment with different blender versions until you find one that is working.
 * Updated the colors in the KK Shader to look good in the default "Blender dark" theme
 * Updated the plugin to be a Blender 4.2 extension (it is no longer a legacy addon)
 * Renamed the folders inside of the exporter zip to be clearer
