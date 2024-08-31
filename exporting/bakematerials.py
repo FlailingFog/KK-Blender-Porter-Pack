@@ -1068,7 +1068,8 @@ class bake_materials(bpy.types.Operator):
                     ob.hide_viewport = False
                 cleanup()
             replace_all_baked_materials(folderpath)
-            create_material_atlas(folderpath)
+            if scene.use_atlas:
+                create_material_atlas(folderpath)
             c.toggle_console()
 
             c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')

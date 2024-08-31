@@ -70,15 +70,9 @@ class PlaceholderProperties(PropertyGroup):
             ("D", t('cat_drop_D'), t('cat_drop_D_tt')),
         ), name="", default=bpy.context.preferences.addons[__package__].preferences.categorize_dropdown, description=t('cat_drop'))
     
-    colors_dropdown : EnumProperty(
-        items=(
-            # ("A", t('dark_A'), t('dark_A_tt')),
-            # ("B", t('dark_B'), t('dark_B_tt')),
-            ("C", t('dark_C'), t('dark_C_tt')),
-            # ("D", t('dark_D'), t('dark_D_tt')),
-            # ("E", t('dark_E'), t('dark_E_tt')),
-            ("F", t('dark_F'), t('dark_F_tt'))
-        ), name="", default=bpy.context.preferences.addons[__package__].preferences.colors_dropdown, description=t('dark'))
+    colors_dropdown : BoolProperty(
+        description = t('dark'),
+        default=bpy.context.preferences.addons[__package__].preferences.colors_dropdown)
     
     prep_dropdown : EnumProperty(
         items=(
@@ -97,15 +91,23 @@ class PlaceholderProperties(PropertyGroup):
     
     bake_light_bool : BoolProperty(
     description=t('bake_light_tt'),
-    default = True)
+    default = bpy.context.preferences.addons[__package__].preferences.bake_light_bool)
 
     bake_dark_bool : BoolProperty(
     description=t('bake_dark_tt'),
-    default = True)
+    default = bpy.context.preferences.addons[__package__].preferences.bake_dark_bool)
 
     bake_norm_bool : BoolProperty(
     description=t('bake_norm_tt'),
-    default = False)
+    default = bpy.context.preferences.addons[__package__].preferences.bake_norm_bool)
+
+    delete_cache : BoolProperty(
+    description=t('delete_cache_tt'),
+    default = bpy.context.preferences.addons[__package__].preferences.delete_cache)
+
+    use_atlas : BoolProperty(
+    description=t('use_atlas_tt'),
+    default = bpy.context.preferences.addons[__package__].preferences.use_atlas)
 
     animation_library_scale : BoolProperty(
     description=t('animation_library_scale_tt'),
@@ -217,32 +219,29 @@ class IMPORTING_PT_panel(bpy.types.Panel):
             row = col.row(align=True)
             row.operator('kkbp.kkbpimport', text = t('import_model'), icon='FILE_FOLDER')
             row.enabled = scene.plugin_state not in ['imported', 'prepped']
-            
-            # row = col.row(align=True)
-            # row.label(text="")
-            
+                        
             row = col.row(align = True)
             box = row.box()
             col = box.column(align=True)
             
             row = col.row(align=True)
-            row.prop(context.scene.kkbp, "categorize_dropdown")
-            row.enabled = scene.plugin_state not in ['imported', 'prepped']
-
-            row = col.row(align=True)
             split = row.split(align = True, factor=splitfac)
+            split.prop(context.scene.kkbp, "categorize_dropdown")
             split.prop(context.scene.kkbp, "armature_dropdown")
-            split.prop(context.scene.kkbp, "colors_dropdown")
-            #split.operator('kkbp.importcolors', text = t('recalc_dark'), icon='IMAGE')
-            row.enabled = scene.plugin_state not in ['imported', 'prepped']
-
+            split.enabled = scene.plugin_state not in ['imported', 'prepped']
+            
             row = col.row(align=True)
             split = row.split(align = True, factor=splitfac)
             split.prop(context.scene.kkbp, "shapekeys_dropdown")
             split.prop(context.scene.kkbp, "shader_dropdown")
-            
             row.enabled = scene.plugin_state not in ['imported', 'prepped']
-            
+
+            row = col.row(align=True)
+            split = row.split(align = True, factor=splitfac)
+            split.prop(context.scene.kkbp, "colors_dropdown", toggle=True, text = t('dark_F') if scene.colors_dropdown else t('dark_C'))
+            split.prop(context.scene.kkbp, "delete_cache", toggle=True, text = t('delete_cache'))
+            row.enabled = scene.plugin_state not in ['imported', 'prepped']
+
             row = col.row(align=True)
             split = row.split(align = True, factor=splitfac)
             split.prop(context.scene.kkbp, "fix_seams", toggle=True, text = t('seams'))
@@ -269,6 +268,11 @@ class IMPORTING_PT_panel(bpy.types.Panel):
             split = row.split(align=True, factor=splitfac)
             split.prop(context.scene.kkbp, 'old_bake_bool', toggle=True, text = t('old_bake'))
             split.prop(context.scene.kkbp, "bake_mult", text = t('bake_mult'))
+            row.enabled = scene.plugin_state in ['imported', 'prepped']
+            row = col.row(align = True)
+            split = row.split(align=True, factor=splitfac)
+            split.operator('kkbp.splitobjects', text = t('split_objects'), icon = 'UNLINKED')
+            split.prop(context.scene.kkbp, "use_atlas", toggle=True, text = t('use_atlas') if scene.use_atlas else t('dont_use_atlas'))
             row.enabled = scene.plugin_state in ['imported', 'prepped']
 
         else:
@@ -383,8 +387,15 @@ class EXTRAS_PT_panel(bpy.types.Panel):
             col = box.column(align=True)
             row = col.row(align=True)
             split = row.split(align=True, factor=splitfac)
+            split.label(text=t('sep_eye'))
+            split.operator('kkbp.linkshapekeys', text = '', icon='HIDE_OFF')
+
+            box = layout.box()
+            col = box.column(align=True)
+            row = col.row(align=True)
+            split = row.split(align=True, factor=splitfac)
             split.label(text="Update bone visibility")
-            split.operator('kkbp.updatebones', text = '', icon = 'HIDE_OFF')
+            split.operator('kkbp.updatebones', text = '', icon = 'BONE_DATA')
 
             col = box.column(align=True)
             row = col.row(align=True)
@@ -400,13 +411,6 @@ class EXTRAS_PT_panel(bpy.types.Panel):
             split.label(text="Export Seperate Meshes")
             split.operator('kkbp.exportseparatemeshes', text = '', icon = 'EXPORT')
             row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.categorize_dropdown == 'D'
-            
-            col = box.column(align=True)
-            row = col.row(align=True)
-            split = row.split(align=True, factor=splitfac)
-            split.label(text=t('sep_eye'))
-            split.operator('kkbp.linkshapekeys', text = '', icon='SPHERECURVE')
-
             
             #put all icons available in blender at the end of the panel
 

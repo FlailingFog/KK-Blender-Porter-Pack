@@ -43,6 +43,21 @@ class kkbp_import(bpy.types.Operator):
         #save filepath for later
         bpy.context.scene.kkbp.import_dir = str(self.filepath)[:-9]
 
+        #delete the cached files if the option is enabled
+        if bpy.context.scene.kkbp.delete_cache and bpy.context.scene.kkbp.import_dir:
+            c.kklog('Clearing the cache folder...')
+            for cache_folder in ['atlas_files', 'baked_files', 'dark_files', 'saturated_files']:
+                try:
+                    for f in os.listdir(os.path.join(bpy.context.scene.kkbp.import_dir, cache_folder)):
+                        try:
+                            os.remove(os.path.join(bpy.context.scene.kkbp.import_dir, cache_folder, f))
+                        except:
+                            pass
+                except:
+                    #that cache folder did not exist
+                    pass
+
+
         #check if there is at least one "Outfit ##" folder inside of this directory
         #   if there isn't, then the user incorrectly chose the .pmx file inside of the outfit directory
         #   correct to the .pmx file inside of the root directory

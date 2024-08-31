@@ -14,7 +14,7 @@ class KKBPPreferences(bpy.types.AddonPreferences):
 
     #this will let the plugin know if the blender 2.90 zip needs to be downloaded, 
     # or where it is located if the user has already downloaded it
-    blender_path: StringProperty(default = '', name="Direct path to 2.90 / 3.6 blender.exe", description="Direct path to blender.exe from any Blender version between 2.90 and 3.6")
+    blender_path: StringProperty(default = '', description="Direct path to blender.exe from any Blender version between 2.90 and 3.6")
 
     sfw_mode : BoolProperty(
     description=t('sfw_mode_tt'),
@@ -51,17 +51,31 @@ class KKBPPreferences(bpy.types.AddonPreferences):
             ("C", t('cat_drop_C'), t('cat_drop_C_tt') ),
             ("D", t('cat_drop_D'), t('cat_drop_D_tt')),
         ), name="", default="A", description=t('cat_drop'))
-    
-    colors_dropdown : EnumProperty(
-        items=(
-            ("A", t('dark_A'), t('dark_A_tt')),
-            ("B", t('dark_B'), t('dark_B_tt')),
-            ("C", t('dark_C'), t('dark_C_tt')),
-            ("D", t('dark_D'), t('dark_D_tt')),
-            ("E", t('dark_E'), t('dark_E_tt')),
-            ("F", t('dark_F'), t('dark_F_tt'))
-        ), name="", default="F", description=t('dark'))
-    
+
+    colors_dropdown : BoolProperty(
+    description=t('dark_F_tt'),
+    default = True)
+
+    bake_light_bool : BoolProperty(
+    description=t('bake_light_tt'),
+    default = True)
+
+    bake_dark_bool : BoolProperty(
+    description=t('bake_dark_tt'),
+    default = True)
+
+    bake_norm_bool : BoolProperty(
+    description=t('bake_norm_tt'),
+    default = False)
+
+    use_atlas : BoolProperty(
+    description=t('use_atlas'),
+    default = True)
+
+    delete_cache : BoolProperty(
+    description=t('delete_cache'),
+    default = False)
+
     prep_dropdown : EnumProperty(
         items=(
             ("A", t('prep_drop_A'), t('prep_drop_A_tt')),
@@ -106,28 +120,36 @@ class KKBPPreferences(bpy.types.AddonPreferences):
     def draw(self, context):
         layout = self.layout
         splitfac = 0.5
-        
+
         box = layout.box()
         col = box.column(align=True)
         row = col.row(align=True)
+        row.label(text='Enter the direct path to 2.90 / 3.6 blender.exe below: (optional)')
+        row = col.row(align=True)
         row.prop(self, "blender_path")
         row = col.row(align=True)
-        row.label(text=' ')
 
+        col = layout.column(align=True)
+                                    
         row = col.row(align=True)
-        split = row.split(align=True, factor=splitfac)
-        split.prop(self, "armature_dropdown")
-        split.prop(self, "categorize_dropdown")
-
+        row.label(text=' ')
+        row = col.row(align=True)
+        row.label(text='Change the default options for the KKBP Importer below:')
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
-        split.prop(self, "colors_dropdown")
-
+        split.prop(self, "categorize_dropdown")
+        split.prop(self, "armature_dropdown")
+        
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(self, "shapekeys_dropdown")
         split.prop(self, "shader_dropdown")
-        
+
+        row = col.row(align=True)
+        split = row.split(align = True, factor=splitfac)
+        split.prop(self, "colors_dropdown", toggle=True, text = t('dark_F'))
+        split.prop(self, "delete_cache", toggle=True, text = t('delete_cache'))
+
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(self, "fix_seams", toggle=True, text = t('seams'))
@@ -137,8 +159,22 @@ class KKBPPreferences(bpy.types.AddonPreferences):
         split = row.split(align = True, factor=splitfac)
         split.prop(self, "use_single_outline", toggle=True, text = t('outline'))
         split.prop(self, "sfw_mode", toggle=True, text = t('sfw_mode'))
-
-        col = box.column(align=True)
+        
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        split = row.split(align=True, factor=0.33)
+        split.prop(self, "bake_light_bool", toggle=True, text = t('bake_light'))
+        split.prop(self, "bake_dark_bool", toggle=True, text = t('bake_dark'))
+        split.prop(self, "bake_norm_bool", toggle=True, text = t('bake_norm'))
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.prop(self, 'old_bake_bool', toggle=True, text = t('old_bake'))
+        row = col.row(align = True)
+        split = row.split(align=True, factor=splitfac)
+        split.prop(self, "use_atlas", toggle=True, text = t('use_atlas'))
+        
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        split = row.split(align=True, factor=splitfac)
+        split.prop(self, "simp_dropdown")
+        split.prop(self, "prep_dropdown")

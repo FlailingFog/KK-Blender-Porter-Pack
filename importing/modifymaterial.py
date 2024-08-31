@@ -413,7 +413,7 @@ class modify_material(bpy.types.Operator):
                         shadow_color = [self.body['KKBP shadow colors'][material_name.replace('_ST', '_MT')]['r'],
                                         self.body['KKBP shadow colors'][material_name.replace('_ST', '_MT')]['g'], 
                                         self.body['KKBP shadow colors'][material_name.replace('_ST', '_MT')]['b']]
-                    if bpy.context.scene.kkbp.colors_dropdown != 'C':
+                    if bpy.context.scene.kkbp.colors_dropdown == True:
                         darktex = self.create_darktex(bpy.data.images[image.name], shadow_color) #create the darktex now and load it in later
             except:
                 c.kklog('Tried to create a dark version of {} but it was missing a shadow color. Defaulting to shadow color of R=0.764, G=0.880, B=1].'.format(image.name), type='warn')
@@ -432,7 +432,7 @@ class modify_material(bpy.types.Operator):
                         convert_this = False
                 if '_ST_CT' in image.name and convert_this:
                     material_name = image.name[:-10]
-                    if bpy.context.scene.kkbp.colors_dropdown != 'C':
+                    if bpy.context.scene.kkbp.colors_dropdown == True:
                         darktex = self.create_darktex(bpy.data.images[image.name], [.764, .880, 1]) #create the darktex now and load it in later
         c.print_timer('load_images_and_shadow_colors')
 
@@ -991,12 +991,7 @@ class modify_material(bpy.types.Operator):
     def load_luts(cls):
         self = cls
         self.lut_selection = bpy.context.scene.kkbp.colors_dropdown
-        if self.lut_selection == 'A':
-            self.lut_dark = 'Lut_TimeNight.png'
-        elif self.lut_selection == 'B':
-            self.lut_dark = 'Lut_TimeSunset.png'
-        else:
-            self.lut_dark = 'Lut_TimeDay.png'
+        self.lut_dark = 'Lut_TimeDay.png'
         self.lut_light = 'Lut_TimeDay.png'
         
         self.lut_path = os.path.dirname(os.path.abspath(__file__)) + '/luts/'
@@ -1529,7 +1524,7 @@ class modify_material(bpy.types.Operator):
                         shader_inputs['Light fade color'].default_value = hair_tip_colors[hairType.replace('KK ', '')]
                     shader_inputs['Manually set the hair color detail? (1 = yes)'].default_value = 0
                     shader_inputs['Use fade mask? (1 = yes)'].default_value = 0.5
-                    if lut_selection == 'F' and not light and hairType.replace('KK ', '') in hair_dark_colors:
+                    if lut_selection == True and not light and hairType.replace('KK ', '') in hair_dark_colors:
                         shader_inputs['Dark Hair color'].default_value = hair_dark_colors[hairType.replace('KK ', '')]
                     elif hairType.replace('KK ', '') in hair_light_colors:
                         shader_inputs['Light Hair color' if light else 'Dark Hair color'].default_value = hair_light_colors[hairType.replace('KK ', '')]
@@ -1539,7 +1534,7 @@ class modify_material(bpy.types.Operator):
                         #ensure the maintex hairs get the right hair color
                         
         ## Accessories/Items Shader
-        uses_lut = lut_selection in ['A', 'B', 'C', 'F']
+        uses_lut = True
         for idx, item in enumerate(item_data):
             pattern_input_names = [
                 'Pattern color (red)',
@@ -1556,24 +1551,15 @@ class modify_material(bpy.types.Operator):
             shader_inputs = item_shader_node_groups[idx].nodes['colorsLight' if light else 'colorsDark'].inputs
             if not light and uses_lut:
                 shader_inputs['Automatically darken color?'].default_value = 0
-            elif not light and lut_selection == 'D':
-                shader_inputs['Automatically darken color?'].default_value = 1
-                shader_inputs['Auto dark color (low sat.)'].default_value = [0.278491, 0.311221, 0.700000, 1.000000]
-                shader_inputs['Auto dark color (high sat.)'].default_value = [0.531185, 0.544296, 0.700000, 1.000000]
-            elif not light and lut_selection == 'E':
-                shader_inputs['Automatically darken color?'].default_value = 0
 
             shader_inputs['Manually set detail color? (1 = yes)'].default_value = 0
             shader_inputs['Detail intensity (green)'].default_value = 0.1
             shader_inputs['Detail intensity (blue)'].default_value = 0.1
             #shader_inputs['Use Color mask instead? (1 = yes)'].default_value = 1
 
-            if not light and lut_selection == 'E':
-                shader_inputs['Color mask color (base)'].default_value = [0.3, 0.3, 0.3, 0.3]
-            else:
-                shader_inputs['Color mask color (base)'].default_value = [1, 1, 1, 1]
+            shader_inputs['Color mask color (base)'].default_value = [1, 1, 1, 1]
             
-            if lut_selection == 'F' and not light: #automatic dark color replication
+            if lut_selection == True and not light: #automatic dark color replication
                 for i, colorItem in enumerate(item['colorInfo']):
                     if i < len(color_input_names):
                         color = colorItem
@@ -1590,21 +1576,14 @@ class modify_material(bpy.types.Operator):
                 for i, colorItem in enumerate(item['colorInfo']):
                     if i < len(color_input_names):
                         color_channel = self.color_to_KK(to_255(colorItem), active_lut)
-                        if not light and lut_selection == 'E':
-                            color_channel = [x * .3 for x in color_channel]
                         shader_inputs[color_input_names[i]].default_value = color_channel
                 #shader_inputs['Ignore colormask?'].default_value = 1
 
-            if not light and lut_selection == 'E':
-                shader_inputs['Pattern (base)'].default_value = [0.3, 0.3, 0.3, 0.3]
-            else:
-                shader_inputs['Pattern (base)'].default_value =  [1, 1, 1, 1]
+            shader_inputs['Pattern (base)'].default_value =  [1, 1, 1, 1]
 
             for i, patternColor in enumerate(item['patternColors']):
                 if i < len(pattern_input_names):
                     color_channel = self.color_to_KK(to_255(patternColor), active_lut)
-                    if not light and lut_selection == 'E':
-                        color_channel = [x * .3 for x in color_channel]
                     shader_inputs[pattern_input_names[i]].default_value = color_channel
 
     #something is wrong with this one, currently unused

@@ -48,6 +48,7 @@ def reg_unreg(register_bool):
     from .extras.rigifyscripts.rigify_after import rigify_after
     from .extras.catsscripts.armature_manual import MergeWeights
     from .extras.importanimation import anim_import
+    from .extras.splitobjects import split_objects
 
     from . KKPanel import PlaceholderProperties
     from . KKPanel import (
@@ -76,6 +77,7 @@ def reg_unreg(register_bool):
         rigify_after,
         MergeWeights,
         anim_import,
+        split_objects,
 
         install_dependency,
         install_dependency28,

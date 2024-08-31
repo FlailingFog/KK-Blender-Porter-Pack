@@ -115,7 +115,17 @@ translation_dictionary = {
 This process will take a few minutes depending on your network speed, and will download 193MB of data from https://download.blender.org/release/ 
 After it is installed, it will take 504MB of space and will be stored in the KKBP addon directory. You can reclaim this space by uninstalling the KKBP addon.
 If you want to use Blender 3.6 instead, click on the 3.6 button below. This version is a lot larger than Blender 2.90, but may have better hardware compatibility. 
-If you wish to supply your own blender 2.90 exe instead of letting the plugin download it for you, open the KKBP plugin preferences window and enter direct path to the .exe there. Any version between 2.90 and 3.6 should work"""
+If you wish to supply your own blender 2.90 exe instead of letting the plugin download it for you, open the KKBP plugin preferences window and enter direct path to the .exe there. Any version between 2.90 and 3.6 should work""",
+
+    'delete_cache' : 'Delete cache',
+    'delete_cache_tt' : 'Enable this to delete the cache files. Cache files are generated when you import a model or finalize materials. These are stored in the pmx folder as "atlas_files", "baked_files", "dark_files" and "saturated_files". Enabling this option will delete ALL files inside of these folders',
+
+    'split_objects' : 'Split object',
+    'split_objects_tt' : 'Click this button to split the currently selected object into two. When you use the Finalize materials button the addon will generate an atlas for your model, but if your object has an excessive amount of materials blender may crash due to lack of RAM. This button lets you halve the amount of materials on your model by splitting the object into two pieces, so it will be less likely to crash on lower end hardware',
+
+    'use_atlas' : 'Create Atlas',
+    'use_atlas_tt': 'Disabling this can save a lot of time when finalizing materials, but a material atlas will not be created.',
+    'dont_use_atlas' : 'Don\'t create Atlas',
     }
 
 def t(text_entry):
