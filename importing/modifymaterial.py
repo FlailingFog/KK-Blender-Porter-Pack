@@ -567,6 +567,7 @@ class modify_material(bpy.types.Operator):
                 newNode.name = hairType + ' Textures'
             
                 self.image_load(hairMat.name, 'Gentex', 'hairMainTex',  hairType+'_ST_CT.png')
+                self.image_load(hairMat.name, 'Gentex', 'hairDarkTex',  hairType+'_ST_CT.png') #attempt to default to light in case dark is not available
                 self.image_load(hairMat.name, 'Gentex', 'hairDarkTex',  hairType+'_ST_DT.png')
                 self.image_load(hairMat.name, 'Gentex', 'hairDetail', hairType+'_DM.png')
                 self.image_load(hairMat.name, 'Gentex', 'hairFade',   hairType+'_CM.png')
