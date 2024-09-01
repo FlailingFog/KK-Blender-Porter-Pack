@@ -124,7 +124,7 @@ class KKBPPreferences(bpy.types.AddonPreferences):
         box = layout.box()
         col = box.column(align=True)
         row = col.row(align=True)
-        row.label(text='Enter the direct path to 2.90 / 3.6 blender.exe below: (optional)')
+        row.label(text='Enter the direct path to older blender.exe below: (optional, do not surround path with quotes)')
         row = col.row(align=True)
         row.prop(self, "blender_path")
         row = col.row(align=True)

@@ -199,6 +199,7 @@ class IMPORTING_PT_panel(bpy.types.Panel):
     bl_options = {'HIDE_HEADER'}
 
     def __init__(self):
+        #check for internal blender path
         script_dir = os.path.dirname(os.path.realpath(__file__))
         blender_dir = os.path.join(script_dir, 'importing', 'dependencies', "blender-3.6.9-windows-x64", "blender.exe")
         if os.path.isfile(blender_dir):
@@ -207,6 +208,17 @@ class IMPORTING_PT_panel(bpy.types.Panel):
             blender_dir = os.path.join(script_dir, 'importing', 'dependencies', "blender-2.90.0-windows64", "blender.exe")
             if os.path.isfile(blender_dir):
                 bpy.context.scene.kkbp.blender_path = blender_dir
+            else:
+                #check for external blender path
+                try:
+                    addon_prefs = bpy.context.preferences.addons['bl_ext.user_default.kkbp'].preferences
+                except:
+                    addon_prefs = bpy.context.preferences.addons['KK-Blender-Porter-Pack'].preferences
+                if addon_prefs.blender_path:
+                    bpy.context.scene.kkbp.blender_path = addon_prefs.blender_path
+                else:
+                    #no internal path or external path, prompt user to download or link existing path
+                    bpy.context.scene.kkbp.blender_path = '' #blender exe not found
 
     def draw(self,context):
         scene = context.scene.kkbp
