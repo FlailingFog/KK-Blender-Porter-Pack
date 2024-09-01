@@ -10,7 +10,7 @@ type = "add-on"
 website = "https://github.com/FlailingFog/KK-Blender-Porter-Pack"
 tags = ["Import-Export"]
 blender_version_min = "4.2.0"
-license = ["SPDX:GPL-2.0-or-later"]
+license = ["SPDX:MIT"]
 platforms = ["windows-x64"]
 
 [permissions]
