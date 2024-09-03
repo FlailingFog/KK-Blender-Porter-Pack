@@ -374,34 +374,31 @@ def cleanup():
     bpy.context.scene.render.filter_size = 1.5
 
 def replace_all_baked_materials(folderpath):
-
+    
     #load all baked images into blender
     fileList = pathlib.Path(folderpath).glob('*.*')
     files = [file for file in fileList if file.is_file()]
     print(files)
     print('----------------')
-
     for bake_type in ['light', 'dark', 'normal']:
         for mat in [m for m in bpy.data.materials if 'KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name and ' Atlas' not in m.name]:
             matname = mat.name[:-4] if mat.name[-4:] == '-ORG' else mat.name
             image_path = pathlib.Path(folderpath + '/' + sanitizeMaterialName(matname) + ' ' + bake_type + '.png')
             print(image_path)
             if image_path in files:
-                print(image_path)
                 image = bpy.data.images.load(filepath=str(image_path))
                 image.pack()
                 #if there was an older version of this image, get rid of it
                 if image.name[-4:] == '.001':
                     if bpy.data.images.get(image.name[:-4]):
+                        bpy.data.images[image.name[:-4]].user_remap(image)
                         bpy.data.images.remove(bpy.data.images[image.name[:-4]])
                         image.name = image.name[:-4]
-                # c.kklog('Found {}'.format(sanitizeMaterialName(matname) + ' ' + bake_type + '.png'))
-                
+
     #now all needed images are loaded into the file. Match each material to it's image textures
     for mat in [m for m in bpy.data.materials if m.name not in ['KK Simple', "KK Tears", "KK Shadowcast", "KK Gag02", "KK Gag01", "KK Gag00"]]:
         finalize_this_mat = 'KK ' in mat.name and 'Outline ' not in mat.name and ' Outline' not in mat.name and ' Atlas' not in mat.name
         if finalize_this_mat:
-            # c.kklog('Finalizing {}'.format(mat))
             matname = mat.name[:-4] if mat.name[-4:] == '-ORG' else mat.name
             if mat.node_tree.nodes.get('baked_file'):
                 if not mat.node_tree.nodes['baked_file'].image:
@@ -498,7 +495,6 @@ def replace_all_baked_materials(folderpath):
                         
 def create_material_atlas(folderpath):
     '''Merges all the finalized material png files into a single atlas file, copies the current model and applies the atlas to the copy'''
-
     # https://blender.stackexchange.com/questions/127403/change-active-collection
     #Recursivly transverse layer_collection for a particular name
     def recurLayerCollection(layerColl, collName):
