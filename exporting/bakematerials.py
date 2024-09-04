@@ -1093,7 +1093,7 @@ class bake_materials(bpy.types.Operator):
                 bpy.data.collections["Collection"].exporters[0].export_properties.embed_textures = False
                 bpy.data.collections["Collection"].exporters[0].export_properties.mesh_smooth_type = 'OFF'
                 bpy.data.collections["Collection"].exporters[0].export_properties.filepath = os.path.join(folderpath.replace('baked_files', 'atlas_files'), 'Exported model.fbx')
-                c.toggle_console()
+            c.toggle_console()
 
             c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             #reset viewport shading back to material preview
