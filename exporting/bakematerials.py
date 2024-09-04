@@ -1066,7 +1066,34 @@ class bake_materials(bpy.types.Operator):
             replace_all_baked_materials(folderpath)
             if scene.use_atlas:
                 create_material_atlas(folderpath)
-            c.toggle_console()
+            
+            #setup the original collection for exporting
+            # https://blender.stackexchange.com/questions/127403/change-active-collection
+            #Recursively transverse layer_collection for a particular name
+            def recurLayerCollection(layerColl, collName):
+                found = None
+                if (layerColl.name == collName):
+                    return layerColl
+                for layer in layerColl.children:
+                    found = recurLayerCollection(layer, collName)
+                    if found:
+                        return found
+
+            layer_collection = bpy.context.view_layer.layer_collection
+            layerColl = recurLayerCollection(layer_collection, 'Collection')
+            bpy.context.view_layer.active_layer_collection = layerColl
+            if not bpy.data.collections["Collection"].exporters:
+                bpy.ops.collection.exporter_add(name="IO_FH_fbx")
+                bpy.data.collections["Collection"].exporters[0].export_properties.object_types = {'EMPTY', 'ARMATURE', 'MESH', 'OTHER'}
+                bpy.data.collections["Collection"].exporters[0].export_properties.use_mesh_modifiers = False
+                bpy.data.collections["Collection"].exporters[0].export_properties.add_leaf_bones = False
+                bpy.data.collections["Collection"].exporters[0].export_properties.bake_anim = False
+                bpy.data.collections["Collection"].exporters[0].export_properties.apply_scale_options = 'FBX_SCALE_ALL'
+                bpy.data.collections["Collection"].exporters[0].export_properties.path_mode = 'COPY'
+                bpy.data.collections["Collection"].exporters[0].export_properties.embed_textures = False
+                bpy.data.collections["Collection"].exporters[0].export_properties.mesh_smooth_type = 'OFF'
+                bpy.data.collections["Collection"].exporters[0].export_properties.filepath = os.path.join(folderpath.replace('baked_files', 'atlas_files'), 'Exported model.fbx')
+                c.toggle_console()
 
             c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             #reset viewport shading back to material preview
