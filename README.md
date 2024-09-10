@@ -16,7 +16,8 @@ The absolute latest version of KKBP can be downloaded [here](https://github.com/
 
 ## Video walkthrough of the plugins
 
-(Click for playlist!)  
+[(Click for playlist!)  
+![ ](https://raw.githubusercontent.com/FlailingFog/flailingfog.github.io/master/assets/images/readmeyt.png)](https://www.youtube.com/playlist?list=PLhiuav2SCuveWvSwKg18l6mDSl5xl4x7o)
 
 ## Help
 [Check the wiki for FAQ and basic info.](https://flailingfog.github.io/wiki)  
