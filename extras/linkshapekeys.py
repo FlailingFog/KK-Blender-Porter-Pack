@@ -77,15 +77,17 @@ class link_shapekeys(bpy.types.Operator):
 
         eyes = bpy.data.objects[ob_name]
         eyes.name = 'Eyes'
-        eyes.modifiers['Outline Modifier'].show_viewport = False
-        eyes.modifiers['Outline Modifier'].show_render = False
+        if eyes.modifiers.get('Outline Modifier'):
+            eyes.modifiers['Outline Modifier'].show_viewport = False
+            eyes.modifiers['Outline Modifier'].show_render = False
         
         #do the same for the eyebrows
         separateMaterial(['KK Eyebrows (mayuge)'])
         eyebrows = bpy.data.objects[ob_name]
         eyebrows.name = 'Eyebrows'
-        eyebrows.modifiers['Outline Modifier'].show_viewport = False
-        eyebrows.modifiers['Outline Modifier'].show_render = False
+        if eyebrows.modifiers.get('Outline Modifier'):
+            eyebrows.modifiers['Outline Modifier'].show_viewport = False
+            eyebrows.modifiers['Outline Modifier'].show_render = False
 
         bpy.ops.object.mode_set(mode = 'OBJECT')
         link_keys(body, [eyes, eyebrows])
