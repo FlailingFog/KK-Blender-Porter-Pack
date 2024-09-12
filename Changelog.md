@@ -17,7 +17,7 @@
     * This feature does not have a pixel limit, so if the atlas is too large, you can split up your objects and re-generate it
 * Streamlined the KKBP main panel!
     * There's now only one button for importing, one for optimizing materials and one for exporting
-    * If a button in the panel cannot be used, it will now be grayed out. Some features (like the animation import feature) require you to use the Rigify armature
+    * If a button in the panel cannot be used, it will now be grayed out. Some features (like the animation import feature) require you to use the Rigify armature, and other features (like the prep for export button) require you to use the KKBP armature
 * During very long sequences, like when finalizing materials or bone simplification, the plugin will now attempt to give you progress information
 * Generating dark colors and textures can now be skipped to slightly speed up import times
 * Blue pixels on textures should now be fixed
