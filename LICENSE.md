@@ -5,7 +5,7 @@ The majority of KKBP's Python source code is developed and distributed under the
 
 ### The MIT License (MIT)
 
-Copyright © 2024 FlailingFog
+Copyright © 2024 KKBP developers
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
