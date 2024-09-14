@@ -24,9 +24,11 @@
 # Repo: https://github.com/michaeldegroot/cats-blender-plugin
 # Edits by: GiveMeAllYourCats
 
-import bpy
+import bpy, io
 
+from contextlib import redirect_stdout
 from . import common as Common
+from ...common import kklog
 #from .register import register_wrap
 #from .translations import t
 
@@ -77,15 +79,20 @@ class MergeWeights(bpy.types.Operator):
 def merge_weights(armature, parenting_list):
     Common.switch('OBJECT')
     # Merge the weights on the meshes
-    for mesh in Common.get_meshes_objects(armature_name=armature.name, visible_only=bpy.context.scene.merge_visible_meshes_only if bpy.context.scene.get('merge_visible_meshes_only') != None else True):
+    stdout = io.StringIO()
+    meshes = Common.get_meshes_objects(armature_name=armature.name, visible_only=bpy.context.scene.merge_visible_meshes_only if bpy.context.scene.get('merge_visible_meshes_only') != None else True)
+    for mindex, mesh in enumerate(meshes):
         Common.set_active(mesh)
 
-        for bone, parent in parenting_list.items():
+        for index, bone in enumerate(parenting_list):
+            parent = parenting_list[bone]
+            kklog('Merging bone: {}     object {} / {}, bone {} / {}'.format(bone, mindex, len(meshes), index, len(parenting_list)))
             if not mesh.vertex_groups.get(bone):
                 continue
             if not mesh.vertex_groups.get(parent):
                 mesh.vertex_groups.new(name=parent)
-            Common.mix_weights(mesh, bone, parent)
+            with redirect_stdout(stdout):
+                Common.mix_weights(mesh, bone, parent)
 
     # Select armature
     Common.unselect_all()

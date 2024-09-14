@@ -1,4 +1,4 @@
-import bpy, json, datetime, traceback
+import bpy, json, datetime, traceback, os
 from pathlib import Path
 
 def toggle_console():
@@ -10,7 +10,7 @@ def toggle_console():
         return #only available on windows so it might error out for other platforms
 
 def kklog(log_text, type = ''):
-    '''Log to the KKBP Log text in the scripting tab. Also prints to console'''
+    '''Log to the KKBP Log text in the scripting tab. Also prints to console. optional types are error or warn'''
     if not bpy.data.texts.get('KKBP Log'):
         bpy.data.texts.new(name='KKBP Log')
         if bpy.data.screens.get('Scripting'):
@@ -42,12 +42,16 @@ def get_json_file(filename:str):
         return json_data
 
 def initialize_timer():
+    bpy.context.scene.kkbp.total_timer = datetime.datetime.now().minute * 60 + datetime.datetime.now().second + datetime.datetime.now().microsecond / 1e6
+    bpy.context.scene.kkbp.timer = datetime.datetime.now().minute * 60 + datetime.datetime.now().second + datetime.datetime.now().microsecond / 1e6
+
+def reset_timer():
     bpy.context.scene.kkbp.timer = datetime.datetime.now().minute * 60 + datetime.datetime.now().second + datetime.datetime.now().microsecond / 1e6
 
 def print_timer(operation_name:str):
     '''Prints the time between now and the last operation that was timed'''
     kklog('{} operation took {} seconds'.format(operation_name, abs(round(((datetime.datetime.now().minute * 60 + datetime.datetime.now().second + datetime.datetime.now().microsecond / 1e6) - bpy.context.scene.kkbp.timer), 3))))
-    initialize_timer()
+    reset_timer()
 
 def handle_error(error_causer:bpy.types.Operator, error:Exception):
     kklog('Unknown python error occurred. \n          Make sure the default model imports correctly before troubleshooting on this model!\n\n\n', type = 'error')
@@ -109,7 +113,7 @@ def import_from_library_file(category, list_of_items, use_fake_user = False):
     if blend_file_missing:
         #grab it from the plugin directory
         directory = Path(__file__)
-        filename = 'KK Shader V6.6.blend/'
+        filename = 'KK Shader V7.0.blend/'
     
     library_path=(Path(directory).parent / filename).resolve()
     template_list = [{'name':item} for item in list_of_items]
@@ -119,3 +123,17 @@ def import_from_library_file(category, list_of_items, use_fake_user = False):
         files=template_list,
         set_fake=use_fake_user
         )
+
+def has_blender_dependency():
+    '''Check the script directory for the blender exe'''
+    if bpy.context.scene.kkbp.blender_path:
+        return True
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    blender_dir = os.path.join(script_dir, 'importing', 'dependencies', "blender-3.6.9-windows-x64", "blender.exe")
+    if os.path.isfile(blender_dir):
+        return True
+    else:
+        blender_dir = os.path.join(script_dir, 'importing', 'dependencies', "blender-2.90.0-windows64", "blender.exe")
+        if os.path.isfile(blender_dir):
+            return True
+    return False

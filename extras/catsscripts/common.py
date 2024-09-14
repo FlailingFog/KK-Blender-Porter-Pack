@@ -51,13 +51,6 @@ from . import common as Common
 #from mmd_tools_local.panels import util_tools as mmd_util_tools
 #from mmd_tools_local.panels import view_prop as mmd_view_prop
 
-# TODO:
-#  - Add check if hips bone really needs to be rotated
-#  - Reset Pivot
-#  - Manual bone selection button for root bones
-#  - Checkbox for eye blinking/moving
-#  - Translate progress bar
-
 
 def version_2_79_or_older():
     return bpy.app.version < (2, 80)
@@ -155,7 +148,6 @@ def get_top_parent(child):
 
 
 def unhide_all_unnecessary():
-    # TODO: Documentation? What does "unnecessary" mean?
     try:
         bpy.ops.object.hide_view_clear()
     except RuntimeError:
@@ -215,10 +207,7 @@ def get_active():
 def select(obj, sel=True):
     if sel:
         hide(obj, False)
-    if version_2_79_or_older():
-        obj.select = sel
-    else:
-        obj.select_set(sel)
+    obj.select_set(sel)
 
 
 def is_selected(obj):
@@ -228,15 +217,9 @@ def is_selected(obj):
 
 
 def hide(obj, val=True):
-    if hasattr(obj, 'hide'):
-        obj.hide = val
-    if not version_2_79_or_older():
-        obj.hide_set(val)
-
+    obj.hide_set(val)
 
 def is_hidden(obj):
-    if version_2_79_or_older():
-        return obj.hide
     return obj.hide_get()
 
 
@@ -295,8 +278,8 @@ def set_default_stage():
     armature = get_armature()
     if armature:
         set_active(armature)
-        if version_2_79_or_older():
-            armature.layers[0] = True
+        # if version_2_79_or_older():
+        #     armature.layers[0] = True
 
     # Fix broken armatures
     if not bpy.context.scene.armature:
@@ -1742,7 +1725,7 @@ def mix_weights(mesh, vg_from, vg_to, mix_strength=1.0, mix_mode='ADD', delete_o
     apply_modifier(mod)
     if delete_old_vg:
         mesh.vertex_groups.remove(mesh.vertex_groups.get(vg_from))
-    mesh.active_shape_key_index = 0  # This line fixes a visual bug in 2.80 which causes random weights to be stuck after being merged
+    mesh.active_shape_key_index = 0  # This line fixes a visual bug in 2.90 which causes random weights to be stuck after being merged
 
 
 def get_user_preferences():
@@ -1815,7 +1798,7 @@ def update_material_list(self=None, context=None):
 
 
 def unify_materials():
-    textures = []  # TODO
+    textures = [] 
 
     for ob in get_objects():
         if ob.type == "MESH":

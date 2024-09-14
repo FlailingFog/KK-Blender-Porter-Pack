@@ -135,7 +135,7 @@ def main():
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.rootBoneName, 0.35)
     
     for bone in generatedRig.pose.bones:
-        if generatedRig.data.bones[bone.name].layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.faceLayerName + koikatsuCommons.mchLayerSuffix)] == True:
+        if generatedRig.data.bones[bone.name].collections.get(str(koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.faceLayerName + koikatsuCommons.mchLayerSuffix))):
             koikatsuCommons.setBoneCustomShapeScale(generatedRig, bone.name, 0.15)
         
     headBone = generatedRig.pose.bones[koikatsuCommons.originalBonePrefix + koikatsuCommons.headBoneName]
@@ -193,10 +193,10 @@ def main():
     bpy.ops.object.mode_set(mode='EDIT')
 
     for bone in generatedRig.data.edit_bones:
-        if generatedRig.data.bones[bone.name].layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.junkLayerName)] == True:
+        if generatedRig.data.bones[bone.name].collections.get(str(koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.junkLayerName))):
             koikatsuCommons.deleteBone(generatedRig, bone.name)
             continue
-        if generatedRig.data.bones[bone.name].layers[koikatsuCommons.defLayerIndex] == True:
+        if generatedRig.data.bones[bone.name].collections.get(str(koikatsuCommons.defLayerIndex)):
             bone.use_deform = True
             
     generatedRig.data.edit_bones[koikatsuCommons.eyesTrackTargetParentBoneName].parent = None
@@ -205,6 +205,79 @@ def main():
     bpy.ops.object.mode_set(mode='OBJECT')
         
     #koikatsuCommons.setBoneManagerLayersFromRigifyLayers(generatedRig)
+
+    #move some bones to the correct layer at the end because I don't feel like figuring out what went wrong
+    theme_dict = {
+        'purple':[1.000000, 0.266356, 0.955974],
+        'red':(0.8, 0, 0),
+        'yellow':(0.956863, 0.788235, 0.047059),
+        'blue':(0.005605, 0.104617, 0.947307),
+        'green':(0.026241, 0.693872, 0.004025),
+        'orange':(0.968628, 0.250980, 0.094118)
+    }
+    for bone in ['cf_j_tang_02', 'cf_j_tang_03', 'cf_j_tang_04', 'cf_j_tang_05', 'cf_j_tang_02.001']:
+        koikatsuCommons.assignSingleBoneLayer_except(generatedRig, bone, 3)
+        if generatedRig.data.bones.get(bone):
+            generatedRig.data.bones[bone].color.custom.normal = theme_dict['green']
+            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['green']
+
+    #Torso detail
+    for bone in ['tweak_Neck', 'Upper Chest_fk', 'tweak_Upper Chest', 'Chest_fk', 'tweak_Upper Chest', 'Chest_fk','tweak_Chest','Spine_fk','tweak_Spine','Hips_fk','tweak_Hips']:
+        koikatsuCommons.assignSingleBoneLayer_except(generatedRig, bone, 8)
+        if generatedRig.data.bones.get(bone):
+            generatedRig.data.bones[bone].color.custom.normal = theme_dict['blue']
+            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['blue']
+
+    for bone in ['Left wrist_fk', 'Left elbow_fk', 'Left arm_fk', 'Right arm_fk', 'Right elbow_fk', 'Right wrist_fk']:
+        koikatsuCommons.assignSingleBoneLayer_except(generatedRig, bone, 10 if 'Left' in bone else 13)
+        if generatedRig.data.bones.get(bone):
+            generatedRig.data.bones[bone].color.custom.normal = theme_dict['green']
+            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['green']
+
+    for bone in ['Left arm_tweak', 'Left arm_tweak.001', 'Left arm_tweak.002', 'Left elbow_tweak', 'Left elbow_tweak.001', 'Left elbow_tweak.002', 'Left wrist_tweak',
+                 'Right arm_tweak', 'Right arm_tweak.001', 'Right arm_tweak.002', 'Right elbow_tweak', 'Right elbow_tweak.001', 'Right elbow_tweak.002', 'Right wrist_tweak']:
+        koikatsuCommons.assignSingleBoneLayer_except(generatedRig, bone, 11 if 'Left' in bone else 14)
+        if generatedRig.data.bones.get(bone):
+            generatedRig.data.bones[bone].color.custom.normal = theme_dict['blue']
+            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['blue']
+
+    for bone in ['Thumb0_L', 'Thumb1_L', 'Thumb2_L', 'Thumb0_L.001', 'IndexFinger1_L', 'IndexFinger2_L', 'IndexFinger3_L', 'IndexFinger1_L.001', 'MiddleFinger1_L', 'MiddleFinger2_L', 'MiddleFinger3_L', 'MiddleFinger1_L.001', 'RingFinger1_L', 'RingFinger2_L', 'RingFinger3_L', 'RingFinger1_L.001', 'LittleFinger1_L', 'LittleFinger2_L', 'LittleFinger3_L', 'LittleFinger1_L.001', 'Thumb0_R', 'Thumb1_R', 'Thumb2_R', 'Thumb0_R.001', 'IndexFinger1_R', 'IndexFinger2_R', 'IndexFinger3_R', 'IndexFinger1_R.001', 'MiddleFinger1_R', 'MiddleFinger2_R', 'MiddleFinger3_R', 'MiddleFinger1_R.001', 'RingFinger1_R', 'RingFinger2_R', 'RingFinger3_R', 'RingFinger1_R.001', 'LittleFinger1_R', 'LittleFinger2_R', 'LittleFinger3_R', 'LittleFinger1_R.001']:
+        koikatsuCommons.assignSingleBoneLayer_except(generatedRig, bone, 16)
+        if generatedRig.data.bones.get(bone):
+            generatedRig.data.bones[bone].color.custom.normal = theme_dict['green']
+            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['green']
+
+    for bone in ['Left leg_fk', 'Left knee_fk', 'Left ankle_fk', 'Left toe_fk', 'Right leg_fk', 'Right knee_fk', 'Right ankle_fk', 'Right toe_fk']:
+        koikatsuCommons.assignSingleBoneLayer_except(generatedRig, bone, 18 if 'Left' in bone else 21)
+        if generatedRig.data.bones.get(bone):
+            generatedRig.data.bones[bone].color.custom.normal = theme_dict['green']
+            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['green']
+
+    for bone in ['Left leg_tweak', 'Left leg_tweak.001', 'Left leg_tweak.002', 'Left knee_tweak', 'Left knee_tweak.001', 'Left knee_tweak.002', 'Left ankle_tweak', 'Right leg_tweak', 'Right leg_tweak.001', 'Right leg_tweak.002', 'Right knee_tweak', 'Right knee_tweak.001', 'Right knee_tweak.002', 'Right ankle_tweak']:
+        koikatsuCommons.assignSingleBoneLayer_except(generatedRig, bone, 19 if 'Left' in bone else 22)
+        if generatedRig.data.bones.get(bone):
+            generatedRig.data.bones[bone].color.custom.normal = theme_dict['blue']
+            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['blue']
+
+    for bone in ['cf_j_sk_00_00_ik', 'cf_j_sk_01_00_ik', 'cf_j_sk_02_00_ik', 'cf_j_sk_03_00_ik', 'cf_j_sk_04_00_ik', 'cf_j_sk_05_00_ik', 'cf_j_sk_06_00_ik', 'cf_j_sk_07_00_ik', 'cf_j_sk_00_00_master', 'cf_j_sk_01_00_master', 'cf_j_sk_02_00_master', 'cf_j_sk_03_00_master', 'cf_j_sk_04_00_master', 'cf_j_sk_05_00_master', 'cf_j_sk_06_00_master', 'cf_j_sk_07_00_master']:
+        koikatsuCommons.assignSingleBoneLayer_except(generatedRig, bone, 23)
+        if generatedRig.data.bones.get(bone):
+            generatedRig.data.bones[bone].color.custom.normal = theme_dict['red']
+            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['red']
+
+    bpy.context.object.pose.bones["root"].color.palette = 'CUSTOM'
+    generatedRig.data.bones['root'].color.custom.normal = theme_dict['yellow']
+    generatedRig.pose.bones['root'].color.custom.normal = theme_dict['yellow']
+    generatedRig.data.bones['root'].color.custom.select = (0.313989, 0.783538, 1.000000)
+    generatedRig.pose.bones['root'].color.custom.select = (0.313989, 0.783538, 1.000000)
+    generatedRig.data.bones['root'].color.custom.active = (0.552011, 1.000000, 1.000000)
+    generatedRig.pose.bones['root'].color.custom.active = (0.552011, 1.000000, 1.000000)
+
+    #set layer visibility
+    for layer in ['None']:
+        generatedRig.data.collections_all[str(layer)].is_visible = False
+    for layer in [7,9,12,17,20]:
+        generatedRig.data.collections_all[str(layer)].is_visible = True
 
 class rigify_after(bpy.types.Operator):
     bl_idname = "kkbp.rigafter"

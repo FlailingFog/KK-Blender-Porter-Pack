@@ -57,7 +57,7 @@ def better_fbx_map_import(directory):
                 template = bpy.data.materials['KK Simple'].copy()
             except:
                 script_dir=pathlib.Path(__file__).parent.parent
-                template_path=(script_dir / '../KK Shader V6.6.blend').resolve()
+                template_path=(script_dir / '../KK Shader V7.0.blend').resolve()
                 filepath = str(template_path)
 
                 innerpath = 'Material'
@@ -83,7 +83,7 @@ def better_fbx_map_import(directory):
                     new_path = main_image.filepath.replace(".dds", ".png").replace(".DDS", ".png")
                     new_image_name = main_image.name.replace(".dds", ".png").replace(".DDS", ".png")
                     main_image.save_render(bpy.path.abspath(new_path))
-                    bpy.ops.image.open(filepath=bpy.path.abspath(new_path), use_udim_detecting=False)
+                    bpy.data.images.load(filepath=bpy.path.abspath(new_path))
                     bpy.data.images[new_image_name].pack()
 
                     #create darktex
@@ -107,14 +107,14 @@ def better_fbx_map_import(directory):
                         image.pixels = new_pixels
                     
                     #then load it in
-                    new_node.nodes['MapMain'].image = main_image
-                    new_node.nodes['Darktex'].image = dark_image
+                    new_node.nodes['light'].image = main_image
+                    new_node.nodes['dark'].image = dark_image
                 
                 norm_image_link = [node for node in obj.material_slots[0].material.node_tree.nodes if node.type == 'BSDF_PRINCIPLED'][0].inputs[22]
 
                 if norm_image_link.is_linked:
                     norm_image = norm_image_link.links[0].from_node.inputs[2].links[0].from_node.image
-                    new_node.nodes['MapNorm'].image == norm_image
+                    new_node.nodes['norm'].image == norm_image
                 obj.material_slots[0].material = template
 
 def main(folder):

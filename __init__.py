@@ -1,14 +1,16 @@
 #The init file for the plugin
-bl_info = {
-    "name" : "KK Blender Porter",
-    "author" : "a blendlet and some blenderchads",
-    "location" : "View 3D > Tool Shelf > KKBP and Image Editor > Tool Shelf > KKBP",
-    "description" : "Scripts to automate cleanup of a Koikatsu export",
-    "version": (6, 6, 3),
-    "blender" : (3, 6, 9),
-    "category" : "3D View",
-    "tracker_url" : "https://github.com/FlailingFog/KK-Blender-Porter-Pack/"
-}
+# bl_info = {
+#     "name" : "KKBP (Koikatsu Blender Porter)",
+#     "author" : "a blendlet and some blenderchads",
+#     "location" : "View 3D > Tool Shelf > KKBP and Image Editor > Tool Shelf > KKBP",
+#     "description" : "Scripts to automate cleanup of a Koikatsu export",
+#     "version": (7, 0, 0),
+#     "blender" : (4, 2, 0),
+#     "category" : "3D View",
+#     "tracker_url" : "https://github.com/FlailingFog/KK-Blender-Porter-Pack/",
+#     "doc_url": "https://github.com/FlailingFog/KK-Blender-Porter-Pack/blob/master/wiki/Wiki%20top.md",
+# }
+
 
 from bpy.utils import register_class, unregister_class
 from bpy.types import Scene
@@ -21,6 +23,7 @@ def reg_unreg(register_bool):
     else:
         unregister_class(KKBPPreferences)
 
+    from .importing.installdependency import install_dependency, install_dependency28
     from .importing.importbuttons import kkbp_import
     from .importing.modifymesh import modify_mesh
     from .importing.modifyarmature import modify_armature
@@ -28,26 +31,24 @@ def reg_unreg(register_bool):
     from .importing.postoperations import post_operations
 
     from .exporting.bakematerials import bake_materials
-    from .exporting.applymaterials import apply_materials
     from .exporting.exportprep import export_prep
-    from .exporting.exportfbx import export_fbx
 
     from .extras.importstudio import import_studio
     from .extras.animationlibrary.createmapassetlibrary import map_asset_lib
     from .extras.animationlibrary.createanimationlibrary import anim_asset_lib
     from .extras.linkshapekeys import link_shapekeys
-    from .extras.importanimation import import_animation
     from .extras.separatemeshes import separate_meshes
     from .extras.separatemeshes import export_separate_meshes
     from .extras.toggleik import toggle_ik
     from .extras.updatebones import update_bones
     from .extras.imageconvert import image_convert
     from .extras.imageconvert import image_dark_convert
-    from .extras.finalizematerials import finalize_materials
     from .extras.rigifywrapper import rigify_convert
     from .extras.rigifyscripts.rigify_before import rigify_before
     from .extras.rigifyscripts.rigify_after import rigify_after
     from .extras.catsscripts.armature_manual import MergeWeights
+    from .extras.importanimation import anim_import
+    from .extras.splitobjects import split_objects
 
     from . KKPanel import PlaceholderProperties
     from . KKPanel import (
@@ -55,18 +56,14 @@ def reg_unreg(register_bool):
         IMPORTING_PT_panel,
         EXPORTING_PT_panel,
         EXTRAS_PT_panel,
-        EDITOR_PT_panel
     )
 
     classes = (
-        apply_materials,
         bake_materials, 
         export_prep,
-        export_fbx,
         image_convert, 
         image_dark_convert,
 
-        import_animation, 
         import_studio,
         map_asset_lib,
         anim_asset_lib,
@@ -75,12 +72,15 @@ def reg_unreg(register_bool):
         export_separate_meshes,
         toggle_ik,
         update_bones,
-        finalize_materials,
         rigify_convert,
         rigify_before,
         rigify_after,
         MergeWeights,
+        anim_import,
+        split_objects,
 
+        install_dependency,
+        install_dependency28,
         kkbp_import,
         modify_mesh,
         modify_armature,
@@ -91,8 +91,7 @@ def reg_unreg(register_bool):
         IMPORTINGHEADER_PT_panel,
         IMPORTING_PT_panel,
         EXPORTING_PT_panel,
-        EXTRAS_PT_panel,
-        EDITOR_PT_panel)
+        EXTRAS_PT_panel)
 
     for cls in classes:
         register_class(cls) if register_bool else unregister_class(cls)

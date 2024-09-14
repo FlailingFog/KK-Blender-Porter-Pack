@@ -46,12 +46,14 @@ def main():
     
     selectedLayers = []
     for i in range(32):
-        if metarig.data.layers[i] == True:
+        if metarig.data.collections.get(str(i)) == True:
             selectedLayers.append(i)
         if i == koikatsuCommons.originalIkLayerIndex:
-            metarig.data.layers[i] = True
+            if metarig.data.collections.get(str(i)):
+                metarig.data.collections.get(str(i)).is_visible = True
         else:
-            metarig.data.layers[i] = False
+            if metarig.data.collections.get(str(i)):
+                metarig.data.collections.get(str(i)).is_visible = False
             
     hasSkirt = True    
     if koikatsuCommons.skirtParentBoneName not in metarig.pose.bones:
@@ -182,6 +184,12 @@ def main():
     buttocksBone.tail.y = statistics.mean([leftButtockBone.tail.y, rightButtockBone.tail.y])
     
     bpy.ops.object.mode_set(mode='OBJECT')
+
+    #set the newly created bones to layer 0 just in case
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.eyesBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.leftEyeBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.rightEyeBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.buttocksBoneName, 0)
     
     def arrangeTripleWidgetSet(widgetCollectionName, parentWidget, leftChildWidget, rightChildWidget, snapGeometryToOrigin, 
     vertexGroupObjectName, leftVertexGroupName, rightVertexGroupName, 
@@ -332,7 +340,11 @@ def main():
             rightChildHandleBone.parent = parentHandleBone
             
             bpy.ops.object.mode_set(mode='OBJECT')
-            
+
+            #set new bones to layer 0, just in case
+            koikatsuCommons.assignSingleBoneLayer(rig, parentHandleBoneName, 0)
+            koikatsuCommons.assignSingleBoneLayer(rig, leftChildHandleBoneName, 0)
+            koikatsuCommons.assignSingleBoneLayer(rig, rightChildHandleBoneName, 0)
 
     widgetEyes = createEyesWidget(koikatsuCommons.widgetEyesName, koikatsuCommons.widgetCollectionName, metarig, koikatsuCommons.eyesBoneName)
     widgetEyeLeft = createEyeWidget(koikatsuCommons.widgetEyeLeftName, koikatsuCommons.widgetCollectionName, metarig, koikatsuCommons.leftEyeBoneName)
@@ -504,6 +516,35 @@ def main():
     
     bpy.ops.object.mode_set(mode='OBJECT')
     
+    #set newly created bones to layer 0
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.eyesTrackTargetBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.eyesTrackTargetParentBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.eyesHandleMarkerBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.leftEyeHandleMarkerBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.rightEyeHandleMarkerBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.leftEyeHandleMarkerXBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.rightEyeHandleMarkerXBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.leftEyeHandleMarkerZBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.rightEyeHandleMarkerZBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.eyeballsBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.leftEyeballBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.rightEyeballBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.eyeballsTrackBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.leftEyeballTrackBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.rightEyeballTrackBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.leftEyeballTrackCorrectionBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.rightEyeballTrackCorrectionBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.leftHeadMarkerXBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.rightHeadMarkerXBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.leftHeadMarkerZBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.rightHeadMarkerZBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.headTrackTargetBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.headTrackTargetParentBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.headTrackBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.headTweakBoneName + koikatsuCommons.placeholderBoneSuffix, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.torsoBoneName + koikatsuCommons.placeholderBoneSuffix, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.rootBoneName + koikatsuCommons.placeholderBoneSuffix, 0)
+
     eyesSizeFactor = 100.0
     
     """
@@ -885,8 +926,10 @@ def main():
     Begin Rigifying
     """
         
-    bpy.ops.pose.rigify_layer_init()
-    bpy.ops.armature.rigify_add_bone_groups()
+    # bpy.ops.pose.rigify_layer_init()
+    bpy.ops.armature.rigify_add_color_sets()
+    bpy.ops.armature.rigify_collection_select(index=2)
+    bpy.ops.armature.rigify_collection_set_ui_row(index=2, row=1)
         
     for index, rigifyLayer in enumerate(koikatsuCommons.rigifyLayers):
         koikatsuCommons.setRigifyLayer(metarig, index, rigifyLayer)
@@ -992,7 +1035,7 @@ def main():
     def fix_bone_orientations(armature):
         # Connect all bones with their children if they have exactly one
         for bone in armature.data.edit_bones:
-            if len(bone.children) == 1 and (metarig.data.bones[bone.name].layers[koikatsuCommons.originalAccessoryLayerIndex] == True or metarig.data.bones[bone.name].layers[koikatsuCommons.originalMchLayerIndex] == True):
+            if len(bone.children) == 1 and (metarig.data.bones[bone.name].collections.get(str(koikatsuCommons.originalAccessoryLayerIndex)) or metarig.data.bones[bone.name].collections.get(str(koikatsuCommons.originalMchLayerIndex))):
                 p1 = bone.head
                 p2 = bone.children[0].head
                 dist = ((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2 + (p2[2] - p1[2]) ** 2) ** (1/2)
@@ -1005,26 +1048,31 @@ def main():
                     
     fix_bone_orientations(metarig)
     
+
+    '''Put all Mch bones into an array'''
+
     accessoryBoneNames = []
     accessoryMchBoneNames = []
     faceMchBoneNames = []    
     for bone in metarig.data.edit_bones:
-        if metarig.data.bones[bone.name].layers[koikatsuCommons.originalUpperFaceLayerIndex] == True or metarig.data.bones[bone.name].layers[koikatsuCommons.originalLowerFaceLayerIndex] == True:
-            if metarig.data.bones[bone.parent.name].layers[koikatsuCommons.originalMchLayerIndex] == True and bone.parent.name not in faceMchBoneNames and metarig.data.bones[bone.parent.name].layers[koikatsuCommons.originalUpperFaceLayerIndex] == False and metarig.data.bones[bone.parent.name].layers[koikatsuCommons.originalLowerFaceLayerIndex] == False:
+        if metarig.data.bones[bone.name].collections.get(str(koikatsuCommons.originalUpperFaceLayerIndex)) or metarig.data.bones[bone.name].collections.get(str(koikatsuCommons.originalLowerFaceLayerIndex)):
+            if metarig.data.bones[bone.parent.name].collections.get(str(koikatsuCommons.originalMchLayerIndex)) and bone.parent.name not in faceMchBoneNames and not metarig.data.bones[bone.parent.name].collections.get(str(koikatsuCommons.originalUpperFaceLayerIndex)) and not metarig.data.bones[bone.parent.name].collections.get(str(koikatsuCommons.originalLowerFaceLayerIndex)):
                 faceMchBoneNames.append(bone.parent.name)
-        if metarig.data.bones[bone.name].layers[koikatsuCommons.originalAccessoryLayerIndex] == True:
+        if metarig.data.bones[bone.name].collections.get(str(koikatsuCommons.originalAccessoryLayerIndex)):
             accessoryBoneNames.append(bone.name)
-            if metarig.data.bones[bone.parent.name].layers[koikatsuCommons.originalMchLayerIndex] == True and metarig.data.bones[bone.parent.name].layers[koikatsuCommons.originalAccessoryLayerIndex] == False:
+            if metarig.data.bones[bone.parent.name].collections.get(str(koikatsuCommons.originalMchLayerIndex)) and not metarig.data.bones[bone.parent.name].collections.get(str(koikatsuCommons.originalAccessoryLayerIndex)):
                 accessoryMchBoneNames.append(bone.parent.name)
     
     def finalizeMchList(rig, mchBoneNames, sourceLayerIndex, excludedLayerIndexes, excludedList = None):
         for childBoneName in mchBoneNames:
             childBone = metarig.data.edit_bones[childBoneName]
             #childBone.length = childBone.length / 4
-            if rig.data.bones[childBone.parent.name].layers[sourceLayerIndex] == True and childBone.parent.name not in mchBoneNames:
+            if childBone.name == 'Center':
+                continue
+            if rig.data.bones[childBone.parent.name].collections.get(str(sourceLayerIndex)) and childBone.parent.name not in mchBoneNames:
                 insideExcludedLayer = False
                 for excludedLayerIndex in excludedLayerIndexes:
-                    if rig.data.bones[childBone.parent.name].layers[excludedLayerIndex] == True:
+                    if rig.data.bones[childBone.parent.name].collections.get(str(excludedLayerIndex)):
                         insideExcludedLayer = True
                         break
                 if not insideExcludedLayer and (excludedList is None or childBone.parent.name not in excludedList):
@@ -1361,6 +1409,10 @@ def main():
     
     bpy.ops.object.mode_set(mode='OBJECT')
     
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.leftHeelBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.rightHeelBoneName, 0)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.skirtParentBoneCopyName, 0)
+
     legConstrainedBoneNames = [koikatsuCommons.waistJointCorrectionBoneName, koikatsuCommons.leftButtockJointCorrectionBoneName, koikatsuCommons.rightButtockJointCorrectionBoneName, koikatsuCommons.leftLegJointCorrectionBoneName, koikatsuCommons.rightLegJointCorrectionBoneName]
     for legConstrainedBoneName in legConstrainedBoneNames:
         for constraint in metarig.pose.bones[legConstrainedBoneName].constraints:
@@ -1410,6 +1462,8 @@ def main():
         rightShoulderJointCorrectionBoneDriverZ.driver.expression = rightShoulderJointCorrectionBoneDriverZ.driver.expression
         rightShoulderJointCorrectionBoneDriverZ.driver.variables[0].targets[0].transform_type = 'ROT_X'
     
+    '''Apply rigify bone type to all bones'''
+
     for bone in metarig.pose.bones[:]:
         bone.rigify_type = "basic.raw_copy"
                        
@@ -1418,8 +1472,8 @@ def main():
         metarig.pose.bones[fingerBone1Name].rigify_parameters.primary_rotation_axis = "-X"
         metarig.pose.bones[fingerBone1Name].rigify_parameters.make_extra_ik_control = True
         metarig.pose.bones[fingerBone1Name].custom_shape = None
-        metarig.pose.bones[fingerBone1Name].rigify_parameters.tweak_layers[1] = False
-        metarig.pose.bones[fingerBone1Name].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.fingersLayerName + koikatsuCommons.detailLayerSuffix)] = True
+        # metarig.pose.bones[fingerBone1Name].rigify_parameters.tweak_layers[1] = False
+        # metarig.pose.bones[fingerBone1Name].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.fingersLayerName + koikatsuCommons.detailLayerSuffix)] = True
         metarig.pose.bones[fingerBone2Name].rigify_type = ""
         metarig.pose.bones[fingerBone2Name].custom_shape = None
         metarig.pose.bones[fingerBone3Name].rigify_type = ""
@@ -1440,8 +1494,8 @@ def main():
         metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_parameters.primary_rotation_axis = "-X"
         metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_parameters.make_extra_ik_control = True
         metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].custom_shape = None
-        metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_parameters.tweak_layers[1] = False
-        metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.eyesLayerName + koikatsuCommons.secondaryLayerSuffix)] = True
+        # metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_parameters.tweak_layers[1] = False
+        # metarig.pose.bones[koikatsuCommons.riggedTongueBone2Name].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.eyesLayerName + koikatsuCommons.secondaryLayerSuffix)] = True
         metarig.pose.bones[koikatsuCommons.riggedTongueBone3Name].rigify_type = ""
         metarig.pose.bones[koikatsuCommons.riggedTongueBone3Name].custom_shape = None
         metarig.pose.bones[koikatsuCommons.riggedTongueLeftBone3Name].rigify_parameters.optional_widget_type = "sphere"
@@ -1454,6 +1508,7 @@ def main():
         metarig.pose.bones[koikatsuCommons.riggedTongueBone5Name].custom_shape = None
         metarig.pose.bones[koikatsuCommons.riggedTongueLeftBone5Name].rigify_parameters.optional_widget_type = "sphere"
         metarig.pose.bones[koikatsuCommons.riggedTongueRightBone5Name].rigify_parameters.optional_widget_type = "sphere"
+
     metarig.pose.bones[koikatsuCommons.headBoneName].custom_shape = None
     metarig.pose.bones[koikatsuCommons.headBoneName].rigify_type = ""
     metarig.pose.bones[koikatsuCommons.headTrackBoneName].rigify_parameters.relink_constraints = True
@@ -1463,8 +1518,8 @@ def main():
     metarig.pose.bones[koikatsuCommons.neckBoneName].custom_shape = None
     metarig.pose.bones[koikatsuCommons.neckBoneName].rigify_type = "spines.super_head"
     metarig.pose.bones[koikatsuCommons.neckBoneName].rigify_parameters.connect_chain = True
-    metarig.pose.bones[koikatsuCommons.neckBoneName].rigify_parameters.tweak_layers[1] = False
-    metarig.pose.bones[koikatsuCommons.neckBoneName].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.torsoLayerName + koikatsuCommons.tweakLayerSuffix)] = True
+    # metarig.pose.bones[koikatsuCommons.neckBoneName].rigify_parameters.tweak_layers[1] = False
+    # metarig.pose.bones[koikatsuCommons.neckBoneName].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.torsoLayerName + koikatsuCommons.tweakLayerSuffix)] = True
     metarig.pose.bones[koikatsuCommons.upperChestBoneName].custom_shape = None
     metarig.pose.bones[koikatsuCommons.upperChestBoneName].rigify_type = ""
     metarig.pose.bones[koikatsuCommons.chestBoneName].custom_shape = None
@@ -1474,10 +1529,10 @@ def main():
     metarig.pose.bones[koikatsuCommons.hipsBoneName].custom_shape = None
     metarig.pose.bones[koikatsuCommons.hipsBoneName].rigify_type = "spines.basic_spine"
     metarig.pose.bones[koikatsuCommons.hipsBoneName].rigify_parameters.pivot_pos = 1
-    metarig.pose.bones[koikatsuCommons.hipsBoneName].rigify_parameters.tweak_layers[1] = False
-    metarig.pose.bones[koikatsuCommons.hipsBoneName].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.torsoLayerName + koikatsuCommons.tweakLayerSuffix)] = True
-    metarig.pose.bones[koikatsuCommons.hipsBoneName].rigify_parameters.fk_layers[1] = False
-    metarig.pose.bones[koikatsuCommons.hipsBoneName].rigify_parameters.fk_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.torsoLayerName + koikatsuCommons.tweakLayerSuffix)] = True
+    # metarig.pose.bones[koikatsuCommons.hipsBoneName].rigify_parameters.tweak_layers[1] = False
+    # metarig.pose.bones[koikatsuCommons.hipsBoneName].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.torsoLayerName + koikatsuCommons.tweakLayerSuffix)] = True
+    # metarig.pose.bones[koikatsuCommons.hipsBoneName].rigify_parameters.fk_layers[1] = False
+    # metarig.pose.bones[koikatsuCommons.hipsBoneName].rigify_parameters.fk_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.torsoLayerName + koikatsuCommons.tweakLayerSuffix)] = True
     metarig.pose.bones[koikatsuCommons.waistBoneName].custom_shape = None
     metarig.pose.bones[koikatsuCommons.waistBoneName].rigify_parameters.optional_widget_type = "diamond"
     metarig.pose.bones[koikatsuCommons.crotchBoneName].custom_shape = None
@@ -1516,8 +1571,15 @@ def main():
     widgetFace = bpy.data.objects[koikatsuCommons.widgetFaceName]
     metarig.pose.bones[koikatsuCommons.leftBreastBone2Name].custom_shape = widgetFace
     metarig.pose.bones[koikatsuCommons.rightBreastBone2Name].custom_shape = widgetFace
-    metarig.data.bones[koikatsuCommons.leftBreastBone2Name].layers[koikatsuCommons.originalFkLayerIndex] = True
-    metarig.data.bones[koikatsuCommons.rightBreastBone2Name].layers[koikatsuCommons.originalFkLayerIndex] = True
+    def set_layer(bone_name, show_layer):
+        if metarig.data.bones.get(str(bone_name)):
+                if metarig.data.collections.get(str(show_layer)):
+                    metarig.data.collections[str(show_layer)].assign(metarig.data.bones.get(bone_name))
+                else:
+                    metarig.data.collections.new(str(show_layer))
+                    metarig.data.collections[str(show_layer)].assign(metarig.data.bones.get(bone_name))
+    set_layer(koikatsuCommons.leftBreastBone2Name, koikatsuCommons.originalFkLayerIndex)
+    set_layer(koikatsuCommons.rightBreastBone2Name, koikatsuCommons.originalFkLayerIndex)
     metarig.pose.bones[koikatsuCommons.leftBreastDeformBone2Name].rigify_parameters.optional_widget_type = "sphere"
     metarig.pose.bones[koikatsuCommons.rightBreastDeformBone2Name].rigify_parameters.optional_widget_type = "sphere"
     metarig.pose.bones[koikatsuCommons.leftBreastBone3Name].custom_shape = widgetFace
@@ -1551,14 +1613,14 @@ def main():
     metarig.pose.bones[koikatsuCommons.rightArmBoneName].rigify_parameters.auto_align_extremity = True
     metarig.pose.bones[koikatsuCommons.leftArmBoneName].rigify_parameters.make_ik_wrist_pivot = True
     metarig.pose.bones[koikatsuCommons.rightArmBoneName].rigify_parameters.make_ik_wrist_pivot = True
-    metarig.pose.bones[koikatsuCommons.leftArmBoneName].rigify_parameters.tweak_layers[1] = False
-    metarig.pose.bones[koikatsuCommons.rightArmBoneName].rigify_parameters.tweak_layers[1] = False
-    metarig.pose.bones[koikatsuCommons.leftArmBoneName].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.leftArmLayerName + koikatsuCommons.tweakLayerSuffix)] = True
-    metarig.pose.bones[koikatsuCommons.rightArmBoneName].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.rightArmLayerName + koikatsuCommons.tweakLayerSuffix)] = True
-    metarig.pose.bones[koikatsuCommons.leftArmBoneName].rigify_parameters.fk_layers[1] = False
-    metarig.pose.bones[koikatsuCommons.rightArmBoneName].rigify_parameters.fk_layers[1] = False
-    metarig.pose.bones[koikatsuCommons.leftArmBoneName].rigify_parameters.fk_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.leftArmLayerName + koikatsuCommons.fkLayerSuffix)] = True
-    metarig.pose.bones[koikatsuCommons.rightArmBoneName].rigify_parameters.fk_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.rightArmLayerName + koikatsuCommons.fkLayerSuffix)] = True
+    # metarig.pose.bones[koikatsuCommons.leftArmBoneName].rigify_parameters.tweak_layers[1] = False
+    # metarig.pose.bones[koikatsuCommons.rightArmBoneName].rigify_parameters.tweak_layers[1] = False
+    # metarig.pose.bones[koikatsuCommons.leftArmBoneName].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.leftArmLayerName + koikatsuCommons.tweakLayerSuffix)] = True
+    # metarig.pose.bones[koikatsuCommons.rightArmBoneName].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.rightArmLayerName + koikatsuCommons.tweakLayerSuffix)] = True
+    # metarig.pose.bones[koikatsuCommons.leftArmBoneName].rigify_parameters.fk_layers[1] = False
+    # metarig.pose.bones[koikatsuCommons.rightArmBoneName].rigify_parameters.fk_layers[1] = False
+    # metarig.pose.bones[koikatsuCommons.leftArmBoneName].rigify_parameters.fk_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.leftArmLayerName + koikatsuCommons.fkLayerSuffix)] = True
+    # metarig.pose.bones[koikatsuCommons.rightArmBoneName].rigify_parameters.fk_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.rightArmLayerName + koikatsuCommons.fkLayerSuffix)] = True
     metarig.pose.bones[koikatsuCommons.leftElbowBoneName].custom_shape = None
     metarig.pose.bones[koikatsuCommons.rightElbowBoneName].custom_shape = None
     metarig.pose.bones[koikatsuCommons.leftElbowBoneName].rigify_type = ""
@@ -1624,14 +1686,14 @@ def main():
     if (bpy.app.version[0] == 3 and bpy.app.version[1] >= 3) or bpy.app.version[0] > 3:
         metarig.pose.bones[koikatsuCommons.leftLegBoneName].rigify_parameters.limb_uniform_scale = True
         metarig.pose.bones[koikatsuCommons.rightLegBoneName].rigify_parameters.limb_uniform_scale = True
-    metarig.pose.bones[koikatsuCommons.leftLegBoneName].rigify_parameters.tweak_layers[1] = False
-    metarig.pose.bones[koikatsuCommons.rightLegBoneName].rigify_parameters.tweak_layers[1] = False
-    metarig.pose.bones[koikatsuCommons.leftLegBoneName].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.leftLegLayerName + koikatsuCommons.tweakLayerSuffix)] = True
-    metarig.pose.bones[koikatsuCommons.rightLegBoneName].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.rightLegLayerName + koikatsuCommons.tweakLayerSuffix)] = True
-    metarig.pose.bones[koikatsuCommons.leftLegBoneName].rigify_parameters.fk_layers[1] = False
-    metarig.pose.bones[koikatsuCommons.rightLegBoneName].rigify_parameters.fk_layers[1] = False
-    metarig.pose.bones[koikatsuCommons.leftLegBoneName].rigify_parameters.fk_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.leftLegLayerName + koikatsuCommons.fkLayerSuffix)] = True
-    metarig.pose.bones[koikatsuCommons.rightLegBoneName].rigify_parameters.fk_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.rightLegLayerName + koikatsuCommons.fkLayerSuffix)] = True
+    # metarig.pose.bones[koikatsuCommons.leftLegBoneName].rigify_parameters.tweak_layers[1] = False
+    # metarig.pose.bones[koikatsuCommons.rightLegBoneName].rigify_parameters.tweak_layers[1] = False
+    # metarig.pose.bones[koikatsuCommons.leftLegBoneName].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.leftLegLayerName + koikatsuCommons.tweakLayerSuffix)] = True
+    # metarig.pose.bones[koikatsuCommons.rightLegBoneName].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.rightLegLayerName + koikatsuCommons.tweakLayerSuffix)] = True
+    # metarig.pose.bones[koikatsuCommons.leftLegBoneName].rigify_parameters.fk_layers[1] = False
+    # metarig.pose.bones[koikatsuCommons.rightLegBoneName].rigify_parameters.fk_layers[1] = False
+    # metarig.pose.bones[koikatsuCommons.leftLegBoneName].rigify_parameters.fk_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.leftLegLayerName + koikatsuCommons.fkLayerSuffix)] = True
+    # metarig.pose.bones[koikatsuCommons.rightLegBoneName].rigify_parameters.fk_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.rightLegLayerName + koikatsuCommons.fkLayerSuffix)] = True
     metarig.pose.bones[koikatsuCommons.leftKneeBoneName].custom_shape = None
     metarig.pose.bones[koikatsuCommons.rightKneeBoneName].custom_shape = None
     metarig.pose.bones[koikatsuCommons.leftKneeBoneName].rigify_type = ""
@@ -1658,8 +1720,8 @@ def main():
     metarig.pose.bones[koikatsuCommons.rightHeelBoneName].custom_shape = None
     metarig.pose.bones[koikatsuCommons.leftHeelBoneName].rigify_type = ""
     metarig.pose.bones[koikatsuCommons.rightHeelBoneName].rigify_type = ""
-    metarig.data.bones[koikatsuCommons.leftHeelBoneName].layers[koikatsuCommons.originalFkLayerIndex] = True
-    metarig.data.bones[koikatsuCommons.rightHeelBoneName].layers[koikatsuCommons.originalFkLayerIndex] = True
+    set_layer(koikatsuCommons.leftHeelBoneName, koikatsuCommons.originalFkLayerIndex)
+    set_layer(koikatsuCommons.rightHeelBoneName, koikatsuCommons.originalFkLayerIndex)
     metarig.pose.bones[koikatsuCommons.frontLeftKneeJointCorrectionBoneName].rigify_parameters.relink_constraints = True
     metarig.pose.bones[koikatsuCommons.frontRightKneeJointCorrectionBoneName].rigify_parameters.relink_constraints = True
     metarig.pose.bones[koikatsuCommons.frontLeftKneeJointCorrectionBoneName].rigify_parameters.parent_bone = koikatsuCommons.leftLegDeformBone1Name
@@ -1720,7 +1782,7 @@ def main():
     ctrlBoneNames.extend(koikatsuCommons.rightLegIkLayerBoneNames)
     
     for bone in metarig.data.bones:
-        if bone.layers[koikatsuCommons.originalUpperFaceLayerIndex] == True or bone.layers[koikatsuCommons.originalLowerFaceLayerIndex] == True:
+        if bone.collections.get(str(koikatsuCommons.originalUpperFaceLayerIndex)) or bone.collections.get(str(koikatsuCommons.originalLowerFaceLayerIndex)):
             if bone.name == koikatsuCommons.originalRootUpperBoneName:
                 continue
             if bone.name not in ctrlBoneNames:
@@ -1750,6 +1812,8 @@ def main():
         if name not in usefulBoneNames:
             usefulBoneNames.append(name)
     
+    '''Setup rigify type and layers for all skirt bones'''
+
     if hasSkirt:
         for primaryIndex in range(8):
             skirtPalmBoneName = koikatsuCommons.getSkirtBoneName(True, primaryIndex)
@@ -1758,7 +1822,7 @@ def main():
             if skirtPalmBoneName not in usefulBoneNames:
                 usefulBoneNames.append(skirtPalmBoneName)
             metarig.pose.bones[skirtPalmBoneName].custom_shape = None
-            koikatsuCommons.assignSingleBoneLayer(metarig, skirtPalmBoneName, koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.skirtLayerName))
+            koikatsuCommons.assignSingleBoneLayer(metarig, skirtPalmBoneName, 23)
             if primaryIndex == 2:
                 metarig.pose.bones[skirtPalmBoneName].rigify_type = "limbs.super_palm"
                 metarig.pose.bones[skirtPalmBoneName].rigify_parameters.palm_both_sides = True
@@ -1773,15 +1837,14 @@ def main():
                 if skirtBoneName not in usefulBoneNames:
                     usefulBoneNames.append(skirtBoneName)
                 metarig.pose.bones[skirtBoneName].custom_shape = None
-                koikatsuCommons.assignSingleBoneLayer(metarig, skirtBoneName, koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.skirtLayerName))
+                koikatsuCommons.assignSingleBoneLayer(metarig, skirtBoneName, 23 if (('master' in skirtBoneName) or ('_ik' in skirtBoneName)) else 24)
                 if secondaryIndex == 0:
                     metarig.pose.bones[skirtBoneName].rigify_type = "limbs.super_finger"
                     metarig.pose.bones[skirtBoneName].rigify_parameters.make_extra_ik_control = True
-                    metarig.pose.bones[skirtBoneName].rigify_parameters.tweak_layers[1] = False
-                    metarig.pose.bones[skirtBoneName].rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.skirtLayerName + koikatsuCommons.detailLayerSuffix)] = True
+                    # metarig.pose.bones[skirtBoneName].rigify_parameters.tweak_layers[1] = False
                 else:
                     metarig.pose.bones[skirtBoneName].rigify_type = ""
-                
+    
     for boneName in accessoryBoneNames:
         if boneName not in usefulBoneNames:
             usefulBoneNames.append(boneName)
@@ -1795,8 +1858,9 @@ def main():
         if boneName in accessoryBoneConnectedParentNames:
             bone.rigify_type = "limbs.super_finger"
             bone.rigify_parameters.make_extra_ik_control = True
-            bone.rigify_parameters.tweak_layers[1] = False
-            bone.rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.hairLayerName + koikatsuCommons.detailLayerSuffix)] = True
+            koikatsuCommons.assignSingleBoneLayer(metarig, boneName, 1)
+            # bone.rigify_parameters.tweak_layers[1] = False
+            # bone.rigify_parameters.tweak_layers[koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.hairLayerName + koikatsuCommons.detailLayerSuffix)] = True
         elif boneName in accessoryBoneConnectedChildNames:
             bone.rigify_type = ""
         else:
@@ -1805,7 +1869,7 @@ def main():
             bone.rigify_parameters.make_widget = True
             bone.rigify_parameters.super_copy_widget_type = "limb"  
             bone.rigify_parameters.make_deform = True
-    
+
     accessoryMchPalmBoneNames = []
     for boneName in accessoryMchBoneNames:
         #metarig.data.bones[boneName].layers[koikatsuCommons.temporaryAccessoryMchLayerIndex] = True
@@ -1862,7 +1926,7 @@ def main():
     for boneName in usefulBoneNames:
         if boneName in defBoneNames:
             if boneName in ctrlBoneNames:
-                metarig.data.bones[boneName].layers[koikatsuCommons.defLayerIndex] = True
+                set_layer(boneName, koikatsuCommons.defLayerIndex)
             else:
                 koikatsuCommons.assignSingleBoneLayer(metarig, boneName, koikatsuCommons.defLayerIndex)
                 koikatsuCommons.lockAllPoseTransforms(metarig, boneName)
@@ -1876,8 +1940,12 @@ def main():
                 usefulBoneNames.append(relatedBoneName)       
     
     for bone in metarig.pose.bones:
-        if bpy.app.version[0] >= 3:
-            bone['mmd_bone'] = None
+        # if bpy.app.version[0] >= 3:
+        #     try:
+        #         bone['mmd_bone'] = None
+        #     except:
+        #         #oh well
+        #         pass
         if bone.name not in usefulBoneNames:
             koikatsuCommons.assignSingleBoneLayer(metarig, bone.name, koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.junkLayerName))
             continue
@@ -1910,14 +1978,91 @@ def main():
                 bone.use_connect = False #may otherwise cause Rigify generation failure if part of a finger chain
     
     bpy.ops.object.mode_set(mode='OBJECT')
-                
+    
     for i in range(32):
         index = 31 - i
         if index in selectedLayers:
-            metarig.data.layers[index] = True
+            if metarig.data.collections.get(str(index)):
+                metarig.data.collections[str(index)].is_visible = True
+            else:
+                metarig.data.collections.new(str(index))
+                metarig.data.collections[str(index)].is_visible = True
         else:
-            metarig.data.layers[index] = False
-            
+            if metarig.data.collections.get(str(index)):
+                metarig.data.collections[str(index)].is_visible = False
+            else:
+                metarig.data.collections.new(str(index))
+                metarig.data.collections[str(index)].is_visible = False
+    metarig.data.collections
+
+    #clean up missing rigify layers because I edited the script
+    def get_rigify_index(collection_name):
+        if 'None' == collection_name:
+            return metarig.data.collections_all.get(str(collection_name)).index
+        else:
+            return metarig.data.collections_all.get(str(collection_name)).index
+
+    bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(1), row=2) #move hair detail to same layer
+    bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(2), row=2) #move hair mch to same layer
+    bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(3), row=3) #move eyes primary
+    bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(4), row=3) #move eyes secondary
+    bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(5), row=4) #move face
+    metarig.data.collections_all['5'].rigify_ui_title_name = 'Face'
+    bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(6), row=5) #move face mch
+    metarig.data.collections_all['6'].rigify_ui_title_name = 'Face (MCH)'
+    bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(7), row=6) #move torso
+    metarig.data.collections_all['7'].rigify_ui_title_name = 'Torso'
+    bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index('None'), row=7) #move torso detail
+    metarig.data.collections_all['None'].rigify_ui_title_name = 'Torso (Detail)'
+    bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(8), row=7) #move torso tweak
+    metarig.data.collections_all['8'].rigify_ui_title_name = 'Torso (Tweak)'
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(9), row=8) #move arm L IK
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(12), row=8) #move arm L IK
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(10), row=9) #arm L fk
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(13), row=9) #arm R FK
+    metarig.data.collections_all['13'].rigify_ui_title_name = 'Arm.R FK'
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(11), row=10) #arm L tweak
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(14), row=10) #arm R tweak
+    metarig.data.collections_all['14'].rigify_ui_title_name = 'Arm.R (Tweak)'
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(15), row=11)
+    metarig.data.collections_all['15'].rigify_ui_title_name = 'Fingers'
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(16), row=12) #mvoe fingers detail
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(17), row=13) #move leg L IK
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(20), row=13) #move leg R IK
+    metarig.data.collections_all['20'].rigify_ui_title_name = 'Leg.R IK'
+    metarig.data.collections_all['21'].rigify_ui_title_name = 'Leg.R FK'
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(18), row=14) #move leg L FK
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(21), row=14) #move leg R FK
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(19), row=15) #move leg L tweak
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(22), row=15) #move leg R tweak
+    metarig.data.collections_all['22'].rigify_ui_title_name = 'Leg.R (Tweak)'
+    metarig.data.collections_all['19'].rigify_ui_title_name = 'Leg.L (Tweak)'
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(23), row=16) #move skirt
+    metarig.data.collections_all['23'].rigify_ui_title_name = 'Skirt'
+    bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(24), row=17) #move skirt detail
+    metarig.data.collections_all['24'].rigify_ui_title_name = 'Skirt (Detail)'
+    metarig.data.collections_all['27'].rigify_ui_title_name = 'Junk'
+
+    #set new checkbox for the toe lock
+    # metarig.pose.bones['Left leg'].rigify_parameters.extra_toe_roll  = True
+    # metarig.pose.bones['Right leg'].rigify_parameters.extra_toe_roll = True
+
+    #add missing color groups
+    bpy.context.object.data.collections_all["5"].rigify_color_set_name = "Tweak"
+    bpy.context.object.data.collections_all["6"].rigify_color_set_name = "Root"
+    bpy.context.object.data.collections_all["7"].rigify_color_set_name = "Special"
+    bpy.context.object.data.collections_all["8"].rigify_color_set_name = "Tweak"
+    bpy.context.object.data.collections_all["13"].rigify_color_set_name = "FK"
+    bpy.context.object.data.collections_all["14"].rigify_color_set_name = "Tweak"
+    bpy.context.object.data.collections_all["15"].rigify_color_set_name = "Extra"
+    bpy.context.object.data.collections_all["19"].rigify_color_set_name = "Tweak"
+    bpy.context.object.data.collections_all["20"].rigify_color_set_name = "IK"
+    bpy.context.object.data.collections_all["21"].rigify_color_set_name = "FK"
+    bpy.context.object.data.collections_all["22"].rigify_color_set_name = "Tweak"
+    bpy.context.object.data.collections_all["23"].rigify_color_set_name = "Extra"
+    bpy.context.object.data.collections_all["24"].rigify_color_set_name = "FK"
+    bpy.context.object.data.collections_all["None"].rigify_color_set_name = "FK"
+
     #bpy.ops.bone_layer_man.get_rigify_layers()
     #koikatsuCommons.setBoneManagerLayersFromRigifyLayers(metarig)
 

@@ -57,6 +57,7 @@ class link_shapekeys(bpy.types.Operator):
         bpy.context.view_layer.objects.active = body
         bpy.ops.object.mode_set(mode = 'EDIT')
         bpy.ops.mesh.select_all(action = 'DESELECT')
+        ob_name = 'Body.002' if bpy.data.objects.get('Body.001') else 'Body.001'
 
         def separateMaterial(matList):
             for mat in matList:
@@ -71,21 +72,22 @@ class link_shapekeys(bpy.types.Operator):
                     print('material wasn\'t found: ' + mat)
             bpy.ops.mesh.separate(type='SELECTED')
 
-        eye_list = ['KK EyeL (hitomi)', 'KK Eyewhites (sirome)', 'KK Eyeline down', 'KK Eyeline up', 'KK EyeR (hitomi)']
+        eye_list = ['KK EyeR (hitomi)', 'KK EyeL (hitomi)',  'KK EyewhitesL (sirome)', 'KK EyewhitesR (sirome)',  'KK Eyeline up', 'KK Eyeline down']
         separateMaterial(eye_list)
 
-        eyes = bpy.data.objects['Body.001']
+        eyes = bpy.data.objects[ob_name]
         eyes.name = 'Eyes'
+        if eyes.modifiers.get('Outline Modifier'):
+            eyes.modifiers['Outline Modifier'].show_viewport = False
+            eyes.modifiers['Outline Modifier'].show_render = False
         
         #do the same for the eyebrows
         separateMaterial(['KK Eyebrows (mayuge)'])
-        eyebrows = bpy.data.objects['Body.001']
+        eyebrows = bpy.data.objects[ob_name]
         eyebrows.name = 'Eyebrows'
-
-        eyes.modifiers[4].show_viewport = False
-        eyes.modifiers[4].show_render = False
-        eyebrows.modifiers[4].show_viewport = False
-        eyebrows.modifiers[4].show_render = False
+        if eyebrows.modifiers.get('Outline Modifier'):
+            eyebrows.modifiers['Outline Modifier'].show_viewport = False
+            eyebrows.modifiers['Outline Modifier'].show_render = False
 
         bpy.ops.object.mode_set(mode = 'OBJECT')
         link_keys(body, [eyes, eyebrows])

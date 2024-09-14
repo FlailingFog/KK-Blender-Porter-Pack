@@ -1,3 +1,33 @@
+### Changes for V7.0.0
+* Blender 4.2 LTS support!
+    * You need the new version of [mmd_tools](https://extensions.blender.org/add-ons/mmd-tools/)
+    * After you install mmd_tools and the KKBP importer, it will ask you to download a dependency from blender.org
+    * KKBP 7.0.0 does not support Linux / Mac. You should still be able to import the model using wine or a windows VM, then open the .blend file normally after the import
+* Koikatsu Sunshine exporter bugfix by **Guerra24**!
+    * This fixes colors not showing up on KKS exports that had their material set to "Koikano"
+* Replaced Generated Face Normal smoothing with a new geometry nodes setup from **MoriMorinya**! (original node group by **aVersionOfReality**)
+* Added a button to import a single ripped animation from the game onto your model!
+    * This feature requires Rokoko studio live plugin to be installed
+    * This supports Mixamo animations too thanks to **hsxfunc**
+* Import KeyError fixes by **justturniphead**!
+* Chinese translation updates by **AnalogKnight**!
+* Normal maps are now loaded into the optimized material thanks to **FrankV724**!
+* The KKBP plugin can now generate a material atlas by itself! 
+    * The plugin also automatically generates a copy of your model that uses the atlas
+    * This feature does not have a pixel limit, so if the atlas is too large, you can split up your objects and re-generate it
+* Streamlined the KKBP main panel!
+    * There's now only one button for importing, one for optimizing materials and one for exporting
+    * If a button in the panel cannot be used, it will now be grayed out. Some features (like the animation import feature) require you to use the Rigify armature, and other features (like the prep for export button) require you to use the KKBP armature
+* During very long sequences, like when finalizing materials or bone simplification, the plugin will now attempt to give you progress information
+* Generating dark colors and textures can now be skipped to slightly speed up import times
+* Blue pixels on textures should now be fixed
+    * This appeared to be an issue with certain blender versions. You can now manually download any version of blender.exe between 2.80 and 3.6 and make the KKBP importer use the version you downloaded for generating the textures, so if the built in downloads for 2.90 or 3.6.9 are not working you can experiment with different blender versions until you find one that is working.
+* Updated the colors in the KK Shader to look good in the default "Blender dark" theme
+* Updated the plugin to be a Blender 4.2 extension (it is no longer a legacy addon)
+* Renamed the folders inside of the exporter zip to be clearer
+* Added decompiled source code for the KKBP_Exporter.dll to the exporter zip (thanks to **Guerra24**)
+* Moved wiki and usage instructions to a github pages site: https://flailingfog.github.io
+
 ### Changes for V6.6.3
 * Blender export bug fix by **AnalogKnight**!
 * Removed LBS support

@@ -53,6 +53,7 @@ def main(folder):
     rigify_armature = bpy.data.objects['RIG-Armature']
     bpy.context.view_layer.objects.active=rigify_armature
     bpy.ops.object.mode_set(mode = 'OBJECT')
+    bpy.ops.rsl.clear_custom_bones()
 
     if kkbp_character:
         #disable IKs
@@ -260,11 +261,13 @@ bpy.ops.wm.quit_blender()
              #'Right Buttock handle',
         ]
         if kkbp_character:
-            for action in rigify_armature.animation_data.action.fcurves:
+            for index, action in enumerate(rigify_armature.animation_data.action.fcurves):
                 bone_name = action.data_path[action.data_path.find('[')+2:action.data_path.find('].')-1]
+                print('{}  {} / {}'.format(action.data_path, index, len(rigify_armature.animation_data.action.fcurves)))
                 if bone_name not in retargeting_list:
                     rigify_armature.animation_data.action.fcurves.remove(action) #remove keyframes
-                    rigify_armature.pose.bones[bone_name].matrix_basis = mathutils.Matrix()
+                    if rigify_armature.pose.bones.get(bone_name):
+                        rigify_armature.pose.bones[bone_name].matrix_basis = mathutils.Matrix() #reset rotation matrix
         
         if bpy.context.scene.kkbp.animation_library_scale:
             #also scale the arms on the y axis by 5% because it makes the animation more accurate to the in-game one for some poses
@@ -287,7 +290,7 @@ bpy.ops.wm.quit_blender()
         bpy.context.view_layer.objects.active=rigify_armature
         bpy.ops.object.mode_set(mode = 'POSE')
         bpy.ops.pose.select_all(action='SELECT')
-        bpy.data.workspaces["Layout"].asset_library_ref = 'LOCAL'
+        bpy.data.workspaces["Layout"].asset_library_reference = 'LOCAL'
         #translate name
         name = filename.replace('-p_cf_body_bone-0.fbx', '')
         name = name.replace('-p_cf_body_bone-1.fbx', '')
@@ -305,7 +308,7 @@ bpy.ops.wm.quit_blender()
             'konbou':'Club',
             'aruki':'Walking',
             'haruki':'Running',
-            'ne_0':'Laying_0',
+            'ne_0':'Sleep',
             'nugi':'Undressing',
         }
         translation_dict_h = {
@@ -385,6 +388,8 @@ bpy.ops.wm.quit_blender()
         
         action = rigify_armature.animation_data.action
         action.asset_mark()
+        rigify_armature.asset_mark()
+        action.use_fake_user = True
         #render the first frame of the animation and set it as the preview
         bpy.context.scene.render.filepath = folder + r"\preview.png"
         #print(file[2])
@@ -441,50 +446,3 @@ class anim_asset_lib(bpy.types.Operator):
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
-    
-if __name__ == "__main__":
-    bpy.utils.register_class(anim_asset_lib)
-    
-    # test call
-    print((bpy.ops.kkbp.importstudio('INVOKE_DEFAULT')))
-
-
-"""
-import bpy, json
-
-
-file = r"ARP retargeting list (koikatsu fbx to KKBP Rigify).json"
-
-rigify_armature = bpy.data.objects['RIG-Armature']
-
-rigify_armature.pose.bones["Right arm_parent"]["IK_FK"] = 1
-rigify_armature.pose.bones["Left arm_parent"]["IK_FK"] = 1
-rigify_armature.pose.bones["Right leg_parent"]["IK_FK"] = 1
-rigify_armature.pose.bones["Left leg_parent"]["IK_FK"] = 1
-
-#disable head follow
-rigify_armature.pose.bones['torso']['neck_follow'] = 1.0
-rigify_armature.pose.bones['torso']['head_follow'] = 1.0
-    
-#bpy.context.object.pose.bones["Left leg_parent"]["pole_vector"] = 1
-#bpy.context.object.pose.bones["Right leg_parent"]["pole_vector"] = 1
-#bpy.context.object.pose.bones["Left arm_parent"]["pole_vector"] = 1
-#bpy.context.object.pose.bones["Right arm_parent"]["pole_vector"] = 1
-json_file = open(file)
-data = json.load(json_file)
-bpy.context.scene.bones_map_index = 1
-for row in bpy.context.scene.bones_map:
-    row.name = "None"
-
-for bone in data['bones']:
-    for row in bpy.context.scene.bones_map:
-        if row.source_bone == data['bones'][bone][0]:
-            row.name = data['bones'][bone][1]
-        if row.name == 'torso':
-            row.set_as_root = True
-        #if '_ik' in row.name:
-        #    row.ik = True
-        #    if ' wrist' in row.name:
-        #        row.ik_pole = (('Left' if 'Left' in row.name else 'Right') + " arm_ik_target")
-        #    else:
-        #        row.ik_pole = (('Left' if 'Left' in row.name else 'Right') + " leg_ik_target")"""

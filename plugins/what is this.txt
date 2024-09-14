@@ -8,3 +8,11 @@ Requires:
 KKAPI or KKSAPI > v1.32
 KK_Accessory_States.dll or KKS_Accessory_States.dll
 KK_Pushup.dll or KKS_Pushup.dll
+
+Building the source:
+Download Visual Studio 2022 Community edition
+Install .net desktop development workload for C#
+Install .net 4.6 pack
+Unzip the source
+Place KKS_Accessory_States.dll and KKS_Pushup.dll in the deps folder
+Open .sln and build the project
