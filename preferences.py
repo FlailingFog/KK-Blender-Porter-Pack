@@ -12,10 +12,6 @@ class KKBPPreferences(bpy.types.AddonPreferences):
     # when defining this in a submodule of a python package.
     bl_idname = __package__
 
-    #this will let the plugin know if the blender 2.90 zip needs to be downloaded, 
-    # or where it is located if the user has already downloaded it
-    blender_path: StringProperty(default = '', description="Direct path to blender.exe from any Blender version between 2.90 and 3.6")
-
     sfw_mode : BoolProperty(
     description=t('sfw_mode_tt'),
     default = False)
@@ -121,18 +117,7 @@ class KKBPPreferences(bpy.types.AddonPreferences):
         layout = self.layout
         splitfac = 0.5
 
-        box = layout.box()
-        col = box.column(align=True)
-        row = col.row(align=True)
-        row.label(text='Enter the direct path to older blender.exe below: (optional, do not surround path with quotes)')
-        row = col.row(align=True)
-        row.prop(self, "blender_path")
-        row = col.row(align=True)
-
         col = layout.column(align=True)
-                                    
-        row = col.row(align=True)
-        row.label(text=' ')
         row = col.row(align=True)
         row.label(text='Change the default options for the KKBP Importer below:')
         row = col.row(align=True)

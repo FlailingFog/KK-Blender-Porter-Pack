@@ -1,15 +1,15 @@
 #The init file for the plugin
-# bl_info = {
-#     "name" : "KKBP (Koikatsu Blender Porter)",
-#     "author" : "a blendlet and some blenderchads",
-#     "location" : "View 3D > Tool Shelf > KKBP and Image Editor > Tool Shelf > KKBP",
-#     "description" : "Scripts to automate cleanup of a Koikatsu export",
-#     "version": (7, 0, 0),
-#     "blender" : (4, 2, 0),
-#     "category" : "3D View",
-#     "tracker_url" : "https://github.com/FlailingFog/KK-Blender-Porter-Pack/",
-#     "doc_url": "https://github.com/FlailingFog/KK-Blender-Porter-Pack/blob/master/wiki/Wiki%20top.md",
-# }
+bl_info = {
+    "name" : "KKBP (Koikatsu Blender Porter)",
+    "author" : "a blendlet and some blenderchads",
+    "location" : "View 3D > Tool Shelf > KKBP and Image Editor > Tool Shelf > KKBP",
+    "description" : "Scripts to automate cleanup of a Koikatsu export",
+    "version": (7, 1, 0),
+    "blender" : (4, 2, 0),
+    "category" : "3D View",
+    "tracker_url" : "https://github.com/FlailingFog/KK-Blender-Porter-Pack/",
+    "doc_url": "https://github.com/FlailingFog/KK-Blender-Porter-Pack/blob/master/wiki/Wiki%20top.md",
+}
 
 
 from bpy.utils import register_class, unregister_class
@@ -23,7 +23,6 @@ def reg_unreg(register_bool):
     else:
         unregister_class(KKBPPreferences)
 
-    from .importing.installdependency import install_dependency, install_dependency28
     from .importing.importbuttons import kkbp_import
     from .importing.modifymesh import modify_mesh
     from .importing.modifyarmature import modify_armature
@@ -79,8 +78,6 @@ def reg_unreg(register_bool):
         anim_import,
         split_objects,
 
-        install_dependency,
-        install_dependency28,
         kkbp_import,
         modify_mesh,
         modify_armature,
