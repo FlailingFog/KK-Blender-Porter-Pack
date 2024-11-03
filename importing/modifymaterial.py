@@ -31,8 +31,7 @@ Color and image saturation code taken from MediaMoots https://github.com/Flailin
 Dark color conversion code taken from Xukmi https://github.com/xukmi/KKShadersPlus/tree/main/Shaders
 '''
 
-import bpy, sys, os, gpu, numpy, math, time, numpy as np
-from gpu_extras.batch import batch_for_shader
+import bpy, sys, os, numpy, math, time
 from pathlib import Path
 from .. import common as c
 
@@ -70,7 +69,6 @@ class modify_material(bpy.types.Operator):
             self.add_outlines_to_clothes()
 
             self.load_luts()
-            self.convert_main_textures()
             self.load_json_colors()
             self.set_color_management()
 
@@ -337,12 +335,14 @@ class modify_material(bpy.types.Operator):
         '''Load all images from the pmx folder'''
         c.switch(self.body, 'object')
 
+        #saturate all of the main textures
+        self.convert_main_textures()
+
         def get_line_starter():
             return 'materialName' if bpy.context.scene.kkbp.V421_export else 'MaterialName'
 
         #get all images from the pmx directory
-        directory = bpy.context.scene.kkbp.import_dir + ('/' if (sys.platform == 'linux' or sys.platform == 'darwin') else '\\')
-        fileList = Path(directory).rglob('*.*')
+        fileList = Path(bpy.context.scene.kkbp.import_dir).rglob('*.*')
         files = [file for file in fileList if file.is_file()]
 
         #get shadow colors for each material and store the dictionary on the body object
@@ -1009,8 +1009,38 @@ class modify_material(bpy.types.Operator):
         #night_lut.save()
 
     def convert_main_textures(self):
+        '''import and saturate all of the pmx textures, then save them to the .pmx directory under a saturated_files folder'''
+        #Set the view transform or the files will not save correctly
+        bpy.context.scene.view_settings.view_transform = 'Standard'
+
+        addon_dir = os.path.dirname(__file__)
+        lut_image = os.path.join(addon_dir, 'luts', 'Lut_TimeDay.png')
+        lut_image = bpy.data.images.load(str(lut_image))
+
+        #collect all images in this folder and all subfolders into an array
+        ignore_list = [
+                "cf_m_eyeline_00_up_MT_CT.png",
+                "cf_m_eyeline_down_MT_CT.png",
+                "cf_m_noseline_00_MT_CT.png",
+                "cf_m_mayuge_00_MT_CT.png",
+                "cf_m_eyeline_kage_MT.png",
+            ]
+
+        fileList = Path(bpy.context.scene.kkbp.import_dir).rglob('*.png')
+        files = [file for file in fileList if file.is_file() and "_MT" in file.name and file.name not in ignore_list]
+        for image_file in files:
+            #skip this file if it has already been converted
+            if os.path.isfile(os.path.join(bpy.context.scene.kkbp.import_dir, 'saturated_files', str(image_file.name).replace('_MT','_ST'))):
+                c.kklog('File already saturated. Skipping {}'.format(image_file.name))
+            else:
+                start_time = time.time()
+                image = bpy.data.images.load(str(image_file))
+                #saturate the image, save and remove the file
+                self.saturate_texture(image, lut_image)
+                image.save_render(str(os.path.join(bpy.context.scene.kkbp.import_dir, "saturated_files", image_file.name.replace('_MT', '_ST'))))
+                c.kklog('Saturated {} in {} sec'.format(image_file.name, round(time.time() - start_time, 1)))
+
         bpy.data.use_autopack = True #enable autopack on file save
-        c.print_timer('convert_main_textures')
 
     def load_json_colors(self):
         if bpy.context.scene.kkbp.V421_export:
@@ -1071,25 +1101,23 @@ class modify_material(bpy.types.Operator):
             bpy.data.materials[mat].node_tree.nodes[group].node_tree.nodes[uvnode].uv_map = uvtype
 
     def saturate_color(self, color, lut_image):
-        '''Accepts an 8bit int rgb color array, returns a 1.0 float rgba.'''
+        '''The Secret Sauce. Accepts a 0-255 int rgb color array, saturates it to match the in-game look 
+        and returns it in the form of a 1.0 float rgba'''
         color = [i/255 for i in color]
         color.append(1)
-        color.extend(color)
-        color.extend(color)
+        width, height = 1,1
 
-        width, height = 2,2
-
-        # Load image and LUT image pixels into NumPy arrays
+        # Load image and LUT image pixels into array
         image_pixels = numpy.array(color).reshape(height, width, 4)
         lut_pixels = numpy.array(bpy.data.images[lut_image].pixels[:]).reshape(bpy.data.images[lut_image].size[1], bpy.data.images[lut_image].size[0], 4)
-
-        # Apply LUT
+        
+        #constants to ensure bot and top are within the 32 x 1024 dimensions of the lut
         coord_scale = numpy.array([0.0302734375, 0.96875, 31.0])
         coord_offset = numpy.array([0.5/1024, 0.5/32, 0.0])
         texel_height_X0 = numpy.array([1/32, 0])
 
+        # Find the XY coordinates of the LUT image needed to saturate each pixel
         coord = image_pixels[:, :, :3] * coord_scale + coord_offset
-
         coord_frac, coord_floor = numpy.modf(coord)
         coord_bot = coord[:, :, :2] + numpy.tile(coord_floor[:, :, 2].reshape(height, width, 1), (1, 1, 2)) * texel_height_X0
         coord_top = numpy.clip(coord_bot + texel_height_X0, 0, 1)
@@ -1101,19 +1129,22 @@ class modify_material(bpy.types.Operator):
             #this helps with some kind of overflow / underflow issue where it reads from the next LUT square when it's not supposed to
             x = x + (x/1024  - 0.5)
             y = coords[:, :, 1] * (h - 1)
-            # Get integer and fractional parts
+            # Get integer and fractional parts of each coordinate. 
+            # Also make sure each coordinate is clipped to the LUT image bounds
             x0 = numpy.floor(x).astype(int)
             x1 = numpy.clip(x0 + 1, 0, w - 1)
             y0 = numpy.floor(y).astype(int)
             y1 = numpy.clip(y0 + 1, 0, h - 1)
             x_frac = x - x0
             y_frac = y - y0
-            # Get the pixel values at four corners
+            # Get the pixel values at four corners of this coordinate
             f00 = lut_pixels[y0, x0]
             f01 = lut_pixels[y1, x0]
             f10 = lut_pixels[y0, x1]
             f11 = lut_pixels[y1, x1]
-            # Perform the bilinear interpolation
+            # Perform the bilinear interpolation using the fractional part of each coordinate
+            # This will ensure the LUT can provide the correct color every single time, even if that color isn't found in the LUT itself
+            # If this isn't performed, the resulting image will look very blocky because it will snap to colors only found in the LUT.
             lut_col_bot = f00 * (1 - y_frac)[:, :, numpy.newaxis] + f01 * y_frac[:, :, numpy.newaxis]
             lut_col_top = f10 * (1 - y_frac)[:, :, numpy.newaxis] + f11 * y_frac[:, :, numpy.newaxis]
             interpolated_colors = lut_col_bot * (1 - x_frac)[:, :, numpy.newaxis] + lut_col_top * x_frac[:, :, numpy.newaxis]
@@ -1121,92 +1152,74 @@ class modify_material(bpy.types.Operator):
 
         lutcol_bot = bilinear_interpolation(lut_pixels, coord_bot)
         lutcol_top = bilinear_interpolation(lut_pixels, coord_top)
-
-        #After the gpu code uses the texture lookup the colorspace is converted from srgb to linear,
+        #After the older gpu code uses the texture lookup the colorspace is converted from srgb to linear,
         # so replicate that behavior here.
         def srgb_to_linear(srgb):
-            linear_rgb = np.where(
+            linear_rgb = numpy.where(
                 srgb <= 0.04045,
                 srgb / 12.92,
-                np.power((srgb + 0.055) / 1.055, 2.4))
+                numpy.power((srgb + 0.055) / 1.055, 2.4))
             return linear_rgb
         lutcol_bot = srgb_to_linear(lutcol_bot)
         lutcol_top = srgb_to_linear(lutcol_top)
-
         lut_colors = lutcol_bot * (1 - coord_frac[:, :, 2].reshape(height, width, 1)) + lutcol_top * coord_frac[:, :, 2].reshape(height, width, 1)
         image_pixels[:, :, :3] = lut_colors[:,:,:3]
 
         return image_pixels.flatten().tolist()[0:4]
 
-    def color_to_KK(self, color, lut_name):
-        '''Accepts an 8bit int rgba color array, returns a 1.0 float rgba'''
-        #this function still seems to work in Blender 4.0 as long as the image is a single pixel
+    def saturate_texture(self, image, lut_image):
+        '''The Secret Sauce. Accepts a bpy image and saturates it to match the in-game look.'''
+        width, height = image.size
+        # Load image and LUT image pixels into array
+        image_pixels = numpy.array(image.pixels[:]).reshape(height, width, 4)
+        lut_pixels = numpy.array(lut_image.pixels[:]).reshape(lut_image.size[1], lut_image.size[0], 4)
+        #constants to ensure bot and top are within the 32 x 1024 dimensions of the lut
+        coord_scale = numpy.array([0.0302734375, 0.96875, 31.0])
+        coord_offset = numpy.array([0.5/1024, 0.5/32, 0.0])
+        texel_height_X0 = numpy.array([1/32, 0])
+        # Find the XY coordinates of the LUT image needed to saturate each pixel
+        coord = image_pixels[:, :, :3] * coord_scale + coord_offset
+        coord_frac, coord_floor = numpy.modf(coord)
+        coord_bot = coord[:, :, :2] + numpy.tile(coord_floor[:, :, 2].reshape(height, width, 1), (1, 1, 2)) * texel_height_X0
+        coord_top = numpy.clip(coord_bot + texel_height_X0, 0, 1)
 
-        nx = 1
-        ny = 1
-        lut = bpy.data.images[lut_name]
+        def bilinear_interpolation(lut_pixels, coords):
+            #stretch coordinates to be between 0 and 1024, the width of the LUT image
+            h, w, _ = lut_pixels.shape
+            x = coords[:, :, 0] * (w - 1)
+            y = coords[:, :, 1] * (h - 1)
+            #Fudge x coordinates based on x position. subtract -0.5 if at x position 0 and add 0.5 if at x position 1024 of the LUT. 
+            #this helps with some kind of overflow / underflow issue where it reads from the next LUT square when it's not supposed to
+            x = x + (x/1024  - 0.5)
+            # Get integer and fractional parts of each coordinate. 
+            # Also make sure each coordinate is clipped to the LUT image bounds
+            x0 = numpy.floor(x).astype(int)
+            x1 = numpy.clip(x0 + 1, 0, w - 1)
+            y0 = numpy.floor(y).astype(int)
+            y1 = numpy.clip(y0 + 1, 0, h - 1)
+            x_frac = x - x0
+            y_frac = y - y0
+            # Get the pixel values at four corners of this coordinate
+            f00 = lut_pixels[y0, x0]
+            f01 = lut_pixels[y1, x0]
+            f10 = lut_pixels[y0, x1]
+            f11 = lut_pixels[y1, x1]
+            # Perform the bilinear interpolation using the fractional part of each coordinate
+            # This will ensure the LUT can provide the correct color every single time, even if that color isn't found in the LUT itself
+            # If this isn't performed, the resulting image will look very blocky because it will snap to colors only found in the LUT.
+            lut_col_bot = f00 * (1 - y_frac)[:, :, numpy.newaxis] + f01 * y_frac[:, :, numpy.newaxis]
+            lut_col_top = f10 * (1 - y_frac)[:, :, numpy.newaxis] + f11 * y_frac[:, :, numpy.newaxis]
+            interpolated_colors = lut_col_bot * (1 - x_frac)[:, :, numpy.newaxis] + lut_col_top * x_frac[:, :, numpy.newaxis]
+            return interpolated_colors
 
-        # Some Sauce
-        vertex_default = '''
-        in vec2 a_position;
-        in vec4 color;
-        out vec4 col;
-        void main() {
-            gl_Position = vec4(a_position, 0.0, 1.0);
-            col = color;
-        }
-        '''
-        # The Secret Sauce
-        current_code = '''
-        uniform vec3 inputColor;
-        uniform sampler2D lut;
-        in vec4 col;
-        out vec4 out_Color;
-        vec3 to_srgb(vec3 c){
-            c.rgb = max( 1.055 * pow( c.rgb, vec3(0.416666667,0.416666667,0.416666667) ) - 0.055, 0 );
-            return c;
-        }
-        void main() {
-            vec3 color = inputColor / 255;
-            const vec3 coord_scale = vec3(0.0302734375, 0.96875, 31.0);
-            const vec3 coord_offset = vec3( 0.5/1024, 0.5/32, 0.0);
-            const vec2 texel_height_X0 = vec2( 0.03125, 0.0 );
-            vec3 coord = color * coord_scale + coord_offset;
-            vec3 coord_frac = fract( coord );
-            vec3 coord_floor = coord - coord_frac;
-            vec2 coord_bot = coord.xy + coord_floor.zz * texel_height_X0;
-            vec2 coord_top = coord_bot + texel_height_X0;
-            vec3 lutcol_bot = texture( lut, coord_bot ).rgb;
-            vec3 lutcol_top = texture( lut, coord_top ).rgb;
-            vec3 lutColor = mix(lutcol_bot, lutcol_top, coord_frac.z);
-            vec3 shaderColor = lutColor;
-            out_Color = vec4(shaderColor.rgb, 1);
-        }
-        '''
-
-        # create Offscreen
-        offscreen = gpu.types.GPUOffScreen(1, 1)
-        offscreen.bind()
-        # Custom Shader
-        shader = gpu.types.GPUShader(vertex_default, current_code)
-        batch = batch_for_shader(shader, 'TRI_STRIP', {'a_position': ((-1, -1), (1, -1), (1, 1), (-1, 1), (-1, -1)),})
-        fb = gpu.state.active_framebuffer_get()
-        fb.clear(color=(0.0, 0.0, 0.0, 0.0))
-        shader.bind()
-        shader.uniform_float("inputColor", color)
-        shader.uniform_sampler("lut", gpu.texture.from_image(lut))
-        # Draw Shader
-        batch.draw(shader)
-        # Save Frame Buffer to Image
-        fb = gpu.state.active_framebuffer_get()
-        offscreen.unbind()
-        buffer = fb.read_color(0, 0, 1, 1, 4, 0, 'FLOAT')
-        buffer.dimensions = 1 * 1 * 4
-        imageData = np.frombuffer(buffer, dtype=np.float32)
-        
-        # Get and return the pixels from the converted image
-        final_color = imageData.tolist()
-        return final_color #return rgba
+        #use those XY coordinates to find the saturated version of the color from the LUT image
+        lutcol_bot = bilinear_interpolation(lut_pixels, coord_bot)
+        lutcol_top = bilinear_interpolation(lut_pixels, coord_top)
+        lut_colors = lutcol_bot * (1 - coord_frac[:, :, 2].reshape(height, width, 1)) + lutcol_top * coord_frac[:, :, 2].reshape(height, width, 1)
+        image_pixels[:, :, :3] = lut_colors[:,:,:3]
+        # Update image pixels
+        image.pixels = image_pixels.flatten().tolist()
+        return image
 
     def update_shaders(self, json, lut_selection, active_lut, light):
         def to_255(color):

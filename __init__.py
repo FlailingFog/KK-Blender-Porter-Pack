@@ -23,7 +23,6 @@ def reg_unreg(register_bool):
     else:
         unregister_class(KKBPPreferences)
 
-    from .importing.installdependency import install_dependency, install_dependency28
     from .importing.importbuttons import kkbp_import
     from .importing.modifymesh import modify_mesh
     from .importing.modifyarmature import modify_armature
@@ -79,8 +78,6 @@ def reg_unreg(register_bool):
         anim_import,
         split_objects,
 
-        install_dependency,
-        install_dependency28,
         kkbp_import,
         modify_mesh,
         modify_armature,
