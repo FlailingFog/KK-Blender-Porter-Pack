@@ -117,10 +117,7 @@ class KKBPPreferences(bpy.types.AddonPreferences):
         layout = self.layout
         splitfac = 0.5
 
-        box = layout.box()
-        col = layout.column(align=True)                   
-        row = col.row(align=True)
-        row.label(text=' ')
+        col = layout.column(align=True)
         row = col.row(align=True)
         row.label(text='Change the default options for the KKBP Importer below:')
         row = col.row(align=True)
