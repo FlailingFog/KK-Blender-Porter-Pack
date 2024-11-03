@@ -1,175 +1,61 @@
 '''
 This file can be run by any blender version between 2.90 and 3.6 to import and saturate all of the pmx textures
 '''
-import bpy, sys, os, bgl, gpu, numpy, datetime
-from gpu_extras.batch import batch_for_shader
+import bpy, sys, os, numpy, datetime
 from pathlib import Path
 
 def saturate(image, lut_image):
+    width, height = image.size
 
-    width = image.size[0]
-    height = image.size[1]
+    # Load image and LUT image pixels into NumPy arrays
+    image_pixels = numpy.array(image.pixels[:]).reshape(height, width, 4)
+    lut_pixels = numpy.array(lut_image.pixels[:]).reshape(lut_image.size[1], lut_image.size[0], 4)
 
-    # Some Sauce
-    vertex_default = '''
-    in vec2 a_position;
-    in vec2 a_texcoord;
-    
-    in vec4 color;
-    out vec4 col;
-    
-    void main() {
-        gl_Position = vec4(a_position, 0.0, 1.0);
-        col = color;
-    }
-    '''
+    # Apply LUT
+    coord_scale = numpy.array([0.0302734375, 0.96875, 31.0])
+    coord_offset = numpy.array([0.5/1024, 0.5/32, 0.0])
+    texel_height_X0 = numpy.array([1/32, 0])
 
-    # The Secret Sauce
-    current_code = '''
-    uniform sampler2D tex0;
-    uniform sampler2D lut;
-    uniform vec2    u_resolution;
-    
-    in vec4 col;
-    out vec4 out_Color;
+    coord = image_pixels[:, :, :3] * coord_scale + coord_offset
 
-    vec3 to_srgb(vec3 c){
-        c.rgb = max( 1.055 * pow( c.rgb, vec3(0.416666667,0.416666667,0.416666667) ) - 0.055, 0 );
-        return c;
-    }
-    
-    vec3 apply_lut(vec3 color) {
-        const vec3 coord_scale = vec3(0.0302734375, 0.96875, 31.0);
-        const vec3 coord_offset = vec3( 0.5/1024, 0.5/32, 0.0);
-        const vec2 texel_height_X0 = vec2( 0.03125, 0.0 );
-        
-        vec3 coord = color * coord_scale + coord_offset;
-        
-        vec3 coord_frac = fract( coord );
-        vec3 coord_floor = coord - coord_frac;
-        vec2 coord_bot = coord.xy + coord_floor.zz * texel_height_X0;
-        vec2 coord_top = coord_bot + texel_height_X0;
+    coord_frac, coord_floor = numpy.modf(coord)
+    coord_bot = coord[:, :, :2] + numpy.tile(coord_floor[:, :, 2].reshape(height, width, 1), (1, 1, 2)) * texel_height_X0
+    coord_top = numpy.clip(coord_bot + texel_height_X0, 0, 1)
 
-        vec3 lutcol_bot = texture( lut, coord_bot ).rgb; //Changed from texture2D to texture just in case (apparently depreciated in opengl 3.1?)
-        vec3 lutcol_top = texture( lut, coord_top ).rgb;
-        
-        vec3 lutColor = mix(lutcol_bot, lutcol_top, coord_frac.z);
-        
-        return lutColor;
-    }
+    def bilinear_interpolation(lut_pixels, coords):
+        h, w, _ = lut_pixels.shape
+        x = coords[:, :, 0] * (w - 1)
+        #Fudge x coordinates based on x position. subtract -0.5 if at x position 0 and add 0.5 if at x position 1024 of the LUT. 
+        #this helps with some kind of overflow / underflow issue where it reads from the next LUT square when it's not supposed to
+        x = x + (x/1024  - 0.5)
+        y = coords[:, :, 1] * (h - 1)
+        # Get integer and fractional parts
+        x0 = numpy.floor(x).astype(int)
+        x1 = numpy.clip(x0 + 1, 0, w - 1)
+        y0 = numpy.floor(y).astype(int)
+        y1 = numpy.clip(y0 + 1, 0, h - 1)
+        x_frac = x - x0
+        y_frac = y - y0
+        # Get the pixel values at four corners
+        f00 = lut_pixels[y0, x0]
+        f01 = lut_pixels[y1, x0]
+        f10 = lut_pixels[y0, x1]
+        f11 = lut_pixels[y1, x1]
+        # Perform the bilinear interpolation
+        lut_col_bot = f00 * (1 - y_frac)[:, :, numpy.newaxis] + f01 * y_frac[:, :, numpy.newaxis]
+        lut_col_top = f10 * (1 - y_frac)[:, :, numpy.newaxis] + f11 * y_frac[:, :, numpy.newaxis]
+        interpolated_colors = lut_col_bot * (1 - x_frac)[:, :, numpy.newaxis] + lut_col_top * x_frac[:, :, numpy.newaxis]
+        return interpolated_colors
 
-    void main() {
-        vec4 texRGBA = texture(tex0, gl_FragCoord.xy / u_resolution);
+    lutcol_bot = bilinear_interpolation(lut_pixels, coord_bot)
+    lutcol_top = bilinear_interpolation(lut_pixels, coord_top)
 
-        vec3 texColor = to_srgb(texRGBA.rgb);
+    lut_colors = lutcol_bot * (1 - coord_frac[:, :, 2].reshape(height, width, 1)) + lutcol_top * coord_frac[:, :, 2].reshape(height, width, 1)
+    image_pixels[:, :, :3] = lut_colors[:,:,:3]
 
-        vec3 newColor = apply_lut(texColor);
+    # Update image pixels
+    image.pixels = image_pixels.flatten().tolist()
 
-        newColor = to_srgb(newColor);
-        
-        out_Color = vec4(newColor.rgb, texRGBA.a);
-    }
-    '''
-
-    # This object gives access to off screen buffers.
-    offscreen = gpu.types.GPUOffScreen(width, height)
-    
-    # Context manager to ensure balanced bind calls, even in the case of an error.
-    # Only run if valid
-    with offscreen.bind():
-        
-        # Clear buffers to preset values
-        bgl.glClear(bgl.GL_COLOR_BUFFER_BIT)
-
-        # Initialize the shader
-        # GPUShader combines multiple GLSL shaders into a program used for drawing. 
-        # It must contain a vertex and fragment shaders, with an optional geometry shader.
-        shader = gpu.types.GPUShader(vertex_default, current_code)
-        
-        # Initialize the shader batch
-        # It makes sure that all the vertex attributes necessary for a specific shader are provided.
-        batch = batch_for_shader(
-            shader, 
-            'TRI_STRIP', #https://wiki.blender.org/wiki/Reference/Release_Notes/3.2/Python_API for TRI_FAN depreciation
-            {
-                'a_position': ((-1, -1), (1, -1), (1, 1), (-1, 1), (-1, -1)),
-            },
-        )
-
-        # Bind the shader object. Required to be able to change uniforms of this shader.
-        shader.bind()
-        
-        bgl.glUniform1i(bgl.glGetUniformLocation(shader.program, "tex0"), 0)
-        bgl.glUniform1i(bgl.glGetUniformLocation(shader.program, "lut"), 1)
-                    
-        try:
-            # Make sure image has a bindcode
-            if image.bindcode == 0:
-                for i in range(0, 20):
-                    image.gl_load()
-                    if image.bindcode != 0:
-                        break
-
-            # https://docs.blender.org/api/current/bgl.html
-            bgl.glActiveTexture(bgl.GL_TEXTURE0)
-            bgl.glBindTexture(bgl.GL_TEXTURE_2D, image.bindcode)
-            bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_WRAP_S, bgl.GL_CLAMP_TO_EDGE)
-            bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_WRAP_T, bgl.GL_CLAMP_TO_EDGE)
-            bgl.glTexParameterf(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MIN_FILTER, bgl.GL_LINEAR)
-            bgl.glTexParameterf(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MAG_FILTER, bgl.GL_LINEAR)
-            
-            # Specify the value of a uniform variable for the current program object. 
-            # In this case, an image.
-            shader.uniform_int("tex0", 0)
-        except ValueError:
-            pass
-        
-        try:
-
-            # Make sure image has a bindcode
-            if lut_image.bindcode == 0:
-                for i in range(0, 20):
-                    lut_image.gl_load()
-                    if lut_image.bindcode != 0:
-                        break
-
-            # https://docs.blender.org/api/current/bgl.html
-            bgl.glActiveTexture(bgl.GL_TEXTURE1)
-            bgl.glBindTexture(bgl.GL_TEXTURE_2D, lut_image.bindcode)
-            bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_WRAP_S, bgl.GL_CLAMP_TO_EDGE)
-            bgl.glTexParameteri(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_WRAP_T, bgl.GL_CLAMP_TO_EDGE)
-            bgl.glTexParameterf(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MIN_FILTER, bgl.GL_LINEAR)
-            bgl.glTexParameterf(bgl.GL_TEXTURE_2D, bgl.GL_TEXTURE_MAG_FILTER, bgl.GL_LINEAR)
-            
-            # Specify the value of a uniform variable for the current program object. 
-            # In this case, an image.
-            shader.uniform_int("lut", 1)
-        except ValueError: 
-            pass
-
-        try:
-            shader.uniform_float('u_resolution', (width, height))
-        except ValueError: 
-            pass
-        
-        # Run the drawing program with the parameters assigned to the batch.
-        batch.draw(shader)
-
-        # The Buffer object is simply a block of memory that is delineated and initialized by the user.
-        buffer = bgl.Buffer(bgl.GL_BYTE, width * height * 4)
-        
-        # Select a color buffer source for pixels.
-        bgl.glReadBuffer(bgl.GL_BACK)
-        
-        # Read a block of pixels from the frame buffer.
-        bgl.glReadPixels(0, 0, width, height, bgl.GL_RGBA, bgl.GL_UNSIGNED_BYTE, buffer)
-
-    # Free the offscreen object. The framebuffer, texture and render objects will no longer be accessible.
-    offscreen.free()
-
-    # Return the final buffer-pixels
-    pixels = numpy.array([v / 255 for v in buffer])
-    image.pixels = pixels.tolist()
     return image
 
 if __name__ == '__main__':
