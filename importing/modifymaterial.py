@@ -543,6 +543,11 @@ class modify_material(bpy.types.Operator):
         self.image_load('KK EyeL (hitomi)', 'Gentex', 'expression0', self.body['SMR materials']['cf_Ohitomi_L02'][0][:-15] + '_cf_t_expression_00_EXPR.png')
         self.image_load('KK EyeL (hitomi)', 'Gentex', 'expression1', self.body['SMR materials']['cf_Ohitomi_L02'][0][:-15] + '_cf_t_expression_01_EXPR.png')
         
+        #correct the eye scaling using info from the KK_ChaFileCustomFace.json
+        face_data = c.get_json_file('KK_ChaFileCustomFace.json')
+        bpy.data.node_groups['Eye Textures positioning'].nodes['eye_scale'].inputs[1].default_value = 1/float(face_data[18]['Value'])
+        bpy.data.node_groups['Eye Textures positioning'].nodes['eye_scale'].inputs[2].default_value = 1/float(face_data[19]['Value'])
+
         self.load_baked_material('KK Body')
         self.load_baked_material('KK EyeR (hitomi)')
         self.load_baked_material('KK EyeL (hitomi)')
@@ -1131,9 +1136,9 @@ class modify_material(bpy.types.Operator):
             y = coords[:, :, 1] * (h - 1)
             # Get integer and fractional parts of each coordinate. 
             # Also make sure each coordinate is clipped to the LUT image bounds
-            x0 = numpy.floor(x).astype(int)
+            x0 = numpy.clip(numpy.floor(x).astype(int), 0, w-1)
             x1 = numpy.clip(x0 + 1, 0, w - 1)
-            y0 = numpy.floor(y).astype(int)
+            y0 = numpy.clip(numpy.floor(y).astype(int), 0, h-1)
             y1 = numpy.clip(y0 + 1, 0, h - 1)
             x_frac = x - x0
             y_frac = y - y0
@@ -1193,9 +1198,9 @@ class modify_material(bpy.types.Operator):
             x = x + (x/1024  - 0.5)
             # Get integer and fractional parts of each coordinate. 
             # Also make sure each coordinate is clipped to the LUT image bounds
-            x0 = numpy.floor(x).astype(int)
+            x0 = numpy.clip(numpy.floor(x).astype(int), 0, w-1)
             x1 = numpy.clip(x0 + 1, 0, w - 1)
-            y0 = numpy.floor(y).astype(int)
+            y0 = numpy.clip(numpy.floor(y).astype(int), 0, h-1)
             y1 = numpy.clip(y0 + 1, 0, h - 1)
             x_frac = x - x0
             y_frac = y - y0
