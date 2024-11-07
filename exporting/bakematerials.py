@@ -1019,7 +1019,7 @@ class bake_materials(bpy.types.Operator):
             last_step = time.time()
             c.toggle_console()
             c.kklog('Switching to EEVEE for material baking...')
-            bpy.context.scene.render.engine = 'BLENDER_EEVEE_NEXT'
+            bpy.context.scene.render.engine = 'BLENDER_EEVEE_NEXT' if bpy.app.version[0] > 3 else 'BLENDER_EEVEE'
             try:
                 bpy.ops.object.mode_set(mode='OBJECT')
             except:
@@ -1082,17 +1082,18 @@ class bake_materials(bpy.types.Operator):
             layer_collection = bpy.context.view_layer.layer_collection
             layerColl = recurLayerCollection(layer_collection, 'Collection')
             bpy.context.view_layer.active_layer_collection = layerColl
-            if not bpy.data.collections["Collection"].exporters:
-                bpy.ops.collection.exporter_add(name="IO_FH_fbx")
-                bpy.data.collections["Collection"].exporters[0].export_properties.object_types = {'EMPTY', 'ARMATURE', 'MESH', 'OTHER'}
-                bpy.data.collections["Collection"].exporters[0].export_properties.use_mesh_modifiers = False
-                bpy.data.collections["Collection"].exporters[0].export_properties.add_leaf_bones = False
-                bpy.data.collections["Collection"].exporters[0].export_properties.bake_anim = False
-                bpy.data.collections["Collection"].exporters[0].export_properties.apply_scale_options = 'FBX_SCALE_ALL'
-                bpy.data.collections["Collection"].exporters[0].export_properties.path_mode = 'COPY'
-                bpy.data.collections["Collection"].exporters[0].export_properties.embed_textures = False
-                bpy.data.collections["Collection"].exporters[0].export_properties.mesh_smooth_type = 'OFF'
-                bpy.data.collections["Collection"].exporters[0].export_properties.filepath = os.path.join(folderpath.replace('baked_files', 'atlas_files'), 'Exported model.fbx')
+            if bpy.app.version[0] != 3:
+                if not bpy.data.collections["Collection"].exporters:
+                    bpy.ops.collection.exporter_add(name="IO_FH_fbx")
+                    bpy.data.collections["Collection"].exporters[0].export_properties.object_types = {'EMPTY', 'ARMATURE', 'MESH', 'OTHER'}
+                    bpy.data.collections["Collection"].exporters[0].export_properties.use_mesh_modifiers = False
+                    bpy.data.collections["Collection"].exporters[0].export_properties.add_leaf_bones = False
+                    bpy.data.collections["Collection"].exporters[0].export_properties.bake_anim = False
+                    bpy.data.collections["Collection"].exporters[0].export_properties.apply_scale_options = 'FBX_SCALE_ALL'
+                    bpy.data.collections["Collection"].exporters[0].export_properties.path_mode = 'COPY'
+                    bpy.data.collections["Collection"].exporters[0].export_properties.embed_textures = False
+                    bpy.data.collections["Collection"].exporters[0].export_properties.mesh_smooth_type = 'OFF'
+                    bpy.data.collections["Collection"].exporters[0].export_properties.filepath = os.path.join(folderpath.replace('baked_files', 'atlas_files'), 'Exported model.fbx')
             c.toggle_console()
 
             c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')

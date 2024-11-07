@@ -1016,14 +1016,22 @@ def getRigifyLayerIndexByName(rigifyLayerName):
             return index
 
 def setRigifyLayer(rig, index, rigifyLayer):
-    if rig.data.collections_all.get(str(index)):
-        rig.data.collections_all[str(index)].rigify_ui_title = rigifyLayer.name
-        rig.data.collections_all[str(index)].rigify_ui_row = rigifyLayer.row
-        rig.data.collections_all[str(index)].rigify_color_set_id = rigifyLayer.group
+    if bpy.app.version[0] == 3:
+        rig.data.rigify_layers[index].name = rigifyLayer.name
+        rig.data.rigify_layers[index].row = rigifyLayer.row
+        rig.data.rigify_layers[index].group = rigifyLayer.group
+    else:
+        if rig.data.collections_all.get(str(index)):
+            rig.data.collections_all[str(index)].rigify_ui_title = rigifyLayer.name
+            rig.data.collections_all[str(index)].rigify_ui_row = rigifyLayer.row
+            rig.data.collections_all[str(index)].rigify_color_set_id = rigifyLayer.group
     
 def setRootRigifyLayer(rig, boneGroupIndex):
-    if rig.data.collections_all.get(str(rootLayerIndex)):
-        rig.data.collections_all[str(rootLayerIndex)].rigify_color_set_id = boneGroupIndex
+    if bpy.app.version[0] == 3:
+        rig.data.rigify_layers[rootLayerIndex].group = boneGroupIndex
+    else:
+        if rig.data.collections_all.get(str(rootLayerIndex)):
+            rig.data.collections_all[str(rootLayerIndex)].rigify_color_set_id = boneGroupIndex
 
 mmdOriginalBoneLayerName = "Original bones"        
 mmdRenamedRequiredDictionaryLayerName = "Renamed required dictionary"
@@ -1152,29 +1160,45 @@ def assignSingleBoneLayer_except(rig, boneName, layerIndex):
         #bone didn't exist
 
 def assignSingleBoneLayer(rig, boneName, layerIndex):
-    original_mode = bpy.context.object.mode
-    bpy.ops.object.mode_set(mode = 'OBJECT')
-    bone = rig.data.bones[boneName]
-    bone.collections.clear()
-    if rig.data.collections.get(str(layerIndex)):
-        rig.data.collections[str(layerIndex)].assign(bone)
+    if bpy.app.version[0] == 3:
+        original_mode = bpy.context.object.mode
+        bpy.ops.object.mode_set(mode = 'POSE')
+        bone = rig.data.bones[boneName]
+        bone.layers[layerIndex] = True
+        for index in range(32):
+            if index != layerIndex:
+                bone.layers[index] = False
     else:
-        rig.data.collections.new(str(layerIndex))
-        rig.data.collections[str(layerIndex)].assign(bone)
-    bpy.ops.object.mode_set(mode = original_mode)
-
-def assignMultipleBoneLayer(rig, boneName, layerIndexes):
-    original_mode = bpy.context.object.mode
-    bpy.ops.object.mode_set(mode = 'OBJECT')
-    bone = rig.data.bones[boneName]
-    bone.collections.clear()
-    for layerIndex in layerIndexes:
+        original_mode = bpy.context.object.mode
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+        bone = rig.data.bones[boneName]
+        bone.collections.clear()
         if rig.data.collections.get(str(layerIndex)):
             rig.data.collections[str(layerIndex)].assign(bone)
         else:
             rig.data.collections.new(str(layerIndex))
             rig.data.collections[str(layerIndex)].assign(bone)
     bpy.ops.object.mode_set(mode = original_mode)
+
+def assignMultipleBoneLayer(rig, boneName, layerIndexes):
+    if bpy.app.version[0] == 3:
+        for layerIndex in layerIndexes:
+            bone.layers[layerIndex] = True
+        for index in range(32):
+            if index not in layerIndexes:
+                bone.layers[index] = False
+    else:
+        original_mode = bpy.context.object.mode
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+        bone = rig.data.bones[boneName]
+        bone.collections.clear()
+        for layerIndex in layerIndexes:
+            if rig.data.collections.get(str(layerIndex)):
+                rig.data.collections[str(layerIndex)].assign(bone)
+            else:
+                rig.data.collections.new(str(layerIndex))
+                rig.data.collections[str(layerIndex)].assign(bone)
+        bpy.ops.object.mode_set(mode = original_mode)
 
             
 def assignSingleBoneLayerToList(rig, boneNamesList, layerIndex):
