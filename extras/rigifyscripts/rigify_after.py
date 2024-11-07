@@ -286,10 +286,21 @@ def main():
         generatedRig.pose.bones['root'].color.custom.active = (0.552011, 1.000000, 1.000000)
 
         #set layer visibility
-        for layer in ['None']:
-            generatedRig.data.collections_all[str(layer)].is_visible = False
+        try:
+            for layer in ['None']:
+                generatedRig.data.collections_all[str(layer)].is_visible = False
+        except:
+            pass
         for layer in [7,9,12,17,20]:
             generatedRig.data.collections_all[str(layer)].is_visible = True
+    else:
+        #set layer visibility
+        generatedRig.data.layers[0] = True
+        for layer in range(1,32):
+            generatedRig.data.layers[layer] = False
+        for layer in [7,9,12,17,20,28]:
+            generatedRig.data.layers[layer] = True
+        generatedRig.data.layers[0] = False
 
 class rigify_after(bpy.types.Operator):
     bl_idname = "kkbp.rigafter"

@@ -2087,8 +2087,11 @@ def main():
         metarig.data.collections_all['6'].rigify_ui_title_name = 'Face (MCH)'
         bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(7), row=6) #move torso
         metarig.data.collections_all['7'].rigify_ui_title_name = 'Torso'
-        bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index('None'), row=7) #move torso detail
-        metarig.data.collections_all['None'].rigify_ui_title_name = 'Torso (Detail)'
+        try:
+            bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index('None'), row=7) #move torso detail
+            metarig.data.collections_all['None'].rigify_ui_title_name = 'Torso (Detail)'
+        except:
+            pass
         bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(8), row=7) #move torso tweak
         metarig.data.collections_all['8'].rigify_ui_title_name = 'Torso (Tweak)'
         bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(9), row=8) #move arm L IK
@@ -2136,7 +2139,10 @@ def main():
         bpy.context.object.data.collections_all["22"].rigify_color_set_name = "Tweak"
         bpy.context.object.data.collections_all["23"].rigify_color_set_name = "Extra"
         bpy.context.object.data.collections_all["24"].rigify_color_set_name = "FK"
-        bpy.context.object.data.collections_all["None"].rigify_color_set_name = "FK"
+        try:
+            bpy.context.object.data.collections_all["None"].rigify_color_set_name = "FK"
+        except:
+            pass
 
     #bpy.ops.bone_layer_man.get_rigify_layers()
     #koikatsuCommons.setBoneManagerLayersFromRigifyLayers(metarig)
