@@ -181,7 +181,8 @@ class modify_material(bpy.types.Operator):
 
     def replace_materials_for_body(self):
         c.switch(self.body, 'object')
-        self.body.visible_shadow = False
+        if bpy.app.version[0] != 3:
+            self.body.visible_shadow = False
         templateList = [
         'KK Body',
         'KK Outline',
@@ -239,7 +240,8 @@ class modify_material(bpy.types.Operator):
     def replace_materials_for_hair(self):
         '''Replace all of the Hair materials with hair templates and name accordingly'''
         for hair in self.hairs:
-            hair.visible_shadow = False
+            if bpy.app.version[0] != 3:
+                hair.visible_shadow = False
             for original_material in hair.material_slots:
                 template = bpy.data.materials['KK Hair'].copy()
                 template.name = 'KK ' + original_material.name
@@ -250,7 +252,8 @@ class modify_material(bpy.types.Operator):
         #Replace all other materials with the general template and name accordingly
         for cat in [self.outfits, self.outfit_alternates]:
             for ob in cat:
-                ob.visible_shadow = False
+                if bpy.app.version[0] != 3:
+                    ob.visible_shadow = False
                 for original_material in ob.material_slots:
                     template = bpy.data.materials['KK General'].copy()
                     template.name = 'KK ' + original_material.name
@@ -383,7 +386,10 @@ class modify_material(bpy.types.Operator):
 
         #open all images into blender and create dark variants if the image is a maintex
         for image in files:
-            bpy.data.images.load(filepath=str(image))
+            if bpy.app.version[0] == 3:
+                bpy.ops.image.open(filepath=str(image), use_udim_detecting=False)
+            else:
+                bpy.data.images.load(filepath=str(image))
             try:
                 bpy.data.images[image.name].pack()
             except:
@@ -1061,8 +1067,9 @@ class modify_material(bpy.types.Operator):
         bpy.data.scenes[0].display_settings.display_device = 'sRGB'
         bpy.data.scenes[0].view_settings.view_transform = 'Standard'
         bpy.data.scenes[0].view_settings.look = 'None'
-        #disable shadows in the scene. The toon shading in 4.2 is fucking broken but the broken-ness can be hidden with this setting
-        bpy.data.scenes[0].eevee.use_shadows = False
+        if bpy.app.version[0] != 3:
+            #disable shadows in the scene. The toon shading in 4.2 is fucking broken but the broken-ness can be hidden with this setting
+            bpy.data.scenes[0].eevee.use_shadows = False
         c.print_timer('set_color_management')
 
     # %% Supporting functions
@@ -1549,7 +1556,7 @@ class modify_material(bpy.types.Operator):
         hair_light_colors = {}
         hair_dark_colors = {}
         for material_name in hair_base_colors:
-            c.kklog("material name: {}, light base: {}, to_255: {}, saturated: {}".format(material_name, hair_base_colors[material_name], to_255(hair_base_colors[material_name]), self.saturate_color(to_255(hair_base_colors[material_name]), active_lut)))
+            # c.kklog("material name: {}, light base: {}, to_255: {}, saturated: {}".format(material_name, hair_base_colors[material_name], to_255(hair_base_colors[material_name]), self.saturate_color(to_255(hair_base_colors[material_name]), active_lut)))
             hair_light_colors[material_name]  = self.saturate_color(to_255(hair_base_colors[material_name]), active_lut)
             hair_dark_colors[material_name]   = self.saturate_color(to_255(self.clothes_dark_color(color = hair_base_colors[material_name], shadow_color = hair_shadow_color)), 'Lut_TimeDay.png')
             hair_root_colors[material_name] = self.saturate_color(hair_root_colors[material_name], active_lut)
@@ -1945,7 +1952,10 @@ class modify_material(bpy.types.Operator):
             c.kklog('Created dark version of {} in {} seconds'.format(darktex.name, time.time() - ok))
             return darktex
         else:
-            bpy.data.images.load(filepath=str(bpy.context.scene.kkbp.import_dir + '/dark_files/' + maintex.name[:-6] + 'DT.png'))
+            if bpy.app.version[0] == 3:
+                bpy.ops.image.open(filepath=str(bpy.context.scene.kkbp.import_dir + '/dark_files/' + maintex.name[:-6] + 'DT.png'), use_udim_detecting=False)
+            else:
+                bpy.data.images.load(filepath=str(bpy.context.scene.kkbp.import_dir + '/dark_files/' + maintex.name[:-6] + 'DT.png'))
             darktex = bpy.data.images[maintex.name[:-6] + 'DT.png']
             c.kklog('A dark version of {} already exists'.format(darktex.name))
             try:

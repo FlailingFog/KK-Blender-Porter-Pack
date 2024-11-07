@@ -125,11 +125,20 @@ class kkbp_import(bpy.types.Operator):
                     outfit = 'Outfit' in subdir
 
                     #import the pmx file with mmd_tools
-                    bpy.ops.mmd_tools.import_model('EXEC_DEFAULT',
-                        filepath=pmx_path,
-                        scale=1,
-                        clean_model = False,
-                        types={'MESH', 'ARMATURE', 'MORPHS'} if not outfit else {'MESH', 'ARMATURE'})
+                    if bpy.app.version[0] == 3:
+                        bpy.ops.mmd_tools.import_model('EXEC_DEFAULT',
+                            files=[{'name': pmx_path}],
+                            directory=pmx_path,
+                            scale=1,
+                            clean_model = False,
+                            types={'MESH', 'ARMATURE', 'MORPHS'} if not outfit else {'MESH'},
+                            log_level='WARNING')
+                    else:
+                        bpy.ops.mmd_tools.import_model('EXEC_DEFAULT',
+                            filepath=pmx_path,
+                            scale=1,
+                            clean_model = False,
+                            types={'MESH', 'ARMATURE', 'MORPHS'} if not outfit else {'MESH', 'ARMATURE'})
                     
                     if outfit:
                         #keep track of outfit ID after pmx import. The active object is the outfit empty after import, so that's where its going

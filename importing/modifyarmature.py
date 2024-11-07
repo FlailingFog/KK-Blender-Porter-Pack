@@ -708,7 +708,10 @@ class modify_armature(bpy.types.Operator):
 
     def reorganize_armature_layers(self):
         '''Moves all bones to different armature layers'''
-        c.switch(self.armature, 'object')
+        if bpy.app.version[0] == 3:
+            c.switch(self.armature, 'pose')
+        else:
+            c.switch(self.armature, 'object')
         
         core_list   = self.get_bone_list('core_list')
         non_ik      = self.get_bone_list('non_ik')
@@ -772,9 +775,12 @@ class modify_armature(bpy.types.Operator):
         True, True, True, False, False, False, False, False, #clothes
         True, True, False, False, False, False, False, False, #face
         False, False, False, False, False, False, False, False]
-        for index, show_layer in enumerate(all_layers):
-            if self.armature.data.collections.get(str(index)):
-                self.armature.data.collections.get(str(index)).is_visible = show_layer
+        if bpy.app.version[0] == 3:
+            bpy.ops.armature.armature_layers(layers=all_layers)
+        else:
+            for index, show_layer in enumerate(all_layers):
+                if self.armature.data.collections.get(str(index)):
+                    self.armature.data.collections.get(str(index)).is_visible = show_layer
         self.armature.data.display_type = 'STICK'
         c.switch(self.armature, 'object')
         c.print_timer('reorganize_armature_layers')
@@ -793,18 +799,32 @@ class modify_armature(bpy.types.Operator):
             vertexWeightMap = self.survey_vertexes(outfit_or_hair)
             #add outfit id to all accessory bones used by that outfit in an array
             number_of_outfits = len([outfit for outfit in bpy.data.objects if 'Outfit ' in outfit.name and 'Hair' not in outfit.name and 'alt ' not in outfit.name and 'Indoor' not in outfit.name])
-            for bone in [bone for bone in self.armature.data.bones if bone.collections.get('10')]:
-                no_move_bone = False
-                for this_prefix in dont_move_these:
-                    if this_prefix in bone.name:
-                        no_move_bone = True
-                if not no_move_bone and vertexWeightMap.get(bone.name):
-                    try:
-                        outfit_id_array = bone['KKBP outfit ID'].to_list()
-                        outfit_id_array.append(outfit_or_hair['KKBP outfit ID'])
-                        bone['KKBP outfit ID'] = outfit_id_array
-                    except:
-                        bone['KKBP outfit ID'] = [outfit_or_hair['KKBP outfit ID']]
+            if bpy.app.version[0] == 3:
+                for bone in [bone for bone in self.armature.data.bones if bone.layers[10]]:
+                    no_move_bone = False
+                    for this_prefix in dont_move_these:
+                        if this_prefix in bone.name:
+                            no_move_bone = True
+                    if not no_move_bone and vertexWeightMap.get(bone.name):
+                        try:
+                            outfit_id_array = bone['KKBP outfit ID'].to_list()
+                            outfit_id_array.append(outfit_or_hair['KKBP outfit ID'])
+                            bone['KKBP outfit ID'] = outfit_id_array
+                        except:
+                            bone['KKBP outfit ID'] = [outfit_or_hair['KKBP outfit ID']]
+            else:
+                for bone in [bone for bone in self.armature.data.bones if bone.collections.get('10')]:
+                    no_move_bone = False
+                    for this_prefix in dont_move_these:
+                        if this_prefix in bone.name:
+                            no_move_bone = True
+                    if not no_move_bone and vertexWeightMap.get(bone.name):
+                        try:
+                            outfit_id_array = bone['KKBP outfit ID'].to_list()
+                            outfit_id_array.append(outfit_or_hair['KKBP outfit ID'])
+                            bone['KKBP outfit ID'] = outfit_id_array
+                        except:
+                            bone['KKBP outfit ID'] = [outfit_or_hair['KKBP outfit ID']]
         #move accessory bones to armature layer 10
         for bone in [bone for bone in self.armature.data.bones if bone.get('KKBP outfit ID')]:
             self.set_armature_layer(bone.name, show_layer = 9)
@@ -1359,21 +1379,32 @@ class modify_armature(bpy.types.Operator):
             self.retreive_stored_tags()
             bpy.ops.pose.select_all(action='DESELECT')
             self.retreive_stored_tags()
-            self.armature.data.bones['FootPin.' + footbone[-1]].collections.clear()
-            self.retreive_stored_tags()
-            self.set_armature_layer('FootPin.' + footbone[-1], 2)
-            self.retreive_stored_tags()
-            self.armature.data.bones['ToePin.' + footbone[-1]].collections.clear()
-            self.retreive_stored_tags()
-            self.set_armature_layer('ToePin.' + footbone[-1], 2)
-            self.retreive_stored_tags()
-            self.armature.data.bones[toebone].collections.clear()
-            self.retreive_stored_tags()
-            self.set_armature_layer(toebone, 2)
-            self.retreive_stored_tags()
-            self.armature.data.bones[footIK].collections.clear()
-            self.retreive_stored_tags()
-            self.set_armature_layer(footIK, 2)
+            if bpy.app.version[0] == 3:
+                self.armature.data.bones['FootPin.' + footbone[-1]].select = True
+                self.retreive_stored_tags()
+                self.armature.data.bones['ToePin.' + footbone[-1]].select = True
+                self.retreive_stored_tags()
+                self.armature.data.bones[toebone].select = True
+                self.retreive_stored_tags()
+                bpy.ops.pose.bone_layers(layers=layer2)
+                self.retreive_stored_tags()
+                self.armature.data.bones[footIK].select = True
+            else:
+                self.armature.data.bones['FootPin.' + footbone[-1]].collections.clear()
+                self.retreive_stored_tags()
+                self.set_armature_layer('FootPin.' + footbone[-1], 2)
+                self.retreive_stored_tags()
+                self.armature.data.bones['ToePin.' + footbone[-1]].collections.clear()
+                self.retreive_stored_tags()
+                self.set_armature_layer('ToePin.' + footbone[-1], 2)
+                self.retreive_stored_tags()
+                self.armature.data.bones[toebone].collections.clear()
+                self.retreive_stored_tags()
+                self.set_armature_layer(toebone, 2)
+                self.retreive_stored_tags()
+                self.armature.data.bones[footIK].collections.clear()
+                self.retreive_stored_tags()
+                self.set_armature_layer(footIK, 2)
         self.retreive_stored_tags()
         heelController('cf_j_foot_L', 'cf_pv_foot_L', 'cf_j_toes_L')
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
@@ -1658,15 +1689,40 @@ class modify_armature(bpy.types.Operator):
         '''Add some bones to bone groups to give them colors'''
         if bpy.context.scene.kkbp.armature_dropdown in ['A','B']:
             c.switch(self.armature, 'pose')
-            group_name = 'IK controllers'
-            for bone in ['cf_pv_hand_L', 'cf_pv_hand_R', 'MasterFootIK.L', 'MasterFootIK.R']:
-                self.set_armature_layer(bone, group_name)
-                self.armature.data.bones[bone].color.palette = 'THEME01'
-            
-            group_name = 'IK poles'
-            for bone in ['cf_pv_elbo_R', 'cf_pv_elbo_L', 'cf_pv_knee_R', 'cf_pv_knee_L']:
-                self.set_armature_layer(bone, group_name)
-                self.armature.data.bones[bone].color.palette = 'THEME09'
+            if bpy.app.version[0] == 3:
+                bpy.ops.pose.group_add()
+                group_index = len(self.armature.pose.bone_groups)-1
+                group = self.armature.pose.bone_groups[group_index]
+                group.name = 'IK controllers'
+                self.armature.data.bones['cf_pv_hand_L'].select = True
+                self.armature.data.bones['cf_pv_hand_R'].select = True
+                self.armature.data.bones['MasterFootIK.L'].select = True
+                self.armature.data.bones['MasterFootIK.R'].select = True
+                bpy.ops.pose.group_assign(type=group_index+1)
+                group.color_set = 'THEME01'
+
+                c.switch(self.armature, 'pose')
+                bpy.ops.pose.group_add()
+                group_index = len(self.armature.pose.bone_groups)-1
+                group = self.armature.pose.bone_groups[group_index]
+                group.name = 'IK poles'
+                self.armature.pose.bone_groups.active_index = 1
+                self.armature.data.bones['cf_pv_elbo_R'].select = True
+                self.armature.data.bones['cf_pv_elbo_L'].select = True
+                self.armature.data.bones['cf_pv_knee_R'].select = True
+                self.armature.data.bones['cf_pv_knee_L'].select = True
+                bpy.ops.pose.group_assign(type=group_index+1)
+                group.color_set = 'THEME09'
+            else:
+                group_name = 'IK controllers'
+                for bone in ['cf_pv_hand_L', 'cf_pv_hand_R', 'MasterFootIK.L', 'MasterFootIK.R']:
+                    self.set_armature_layer(bone, group_name)
+                    self.armature.data.bones[bone].color.palette = 'THEME01'
+                
+                group_name = 'IK poles'
+                for bone in ['cf_pv_elbo_R', 'cf_pv_elbo_L', 'cf_pv_knee_R', 'cf_pv_knee_L']:
+                    self.set_armature_layer(bone, group_name)
+                    self.armature.data.bones[bone].color.palette = 'THEME09'
 
     def rename_bones_for_clarity(self):
         '''rename core bones for easier identification. Also allows Unity to automatically detect each bone in a humanoid armature'''
@@ -1868,6 +1924,9 @@ class modify_armature(bpy.types.Operator):
             all_layers[8] = True
             all_layers[9] = True
 
+        if bpy.app.version[0] == 3:
+            bpy.ops.armature.armature_layers(layers=all_layers)
+        else:
             for index, show_layer in enumerate(all_layers):
                 if self.armature.data.collections.get(str(index)):
                     self.armature.data.collections.get(str(index)).is_visible = show_layer
@@ -1897,9 +1956,12 @@ class modify_armature(bpy.types.Operator):
         True,  True,  False, False, False, False, False, False, #clothes
         False, False, False, False, False, False, False, False, #face
         False, False, False, False, False, False, False, False]
-        for index, show_layer in enumerate(core_layers):
-            if self.armature.data.collections.get(str(index)):
-                self.armature.data.collections.get(str(index)).is_visible = show_layer
+        if bpy.app.version[0] == 3:
+            bpy.ops.armature.armature_layers(layers=core_layers)
+        else:
+            for index, show_layer in enumerate(core_layers):
+                if self.armature.data.collections.get(str(index)):
+                    self.armature.data.collections.get(str(index)).is_visible = show_layer
         self.armature.data.display_type = 'STICK'
         c.switch(self.armature, 'object')
 
@@ -1943,18 +2005,31 @@ class modify_armature(bpy.types.Operator):
         '''Assigns a bone to a bone collection.'''
         bone = self.armature.data.bones.get(bone_name)
         if bone:
-            original_mode = bpy.context.object.mode
-            bpy.ops.object.mode_set(mode = 'OBJECT')
-            show_layer = str(show_layer)
-            bone.collections.clear()
-            if self.armature.data.bones.get(bone_name):
-                if self.armature.data.collections.get(show_layer):
-                    self.armature.data.collections[show_layer].assign(self.armature.data.bones.get(bone_name))
-                else:
-                    self.armature.data.collections.new(show_layer)
-                    self.armature.data.collections[show_layer].assign(self.armature.data.bones.get(bone_name))
-                self.armature.data.bones[bone_name].hide = hidden
-            bpy.ops.object.mode_set(mode = original_mode)
+            if bpy.app.version[0] == 3:
+                if self.armature.data.bones.get(bone_name):
+                    self.armature.data.bones[bone_name].layers = (
+                        True, False, False, False, False, False, False, False,
+                        False, False, False, False, False, False, False, False, 
+                        False, False, False, False, False, False, False, False, 
+                        False, False, False, False, False, False, False, False
+                    )
+                    #have to show the bone on both layer 1 and chosen layer before setting it to just chosen layer
+                    self.armature.data.bones[bone_name].layers[show_layer] = True 
+                    self.armature.data.bones[bone_name].layers[0] = False
+                    self.armature.data.bones[bone_name].hide = hidden
+            else:
+                original_mode = bpy.context.object.mode
+                bpy.ops.object.mode_set(mode = 'OBJECT')
+                show_layer = str(show_layer)
+                bone.collections.clear()
+                if self.armature.data.bones.get(bone_name):
+                    if self.armature.data.collections.get(show_layer):
+                        self.armature.data.collections[show_layer].assign(self.armature.data.bones.get(bone_name))
+                    else:
+                        self.armature.data.collections.new(show_layer)
+                        self.armature.data.collections[show_layer].assign(self.armature.data.bones.get(bone_name))
+                    self.armature.data.bones[bone_name].hide = hidden
+                bpy.ops.object.mode_set(mode = original_mode)
 
     @staticmethod
     def get_bone_list(kind):
@@ -2074,7 +2149,12 @@ class modify_armature(bpy.types.Operator):
 
     def new_bone(self, new_bone_name):
         '''Creates a new bone on the armature with the specified name and returns the blender bone'''
-        bone = self.armature.data.edit_bones.new(new_bone_name)
+        if bpy.app.version[0] == 3:
+            bpy.ops.armature.bone_primitive_add()
+            bone = self.armature.data.edit_bones['Bone']
+            bone.name = new_bone_name
+        else:
+            bone = self.armature.data.edit_bones.new(new_bone_name)
         return bone
 
 if __name__ == "__main__":
