@@ -1,8 +1,13 @@
+### Changes for V7.2.0
+* Add back Blender 3.6 support (for importing only, export and other features not supported)
+
+### Changes for V7.1.0
+* New image saturation method
+* Add back linux / mac support
+
 ### Changes for V7.0.0
 * Blender 4.2 LTS support!
     * You need the new version of [mmd_tools](https://extensions.blender.org/add-ons/mmd-tools/)
-    * After you install mmd_tools and the KKBP importer, it will ask you to download a dependency from blender.org
-    * KKBP 7.0.0 does not support Linux / Mac. You should still be able to import the model using wine or a windows VM, then open the .blend file normally after the import
 * Koikatsu Sunshine exporter bugfix by **Guerra24**!
     * This fixes colors not showing up on KKS exports that had their material set to "Koikano"
 * Replaced Generated Face Normal smoothing with a new geometry nodes setup from **MoriMorinya**! (original node group by **aVersionOfReality**)
