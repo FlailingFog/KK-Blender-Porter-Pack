@@ -1924,13 +1924,13 @@ class modify_armature(bpy.types.Operator):
             all_layers[8] = True
             all_layers[9] = True
 
-        if bpy.app.version[0] == 3:
-            bpy.ops.armature.armature_layers(layers=all_layers)
-        else:
-            for index, show_layer in enumerate(all_layers):
-                if self.armature.data.collections.get(str(index)):
-                    self.armature.data.collections.get(str(index)).is_visible = show_layer
-            self.armature.data.display_type = 'STICK'
+            if bpy.app.version[0] == 3:
+                bpy.ops.armature.armature_layers(layers=all_layers)
+            else:
+                for index, show_layer in enumerate(all_layers):
+                    if self.armature.data.collections.get(str(index)):
+                        self.armature.data.collections.get(str(index)).is_visible = show_layer
+                self.armature.data.display_type = 'STICK'
 
     def hide_widgets(self):
         '''automatically hide bone widgets collection if it's visible'''

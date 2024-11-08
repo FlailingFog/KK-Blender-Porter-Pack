@@ -278,12 +278,12 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         col = box.column(align=True)
         row = col.row(align=True)
         row.operator('kkbp.exportprep', text = t('prep'), icon = 'MODIFIER')
-        row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown == 'A'
+        row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown in ['A', 'C', 'D']
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.prop(context.scene.kkbp, "simp_dropdown")
         split.prop(context.scene.kkbp, "prep_dropdown")
-        row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown == 'A'
+        row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown in ['A', 'C', 'D']
 
 class EXTRAS_PT_panel(bpy.types.Panel):
     bl_label = t('extras')
