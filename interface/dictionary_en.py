@@ -117,7 +117,7 @@ translation_dictionary = {
     'export_sep_meshes_tt'      : "Only available for the \"Separate by SMR data\" option. Choose where to export meshes",
 
     'kkbp_import_tt'    : "Imports a Koikatsu model (.pmx format) and applies fixes to it",
-    'export_prep_tt'    : "Only available for the KKBP Armature. Check the dropdown for more info",
+    'export_prep_tt'    : "Not available for the Rigify Armature. Check the dropdown for more info",
     'bake_mats_tt'      : "Finalize materials as .png files. These will be stored in the original .pmx folder",
 
     'install_dependency': "Install Dependencies",

@@ -118,7 +118,7 @@ translation_dictionary = {
     'export_sep_meshes_tt'      : "仅适用于 “按SMR数据分类”选项。选择导出网格的位置",
 
     'kkbp_import_tt'   : "导入恋活模型（.pmx格式），并对其应用修复",
-    'export_prep_tt'    : "只适用于KKBP骨架，查看下拉列表以了解更多信息",
+    'export_prep_tt'    : "不适用于Rigify骨架，查看下拉列表以了解更多信息",
     'bake_mats_tt'      : "打开要将材质模板烘焙到的文件夹",
 
     'install_dependency': "安装依赖",
