@@ -1,6 +1,14 @@
 from bpy.app.translations import locale
+from bpy.app import version_string
 from .dictionary_jp import translation_dictionary as jp_translation
 from .dictionary_zh import translation_dictionary as zh_translation
+
+#Blender 4 changed the language code for Simplified Chinese from 'zh_CN' to 'zh_HANS', this broke Chinese translation.
+if version_string[:1] == '4':
+#Determine whether to use 'zh_CN' or 'zh_HANS' by Blender version.
+    chinese_code = 'zh_HANS'
+else:
+    chinese_code = 'zh_CN'
 
 translation_dictionary = {
 
@@ -142,7 +150,7 @@ def t(text_entry):
     try:
         if locale == 'ja_JP':
             return jp_translation[text_entry]
-        elif locale == 'zh_HANS':
+        elif locale == chinese_code:
             return zh_translation[text_entry]
         else:
             return translation_dictionary[text_entry]
