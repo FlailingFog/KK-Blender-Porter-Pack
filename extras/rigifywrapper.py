@@ -4,11 +4,12 @@ Wrapper for the rigifyscripts folder
 import bpy, traceback
 from .. import common as c
 from ..importing.postoperations import post_operations
+from ..interface.dictionary_en import t
 
 class rigify_convert(bpy.types.Operator):
     bl_idname = "kkbp.rigifyconvert"
     bl_label = "Convert for rigify"
-    bl_description = """Runs several scripts to convert a KKBP armature to be Rigify compatible"""
+    bl_description = t('rigify_convert_tt')
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):

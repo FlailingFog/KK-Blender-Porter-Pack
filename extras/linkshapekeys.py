@@ -7,6 +7,7 @@ Usage:
 Script 90% stolen from https://blender.stackexchange.com/questions/86757/python-how-to-connect-shapekeys-via-drivers
 '''
 import bpy
+from ..interface.dictionary_en import t
 
 def link_keys(shapekey_holder_object, objects_to_link):
 
@@ -48,7 +49,7 @@ def link_keys(shapekey_holder_object, objects_to_link):
 class link_shapekeys(bpy.types.Operator):
     bl_idname = "kkbp.linkshapekeys"
     bl_label = "Link shapekeys"
-    bl_description = "Separates the Eyes and Eyebrows from the Body object and links the shapekeys to the Body object. Useful for when you want to make eyes or eyebrows appear through the hair using the Cryptomatte features in the compositor"
+    bl_description = t('sep_eye_tt')
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):

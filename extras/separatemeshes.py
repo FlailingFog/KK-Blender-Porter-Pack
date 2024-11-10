@@ -14,6 +14,7 @@ from bpy_extras.io_utils import (
         path_reference_mode,
         axis_conversion,
         )
+from ..interface.dictionary_en import t
 
 ########## ERRORS ##########
 def kk_folder_error(self, context):
@@ -292,7 +293,7 @@ def export_meshes(directory):
 class export_separate_meshes(bpy.types.Operator, ExportHelper):
     bl_idname = "kkbp.exportseparatemeshes"
     bl_label = "Export Separate Meshes"
-    bl_description = "Only available for the \"Separate by SMR data\" option. Choose where to export meshes"
+    bl_description = t('export_sep_meshes_tt')
     bl_options = {'REGISTER', 'UNDO'}
     
     filepath : StringProperty(maxlen=1024, default='', subtype='FILE_PATH', options={'HIDDEN'})
