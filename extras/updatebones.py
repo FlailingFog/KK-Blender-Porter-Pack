@@ -1,9 +1,10 @@
 import bpy
+from ..interface.dictionary_en import t
 
 class update_bones(bpy.types.Operator):
     bl_idname = "kkbp.updatebones"
     bl_label = "Update bones"
-    bl_description = "Updates visibility of bones based on which outfits are hidden in the outliner"
+    bl_description = t('bone_visibility_tt')
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):

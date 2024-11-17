@@ -1,6 +1,14 @@
 from bpy.app.translations import locale
+from bpy.app import version_string
 from .dictionary_jp import translation_dictionary as jp_translation
 from .dictionary_zh import translation_dictionary as zh_translation
+
+#Blender 4 changed the language code for Simplified Chinese from 'zh_CN' to 'zh_HANS', this broke Chinese translation.
+if version_string[:1] == '4':
+#Determine whether to use 'zh_CN' or 'zh_HANS' by Blender version.
+    chinese_code = 'zh_HANS'
+else:
+    chinese_code = 'zh_CN'
 
 translation_dictionary = {
 
@@ -92,10 +100,14 @@ translation_dictionary = {
     'prep'          : 'Prep for target application',
 
     'studio_object'             : 'Import studio object',
+    'studio_object_tt'          : 'Open the folder containing the fbx files exported with SB3Utility',
+    'convert_texture'           : 'Convert texture?',
+    'convert_texture_tt'        : '''Enable this if you want the plugin to saturate the item's textures using the in-game LUT''',
     'single_animation'          : 'Import single animation file',
     'single_animation_tt'       : 'Only available for the Rigify armature. Imports an exported Koikatsu .fbx animation file and applies it to your character. Mixamo .fbx files are also supported if you use the toggle below',
     'animation_koi'             : 'Import Koikatsu animation',
     'animation_mix'             : 'Import Mixamo animation',
+    'animation_type_tt'         : 'Disable this if you are importing a Koikatsu .fbx animation. Enable this if you are importing a Mixamo .fbx animation',
     'animation_library'         : 'Create animation library',
     'animation_library_tt'      : "Only available for the Rigify Armature. Creates an animation library using the current file and current character. Will not save over the current file in case you want to reuse it. Open the folder containing the animation files exported with SB3Utility",
     'animation_library_scale'   : 'Scale arms',
@@ -103,11 +115,17 @@ translation_dictionary = {
     'map_library'               : 'Create map asset library',
     'map_library_tt'            : "Creates an asset library using ripped map data. Open the folder containing the map files exported with SB3Utility. Takes 40 to 500 seconds per map",
 
-    'rigify_convert': "Convert for Rigify",
-    'sep_eye'       : "Separate Eyes and Eyebrows",
+    'rigify_convert'            : "Convert for Rigify",
+    'rigify_convert_tt'         : "Runs several scripts to convert a KKBP armature to be Rigify compatible",
+    'sep_eye'                   : "Separate Eyes and Eyebrows",
+    'sep_eye_tt'                : "Separates the Eyes and Eyebrows from the Body object and links the shapekeys to the Body object. Useful for when you want to make eyes or eyebrows appear through the hair using the Cryptomatte features in the compositor",
+    'bone_visibility'           : "Update bone visibility",
+    'bone_visibility_tt'        : "Updates visibility of bones based on which outfits are hidden in the outliner",
+    'export_sep_meshes'         : "Export Seperate Meshes",
+    'export_sep_meshes_tt'      : "Only available for the \"Separate by SMR data\" option. Choose where to export meshes",
 
-    'kkbp_import_tt'   : "Imports a Koikatsu model (.pmx format) and applies fixes to it",
-    'export_prep_tt'    : "Only available for the KKBP Armature. Check the dropdown for more info",
+    'kkbp_import_tt'    : "Imports a Koikatsu model (.pmx format) and applies fixes to it",
+    'export_prep_tt'    : "Not available for the Rigify Armature. Check the dropdown for more info",
     'bake_mats_tt'      : "Finalize materials as .png files. These will be stored in the original .pmx folder",
 
     'install_dependency': "Install Dependencies",
@@ -132,7 +150,7 @@ def t(text_entry):
     try:
         if locale == 'ja_JP':
             return jp_translation[text_entry]
-        elif locale == 'zh_CN':
+        elif locale == chinese_code:
             return zh_translation[text_entry]
         else:
             return translation_dictionary[text_entry]

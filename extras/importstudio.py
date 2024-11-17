@@ -4,6 +4,7 @@ from bpy.props import StringProperty
 from ..importing.modifymaterial import modify_material
 from .. import common as c
 from subprocess import Popen, PIPE
+from ..interface.dictionary_en import t
 
 def import_studio_objects(directory):
     #Stop if no files were detected
@@ -396,7 +397,7 @@ def import_studio_objects(directory):
 class import_studio(bpy.types.Operator):
     bl_idname = "kkbp.importstudio"
     bl_label = "Import studio object"
-    bl_description = "Open the folder containing the fbx files exported with SB3Utility"
+    bl_description = t('studio_object_tt')
     bl_options = {'REGISTER', 'UNDO'}
     
     directory : StringProperty(maxlen=1024, default='', subtype='FILE_PATH', options={'HIDDEN'})
