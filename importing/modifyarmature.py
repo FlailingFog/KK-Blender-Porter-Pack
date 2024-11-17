@@ -672,8 +672,6 @@ class modify_armature(bpy.types.Operator):
         def relocate_tail(bone1, bone2, direction):
             if direction == 'leg':
                 self.armature.data.edit_bones[bone1].tail.z = self.armature.data.edit_bones[bone2].head.z
-                #move the bone forward a bit or the ik bones might not bend correctly
-                self.armature.data.edit_bones[bone1].head.y += -.004
                 self.armature.data.edit_bones[bone1].roll = 0
             elif direction == 'arm':
                 self.armature.data.edit_bones[bone1].tail.x = self.armature.data.edit_bones[bone2].head.x
@@ -681,20 +679,21 @@ class modify_armature(bpy.types.Operator):
                 self.armature.data.edit_bones[bone1].roll = -math.pi/2
             elif direction == 'hand':
                 self.armature.data.edit_bones[bone1].tail = self.armature.data.edit_bones[bone2].tail
-                self.armature.data.edit_bones[bone1].tail.z += .01
+                #make hand bone shorter so you can easily click the hand and the pv bone
+                self.armature.data.edit_bones[bone1].tail.z += .01 
                 self.armature.data.edit_bones[bone1].head = self.armature.data.edit_bones[bone2].head
             else:
                 self.armature.data.edit_bones[bone1].tail.y = self.armature.data.edit_bones[bone2].head.y
                 self.armature.data.edit_bones[bone1].tail.z = self.armature.data.edit_bones[bone2].head.z
                 self.armature.data.edit_bones[bone1].roll = 0
         relocate_tail('cf_j_leg01_R', 'cf_j_foot_R', 'leg')
-        relocate_tail('cf_j_foot_R', 'cf_j_toes_R', 'foot')
-        relocate_tail('cf_j_forearm01_R', 'cf_j_hand_R', 'arm')
-        relocate_tail('cf_pv_hand_R', 'cf_j_hand_R', 'hand')
         relocate_tail('cf_j_leg01_L', 'cf_j_foot_L', 'leg')
-        relocate_tail('cf_j_foot_L', 'cf_j_toes_L', 'foot')
+        relocate_tail('cf_j_forearm01_R', 'cf_j_hand_R', 'arm')
         relocate_tail('cf_j_forearm01_L', 'cf_j_hand_L', 'arm')
+        relocate_tail('cf_pv_hand_R', 'cf_j_hand_R', 'hand')
         relocate_tail('cf_pv_hand_L', 'cf_j_hand_L', 'hand')
+        relocate_tail('cf_j_foot_R', 'cf_j_toes_R', 'foot')
+        relocate_tail('cf_j_foot_L', 'cf_j_toes_L', 'foot')
         c.print_timer('bend_bones_for_iks')
 
     def remove_empty_vertex_groups(self):
@@ -1188,6 +1187,13 @@ class modify_armature(bpy.types.Operator):
             bone = self.armature.data.edit_bones[footIK]
             bone.parent = center_bone
 
+            #set rotation constraints
+            self.retreive_stored_tags()
+            bone = self.armature.pose.bones[legbone]
+            bone.constraints.new("LIMIT_ROTATION")
+            bone.constraints[1].use_limit_x = True
+            bone.constraints[1].max_x = 6.26573
+
         #Run for each side
         legIK('cf_j_leg01_R', 'cf_pv_foot_R', 'cf_pv_knee_R', math.pi/2, 'cf_pv_foot_R', 'cf_j_leg01_R', 'cf_j_toes_R', 'cf_j_foot_R')
         legIK('cf_j_leg01_L',  'cf_pv_foot_L', 'cf_pv_knee_L', math.pi/2, 'cf_pv_foot_L', 'cf_j_leg01_L', 'cf_j_toes_L', 'cf_j_foot_L')
@@ -1455,6 +1461,12 @@ class modify_armature(bpy.types.Operator):
             bone.constraints.new("COPY_ROTATION")
             bone.constraints[0].target=self.armature
             bone.constraints[0].subtarget=self.armature.data.bones[handcontroller].name
+
+            #set arm limit constraint
+            bone = self.armature.pose.bones[elbowbone]
+            bone.constraints.new("LIMIT_ROTATION")
+            bone.constraints[1].use_limit_z = True
+            bone.constraints[1].max_z = 6.26573
 
         #Run for each side
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
