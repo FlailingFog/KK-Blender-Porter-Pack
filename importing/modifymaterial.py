@@ -525,9 +525,12 @@ class modify_material(bpy.types.Operator):
         self.image_load('KK Nose', 'Gentex', 'Nose', self.body['SMR materials']['cf_O_noseline'][0] + '_MT_CT.png')
         if self.body['SMR materials']['cf_O_tooth']:
             self.image_load('KK Teeth (tooth)', 'Gentex', 'Teeth', self.body['SMR materials']['cf_O_tooth'][0] + '_ST_CT.png')
-        self.image_load('KK EyewhitesL (sirome)', 'Gentex', 'Eyewhite', self.body['SMR materials']['cf_Ohitomi_R'][0] + '_ST_CT.png')
-        self.image_load('KK EyewhitesR (sirome)', 'Gentex', 'Eyewhite', self.body['SMR materials']['cf_Ohitomi_R'][0] + '_ST_CT.png')
-        
+        if self.body['SMR materials']['cf_Ohitomi_R']:
+            self.image_load('KK EyewhitesL (sirome)', 'Gentex', 'Eyewhite', self.body['SMR materials']['cf_Ohitomi_R'][0] + '_ST_CT.png')
+            self.image_load('KK EyewhitesR (sirome)', 'Gentex', 'Eyewhite', self.body['SMR materials']['cf_Ohitomi_R'][0] + '_ST_CT.png')
+        else:
+            c.kklog("Eyewhite bugged/missing", type = 'warn')
+
         if self.body['SMR materials']['cf_O_eyeline']:
             self.image_load('KK Eyeline up', 'Gentex', 'EyelineUp', self.body['SMR materials']['cf_O_eyeline'][0] + '_MT_CT.png')
             self.image_load('KK Eyeline up', 'Gentex', 'EyelineUp.001', self.body['SMR materials']['cf_O_eyeline'][0] + '_MT_CT.png')
@@ -702,12 +705,21 @@ class modify_material(bpy.types.Operator):
         c.print_timer('link_textures_for_clothes')
 
     def link_textures_for_tongue_tear_gag(self):
-        self.image_load('KK Tongue', 'Gentex', 'Maintex',        self.body['SMR materials']['o_tang'][0] + '_CM.png') #done on purpose
-        self.image_load('KK Tongue', 'Gentex', 'MainCol',        self.body['SMR materials']['o_tang'][0] + '_CM.png')
-        self.image_load('KK Tongue', 'Gentex', 'MainDet',        self.body['SMR materials']['o_tang'][0] + '_DM.png')
-        self.image_load('KK Tongue', 'Gentex', 'MainNorm',       self.body['SMR materials']['o_tang'][0] + '_NMP.png')
-        self.image_load('KK Tongue', 'Gentex', 'MainNormDetail', self.body['SMR materials']['o_tang'][0] + '_NMP_CNV.png') #load regular map by default
-        self.image_load('KK Tongue', 'Gentex', 'MainNormDetail', self.body['SMR materials']['o_tang'][0] + '_NMPD_CNV.png') #then the detail map if it's there
+        if self.body['SMR materials']['o_tang']:
+            self.image_load('KK Tongue', 'Gentex', 'Maintex',        self.body['SMR materials']['o_tang'][0] + '_CM.png') #done on purpose
+            self.image_load('KK Tongue', 'Gentex', 'MainCol',        self.body['SMR materials']['o_tang'][0] + '_CM.png')
+            self.image_load('KK Tongue', 'Gentex', 'MainDet',        self.body['SMR materials']['o_tang'][0] + '_DM.png')
+            self.image_load('KK Tongue', 'Gentex', 'MainNorm',       self.body['SMR materials']['o_tang'][0] + '_NMP.png')
+            self.image_load('KK Tongue', 'Gentex', 'MainNormDetail', self.body['SMR materials']['o_tang'][0] + '_NMP_CNV.png') #load regular map by default
+            self.image_load('KK Tongue', 'Gentex', 'MainNormDetail', self.body['SMR materials']['o_tang'][0] + '_NMPD_CNV.png') #then the detail map if it's there
+        else:
+            c.kklog("SMR Tongue data bugged/missing", type = 'warn')
+            self.image_load('KK Tongue', 'Gentex', 'Maintex',        'cf_m_tang_CM.png') #done on purpose
+            self.image_load('KK Tongue', 'Gentex', 'MainCol',        'cf_m_tang_CM.png')
+            self.image_load('KK Tongue', 'Gentex', 'MainDet',        'cf_m_tang_DM.png')
+            self.image_load('KK Tongue', 'Gentex', 'MainNorm',       'cf_m_tang_NMP.png')
+            self.image_load('KK Tongue', 'Gentex', 'MainNormDetail', 'cf_m_tang_NMP_CNV.png') #load regular map by default
+            self.image_load('KK Tongue', 'Gentex', 'MainNormDetail', 'cf_m_tang_NMPD_CNV.png') #then the detail map if it's there
 
         #load all gag eyes in if it exists
         if bpy.data.objects.get('Gag Eyes'):
@@ -1116,7 +1128,8 @@ class modify_material(bpy.types.Operator):
         '''The Secret Sauce. Accepts a 0-255 int rgb color array, saturates it to match the in-game look 
         and returns it in the form of a 1.0 float rgba'''
         color = [i/255 for i in color]
-        color.append(1)
+        if len(color) < 4:
+            color.append(1)
         width, height = 1,1
 
         # Load image and LUT image pixels into array
@@ -1265,7 +1278,9 @@ class modify_material(bpy.types.Operator):
         kage_color = [1, 1, 1, 1]
 
         ## Tongue
-        tongue_shader_node_group = node_groups['Tongue Shader']
+        tongue_shader_node_group = None
+        if 'Tongue Shader' in node_groups:
+            tongue_shader_node_group = node_groups['Tongue Shader']
         tongue_color1 = to_255({"r":1,"g":1,"b":1,"a":1})
         tongue_color2 = to_255({"r":1,"g":1,"b":1,"a":1})
         tongue_color3 = to_255({"r":1,"g":1,"b":1,"a":1})
@@ -1304,7 +1319,10 @@ class modify_material(bpy.types.Operator):
         else:
             eyeline_material_name = None
         kage_material_name = 'cf_m_eyeline_kage'
-        tongue_material_names = [body['SMR materials']['o_tang'][0], body['SMR materials']['o_tang_rigged'][0]]
+        if body['SMR materials']['o_tang']:
+            tongue_material_names = [body['SMR materials']['o_tang'][0], body['SMR materials']['o_tang_rigged'][0]]
+        else:
+            tongue_material_names = ["cf_m_tang", "cf_m_tang.001"]
         hair_material_names = []
         for ob in self.hairs:
             hair_material_names.extend([mat.material.name.replace('KK ','') for mat in ob.material_slots])
@@ -1601,15 +1619,16 @@ class modify_material(bpy.types.Operator):
         shader_inputs['Eyeline shadow color'].default_value = self.saturate_color(kage_color, active_lut)
 
         ## Tongue Shader
-        shader_inputs = tongue_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
-        #shader_inputs['Use Color mask instead? (1 = yes)'].default_value = 1
-        shader_inputs['Manually set detail color? (1 = yes)'].default_value = 0
-        shader_inputs['Maintex Saturation'].default_value = 0.6
-        shader_inputs['Detail intensity (green)'].default_value = 0.01
-        shader_inputs['Color mask color (base)'].default_value = [1, 1, 1, 1]
-        shader_inputs['Color mask color (red)'].default_value = tongue_color1
-        shader_inputs['Color mask color (green)'].default_value = tongue_color2
-        shader_inputs['Color mask color (blue)'].default_value = tongue_color3
+        if tongue_shader_node_group:
+            shader_inputs = tongue_shader_node_group.nodes['colorsLight' if light else 'colorsDark'].inputs
+            #shader_inputs['Use Color mask instead? (1 = yes)'].default_value = 1
+            shader_inputs['Manually set detail color? (1 = yes)'].default_value = 0
+            shader_inputs['Maintex Saturation'].default_value = 0.6
+            shader_inputs['Detail intensity (green)'].default_value = 0.01
+            shader_inputs['Color mask color (base)'].default_value = [1, 1, 1, 1]
+            shader_inputs['Color mask color (red)'].default_value = tongue_color1
+            shader_inputs['Color mask color (green)'].default_value = tongue_color2
+            shader_inputs['Color mask color (blue)'].default_value = tongue_color3
 
         ## Hair Shader
         #go through all hairs to check for maintex
