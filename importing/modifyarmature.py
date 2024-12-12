@@ -1192,7 +1192,7 @@ class modify_armature(bpy.types.Operator):
             bone = self.armature.pose.bones[legbone]
             bone.constraints.new("LIMIT_ROTATION")
             bone.constraints[1].use_limit_x = True
-            bone.constraints[1].max_x = 6.26573
+            bone.constraints[1].max_x = 3.13287
 
         #Run for each side
         legIK('cf_j_leg01_R', 'cf_pv_foot_R', 'cf_pv_knee_R', math.pi/2, 'cf_pv_foot_R', 'cf_j_leg01_R', 'cf_j_toes_R', 'cf_j_foot_R')
