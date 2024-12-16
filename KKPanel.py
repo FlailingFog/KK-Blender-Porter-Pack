@@ -9,7 +9,7 @@ from bpy.props import (
 )
 
 from .interface.dictionary_en import t
-from . import common as c
+from .exporting.material_combiner import globs
 
 class PlaceholderProperties(PropertyGroup):
     #this will let the plugin know where to look for texture / json data
@@ -256,8 +256,17 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         row.enabled = scene.plugin_state in ['imported', 'prepped']
         row = col.row(align = True)
         split = row.split(align=True, factor=splitfac)
-        split.operator('kkbp.splitobjects', text = t('split_objects'), icon = 'UNLINKED')
-        split.prop(context.scene.kkbp, "use_atlas", toggle=True, text = t('use_atlas') if scene.use_atlas else t('dont_use_atlas'))
+        if globs.pil_exist == 'no':
+            split.operator('kkbp.get_pillow', text = t('pillow'), icon='FILE_REFRESH')
+            split.operator('kkbp.resetmaterials', text = t('reset_mats'), icon='RECOVER_LAST')
+        elif globs.pil_exist == 'restart':
+            col = col.box().column()
+            col.label(text='Installation complete')
+            col.label(text='Please restart Blender')
+        else:
+            split.prop(context.scene.kkbp, "use_atlas", toggle=True, text = t('use_atlas') if scene.use_atlas else t('dont_use_atlas'))
+            split.operator('kkbp.resetmaterials', text = t('reset_mats'), icon='RECOVER_LAST')
+
         row.enabled = scene.plugin_state in ['imported', 'prepped']
 
 class EXPORTING_PT_panel(bpy.types.Panel):
@@ -365,6 +374,12 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         split = row.split(align=True, factor=splitfac)
         split.label(text=t('rigify_convert'))
         split.operator('kkbp.rigifyconvert', text = '', icon='SOLO_OFF')
+
+        col = box.column(align=True)
+        row = col.row(align=True)
+        split = row.split(align=True, factor=splitfac)
+        split.label(text=t('matcomb'))
+        split.operator('kkbp.matcombsetup', text = '', icon='COLLAPSEMENU')
         
         box = layout.box()
         col = box.column(align=True)

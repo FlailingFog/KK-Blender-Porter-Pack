@@ -1,4 +1,4 @@
-import bpy, json, datetime, traceback, os
+import bpy, json, datetime, traceback
 from pathlib import Path
 
 def toggle_console():

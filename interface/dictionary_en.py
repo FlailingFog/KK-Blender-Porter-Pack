@@ -141,9 +141,17 @@ If you wish to supply your own blender 2.90 exe instead of letting the plugin do
     'split_objects' : 'Split object',
     'split_objects_tt' : 'Click this button to split the currently selected object into two. When you use the Finalize materials button the addon will generate an atlas for your model, but if your object has an excessive amount of materials blender may crash due to lack of RAM. This button lets you halve the amount of materials on your model by splitting the object into two pieces, so it will be less likely to crash on lower end hardware',
 
-    'use_atlas' : 'Create Atlas',
-    'use_atlas_tt': 'Disabling this can save a lot of time when finalizing materials, but a material atlas will not be created.',
+    'use_atlas' : 'Create atlas',
+    'use_atlas_tt': 'Enable this to create a material atlas when finalizing materials',
     'dont_use_atlas' : 'Don\'t create Atlas',
+
+    'mat_comb_tt' : 'KKBP uses parts of Shotariya\'s Material Combiner addon to automatically merge your materials into an atlas. Click this if you want to manually combine your materials instead of letting KKBP do it for you (requires you to download the Material Combiner addon. Also, make sure you have already clicked the Finalize Materials button in the KKBP panel or it will not work) ',
+    'matcomb' : 'Setup materials for Material Combiner',
+    'pillow' : 'Install PIL to use atlas feature',
+    'pillow_tt':'Click to install Pillow. This could take a while and might require you to run Blender as Admin',
+    'reset_mats' : 'Reset finalized materials',
+    'reset_mats_tt' : 'Click this to reset ALL of your finalized materials back to the -ORG version. Handy if you want to refinalize everything',
+    
     }
 
 def t(text_entry):
