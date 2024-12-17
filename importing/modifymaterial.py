@@ -554,8 +554,8 @@ class modify_material(bpy.types.Operator):
         
         #correct the eye scaling using info from the KK_ChaFileCustomFace.json
         face_data = c.get_json_file('KK_ChaFileCustomFace.json')
-        bpy.data.node_groups['Eye Textures positioning'].nodes['eye_scale'].inputs[1].default_value = 1/float(face_data[18]['Value'])
-        bpy.data.node_groups['Eye Textures positioning'].nodes['eye_scale'].inputs[2].default_value = 1/float(face_data[19]['Value'])
+        bpy.data.node_groups['Eye Textures positioning'].nodes['eye_scale'].inputs[1].default_value = 1/(float(face_data[18]['Value']) + 0.0001)
+        bpy.data.node_groups['Eye Textures positioning'].nodes['eye_scale'].inputs[2].default_value = 1/(float(face_data[19]['Value']) + 0.0001)
 
         self.load_baked_material('KK Body')
         self.load_baked_material('KK EyeR (hitomi)')
