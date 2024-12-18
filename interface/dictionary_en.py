@@ -72,15 +72,15 @@ translation_dictionary = {
 
     'bake'          : 'Finalize materials',
     'bake_light'    : "Light",
-    'bake_light_tt' : "Bake light version of all textures",
+    'bake_light_tt' : "Finalize light version of all textures",
     'bake_dark'     : "Dark",
-    'bake_dark_tt'  : "Bake dark version of all textures",
+    'bake_dark_tt'  : "Finalize dark version of all textures",
     'bake_norm'     : "Normal",
-    'bake_norm_tt'  : "Bake normal version of all textures",
-    'bake_mult'     : 'Bake multiplier',
-    'bake_mult_tt'  : "Set this to 2 or 3 if the baked texture is blurry",
-    'old_bake'      : 'Use old baker',
-    'old_bake_tt'   : 'Enable to use the old baking system. This system will not bake any extra UV maps like hair shine or eyeshadow, but it may help if you are encountering corruption in the baked images',
+    'bake_norm_tt'  : "Finalize normal version of all textures",
+    'bake_mult'     : 'Finalize multiplier',
+    'bake_mult_tt'  : "Set this to 2 or 3 if the finalized texture is blurry",
+    'old_bake'      : 'Use V4 baker',
+    'old_bake_tt'   : 'Enable to use the old finalization system. This system will not bake any extra UV maps like hair shine or eyeshadow, but it may help if you are encountering corruption in the finalized images',
 
     'shape_A'       : 'Use KKBP shapekeys',
     'shape_A_tt'    : 'Rename and delete the old shapekeys. This will merge the shapekeys that are part of the same expression and delete the rest',
@@ -119,8 +119,8 @@ translation_dictionary = {
     'rigify_convert_tt'         : "Runs several scripts to convert a KKBP armature to be Rigify compatible",
     'sep_eye'                   : "Separate Eyes and Eyebrows",
     'sep_eye_tt'                : "Separates the Eyes and Eyebrows from the Body object and links the shapekeys to the Body object. Useful for when you want to make eyes or eyebrows appear through the hair using the Cryptomatte features in the compositor",
-    'bone_visibility'           : "Update bone visibility",
-    'bone_visibility_tt'        : "Updates visibility of bones based on which outfits are hidden in the outliner",
+    'bone_visibility'           : "Show bones for current outfit",
+    'bone_visibility_tt'        : "This will update visibility for all accessory bones. For example, if you have an Outfit 00 and an Outfit 01, both of them are visible then all accessory bones will be shown. If you hide Outfit 00 and click this button, only Outfit 01's accessory bones will be shown",
     'export_sep_meshes'         : "Export Seperate Meshes",
     'export_sep_meshes_tt'      : "Only available for the \"Separate by SMR data\" option. Choose where to export meshes",
 
@@ -128,18 +128,8 @@ translation_dictionary = {
     'export_prep_tt'    : "Not available for the Rigify Armature. Check the dropdown for more info",
     'bake_mats_tt'      : "Finalize materials as .png files. These will be stored in the original .pmx folder",
 
-    'install_dependency': "Install Dependencies",
-    'install_dependency_tt': """Click this button to automatically download Blender 2.90. This version of Blender is required to import KKBP models. 
-This process will take a few minutes depending on your network speed, and will download 193MB of data from https://download.blender.org/release/ 
-After it is installed, it will take 504MB of space and will be stored in the KKBP addon directory. You can reclaim this space by uninstalling the KKBP addon.
-If you want to use Blender 3.6 instead, click on the 3.6 button below. This version is a lot larger than Blender 2.90, but may have better hardware compatibility. 
-If you wish to supply your own blender 2.90 exe instead of letting the plugin download it for you, open the KKBP plugin preferences window and enter direct path to the .exe there. Any version between 2.90 and 3.6 should work""",
-
     'delete_cache' : 'Delete cache',
     'delete_cache_tt' : 'Enable this to delete the cache files. Cache files are generated when you import a model or finalize materials. These are stored in the pmx folder as "atlas_files", "baked_files", "dark_files" and "saturated_files". Enabling this option will delete ALL files inside of these folders',
-
-    'split_objects' : 'Split object',
-    'split_objects_tt' : 'Click this button to split the currently selected object into two. When you use the Finalize materials button the addon will generate an atlas for your model, but if your object has an excessive amount of materials blender may crash due to lack of RAM. This button lets you halve the amount of materials on your model by splitting the object into two pieces, so it will be less likely to crash on lower end hardware',
 
     'use_atlas' : 'Create atlas',
     'use_atlas_tt': 'Enable this to create a material atlas when finalizing materials',

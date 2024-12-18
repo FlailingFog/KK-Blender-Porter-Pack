@@ -588,7 +588,9 @@ def create_material_atlas(folderpath):
                 nodes = mat.node_tree.nodes
                 links = mat.node_tree.links
                 emissive_node = nodes.new('ShaderNodeEmission')
+                emissive_node.name = 'Emission'
                 image_node = nodes.new('ShaderNodeTexImage')
+                image_node.name = 'Image Texture'
                 links.new(emissive_node.inputs[0], image_node.outputs[0])
                 image_node.image = nodes['Gentex'].node_tree.nodes['light'].image
         context.view_layer.objects.active = obj

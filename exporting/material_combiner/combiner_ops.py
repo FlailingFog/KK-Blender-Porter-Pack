@@ -412,7 +412,12 @@ def _add_ids_from_existing_files(scn: Scene, existed_ids: Set[int]) -> None:
 
 def _save_atlas(scn: Scene, atlas: ImageType, atlas_index: str, type: str) -> str:
     path = os.path.join(scn.kkbp_save_path, f'{atlas_index}_{type}.png')
-    atlas.save(path)
+    try:
+        atlas.save(path)
+    except:
+        #atlas folder didn't exist
+        os.mkdir(scn.kkbp_save_path)
+        atlas.save(path)
     return path
 
 
