@@ -612,6 +612,9 @@ def create_material_atlas(folderpath):
         if obj.modifiers.get('Outline Modifier'):
             obj.modifiers['Outline Modifier'].show_render = False
             obj.modifiers['Outline Modifier'].show_viewport = False
+        #fix the armature modifier
+        if obj.modifiers[0].type == 'ARMATURE':
+            obj.modifiers[0].object = bpy.data.objects["Armature.001"]
         for bake_type in bake_types:
             #check for atlas dupes
             if bpy.data.images.get(f'{index}_{bake_type}.png'):
