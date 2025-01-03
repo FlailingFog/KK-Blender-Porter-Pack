@@ -1,3 +1,6 @@
+### Changes for V7.2.1
+* fixed an issue with the armature not being reparented after baking
+
 ### Changes for V7.2.0
 * Fixed crashes when creating a material atlas!
     * This feature will now use atlas generation scripts borrowed from the [material-combiner-addon](https://github.com/Grim-es/material-combiner-addon)

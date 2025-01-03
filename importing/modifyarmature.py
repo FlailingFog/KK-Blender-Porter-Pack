@@ -1,48 +1,45 @@
-'''
-This file performs the following operations
 
-·	Removes body empty, gives outfit id to clothes and parents them to the armature instead of the empties
-·	Scales armature bones down by a factor of 12
-·	Removes mmd bone constraints and bone drivers, unlocks all bones
-·	Reparents leg03 bone and p_cf_body_bone to match koikatsu armature
-.   Delete all bones not parented to the cf_n_height bone
+# This file performs the following operations
 
-·	Move and rotate finger bones to match koikatsu in game armature
-·	Set bone roll data to match koikatsu in game armature
-·	Slightly bend some bones outward to better support IKs
+# 	Removes empties and parents all objects to the Body armature
+# 	Removes mmd bone constraints and bone drivers, unlocks all bones
+# 	Scales armature bones down by a factor of 12
+# 	Reparents the leg03 bone and p_cf_body_bone to match koikatsu armature
+#   Deletes all bones not parented to the cf_n_height bone
 
-·	Delete empty vertex groups on the body as long as it's not a bone on the armature
-·	Places each bone type (core bones, skirt bones, cf_s_ bones, etc) onto different armature layers
-·	Identifies bones that are accessories with weight to them and moves them to a separate armature layer
-.   Also sets the outfit ID for each accessory bone (not all accessory bones need to be visible at all times,
-        so only the current outfit bones will be shown at the end)
+# 	Move and rotate finger bones to match koikatsu in game armature
+# 	Set bone roll data to match koikatsu in game armature
+# 	Slightly bend some bones outward to better support IKs
 
-·	(KKBP armature) Visually connects all toe bones
-·	(KKBP armature) Scales all skirt / face / eye / BP bones, connects all skirt bones
+# 	Delete empty vertex groups on the body as long as it's not a bone on the armature
+# 	Places each bone type (core bones, skirt bones, cf_s_ bones, etc) onto different armature layers
+# 	Identifies accessory bones and moves them to their own armature layer
+#   Also sets the outfit ID for each accessory bone (not all accessory bones need to be visible at all times,
+#         so only the current outfit bones will be shown at the end)
 
-·	(KKBP Armature) Creates an Eyesx bone to use as a reference bone for the eyes
-·	(KKBP armature) Creates an eye controller bone
-·	(KKBP armature) Detects and fixes empty eye L/R vertex groups
-·	(KKBP armature) shortens kokan bone
-.   (KKBP armature) resizes several skirt and face bones
+# 	(KKBP armature) Visually connects all toe bones
+# 	(KKBP armature) Scales all skirt / face / eye / BP bones, connects all skirt bones
 
-·	(KKBP armature) Repurposes pv bones for IK functionality
-·	(KKBP armature) Creates a foot IK, hand IK, heel controller
-·	(KKBP armature) Sets several bone drivers for several correction bones
-·	(KKBP armature) Moves new bones for IK / eyes to correct armature layers
+# 	(KKBP Armature) Creates a reference bone for the eye uv warp modifier (Eyesx)
+# 	(KKBP armature) Creates an eye controller bone for the eye uv warp modifier (Eye Controller)
+# 	(KKBP armature) shortens kokan bone
+#   (KKBP armature) resizes skirt and face bones
 
-·	(KKBP armature) Adds bones to bone groups to give them colors
-·	(KKBP armature) Renames some core bones to be more readable
-·	Set mmd bone names for each bone
+# 	(KKBP armature) Repurposes pv bones for IK functionality
+# 	(KKBP armature) Creates a foot IK, hand IK, heel controller
+# 	(KKBP armature) Setup bone drivers for correction bones
+# 	(KKBP armature) Moves new bones for IK / eyes to correct armature layers
 
-·	(KKBP armature) Load custom bone widgets from the KK Shader file to apply to the armature
-·	(KKBP armature) Hide bone widgets collection
-.   (KKBP armature) Hide armature layers that are not core bones
+# 	(KKBP armature) Adds bones to bone groups to give them colors
+# 	(KKBP armature) Renames some core bones to be more readable
+# 	Set mmd bone names for each bone
 
-Survey code was taken from MediaMoots here https://github.com/FlailingFog/KK-Blender-Shader-Pack/issues/29
-Majority of the joint driver corrections were taken from a blend file by johnbbob_la_petite on the koikatsu discord
+# 	(KKBP armature) Load custom bone widgets from the KK Shader file to apply to the armature
+#   (KKBP armature) Hide everything but the core bones
+# 	(KKBP armature) Hide bone widgets collection
 
-'''
+# Survey code was taken from MediaMoots here https://github.com/FlailingFog/KK-Blender-Shader-Pack/issues/29
+# Majority of the joint driver corrections were taken from a blend file by johnbbob_la_petite on the koikatsu discord
 
 import bpy, math
 from .. import common as c
@@ -56,7 +53,7 @@ class modify_armature(bpy.types.Operator):
     
     def execute(self, context):
         try:
-            self.retreive_stored_tags()
+            
             self.reparent_all_objects()
             self.remove_bone_locks_and_modifiers()
             self.scale_armature_bones_down()
@@ -73,7 +70,6 @@ class modify_armature(bpy.types.Operator):
 
             self.create_eye_reference_bone()
             self.create_eye_controller_bone()
-            #self.fix_empty_eye_vertex_groups()
             self.shorten_kokan_bone()
             self.scale_skirt_and_face_bones()
             
@@ -93,121 +89,98 @@ class modify_armature(bpy.types.Operator):
             c.handle_error(self, error)
             return {"CANCELLED"}
 
-    # %% Main functions
-    def retreive_stored_tags(self):
-        '''Gets the tag from each object to repopulate the class variables below'''
-        self.hairs = []
-        self.outfits = []
-        self.outfit_alternates = []
-        self.hitboxes = []
-        for object in [o for o in bpy.data.objects if o.type == 'MESH']:
-            if object.get('KKBP tag'):
-                if object['KKBP tag'] == 'body':
-                    self.body = object
-                elif object['KKBP tag'] == 'outfit':
-                    self.outfits.append(object)
-                elif object['KKBP tag'] == 'alt':
-                    self.outfit_alternates.append(object)
-                elif object['KKBP tag'] == 'hair':
-                    self.hairs.append(object)
-                elif object['KKBP tag'] == 'hitbox':
-                    self.hitboxes.append(object)
-        #c.print_timer('retreive_stored_tags')
-        
+    # %% Main functions        
     def reparent_all_objects(self):
         '''Reparents all objects to the main armature'''
-        #reparent the body armature
-        self.armature = bpy.data.objects['Model_arm'] #Model_arm is always the Body's armature
-        empty = bpy.data.objects['Model'] #Model is always the Body's armature's empty
-        c.switch(self.armature, 'object')
-        self.armature.parent = None
-        self.armature.name = 'Armature'
-        self.armature['KKBP tag'] = 'armature'
-        bpy.data.objects.remove(empty)
+        armature = c.get_armature()
+        outfits = c.get_outfits()
+        body = c.get_body()
+        c.switch(armature, 'object')
+        armature.parent = None
+        armature.name = 'Armature'
 
-        #change armature modifier on body
-        self.body.modifiers[0].show_in_editmode = True
-        self.body.modifiers[0].show_on_cage = True
-        self.body.modifiers[0].show_expanded = False
+        #edit armature modifier on body
+        body.modifiers[0].show_in_editmode = True
+        body.modifiers[0].show_on_cage = True
+        body.modifiers[0].show_expanded = False
+        body.modifiers[0].name = 'Armature modifier'
         
         #reparent the outfit meshes as well
-        for empty in [e for e in bpy.data.objects if ("Model" in e.name and e.type == 'EMPTY')]:
-            outfit_id = empty['KKBP outfit ID']
-            outfit_arm = empty.children[0]
-            outfit_meshes = outfit_arm.children
-            #preserve outfit ID from empty then reparent
-            for outfit in outfit_meshes:
-                outfit['KKBP outfit ID'] = outfit_id
-                outfit.parent = self.armature
-                outfit.modifiers[0].object = self.armature
-                outfit.modifiers[0].show_in_editmode = True
-                outfit.modifiers[0].show_on_cage = True
-                outfit.modifiers[0].show_expanded = False
+        for outfit in outfits:
+            outfit_armature = outfit.parent.name
+            outfit.parent = armature
+            outfit.modifiers[0].object = armature
+            outfit.modifiers[0].show_in_editmode = True
+            outfit.modifiers[0].show_on_cage = True
+            outfit.modifiers[0].show_expanded = False
+            outfit.modifiers[0].name = 'Armature modifier'
+            bpy.data.objects.remove(bpy.data.objects[outfit_armature])
+        #remove the empties
+        empties = c.get_empties()
+        for empty in empties:
             bpy.data.objects.remove(empty)
-            bpy.data.objects.remove(outfit_arm)
-        #fix outfit names
-        for outfit in self.outfits:
-            outfit.name = 'Outfit ' + str(outfit['KKBP outfit ID'])
         #reparent the alts and hairs to the main outfit object
-        for alt in self.outfit_alternates:
-            alt_parent = [p for p in self.outfits if p['KKBP outfit ID'] == alt['KKBP outfit ID']][0]
+        for alt in c.get_alts():
+            alt_parent = [p for p in c.get_outfits() if p['id'] == alt['id']][0]
             alt.parent = alt_parent
         for hair in self.hairs:
-            hair_parent = [p for p in self.outfits if p['KKBP outfit ID'] == hair['KKBP outfit ID']][0]
+            hair_parent = [p for p in c.get_outfits() if p['id'] == hair['id']][0]
             hair.parent = hair_parent if bpy.context.scene.kkbp.categorize_dropdown not in ['D'] else hair.parent #don't reparent hair if Categorize by SMR
-            hair.name = 'Hair Outfit ' + str(hair['KKBP outfit ID'])
         #reparent the tongue, tears and gag eyes if they exist
         for object in ['Tongue (rigged)', 'Tears', 'Gag Eyes']:
             if bpy.data.objects.get(object):
-                bpy.data.objects[object].parent = self.body
+                bpy.data.objects[object].parent = body
         #reparent hitboxes if they exist
-        for hb in self.hitboxes:
-            hb.parent = self.armature
+        for hb in c.get_hitboxes():
+            hb.parent = armature
         c.print_timer('reparent_all_objects')
     
     def scale_armature_bones_down(self):
         '''scale all bone sizes down by a factor of 12. (all armature bones must be sticking upwards)'''
-        c.switch(self.armature, 'edit')
-        for bone in self.armature.data.edit_bones:
+        c.switch(c.get_armature(), 'edit')
+        for bone in c.get_armature().data.edit_bones:
             bone.tail.z = bone.head.z + (bone.tail.z - bone.head.z)/12
         c.print_timer('scale_armature_bones_down')
 
     def remove_bone_locks_and_modifiers(self):
         '''Removes mmd bone constraints and bone drivers, unlocks all bones'''
         #remove all constraints from all bones
-        bpy.ops.object.mode_set(mode='POSE')
-        for bone in self.armature.pose.bones:
+        armature = c.get_armature()
+        c.switch(armature, 'pose')
+        for bone in armature.pose.bones:
             for constraint in bone.constraints:
                 bone.constraints.remove(constraint)
         
         #remove all drivers from all armature bones
         #animation_data is nonetype if no drivers have been created yet
-        if self.armature.animation_data:
-            drivers_data = self.armature.animation_data.drivers
+        if armature.animation_data:
+            drivers_data = armature.animation_data.drivers
             for driver in drivers_data:  
-                self.armature.driver_remove(driver.data_path, -1)
+                armature.driver_remove(driver.data_path, -1)
 
         #unlock the armature and all bones
-        self.armature.lock_location = [False, False, False]
-        self.armature.lock_rotation = [False, False, False]
-        self.armature.lock_scale = [False, False, False]
+        armature.lock_location = [False, False, False]
+        armature.lock_rotation = [False, False, False]
+        armature.lock_scale = [False, False, False]
         
-        for bone in self.armature.pose.bones:
+        for bone in armature.pose.bones:
             bone.lock_location = [False, False, False]
         c.print_timer('remove_bone_locks_and_modifiers')
 
     def reparent_leg_and_body_bone(self):
         '''Reparent the leg bone to match the koikatsu armature. Unparent the body_bone bone to match koikatsu armature'''
         if bpy.context.scene.kkbp.armature_dropdown != 'D':
+            armature = c.get_armature()
             #reparent foot to leg03
-            self.armature.data.edit_bones['cf_j_foot_R'].parent = self.armature.data.edit_bones['cf_j_leg03_R']
-            self.armature.data.edit_bones['cf_j_foot_L'].parent = self.armature.data.edit_bones['cf_j_leg03_L']
+            armature.data.edit_bones['cf_j_foot_R'].parent = armature.data.edit_bones['cf_j_leg03_R']
+            armature.data.edit_bones['cf_j_foot_L'].parent = armature.data.edit_bones['cf_j_leg03_L']
             #unparent body bone to match KK
-            self.armature.data.edit_bones['p_cf_body_bone'].parent = None
+            armature.data.edit_bones['p_cf_body_bone'].parent = None
         c.print_timer('reparent_leg_and_body_bone')
 
     def delete_non_height_bones(self):
         '''delete bones not under the cf_n_height bone. Deletes bones not under the BodyTop bone if PMX armature was selected'''
+        armature = c.get_armature()
         def select_children(parent):
             try:
                 parent.select = True
@@ -219,31 +192,32 @@ class modify_armature(bpy.types.Operator):
                 #This is the last bone in the chain
                 return
         if bpy.context.scene.kkbp.armature_dropdown == 'D':
-            select_children(self.armature.data.edit_bones['BodyTop'])
+            select_children(armature.data.edit_bones['BodyTop'])
         else:
-            select_children(self.armature.data.edit_bones['cf_n_height'])
+            select_children(armature.data.edit_bones['cf_n_height'])
             #make sure these bones aren't deleted
             for preserve_bone in ['cf_j_root', 'p_cf_body_bone', 'cf_n_height']:
-                self.armature.data.edit_bones[preserve_bone].select = True
-                self.armature.data.edit_bones[preserve_bone].select_head = True
-                self.armature.data.edit_bones[preserve_bone].select_tail = True
+                armature.data.edit_bones[preserve_bone].select = True
+                armature.data.edit_bones[preserve_bone].select_head = True
+                armature.data.edit_bones[preserve_bone].select_tail = True
         bpy.ops.armature.select_all(action='INVERT')
         bpy.ops.armature.delete()
         c.print_timer('delete_non_height_bones')
 
     def modify_finger_bone_orientations(self):
         '''Reorient the finger bones to match the in game koikatsu armature'''
-        c.switch(self.armature, 'edit')
+        armature = c.get_armature()
+        c.switch(armature, 'edit')
         height_adjust = Vector((0,0,0.1))
         
         #all finger bones need to be rotated a specific direction
         def rotate_thumb(bone):
             bpy.ops.armature.select_all(action='DESELECT')
-            self.armature.data.edit_bones[bone].select = True
-            self.armature.data.edit_bones[bone].select_head = True
-            self.armature.data.edit_bones[bone].select_tail = True
-            parent = self.armature.data.edit_bones[bone].parent
-            self.armature.data.edit_bones[bone].parent = None
+            armature.data.edit_bones[bone].select = True
+            armature.data.edit_bones[bone].select_head = True
+            armature.data.edit_bones[bone].select_tail = True
+            parent = armature.data.edit_bones[bone].parent
+            armature.data.edit_bones[bone].parent = None
 
             #right thumbs face towards hand center
             #left thumbs face away from hand center
@@ -252,18 +226,18 @@ class modify_armature(bpy.types.Operator):
             c = math.cos(angle)
 
             # translate point to origin:
-            self.armature.data.edit_bones[bone].tail.x -= self.armature.data.edit_bones[bone].head.x
-            self.armature.data.edit_bones[bone].tail.y -= self.armature.data.edit_bones[bone].head.y
+            armature.data.edit_bones[bone].tail.x -= armature.data.edit_bones[bone].head.x
+            armature.data.edit_bones[bone].tail.y -= armature.data.edit_bones[bone].head.y
 
             # rotate point around origin
-            xnew = self.armature.data.edit_bones[bone].tail.x * c - self.armature.data.edit_bones[bone].tail.y * s
-            ynew = self.armature.data.edit_bones[bone].tail.x * s + self.armature.data.edit_bones[bone].tail.y * c
+            xnew = armature.data.edit_bones[bone].tail.x * c - armature.data.edit_bones[bone].tail.y * s
+            ynew = armature.data.edit_bones[bone].tail.x * s + armature.data.edit_bones[bone].tail.y * c
 
             # translate point back to original position:
-            self.armature.data.edit_bones[bone].tail.x = xnew + self.armature.data.edit_bones[bone].head.x
-            self.armature.data.edit_bones[bone].tail.y = ynew + self.armature.data.edit_bones[bone].head.y
-            self.armature.data.edit_bones[bone].roll = 0
-            self.armature.data.edit_bones[bone].parent = parent
+            armature.data.edit_bones[bone].tail.x = xnew + armature.data.edit_bones[bone].head.x
+            armature.data.edit_bones[bone].tail.y = ynew + armature.data.edit_bones[bone].head.y
+            armature.data.edit_bones[bone].roll = 0
+            armature.data.edit_bones[bone].parent = parent
             
         rotate_thumb('cf_j_thumb03_L')
         rotate_thumb('cf_j_thumb02_L')
@@ -274,10 +248,10 @@ class modify_armature(bpy.types.Operator):
         
         height_adjust = Vector((0,0,0.05))
         def flip_finger(bone):
-            parent = self.armature.data.edit_bones[bone].parent
-            self.armature.data.edit_bones[bone].parent = None
-            self.armature.data.edit_bones[bone].tail = self.armature.data.edit_bones[bone].head - height_adjust
-            self.armature.data.edit_bones[bone].parent = parent
+            parent = armature.data.edit_bones[bone].parent
+            armature.data.edit_bones[bone].parent = None
+            armature.data.edit_bones[bone].tail = armature.data.edit_bones[bone].head - height_adjust
+            armature.data.edit_bones[bone].parent = parent
         
         finger_list = (
         'cf_j_index03_R', 'cf_j_index02_R', 'cf_j_index01_R',
@@ -291,10 +265,10 @@ class modify_armature(bpy.types.Operator):
         
             height_adjust = Vector((0,0,0.05))
         def resize_finger(bone):
-            parent = self.armature.data.edit_bones[bone].parent
-            self.armature.data.edit_bones[bone].parent = None
-            self.armature.data.edit_bones[bone].tail = self.armature.data.edit_bones[bone].head + height_adjust
-            self.armature.data.edit_bones[bone].parent = parent
+            parent = armature.data.edit_bones[bone].parent
+            armature.data.edit_bones[bone].parent = None
+            armature.data.edit_bones[bone].tail = armature.data.edit_bones[bone].head + height_adjust
+            armature.data.edit_bones[bone].parent = parent
         
         finger_list = (
         'cf_j_index03_L', 'cf_j_index02_L', 'cf_j_index01_L',
@@ -309,7 +283,7 @@ class modify_armature(bpy.types.Operator):
         #reset the orientation of certain bones
         height_adjust = Vector((0,0,0.1))
         def reorient(bone):
-            self.armature.data.edit_bones[bone].tail = self.armature.data.edit_bones[bone].head + height_adjust
+            armature.data.edit_bones[bone].tail = armature.data.edit_bones[bone].head + height_adjust
 
         reorient_list = [
             'cf_j_thigh00_R', 'cf_j_thigh00_L',
@@ -654,40 +628,43 @@ class modify_armature(bpy.types.Operator):
         'cf_s_waist01':0.0,
         }
         
-        c.switch(self.armature, 'edit')
+        armature = c.get_armature()
+        c.switch(armature, 'edit')
         for bone in reroll_data:
-            if self.armature.data.edit_bones.get(bone):
-                self.armature.data.edit_bones[bone].roll = reroll_data[bone]
+            if armature.data.edit_bones.get(bone):
+                armature.data.edit_bones[bone].roll = reroll_data[bone]
         c.print_timer('set_bone_roll_data')
 
     def bend_bones_for_iks(self):
         '''slightly modify the armature to support IKs'''
         if not bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
             return
-        c.switch(self.armature, 'edit')
-        self.armature.data.edit_bones['cf_n_height'].parent = None
-        self.armature.data.edit_bones['cf_j_root'].parent = self.armature.data.edit_bones['cf_pv_root']
-        self.armature.data.edit_bones['p_cf_body_bone'].parent = self.armature.data.edit_bones['cf_pv_root']
+        
+        armature = c.get_armature()
+        c.switch(armature, 'edit')
+        armature.data.edit_bones['cf_n_height'].parent = None
+        armature.data.edit_bones['cf_j_root'].parent = armature.data.edit_bones['cf_pv_root']
+        armature.data.edit_bones['p_cf_body_bone'].parent = armature.data.edit_bones['cf_pv_root']
         #relocate the tail of some bones to make IKs easier
         def relocate_tail(bone1, bone2, direction):
             if direction == 'leg':
-                self.armature.data.edit_bones[bone1].tail.z = self.armature.data.edit_bones[bone2].head.z
-                self.armature.data.edit_bones[bone1].roll = 0
+                armature.data.edit_bones[bone1].tail.z = armature.data.edit_bones[bone2].head.z
+                armature.data.edit_bones[bone1].roll = 0
                 #move the bone forward a bit or the ik bones might not bend correctly
-                self.armature.data.edit_bones[bone1].head.y += -0.01
+                armature.data.edit_bones[bone1].head.y += -0.01
             elif direction == 'arm':
-                self.armature.data.edit_bones[bone1].tail.x = self.armature.data.edit_bones[bone2].head.x
-                self.armature.data.edit_bones[bone1].tail.z = self.armature.data.edit_bones[bone2].head.z
-                self.armature.data.edit_bones[bone1].roll = -math.pi/2
+                armature.data.edit_bones[bone1].tail.x = armature.data.edit_bones[bone2].head.x
+                armature.data.edit_bones[bone1].tail.z = armature.data.edit_bones[bone2].head.z
+                armature.data.edit_bones[bone1].roll = -math.pi/2
             elif direction == 'hand':
-                self.armature.data.edit_bones[bone1].tail = self.armature.data.edit_bones[bone2].tail
+                armature.data.edit_bones[bone1].tail = armature.data.edit_bones[bone2].tail
                 #make hand bone shorter so you can easily click the hand and the pv bone
-                self.armature.data.edit_bones[bone1].tail.z += .01 
-                self.armature.data.edit_bones[bone1].head = self.armature.data.edit_bones[bone2].head
+                armature.data.edit_bones[bone1].tail.z += .01 
+                armature.data.edit_bones[bone1].head = armature.data.edit_bones[bone2].head
             else:
-                self.armature.data.edit_bones[bone1].tail.y = self.armature.data.edit_bones[bone2].head.y
-                self.armature.data.edit_bones[bone1].tail.z = self.armature.data.edit_bones[bone2].head.z
-                self.armature.data.edit_bones[bone1].roll = 0
+                armature.data.edit_bones[bone1].tail.y = armature.data.edit_bones[bone2].head.y
+                armature.data.edit_bones[bone1].tail.z = armature.data.edit_bones[bone2].head.z
+                armature.data.edit_bones[bone1].roll = 0
         relocate_tail('cf_j_leg01_R', 'cf_j_foot_R', 'leg')
         relocate_tail('cf_j_leg01_L', 'cf_j_foot_L', 'leg')
         relocate_tail('cf_j_forearm01_R', 'cf_j_hand_R', 'arm')
@@ -700,19 +677,21 @@ class modify_armature(bpy.types.Operator):
 
     def remove_empty_vertex_groups(self):
         '''check body for groups with no vertexes. Delete if the group is not a bone on the armature'''
-        vertexWeightMap = self.survey_vertexes(self.body)
-        bones_in_armature = [bone.name for bone in self.armature.data.bones]
+        body = c.get_body()
+        vertexWeightMap = self.survey_vertexes(body)
+        bones_in_armature = [bone.name for bone in c.get_armature().data.bones]
         for group in vertexWeightMap:
             if group not in bones_in_armature and vertexWeightMap[group] == False and 'cf_J_Vagina' not in group:
-                self.body.vertex_groups.remove(self.body.vertex_groups[group])
+                body.vertex_groups.remove(body.vertex_groups[group])
         c.print_timer('remove_empty_vertex_groups')
 
     def reorganize_armature_layers(self):
         '''Moves all bones to different armature layers'''
+        armature = c.get_armature()
         if bpy.app.version[0] == 3:
-            c.switch(self.armature, 'pose')
+            c.switch(armature, 'pose')
         else:
-            c.switch(self.armature, 'object')
+            c.switch(armature, 'object')
         
         core_list   = self.get_bone_list('core_list')
         non_ik      = self.get_bone_list('non_ik')
@@ -780,54 +759,57 @@ class modify_armature(bpy.types.Operator):
             bpy.ops.armature.armature_layers(layers=all_layers)
         else:
             for index, show_layer in enumerate(all_layers):
-                if self.armature.data.collections.get(str(index)):
-                    self.armature.data.collections.get(str(index)).is_visible = show_layer
-        self.armature.data.display_type = 'STICK'
-        c.switch(self.armature, 'object')
+                if armature.data.collections.get(str(index)):
+                    armature.data.collections.get(str(index)).is_visible = show_layer
+        armature.data.display_type = 'STICK'
+        c.switch(armature, 'object')
         c.print_timer('reorganize_armature_layers')
 
     def move_accessory_bones_to_layer10(self):
         '''Moves the accessory bones that have weight to them to armature layer 10'''
-        c.switch(self.armature, 'object')
+        armature = c.get_armature()
+        c.switch(armature, 'object')
         #go through each outfit and move ALL accessory bones to layer 10
         dont_move_these = [
                 'cf_pv', 'Eyesx',
                 'cf_J_hitomi_tx_', 'cf_J_FaceRoot', 'cf_J_FaceUp_t',
                 'n_cam', 'EyesLookTar', 'N_move', 'a_n_', 'cf_hit',
                 'cf_j_bnip02', 'cf_j_kokan', 'cf_j_ana']
-        for outfit_or_hair in [obj for obj in bpy.data.objects if 'Outfit ' in obj.name]:
+        outfits = c.get_outfits()
+        outfits.extend(c.get_alts())
+        outfits.extend(c.get_hairs())
+        for outfit_or_hair in outfits:
             # Find empty vertex groups
             vertexWeightMap = self.survey_vertexes(outfit_or_hair)
             #add outfit id to all accessory bones used by that outfit in an array
-            number_of_outfits = len([outfit for outfit in bpy.data.objects if 'Outfit ' in outfit.name and 'Hair' not in outfit.name and 'alt ' not in outfit.name and 'Indoor' not in outfit.name])
             if bpy.app.version[0] == 3:
-                for bone in [bone for bone in self.armature.data.bones if bone.layers[10]]:
+                for bone in [bone for bone in armature.data.bones if bone.layers[10]]:
                     no_move_bone = False
                     for this_prefix in dont_move_these:
                         if this_prefix in bone.name:
                             no_move_bone = True
                     if not no_move_bone and vertexWeightMap.get(bone.name):
                         try:
-                            outfit_id_array = bone['KKBP outfit ID'].to_list()
-                            outfit_id_array.append(outfit_or_hair['KKBP outfit ID'])
-                            bone['KKBP outfit ID'] = outfit_id_array
+                            outfit_id_array = bone['id'].to_list()
+                            outfit_id_array.append(outfit_or_hair['id'])
+                            bone['id'] = outfit_id_array
                         except:
-                            bone['KKBP outfit ID'] = [outfit_or_hair['KKBP outfit ID']]
+                            bone['id'] = [outfit_or_hair['id']]
             else:
-                for bone in [bone for bone in self.armature.data.bones if bone.collections.get('10')]:
+                for bone in [bone for bone in armature.data.bones if bone.collections.get('10')]:
                     no_move_bone = False
                     for this_prefix in dont_move_these:
                         if this_prefix in bone.name:
                             no_move_bone = True
                     if not no_move_bone and vertexWeightMap.get(bone.name):
                         try:
-                            outfit_id_array = bone['KKBP outfit ID'].to_list()
-                            outfit_id_array.append(outfit_or_hair['KKBP outfit ID'])
-                            bone['KKBP outfit ID'] = outfit_id_array
+                            outfit_id_array = bone['id'].to_list()
+                            outfit_id_array.append(outfit_or_hair['id'])
+                            bone['id'] = outfit_id_array
                         except:
-                            bone['KKBP outfit ID'] = [outfit_or_hair['KKBP outfit ID']]
+                            bone['id'] = [outfit_or_hair['id']]
         #move accessory bones to armature layer 10
-        for bone in [bone for bone in self.armature.data.bones if bone.get('KKBP outfit ID')]:
+        for bone in [bone for bone in armature.data.bones if bone.get('id')]:
             self.set_armature_layer(bone.name, show_layer = 9)
         c.print_timer('move_accessory_bones_to_layer10')
 
@@ -890,54 +872,58 @@ class modify_armature(bpy.types.Operator):
         '左足首':'cf_j_leg03_L',
         '右足首':'cf_j_leg03_R',
         }
+        armature = c.get_armature()
         for bone in pmx_rename_dict:
-            if self.armature.pose.bones.get(pmx_rename_dict[bone]):
-                self.armature.pose.bones[pmx_rename_dict[bone]].mmd_bone.name_j = bone
+            if armature.pose.bones.get(pmx_rename_dict[bone]):
+                armature.pose.bones[pmx_rename_dict[bone]].mmd_bone.name_j = bone
         c.print_timer('rename_mmd_bones')
 
     def visually_connect_bones(self):
         '''make sure certain bones are visually connected'''
         if not bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
             return
-        c.switch(self.armature, 'edit')
+        armature = c.get_armature()
+        c.switch(armature, 'edit')
         # Make sure all toe bones are visually correct if using the better penetration armature 
         try:
-            self.armature.data.edit_bones['Toes4_L'].tail.y = self.armature.data.edit_bones['Toes30_L'].head.y
-            self.armature.data.edit_bones['Toes4_L'].tail.z = self.armature.data.edit_bones['Toes30_L'].head.z*.8
-            self.armature.data.edit_bones['Toes0_L'].tail.y = self.armature.data.edit_bones['Toes10_L'].head.y
-            self.armature.data.edit_bones['Toes0_L'].tail.z = self.armature.data.edit_bones['Toes30_L'].head.z*.9
+            armature.data.edit_bones['Toes4_L'].tail.y = armature.data.edit_bones['Toes30_L'].head.y
+            armature.data.edit_bones['Toes4_L'].tail.z = armature.data.edit_bones['Toes30_L'].head.z*.8
+            armature.data.edit_bones['Toes0_L'].tail.y = armature.data.edit_bones['Toes10_L'].head.y
+            armature.data.edit_bones['Toes0_L'].tail.z = armature.data.edit_bones['Toes30_L'].head.z*.9
             
-            self.armature.data.edit_bones['Toes30_L'].tail.z = self.armature.data.edit_bones['Toes30_L'].head.z*0.8
-            self.armature.data.edit_bones['Toes30_L'].tail.y = self.armature.data.edit_bones['Toes30_L'].head.y*1.2
-            self.armature.data.edit_bones['Toes20_L'].tail.z = self.armature.data.edit_bones['Toes20_L'].head.z*0.8
-            self.armature.data.edit_bones['Toes20_L'].tail.y = self.armature.data.edit_bones['Toes20_L'].head.y*1.2
-            self.armature.data.edit_bones['Toes10_L'].tail.z = self.armature.data.edit_bones['Toes10_L'].head.z*0.8
-            self.armature.data.edit_bones['Toes10_L'].tail.y = self.armature.data.edit_bones['Toes10_L'].head.y*1.2
+            armature.data.edit_bones['Toes30_L'].tail.z = armature.data.edit_bones['Toes30_L'].head.z*0.8
+            armature.data.edit_bones['Toes30_L'].tail.y = armature.data.edit_bones['Toes30_L'].head.y*1.2
+            armature.data.edit_bones['Toes20_L'].tail.z = armature.data.edit_bones['Toes20_L'].head.z*0.8
+            armature.data.edit_bones['Toes20_L'].tail.y = armature.data.edit_bones['Toes20_L'].head.y*1.2
+            armature.data.edit_bones['Toes10_L'].tail.z = armature.data.edit_bones['Toes10_L'].head.z*0.8
+            armature.data.edit_bones['Toes10_L'].tail.y = armature.data.edit_bones['Toes10_L'].head.y*1.2
             
-            self.armature.data.edit_bones['Toes4_R'].tail.y = self.armature.data.edit_bones['Toes30_R'].head.y
-            self.armature.data.edit_bones['Toes4_R'].tail.z = self.armature.data.edit_bones['Toes30_R'].head.z*.8
-            self.armature.data.edit_bones['Toes0_R'].tail.y = self.armature.data.edit_bones['Toes10_R'].head.y
-            self.armature.data.edit_bones['Toes0_R'].tail.z = self.armature.data.edit_bones['Toes30_R'].head.z*.9
+            armature.data.edit_bones['Toes4_R'].tail.y = armature.data.edit_bones['Toes30_R'].head.y
+            armature.data.edit_bones['Toes4_R'].tail.z = armature.data.edit_bones['Toes30_R'].head.z*.8
+            armature.data.edit_bones['Toes0_R'].tail.y = armature.data.edit_bones['Toes10_R'].head.y
+            armature.data.edit_bones['Toes0_R'].tail.z = armature.data.edit_bones['Toes30_R'].head.z*.9
             
-            self.armature.data.edit_bones['Toes30_R'].tail.z = self.armature.data.edit_bones['Toes30_R'].head.z*0.8
-            self.armature.data.edit_bones['Toes30_R'].tail.y = self.armature.data.edit_bones['Toes30_R'].head.y*1.2
-            self.armature.data.edit_bones['Toes20_R'].tail.z = self.armature.data.edit_bones['Toes20_R'].head.z*0.8
-            self.armature.data.edit_bones['Toes20_R'].tail.y = self.armature.data.edit_bones['Toes20_R'].head.y*1.2
-            self.armature.data.edit_bones['Toes10_R'].tail.z = self.armature.data.edit_bones['Toes10_R'].head.z*0.8
-            self.armature.data.edit_bones['Toes10_R'].tail.y = self.armature.data.edit_bones['Toes10_R'].head.y*1.2
+            armature.data.edit_bones['Toes30_R'].tail.z = armature.data.edit_bones['Toes30_R'].head.z*0.8
+            armature.data.edit_bones['Toes30_R'].tail.y = armature.data.edit_bones['Toes30_R'].head.y*1.2
+            armature.data.edit_bones['Toes20_R'].tail.z = armature.data.edit_bones['Toes20_R'].head.z*0.8
+            armature.data.edit_bones['Toes20_R'].tail.y = armature.data.edit_bones['Toes20_R'].head.y*1.2
+            armature.data.edit_bones['Toes10_R'].tail.z = armature.data.edit_bones['Toes10_R'].head.z*0.8
+            armature.data.edit_bones['Toes10_R'].tail.y = armature.data.edit_bones['Toes10_R'].head.y*1.2
         except:
             #this character isn't using the BP/toe control armature
+            c.kklog('No toe bones detected. Skipping...', type = 'warn')
             pass
-        c.switch(self.armature, 'object')
+        c.switch(armature, 'object')
         c.print_timer('visually_connect_bones')
 
     def shorten_kokan_bone(self):
         '''make the kokan bone shorter if it's on the armature'''
         if not bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
             return
-        c.switch(self.armature, 'edit')
-        if self.armature.data.edit_bones.get('cf_j_kokan'):
-            self.armature.data.edit_bones['cf_j_kokan'].tail.z = self.armature.data.edit_bones['cf_s_waist02'].head.z
+        armature = c.get_armature()
+        c.switch(armature, 'edit')
+        if armature.data.edit_bones.get('cf_j_kokan'):
+            armature.data.edit_bones['cf_j_kokan'].tail.z = armature.data.edit_bones['cf_s_waist02'].head.z
         c.print_timer('shorten_kokan_bone')
 
     def scale_skirt_and_face_bones(self):
@@ -946,31 +932,32 @@ class modify_armature(bpy.types.Operator):
         #skip this operation if this is the pmx or koikatsu armature
         if not bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
             return
-
-        c.switch(self.armature, 'pose')
+        
+        armature = c.get_armature()
+        c.switch(armature, 'pose')
 
         def shorten_bone(bone, scale):
-            c.switch(self.armature, 'edit')
-            self.armature.data.edit_bones[bone].select_head = True
-            self.armature.data.edit_bones[bone].select_tail = True
-            previous_roll = self.armature.data.edit_bones[bone].roll + 1 #roll doesn't save if you don't add a number at the end
-            self.armature.data.edit_bones[bone].tail = (self.armature.data.edit_bones[bone].tail+self.armature.data.edit_bones[bone].head)/2
-            self.armature.data.edit_bones[bone].tail = (self.armature.data.edit_bones[bone].tail+self.armature.data.edit_bones[bone].head)/2
-            self.armature.data.edit_bones[bone].tail = (self.armature.data.edit_bones[bone].tail+self.armature.data.edit_bones[bone].head)/2
-            self.armature.data.edit_bones[bone].select_head = False
-            self.armature.data.edit_bones[bone].select_tail = False
-            self.armature.data.edit_bones[bone].roll = previous_roll - 1 #subtract the number at the end to save roll
-            c.switch(self.armature, 'pose')
+            c.switch(armature, 'edit')
+            armature.data.edit_bones[bone].select_head = True
+            armature.data.edit_bones[bone].select_tail = True
+            previous_roll = armature.data.edit_bones[bone].roll + 1 #roll doesn't save if you don't add a number at the end
+            armature.data.edit_bones[bone].tail = (armature.data.edit_bones[bone].tail+armature.data.edit_bones[bone].head)/2
+            armature.data.edit_bones[bone].tail = (armature.data.edit_bones[bone].tail+armature.data.edit_bones[bone].head)/2
+            armature.data.edit_bones[bone].tail = (armature.data.edit_bones[bone].tail+armature.data.edit_bones[bone].head)/2
+            armature.data.edit_bones[bone].select_head = False
+            armature.data.edit_bones[bone].select_tail = False
+            armature.data.edit_bones[bone].roll = previous_roll - 1 #subtract the number at the end to save roll
+            c.switch(armature, 'pose')
         
         def connect_bone(root, chain):
             bone = 'cf_j_sk_0'+str(root)+'_0'+str(chain)
             child_bone = 'cf_j_sk_0'+str(root)+'_0'+str(chain+1)
             #first connect tail to child bone to keep head in place during connection
-            c.switch(self.armature, 'edit')
-            if self.armature.data.edit_bones.get(bone) and self.armature.data.edit_bones.get(child_bone) and chain <= 4:
-                self.armature.data.edit_bones[bone].tail = self.armature.data.edit_bones[child_bone].head
+            c.switch(armature, 'edit')
+            if armature.data.edit_bones.get(bone) and armature.data.edit_bones.get(child_bone) and chain <= 4:
+                armature.data.edit_bones[bone].tail = armature.data.edit_bones[child_bone].head
                 #then connect child head to parent tail (both are at the same position, so head doesn't move)
-                self.armature.data.edit_bones[child_bone].use_connect = True
+                armature.data.edit_bones[child_bone].use_connect = True
 
         skirtchain = [0,1,2,3,4,5,6,7]
         skirtchild = [0,1,2,3,4]
@@ -982,7 +969,7 @@ class modify_armature(bpy.types.Operator):
             c.kklog('No skirt bones detected. Skipping...', type = 'warn')
         
         #scale eye bones, mouth bones, eyebrow bones
-        c.switch(self.armature, 'pose')
+        c.switch(armature, 'pose')
         
         eyebones = [1,2,3,4,5,6,7,8]
         
@@ -1005,42 +992,44 @@ class modify_armature(bpy.types.Operator):
             shorten_bone(bone, 0.1)
         
         #move eye bone location
-        c.switch(self.armature, 'edit')
+        c.switch(armature, 'edit')
 
         for eyebone in ['Eyesx', 'Eye Controller']:
-            self.armature.data.edit_bones[eyebone].head.y = self.armature.data.edit_bones['cf_d_bust02_R'].tail.y
-            self.armature.data.edit_bones[eyebone].tail.y = self.armature.data.edit_bones['cf_d_bust02_R'].tail.y*1.5
-            self.armature.data.edit_bones[eyebone].tail.z = self.armature.data.edit_bones['cf_J_Nose_tip'].tail.z
-            self.armature.data.edit_bones[eyebone].head.z = self.armature.data.edit_bones['cf_J_Nose_tip'].tail.z
+            armature.data.edit_bones[eyebone].head.y = armature.data.edit_bones['cf_d_bust02_R'].tail.y
+            armature.data.edit_bones[eyebone].tail.y = armature.data.edit_bones['cf_d_bust02_R'].tail.y*1.5
+            armature.data.edit_bones[eyebone].tail.z = armature.data.edit_bones['cf_J_Nose_tip'].tail.z
+            armature.data.edit_bones[eyebone].head.z = armature.data.edit_bones['cf_J_Nose_tip'].tail.z
 
         #scale BP bones if they exist
         BPList = ['cf_j_kokan', 'cf_j_ana', 'Vagina_Root', 'Vagina_B', 'Vagina_F', 'Vagina_001_L', 'Vagina_002_L', 'Vagina_003_L', 'Vagina_004_L', 'Vagina_005_L',  'Vagina_001_R', 'Vagina_002_R', 'Vagina_003_R', 'Vagina_004_R', 'Vagina_005_R']
         for bone in BPList:
-            if self.armature.data.edit_bones.get(bone):
-                self.armature.data.edit_bones[bone].tail.z = self.armature.data.edit_bones[bone].tail.z*.95
+            if armature.data.edit_bones.get(bone):
+                armature.data.edit_bones[bone].tail.z = armature.data.edit_bones[bone].tail.z*.95
         c.print_timer('scale_skirt_and_face_bones')
 
     def create_eye_reference_bone(self):
         '''Create a bone called "Eyesx that will act as a fixed reference bone for the Eye controller" '''
         if not bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
             return
-        c.switch(self.armature, 'edit')       
-        new_bone = self.armature.data.edit_bones.new('Eyesx')
-        new_bone.head = self.armature.data.edit_bones['cf_hit_head'].tail
+        armature = c.get_armature()
+        c.switch(armature, 'edit')       
+        new_bone = armature.data.edit_bones.new('Eyesx')
+        new_bone.head = armature.data.edit_bones['cf_hit_head'].tail
         new_bone.head.y = new_bone.head.y + 0.05
-        new_bone.tail = self.armature.data.edit_bones['cf_J_Mayu_R'].tail
+        new_bone.tail = armature.data.edit_bones['cf_J_Mayu_R'].tail
         new_bone.tail.x = new_bone.head.x
         new_bone.tail.y = new_bone.head.y
-        new_bone.parent = self.armature.data.edit_bones['cf_j_head']
+        new_bone.parent = armature.data.edit_bones['cf_j_head']
         c.print_timer('create_eye_reference_bone')
 
     def create_eye_controller_bone(self):
         if not bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
             return
-        c.switch(self.armature, 'edit')
+        armature = c.get_armature()
+        c.switch(armature, 'edit')
     
         #roll the eye bone based on armature, create a copy and name it eye controller
-        armature_data = self.armature.data
+        armature_data = armature.data
         armature_data.edit_bones['Eyesx'].roll = -math.pi/2
         copy = self.new_bone('Eye Controller')
         copy.head = armature_data.edit_bones['Eyesx'].head/2
@@ -1049,23 +1038,23 @@ class modify_armature(bpy.types.Operator):
         copy.parent = armature_data.edit_bones['cf_j_head']
         armature_data.edit_bones['Eye Controller'].roll = -math.pi/2
 
-        c.switch(self.armature, 'pose')
+        c.switch(armature, 'pose')
         #Lock y location at zero
-        self.armature.pose.bones['Eye Controller'].lock_location[1] = True
+        armature.pose.bones['Eye Controller'].lock_location[1] = True
         #Hide the original Eyesx bone
-        self.armature.data.bones['Eyesx'].hide = True
+        armature.data.bones['Eyesx'].hide = True
         self.set_armature_layer('Eye Controller', 0)
-        c.switch(self.armature, 'object')
+        c.switch(armature, 'object')
 
         #Create a UV warp modifier for the eyes. Controlled by the Eye controller bone
         def eyeUV(modifiername, eyevertexgroup):
             mod = bpy.data.objects['Body'].modifiers.new(modifiername, 'UV_WARP')
             mod.axis_u = 'Z'
             mod.axis_v = 'X'
-            mod.object_from = self.armature
-            mod.bone_from = self.armature.data.bones['Eyesx'].name
-            mod.object_to = self.armature
-            mod.bone_to = self.armature.data.bones['Eye Controller'].name
+            mod.object_from = armature
+            mod.bone_from = armature.data.bones['Eyesx'].name
+            mod.object_to = armature
+            mod.bone_to = armature.data.bones['Eye Controller'].name
             mod.vertex_group = eyevertexgroup
             mod.uv_layer = 'UVMap'
             mod.show_expanded = False
@@ -1074,55 +1063,23 @@ class modify_armature(bpy.types.Operator):
         eyeUV("Right Eye UV warp", 'Right Eye')
         c.print_timer('create_eye_controller_bone')
 
-    def fix_empty_eye_vertex_groups(self):
-        '''checks if the Eyex_L vertex group is empty. If it is, assume the Eyex_R vertex group is also empty,
-        then fix it by finding the vertices using the eye material and assign both eyes to Eyex_L'''
-        if not bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
-            return
-        c.switch(self.body, 'object')
-        #make the cf_J_hitomi_tx_L vertex group active
-        self.body.vertex_groups.active_index = self.body.vertex_groups['cf_J_hitomi_tx_L'].index
-        #go into edit mode and select the vertices in the cf_J_hitomi_tx_L vertex group
-        c.switch(self.body, 'edit')
-        bpy.ops.object.vertex_group_select()
-        #refresh the selection (this needs to be done for some reason)
-        bpy.ops.object.mode_set(mode='OBJECT')
-        bpy.ops.object.mode_set(mode='EDIT')
-        #get a list of the selected vertices
-        vgVerts = True if [v for v in self.body.data.vertices if v.select] else False
-        #If the list is empty...
-        if not vgVerts:
-            #select the eye materials
-            self.body.active_material_index = self.body.data.materials.find(self.body['SMR materials']['cf_Ohitomi_L02'])
-            bpy.ops.object.material_slot_select()
-            #Try to select the other eye if it wasn't merged
-            try:
-                self.body.active_material_index = self.body.data.materials.find(self.body['SMR materials']['cf_Ohitomi_R02'])
-                bpy.ops.object.material_slot_select()
-            except:
-                #the eye was already merged, skip
-                pass
-            #then assign them to the Eyex_L group
-            bpy.ops.object.vertex_group_assign()
-            bpy.ops.mesh.select_all(action = 'DESELECT')
-        c.print_timer('fix_empty_eye_vertex_groups')
-
     def prepare_ik_bones(self):
         '''reparents some bones to work for IK'''
         if not bpy.context.scene.kkbp.armature_dropdown in ['A','B']:
             return
         #Select the armature and make it active
-        c.switch(self.armature, 'edit')
+        armature = c.get_armature()
+        c.switch(armature, 'edit')
         bpy.context.scene.cursor.location = (0.0, 0.0, 0.0)
         #separate the PV bones, so the elbow IKs rotate with the spine
         pvrootupper = self.new_bone('cf_pv_root_upper')
-        pvrootupper.tail = self.armature.data.edit_bones['cf_pv_root'].tail
-        pvrootupper.head = self.armature.data.edit_bones['cf_pv_root'].head
+        pvrootupper.tail = armature.data.edit_bones['cf_pv_root'].tail
+        pvrootupper.head = armature.data.edit_bones['cf_pv_root'].head
         #reparent things
         def reparent(bone,newparent):
             #refresh armature by going to object mode then back to edit mode?
-            c.switch(self.armature, 'edit')
-            self.armature.data.edit_bones[bone].parent = self.armature.data.edit_bones[newparent]
+            c.switch(armature, 'edit')
+            armature.data.edit_bones[bone].parent = armature.data.edit_bones[newparent]
         reparent('cf_pv_root_upper', 'cf_j_spine01')
         reparent('cf_pv_elbo_R', 'cf_pv_root_upper')
         reparent('cf_pv_elbo_L', 'cf_pv_root_upper')
@@ -1132,105 +1089,72 @@ class modify_armature(bpy.types.Operator):
         '''give the leg a foot IK, the foot a heel controller, and the arm a hand IK'''
         if not bpy.context.scene.kkbp.armature_dropdown in ['A','B']:
             return
-        center_bone = self.armature.data.edit_bones['cf_n_height']
-        c.switch(self.armature, 'edit')
-        self.retreive_stored_tags()
         
         def legIK(legbone, IKtarget, IKpole, IKpoleangle, footIK, kneebone, toebone, footbone):
-            self.retreive_stored_tags()
-            bone = self.armature.pose.bones[legbone]
+            bone = c.get_armature().pose.bones[legbone]
 
             #Make IK
-            self.retreive_stored_tags()
             bone.constraints.new("IK")
 
             #Set target and subtarget
-            self.retreive_stored_tags()
-            bone.constraints["IK"].target = self.armature
-            self.retreive_stored_tags()
-            bone.constraints["IK"].subtarget = self.armature.data.bones[IKtarget].name
+            bone.constraints["IK"].target = c.get_armature()
+            bone.constraints["IK"].subtarget = c.get_armature().data.bones[IKtarget].name
 
             #Set pole and subpole and pole angle
-            self.retreive_stored_tags()
-            bone.constraints["IK"].pole_target = self.armature
-            self.retreive_stored_tags()
-            bone.constraints["IK"].pole_subtarget = self.armature.data.bones[IKpole].name
-            self.retreive_stored_tags()
+            bone.constraints["IK"].pole_target = c.get_armature()
+            bone.constraints["IK"].pole_subtarget = c.get_armature().data.bones[IKpole].name
             bone.constraints["IK"].pole_angle = IKpoleangle
 
             #Set chain length
-            self.retreive_stored_tags()
+            
             bone.constraints["IK"].chain_count=2
 
             #Flip foot IK to match foot bone
-            self.retreive_stored_tags()
-            bone = self.armature.data.edit_bones[footIK]
-            self.retreive_stored_tags()
+            bone = c.get_armature().data.edit_bones[footIK]
 
-            bone = self.armature.data.edit_bones[footIK]
-            bone.head.y = self.armature.data.edit_bones[kneebone].tail.y
-            self.retreive_stored_tags()
-            bone = self.armature.data.edit_bones[footIK]
-            bone.tail.z = self.armature.data.edit_bones[toebone].head.z
-            self.retreive_stored_tags()
-            bone = self.armature.data.edit_bones[footIK]
-            bone.head.z = self.armature.data.edit_bones[footbone].head.z
-            self.retreive_stored_tags()
+            bone = c.get_armature().data.edit_bones[footIK]
+            bone.head.y = c.get_armature().data.edit_bones[kneebone].tail.y
+            bone = c.get_armature().data.edit_bones[footIK]
+            bone.tail.z = c.get_armature().data.edit_bones[toebone].head.z
+            bone = c.get_armature().data.edit_bones[footIK]
+            bone.head.z = c.get_armature().data.edit_bones[footbone].head.z
 
-            bone = self.armature.data.edit_bones[footIK]
-            bone.head.x = self.armature.data.edit_bones[kneebone].tail.x
-            self.retreive_stored_tags()
-            bone = self.armature.data.edit_bones[footIK]
+            bone = c.get_armature().data.edit_bones[footIK]
+            bone.head.x = c.get_armature().data.edit_bones[kneebone].tail.x
+            bone = c.get_armature().data.edit_bones[footIK]
             bone.tail.x = bone.head.x
 
             #unparent the bone
-            self.retreive_stored_tags()
-            center_bone = self.armature.data.edit_bones['cf_n_height']
-            bone = self.armature.data.edit_bones[footIK]
+            center_bone = c.get_armature().data.edit_bones['cf_n_height']
+            bone = c.get_armature().data.edit_bones[footIK]
             bone.parent = center_bone
-
-            # #set rotation constraints
-            # self.retreive_stored_tags()
-            # bone = self.armature.pose.bones[legbone]
-            # bone.constraints.new("LIMIT_ROTATION")
-            # bone.constraints[1].use_limit_x = True
-            # bone.constraints[1].max_x = 6.26573
 
         #Run for each side
         legIK('cf_j_leg01_R', 'cf_pv_foot_R', 'cf_pv_knee_R', math.pi/2, 'cf_pv_foot_R', 'cf_j_leg01_R', 'cf_j_toes_R', 'cf_j_foot_R')
         legIK('cf_j_leg01_L',  'cf_pv_foot_L', 'cf_pv_knee_L', math.pi/2, 'cf_pv_foot_L', 'cf_j_leg01_L', 'cf_j_toes_L', 'cf_j_foot_L')
+        
         #adds an IK for the toe bone, moves the knee IKs a little closer to the body
         def footIK(footbone, toebone, footIK, kneebone, legbone):
-            self.retreive_stored_tags()
-            bone = self.armature.pose.bones[footbone]
+            bone = c.get_armature().pose.bones[footbone]
 
             #Make Copy rotation
-            self.retreive_stored_tags()
             bone.constraints.new("COPY_ROTATION")
 
             #Set target and subtarget
-            self.retreive_stored_tags()
-            bone.constraints[0].target=self.armature
-            self.retreive_stored_tags()
-            bone.constraints[0].subtarget=self.armature.data.bones[footIK].name
+            bone.constraints[0].target=c.get_armature()
+            bone.constraints[0].subtarget = c.get_armature().data.bones[footIK].name
 
             #Set the rotation to local space
-            self.retreive_stored_tags()
             bone.constraints[0].target_space = 'LOCAL_WITH_PARENT'
-            self.retreive_stored_tags()
             bone.constraints[0].owner_space = 'LOCAL_WITH_PARENT'
             
             # move knee IKs closer to body
-            self.retreive_stored_tags()
-            kneedist = round((self.armature.pose.bones[footbone].head - self.armature.pose.bones[footbone].tail).length,2)
-            self.retreive_stored_tags()
-            self.armature.data.edit_bones[kneebone].head.y = kneedist * -5
-            self.retreive_stored_tags()
-            self.armature.data.edit_bones[kneebone].tail.y = kneedist * -5
+            kneedist = round((c.get_armature().pose.bones[footbone].head - c.get_armature().pose.bones[footbone].tail).length,2)
+            c.get_armature().data.edit_bones[kneebone].head.y = kneedist * -5
+            c.get_armature().data.edit_bones[kneebone].tail.y = kneedist * -5
 
             # make toe bone shorter
-            self.retreive_stored_tags()
-            self.armature.data.edit_bones[toebone].tail.z = self.armature.data.edit_bones[legbone].head.z * 0.2
+            c.get_armature().data.edit_bones[toebone].tail.z = c.get_armature().data.edit_bones[legbone].head.z * 0.2
 
         #Run for each side
         footIK('cf_j_foot_R', 'cf_j_toes_R', 'cf_pv_foot_R', 'cf_pv_knee_R', 'cf_j_leg01_R')
@@ -1239,236 +1163,153 @@ class modify_armature(bpy.types.Operator):
         #Add a heel controller to the foot
         #this fucking thing keeps crashing so retreive_stored_tags is called after most operations
         def heelController(footbone, footIK, toebone):
-            self.retreive_stored_tags()
             #duplicate the foot IK. This is the new master bone
-            c.switch(self.armature, 'edit')
-            self.retreive_stored_tags()
+            c.switch(c.get_armature(), 'edit')
             masterbone = self.new_bone('MasterFootIK.' + footbone[-1])
-            self.retreive_stored_tags()
-            masterbone = self.armature.data.edit_bones['MasterFootIK.' + footbone[-1]]
-            self.retreive_stored_tags()
-            masterbone.head = self.armature.data.edit_bones[footbone].head
-            self.retreive_stored_tags()
-            masterbone = self.armature.data.edit_bones['MasterFootIK.' + footbone[-1]]
-            self.retreive_stored_tags()
-            masterbone.tail = self.armature.data.edit_bones[footbone].tail
-            self.retreive_stored_tags()
-            masterbone = self.armature.data.edit_bones['MasterFootIK.' + footbone[-1]]
-            self.retreive_stored_tags()
-            masterbone.matrix = self.armature.data.edit_bones[footbone].matrix
-            self.retreive_stored_tags()
-            masterbone = self.armature.data.edit_bones['MasterFootIK.' + footbone[-1]]
-            self.retreive_stored_tags()
-            masterbone.parent = self.armature.data.edit_bones['cf_n_height']
+            masterbone = c.get_armature().data.edit_bones['MasterFootIK.' + footbone[-1]]
+            masterbone.head = c.get_armature().data.edit_bones[footbone].head
+            masterbone = c.get_armature().data.edit_bones['MasterFootIK.' + footbone[-1]]
+            masterbone.tail = c.get_armature().data.edit_bones[footbone].tail
+            masterbone = c.get_armature().data.edit_bones['MasterFootIK.' + footbone[-1]]
+            masterbone.matrix = c.get_armature().data.edit_bones[footbone].matrix
+            masterbone = c.get_armature().data.edit_bones['MasterFootIK.' + footbone[-1]]
+            masterbone.parent = c.get_armature().data.edit_bones['cf_n_height']
             
             #Create the heel controller
             heelIK = self.new_bone('HeelIK.' + footbone[-1])
-            self.retreive_stored_tags()
-            heelIK = self.armature.data.edit_bones['HeelIK.' + footbone[-1]]
-            self.retreive_stored_tags()
-            heelIK.head = self.armature.data.edit_bones[footbone].tail
-            self.retreive_stored_tags()
-            heelIK = self.armature.data.edit_bones['HeelIK.' + footbone[-1]]
-            self.retreive_stored_tags()
-            heelIK.tail = self.armature.data.edit_bones[footbone].head
-            self.retreive_stored_tags()
-            heelIK = self.armature.data.edit_bones['HeelIK.' + footbone[-1]]
-            self.retreive_stored_tags()
+            heelIK = c.get_armature().data.edit_bones['HeelIK.' + footbone[-1]]
+            heelIK.head = c.get_armature().data.edit_bones[footbone].tail
+            heelIK = c.get_armature().data.edit_bones['HeelIK.' + footbone[-1]]
+            heelIK.tail = c.get_armature().data.edit_bones[footbone].head
+            heelIK = c.get_armature().data.edit_bones['HeelIK.' + footbone[-1]]
             heelIK.parent = masterbone
-            self.retreive_stored_tags()
-            heelIK = self.armature.data.edit_bones['HeelIK.' + footbone[-1]]
-            self.retreive_stored_tags()
-            heelIK = self.armature.data.edit_bones['HeelIK.' + footbone[-1]]
-            self.retreive_stored_tags()
+            heelIK = c.get_armature().data.edit_bones['HeelIK.' + footbone[-1]]
+            heelIK = c.get_armature().data.edit_bones['HeelIK.' + footbone[-1]]
             heelIK.tail.y *= .5
-            self.retreive_stored_tags()
 
             #parent footIK to heel controller
-            self.armature.data.edit_bones[footIK].parent = heelIK
+            c.get_armature().data.edit_bones[footIK].parent = heelIK
             
             #make a bone to pin the foot
-            self.retreive_stored_tags()
             footPin = self.new_bone('FootPin.' + footbone[-1])
-            self.retreive_stored_tags()
-            footPin = self.armature.data.edit_bones['FootPin.' + footbone[-1]]
-            self.retreive_stored_tags()
-            footPin.head = self.armature.data.edit_bones[toebone].head
-            self.retreive_stored_tags()
-            footPin = self.armature.data.edit_bones['FootPin.' + footbone[-1]]
-            self.retreive_stored_tags()
-            footPin.tail = self.armature.data.edit_bones[toebone].tail
-            self.retreive_stored_tags()
-            footPin = self.armature.data.edit_bones['FootPin.' + footbone[-1]]
-            self.retreive_stored_tags()
+            footPin = c.get_armature().data.edit_bones['FootPin.' + footbone[-1]]
+            footPin.head = c.get_armature().data.edit_bones[toebone].head
+            footPin = c.get_armature().data.edit_bones['FootPin.' + footbone[-1]]
+            footPin.tail = c.get_armature().data.edit_bones[toebone].tail
+            footPin = c.get_armature().data.edit_bones['FootPin.' + footbone[-1]]
             footPin.parent = masterbone
-            self.retreive_stored_tags()
-            footPin = self.armature.data.edit_bones['FootPin.' + footbone[-1]]
-            self.retreive_stored_tags()
+            footPin = c.get_armature().data.edit_bones['FootPin.' + footbone[-1]]
             footPin.tail.z*=.8
-            self.retreive_stored_tags()
-            #make a bone to allow rotation of the toe along an arc
-            self.retreive_stored_tags()
+
+            #make a bone to allow rotation of the toe along an arc            
             toeRotator = self.new_bone('ToeRotator.' + footbone[-1])
-            self.retreive_stored_tags()
-            toeRotator = self.armature.data.edit_bones['ToeRotator.' + footbone[-1]]
-            self.retreive_stored_tags()
-            toeRotator.head = self.armature.data.edit_bones[toebone].head
-            self.retreive_stored_tags()
-            toeRotator = self.armature.data.edit_bones['ToeRotator.' + footbone[-1]]
-            self.retreive_stored_tags()
-            toeRotator.tail = self.armature.data.edit_bones[toebone].tail
-            self.retreive_stored_tags()
-            toeRotator = self.armature.data.edit_bones['ToeRotator.' + footbone[-1]]
-            self.retreive_stored_tags()
+            toeRotator = c.get_armature().data.edit_bones['ToeRotator.' + footbone[-1]]
+            toeRotator.head = c.get_armature().data.edit_bones[toebone].head
+            toeRotator = c.get_armature().data.edit_bones['ToeRotator.' + footbone[-1]]
+            toeRotator.tail = c.get_armature().data.edit_bones[toebone].tail
+            toeRotator = c.get_armature().data.edit_bones['ToeRotator.' + footbone[-1]]
             toeRotator.parent = masterbone
-            self.retreive_stored_tags()
+            
             #make a bone to pin the toe
-            self.retreive_stored_tags()
             toePin = self.new_bone('ToePin.' + footbone[-1])
-            self.retreive_stored_tags()
-            toePin = self.armature.data.edit_bones['ToePin.' + footbone[-1]]
-            self.retreive_stored_tags()
-            toePin.head = self.armature.data.edit_bones[toebone].tail
-            self.retreive_stored_tags()
-            toePin = self.armature.data.edit_bones['ToePin.' + footbone[-1]]
-            self.retreive_stored_tags()
-            toePin.tail = self.armature.data.edit_bones[toebone].tail
-            self.retreive_stored_tags()
-            toePin = self.armature.data.edit_bones['ToePin.' + footbone[-1]]
-            self.retreive_stored_tags()
+            toePin = c.get_armature().data.edit_bones['ToePin.' + footbone[-1]]
+            toePin.head = c.get_armature().data.edit_bones[toebone].tail
+            toePin = c.get_armature().data.edit_bones['ToePin.' + footbone[-1]]
+            toePin.tail = c.get_armature().data.edit_bones[toebone].tail
+            toePin = c.get_armature().data.edit_bones['ToePin.' + footbone[-1]]
             toePin.parent = toeRotator
-            self.retreive_stored_tags()
-            toePin = self.armature.data.edit_bones['ToePin.' + footbone[-1]]
+            
+            toePin = c.get_armature().data.edit_bones['ToePin.' + footbone[-1]]
             toePin.tail.z *=1.2
-            self.retreive_stored_tags()
+            
             #pin the foot
-            self.retreive_stored_tags()
-            c.switch(self.armature, 'pose')
-            self.retreive_stored_tags()
-            bone = self.armature.pose.bones[footbone]
-            self.retreive_stored_tags()
+            c.switch(c.get_armature(), 'pose')
+            bone = c.get_armature().pose.bones[footbone]
             bone.constraints.new("IK")
-            self.retreive_stored_tags()
-            bone = self.armature.pose.bones[footbone]
-            self.retreive_stored_tags()
-            bone.constraints["IK"].target = self.armature
-            self.retreive_stored_tags()
-            bone = self.armature.pose.bones[footbone]
-            self.retreive_stored_tags()
-            bone.constraints["IK"].subtarget = self.armature.data.bones['FootPin.' + footbone[-1]].name
-            self.retreive_stored_tags()
-            bone = self.armature.pose.bones[footbone]
-            self.retreive_stored_tags()
+            bone = c.get_armature().pose.bones[footbone]
+            bone.constraints["IK"].target = c.get_armature()
+            bone = c.get_armature().pose.bones[footbone]
+            bone.constraints["IK"].subtarget = c.get_armature().data.bones['FootPin.' + footbone[-1]].name
+            bone = c.get_armature().pose.bones[footbone]
             bone.constraints["IK"].chain_count=1
-            self.retreive_stored_tags()
+            
             #pin the toe
-            self.retreive_stored_tags()
-            bone = self.armature.pose.bones[toebone]
-            self.retreive_stored_tags()
+            bone = c.get_armature().pose.bones[toebone]
             bone.constraints.new("IK")
-            self.retreive_stored_tags()
-            bone = self.armature.pose.bones[toebone]
-            self.retreive_stored_tags()
-            bone.constraints["IK"].target = self.armature
-            self.retreive_stored_tags()
-            bone = self.armature.pose.bones[toebone]
-            self.retreive_stored_tags()
-            bone.constraints["IK"].subtarget = self.armature.data.bones['ToePin.' + footbone[-1]].name
-            self.retreive_stored_tags()
-            bone = self.armature.pose.bones[toebone]
-            self.retreive_stored_tags()
+            bone = c.get_armature().pose.bones[toebone]
+            bone.constraints["IK"].target = c.get_armature()
+            bone = c.get_armature().pose.bones[toebone]
+            bone.constraints["IK"].subtarget = c.get_armature().data.bones['ToePin.' + footbone[-1]].name
+            bone = c.get_armature().pose.bones[toebone]
             bone.constraints["IK"].chain_count=1
-            self.retreive_stored_tags()
+            
             #move these bones to armature layer 2
-            self.retreive_stored_tags()
             bpy.ops.object.mode_set(mode='POSE') #use this instead of c.switch to prevent crashing
-            self.retreive_stored_tags()
             layer2 =   (False, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False)
-            self.retreive_stored_tags()
             bpy.ops.pose.select_all(action='DESELECT')
-            self.retreive_stored_tags()
             if bpy.app.version[0] == 3:
-                self.armature.data.bones['FootPin.' + footbone[-1]].select = True
-                self.retreive_stored_tags()
-                self.armature.data.bones['ToePin.' + footbone[-1]].select = True
-                self.retreive_stored_tags()
-                self.armature.data.bones[toebone].select = True
-                self.retreive_stored_tags()
+                c.get_armature().data.bones['FootPin.' + footbone[-1]].select = True
+                c.get_armature().data.bones['ToePin.' + footbone[-1]].select = True
+                c.get_armature().data.bones[toebone].select = True
                 bpy.ops.pose.bone_layers(layers=layer2)
-                self.retreive_stored_tags()
-                self.armature.data.bones[footIK].select = True
+                c.get_armature().data.bones[footIK].select = True
             else:
-                self.armature.data.bones['FootPin.' + footbone[-1]].collections.clear()
-                self.retreive_stored_tags()
+                c.get_armature().data.bones['FootPin.' + footbone[-1]].collections.clear()
                 self.set_armature_layer('FootPin.' + footbone[-1], 2)
-                self.retreive_stored_tags()
-                self.armature.data.bones['ToePin.' + footbone[-1]].collections.clear()
-                self.retreive_stored_tags()
+                c.get_armature().data.bones['ToePin.' + footbone[-1]].collections.clear()
                 self.set_armature_layer('ToePin.' + footbone[-1], 2)
-                self.retreive_stored_tags()
-                self.armature.data.bones[toebone].collections.clear()
-                self.retreive_stored_tags()
+                c.get_armature().data.bones[toebone].collections.clear()
                 self.set_armature_layer(toebone, 2)
-                self.retreive_stored_tags()
-                self.armature.data.bones[footIK].collections.clear()
-                self.retreive_stored_tags()
+                c.get_armature().data.bones[footIK].collections.clear()
                 self.set_armature_layer(footIK, 2)
-        self.retreive_stored_tags()
+        
         heelController('cf_j_foot_L', 'cf_pv_foot_L', 'cf_j_toes_L')
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
         heelController('cf_j_foot_R', 'cf_pv_foot_R', 'cf_j_toes_R')
-        self.retreive_stored_tags()
+        
         #Give the new foot IKs an mmd bone name
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-        self.retreive_stored_tags()
-        self.armature.pose.bones['MasterFootIK.L'].mmd_bone.name_j = '左足ＩＫ'
-        self.retreive_stored_tags()
-        self.armature.pose.bones['MasterFootIK.R'].mmd_bone.name_j = '右足ＩＫ'
-        self.retreive_stored_tags()
+        c.get_armature().pose.bones['MasterFootIK.L'].mmd_bone.name_j = '左足ＩＫ'
+        c.get_armature().pose.bones['MasterFootIK.R'].mmd_bone.name_j = '右足ＩＫ'
+        
         #add an IK to the arm, makes the wrist bone copy the hand IK's rotation, moves elbow IKs a little closer to the body
         def armhandIK(elbowbone, handcontroller, elbowcontroller, IKangle, wristbone):
             #Set IK bone
-            bone = self.armature.pose.bones[elbowbone]
+            bone = c.get_armature().pose.bones[elbowbone]
 
             #Add IK
             bone.constraints.new("IK")
 
             #Set target and subtarget
-            bone.constraints["IK"].target = self.armature
-            bone.constraints["IK"].subtarget = self.armature.data.bones[handcontroller].name
+            bone.constraints["IK"].target = c.get_armature()
+            bone.constraints["IK"].subtarget = c.get_armature().data.bones[handcontroller].name
 
             #Set pole and subpole and pole angle
-            bone.constraints["IK"].pole_target = self.armature
-            bone.constraints["IK"].pole_subtarget = self.armature.data.bones[elbowcontroller].name
+            bone.constraints["IK"].pole_target = c.get_armature()
+            bone.constraints["IK"].pole_subtarget = c.get_armature().data.bones[elbowcontroller].name
             bone.constraints["IK"].pole_angle= IKangle
 
             #Set chain length
             bone.constraints["IK"].chain_count=2
 
             #unparent the bone
-            c.switch(self.armature, 'edit')
-            self.retreive_stored_tags()
-            bone = self.armature.data.edit_bones[handcontroller]
-            bone.parent = self.armature.data.edit_bones['cf_n_height']
-            self.armature.data.bones[wristbone].hide = True
+            c.switch(c.get_armature(), 'edit')
+            
+            bone = c.get_armature().data.edit_bones[handcontroller]
+            bone.parent = c.get_armature().data.edit_bones['cf_n_height']
+            c.get_armature().data.bones[wristbone].hide = True
             
             # move elbow IKs closer to body
-            elbowdist = round((self.armature.data.edit_bones[elbowbone].head - self.armature.data.edit_bones[elbowbone].tail).length,2)
-            self.armature.data.edit_bones[elbowcontroller].head.y = elbowdist*2
-            self.armature.data.edit_bones[elbowcontroller].tail.y = elbowdist*2
-            c.switch(self.armature, 'pose')
+            elbowdist = round((c.get_armature().data.edit_bones[elbowbone].head - c.get_armature().data.edit_bones[elbowbone].tail).length,2)
+            c.get_armature().data.edit_bones[elbowcontroller].head.y = elbowdist*2
+            c.get_armature().data.edit_bones[elbowcontroller].tail.y = elbowdist*2
+            c.switch(c.get_armature(), 'pose')
 
             # Set hand rotation then hide it
-            bone = self.armature.pose.bones[wristbone]
+            bone = c.get_armature().pose.bones[wristbone]
             bone.constraints.new("COPY_ROTATION")
-            bone.constraints[0].target=self.armature
-            bone.constraints[0].subtarget=self.armature.data.bones[handcontroller].name
-
-            # #set arm limit constraint
-            # bone = self.armature.pose.bones[elbowbone]
-            # bone.constraints.new("LIMIT_ROTATION")
-            # bone.constraints[1].use_limit_z = True
-            # bone.constraints[1].max_z = 6.26573
+            bone.constraints[0].target = c.get_armature()
+            bone.constraints[0].subtarget = c.get_armature().data.bones[handcontroller].name
 
         #Run for each side
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
@@ -1488,20 +1329,20 @@ class modify_armature(bpy.types.Operator):
         self.set_armature_layer('ToeRotator.R', 0)
         self.set_armature_layer('cf_d_bust00', 0)
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-        self.armature.data.bones['cf_pv_root_upper'].hide = True
+        c.get_armature().data.bones['cf_pv_root_upper'].hide = True
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-        c.switch(self.armature, 'object')
-        self.retreive_stored_tags()
+        c.switch(c.get_armature(), 'object')
 
     def create_joint_drivers(self):
         '''There are several joint corrections that use the cf_d_ and cf_s_ bones on the armature. This function attempts to replicate them using blender drivers and bone constraints'''
         if not bpy.context.scene.kkbp.armature_dropdown in ['A','B']:
             return
-        c.switch(self.armature, 'pose')
+        armature = c.get_armature()
+        c.switch(armature, 'pose')
         #generic function to set a copy rotation modifier
         def set_copy(bone, bonetarget, influence, axis = 'all', mix = 'replace', space = 'LOCAL'):
-            constraint = self.armature.pose.bones[bone].constraints.new("COPY_ROTATION")
-            constraint.target = self.armature
+            constraint = armature.pose.bones[bone].constraints.new("COPY_ROTATION")
+            constraint.target = armature
             constraint.subtarget = bonetarget
             constraint.influence = influence
             constraint.target_space = space
@@ -1575,7 +1416,7 @@ class modify_armature(bpy.types.Operator):
             # for location it's (0 is x component, y is 1, z is 2)
             # for rotation it's (0 is w, 1 is x, etc)
             # for scale it's (0 is x, 1 is y, 2 is z)
-            driver = self.armature.pose.bones[bone].driver_add(drivertype, drivertypeselect)
+            driver = armature.pose.bones[bone].driver_add(drivertype, drivertypeselect)
 
             #add driver variable
             vari = driver.driver.variables.new()
@@ -1584,8 +1425,8 @@ class modify_armature(bpy.types.Operator):
 
             #set the target and subtarget
             target = vari.targets[0]
-            target.id = self.armature
-            target.bone_target = self.armature.pose.bones[drivertarget].name
+            target.id = armature
+            target.bone_target = armature.pose.bones[drivertarget].name
 
             #set the transforms for the target. this can be rotation or location 
             target.transform_type = drivertt
@@ -1595,7 +1436,7 @@ class modify_armature(bpy.types.Operator):
             target.rotation_mode = 'QUATERNION' if expresstype in ['scale', 'quat'] else 'AUTO'
 
             #use the distance to the target bone's parent to make results consistent for different sized bones
-            targetbonelength = str(round((self.armature.pose.bones[drivertarget].head - self.armature.pose.bones[drivertarget].parent.head).length,3))
+            targetbonelength = str(round((armature.pose.bones[drivertarget].head - armature.pose.bones[drivertarget].parent.head).length,3))
             
             #driver expression is the rotation value of the target bone multiplied by a percentage of the driver target bone's length
             if expresstype in ['move', 'quat']:
@@ -1702,41 +1543,42 @@ class modify_armature(bpy.types.Operator):
     def categorize_bones(self):
         '''Add some bones to bone groups to give them colors'''
         if bpy.context.scene.kkbp.armature_dropdown in ['A','B']:
-            c.switch(self.armature, 'pose')
+            armature = c.get_armature()
+            c.switch(armature, 'pose')
             if bpy.app.version[0] == 3:
                 bpy.ops.pose.group_add()
-                group_index = len(self.armature.pose.bone_groups)-1
-                group = self.armature.pose.bone_groups[group_index]
+                group_index = len(armature.pose.bone_groups)-1
+                group = armature.pose.bone_groups[group_index]
                 group.name = 'IK controllers'
-                self.armature.data.bones['cf_pv_hand_L'].select = True
-                self.armature.data.bones['cf_pv_hand_R'].select = True
-                self.armature.data.bones['MasterFootIK.L'].select = True
-                self.armature.data.bones['MasterFootIK.R'].select = True
+                armature.data.bones['cf_pv_hand_L'].select = True
+                armature.data.bones['cf_pv_hand_R'].select = True
+                armature.data.bones['MasterFootIK.L'].select = True
+                armature.data.bones['MasterFootIK.R'].select = True
                 bpy.ops.pose.group_assign(type=group_index+1)
                 group.color_set = 'THEME01'
 
-                c.switch(self.armature, 'pose')
+                c.switch(armature, 'pose')
                 bpy.ops.pose.group_add()
-                group_index = len(self.armature.pose.bone_groups)-1
-                group = self.armature.pose.bone_groups[group_index]
+                group_index = len(armature.pose.bone_groups)-1
+                group = armature.pose.bone_groups[group_index]
                 group.name = 'IK poles'
-                self.armature.pose.bone_groups.active_index = 1
-                self.armature.data.bones['cf_pv_elbo_R'].select = True
-                self.armature.data.bones['cf_pv_elbo_L'].select = True
-                self.armature.data.bones['cf_pv_knee_R'].select = True
-                self.armature.data.bones['cf_pv_knee_L'].select = True
+                armature.pose.bone_groups.active_index = 1
+                armature.data.bones['cf_pv_elbo_R'].select = True
+                armature.data.bones['cf_pv_elbo_L'].select = True
+                armature.data.bones['cf_pv_knee_R'].select = True
+                armature.data.bones['cf_pv_knee_L'].select = True
                 bpy.ops.pose.group_assign(type=group_index+1)
                 group.color_set = 'THEME09'
             else:
                 group_name = 'IK controllers'
                 for bone in ['cf_pv_hand_L', 'cf_pv_hand_R', 'MasterFootIK.L', 'MasterFootIK.R']:
                     self.set_armature_layer(bone, group_name)
-                    self.armature.data.bones[bone].color.palette = 'THEME01'
+                    armature.data.bones[bone].color.palette = 'THEME01'
                 
                 group_name = 'IK poles'
                 for bone in ['cf_pv_elbo_R', 'cf_pv_elbo_L', 'cf_pv_knee_R', 'cf_pv_knee_L']:
                     self.set_armature_layer(bone, group_name)
-                    self.armature.data.bones[bone].color.palette = 'THEME09'
+                    armature.data.bones[bone].color.palette = 'THEME09'
 
     def rename_bones_for_clarity(self):
         '''rename core bones for easier identification. Also allows Unity to automatically detect each bone in a humanoid armature'''
@@ -1803,8 +1645,8 @@ class modify_armature(bpy.types.Operator):
             'cf_j_toes_R':'Right toe'
             }
             for bone in unity_rename_dict:
-                if self.armature.data.bones.get(bone):
-                    self.armature.data.bones[bone].name = unity_rename_dict[bone]
+                if c.get_armature().data.bones.get(bone):
+                    c.get_armature().data.bones[bone].name = unity_rename_dict[bone]
             
             #reset the eye vertex groups after renaming the bones
             mod = bpy.data.objects['Body'].modifiers[2]
@@ -1821,46 +1663,47 @@ class modify_armature(bpy.types.Operator):
             #Import custom bone shapes
             c.import_from_library_file('Collection', ['Bone Widgets'], use_fake_user=False)
         
-            #Add custom shapes to the armature        
-            self.armature.data.show_bone_custom_shapes = True
-            c.switch(self.armature, 'pose')
+            #Add custom shapes to the armature   
+            armature = c.get_armature()     
+            armature.data.show_bone_custom_shapes = True
+            c.switch(armature, 'pose')
             
-            self.armature.pose.bones["Spine"].custom_shape = bpy.data.objects["WidgetChest"]
-            self.armature.pose.bones["Chest"].custom_shape = bpy.data.objects["WidgetChest"]
-            self.armature.pose.bones["Upper Chest"].custom_shape = bpy.data.objects["WidgetChest"]
+            armature.pose.bones["Spine"].custom_shape = bpy.data.objects["WidgetChest"]
+            armature.pose.bones["Chest"].custom_shape = bpy.data.objects["WidgetChest"]
+            armature.pose.bones["Upper Chest"].custom_shape = bpy.data.objects["WidgetChest"]
 
-            self.armature.pose.bones["cf_d_bust00"].custom_shape = bpy.data.objects["WidgetBust"]
-            self.armature.pose.bones["cf_d_bust00"].use_custom_shape_bone_size = False
-            self.armature.pose.bones["cf_j_bust01_L"].custom_shape = bpy.data.objects["WidgetBreastL"]
-            self.armature.pose.bones["cf_j_bust01_L"].use_custom_shape_bone_size = False
-            self.armature.pose.bones["cf_j_bust01_R"].custom_shape = bpy.data.objects["WidgetBreastR"]
-            self.armature.pose.bones["cf_j_bust01_R"].use_custom_shape_bone_size = False
+            armature.pose.bones["cf_d_bust00"].custom_shape = bpy.data.objects["WidgetBust"]
+            armature.pose.bones["cf_d_bust00"].use_custom_shape_bone_size = False
+            armature.pose.bones["cf_j_bust01_L"].custom_shape = bpy.data.objects["WidgetBreastL"]
+            armature.pose.bones["cf_j_bust01_L"].use_custom_shape_bone_size = False
+            armature.pose.bones["cf_j_bust01_R"].custom_shape = bpy.data.objects["WidgetBreastR"]
+            armature.pose.bones["cf_j_bust01_R"].use_custom_shape_bone_size = False
 
-            self.armature.pose.bones["Left shoulder"].custom_shape = bpy.data.objects["WidgetShoulderL"]
-            self.armature.pose.bones["Right shoulder"].custom_shape = bpy.data.objects["WidgetShoulderR"]
-            self.armature.pose.bones["cf_pv_hand_R"].custom_shape = bpy.data.objects["WidgetHandR"]
-            self.armature.pose.bones["cf_pv_hand_L"].custom_shape = bpy.data.objects["WidgetHandL"]
+            armature.pose.bones["Left shoulder"].custom_shape = bpy.data.objects["WidgetShoulderL"]
+            armature.pose.bones["Right shoulder"].custom_shape = bpy.data.objects["WidgetShoulderR"]
+            armature.pose.bones["cf_pv_hand_R"].custom_shape = bpy.data.objects["WidgetHandR"]
+            armature.pose.bones["cf_pv_hand_L"].custom_shape = bpy.data.objects["WidgetHandL"]
 
-            self.armature.pose.bones["Head"].custom_shape = bpy.data.objects["WidgetHead"]
-            self.armature.pose.bones["Eye Controller"].custom_shape = bpy.data.objects["WidgetEye"]
-            self.armature.pose.bones["Neck"].custom_shape = bpy.data.objects["WidgetNeck"]
+            armature.pose.bones["Head"].custom_shape = bpy.data.objects["WidgetHead"]
+            armature.pose.bones["Eye Controller"].custom_shape = bpy.data.objects["WidgetEye"]
+            armature.pose.bones["Neck"].custom_shape = bpy.data.objects["WidgetNeck"]
 
-            self.armature.pose.bones["Hips"].custom_shape = bpy.data.objects["WidgetHips"]
-            self.armature.pose.bones["Pelvis"].custom_shape = bpy.data.objects["WidgetPelvis"]
+            armature.pose.bones["Hips"].custom_shape = bpy.data.objects["WidgetHips"]
+            armature.pose.bones["Pelvis"].custom_shape = bpy.data.objects["WidgetPelvis"]
 
-            self.armature.pose.bones["MasterFootIK.R"].custom_shape = bpy.data.objects["WidgetFoot"]
-            self.armature.pose.bones["MasterFootIK.L"].custom_shape = bpy.data.objects["WidgetFoot"]
-            self.armature.pose.bones["ToeRotator.R"].custom_shape = bpy.data.objects["WidgetToe"]
-            self.armature.pose.bones["ToeRotator.L"].custom_shape = bpy.data.objects["WidgetToe"]
-            self.armature.pose.bones["HeelIK.R"].custom_shape = bpy.data.objects["WidgetHeel"]
-            self.armature.pose.bones["HeelIK.L"].custom_shape = bpy.data.objects["WidgetHeel"]
+            armature.pose.bones["MasterFootIK.R"].custom_shape = bpy.data.objects["WidgetFoot"]
+            armature.pose.bones["MasterFootIK.L"].custom_shape = bpy.data.objects["WidgetFoot"]
+            armature.pose.bones["ToeRotator.R"].custom_shape = bpy.data.objects["WidgetToe"]
+            armature.pose.bones["ToeRotator.L"].custom_shape = bpy.data.objects["WidgetToe"]
+            armature.pose.bones["HeelIK.R"].custom_shape = bpy.data.objects["WidgetHeel"]
+            armature.pose.bones["HeelIK.L"].custom_shape = bpy.data.objects["WidgetHeel"]
 
-            self.armature.pose.bones["cf_pv_knee_R"].custom_shape = bpy.data.objects["WidgetKnee"]
-            self.armature.pose.bones["cf_pv_knee_L"].custom_shape = bpy.data.objects["WidgetKnee"]
-            self.armature.pose.bones["cf_pv_elbo_R"].custom_shape = bpy.data.objects["WidgetKnee"]
-            self.armature.pose.bones["cf_pv_elbo_L"].custom_shape = bpy.data.objects["WidgetKnee"]
+            armature.pose.bones["cf_pv_knee_R"].custom_shape = bpy.data.objects["WidgetKnee"]
+            armature.pose.bones["cf_pv_knee_L"].custom_shape = bpy.data.objects["WidgetKnee"]
+            armature.pose.bones["cf_pv_elbo_R"].custom_shape = bpy.data.objects["WidgetKnee"]
+            armature.pose.bones["cf_pv_elbo_L"].custom_shape = bpy.data.objects["WidgetKnee"]
             
-            self.armature.pose.bones["Center"].custom_shape = bpy.data.objects["WidgetRoot"]
+            armature.pose.bones["Center"].custom_shape = bpy.data.objects["WidgetRoot"]
             
             try:
                 bpy.context.space_data.overlay.show_relationship_lines = False
@@ -1873,8 +1716,8 @@ class modify_armature(bpy.types.Operator):
             for piece in eyebones:
                 left = 'cf_J_Eye0'+str(piece)+'_s_L'
                 right = 'cf_J_Eye0'+str(piece)+'_s_R'
-                self.armature.pose.bones[left].custom_shape  = bpy.data.objects['WidgetFace']
-                self.armature.pose.bones[right].custom_shape = bpy.data.objects['WidgetFace']
+                armature.pose.bones[left].custom_shape  = bpy.data.objects['WidgetFace']
+                armature.pose.bones[right].custom_shape = bpy.data.objects['WidgetFace']
             
             restOfFace = [
             'cf_J_Mayu_R', 'cf_J_MayuMid_s_R', 'cf_J_MayuTip_s_R',
@@ -1882,7 +1725,7 @@ class modify_armature(bpy.types.Operator):
             'cf_J_Mouth_R', 'cf_J_Mouth_L',
             'cf_J_Mouthup', 'cf_J_MouthLow', 'cf_J_MouthMove', 'cf_J_MouthCavity']
             for bone in restOfFace:
-                self.armature.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetFace']
+                armature.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetFace']
             
             evenMoreOfFace = [
             'cf_J_EarUp_L', 'cf_J_EarBase_ry_L', 'cf_J_EarLow_L',
@@ -1897,7 +1740,7 @@ class modify_armature(bpy.types.Operator):
             'cf_J_NoseBase', 'cf_J_NoseBridge_rx', 'cf_J_Nose_tip']
             
             for bone in evenMoreOfFace:
-                self.armature.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetSpine']
+                armature.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetSpine']
                 
             fingerList = [
             'IndexFinger1_L', 'IndexFinger2_L', 'IndexFinger3_L',
@@ -1914,19 +1757,19 @@ class modify_armature(bpy.types.Operator):
             
             for finger in fingerList:
                 if 'Thumb' in finger:
-                    self.armature.pose.bones[finger].custom_shape  = bpy.data.objects['WidgetFingerThumb']
+                    armature.pose.bones[finger].custom_shape  = bpy.data.objects['WidgetFingerThumb']
                 else:
-                    self.armature.pose.bones[finger].custom_shape  = bpy.data.objects['WidgetFinger']
+                    armature.pose.bones[finger].custom_shape  = bpy.data.objects['WidgetFinger']
                 
             bp_list = self.get_bone_list('bp_list')
             toe_list = self.get_bone_list('toe_list')
             for bone in bp_list:
-                if self.armature.pose.bones.get(bone):
-                    self.armature.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetSpine']
-                    self.armature.pose.bones[bone].custom_shape_scale_xyz = Vector((1.8, 1.8, 1.8))
+                if armature.pose.bones.get(bone):
+                    armature.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetSpine']
+                    armature.pose.bones[bone].custom_shape_scale_xyz = Vector((1.8, 1.8, 1.8))
             for bone in toe_list:
-                if self.armature.pose.bones.get(bone):
-                    self.armature.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetSpine']
+                if armature.pose.bones.get(bone):
+                    armature.pose.bones[bone].custom_shape  = bpy.data.objects['WidgetSpine']
             
             #Make the body and clothes layers visible
             all_layers = [
@@ -1942,9 +1785,9 @@ class modify_armature(bpy.types.Operator):
                 bpy.ops.armature.armature_layers(layers=all_layers)
             else:
                 for index, show_layer in enumerate(all_layers):
-                    if self.armature.data.collections.get(str(index)):
-                        self.armature.data.collections.get(str(index)).is_visible = show_layer
-                self.armature.data.display_type = 'STICK'
+                    if armature.data.collections.get(str(index)):
+                        armature.data.collections.get(str(index)).is_visible = show_layer
+                armature.data.display_type = 'STICK'
 
     def hide_widgets(self):
         '''automatically hide bone widgets collection if it's visible'''
@@ -1964,7 +1807,8 @@ class modify_armature(bpy.types.Operator):
 
     def only_show_core_armature_bones(self):
         #Make only core, skirt and accessory bones visible
-        c.switch(self.armature, 'object')
+        armature = c.get_armature()
+        c.switch(armature, 'object')
         core_layers = [
         True,  False, False, False, False, False, False, False, #body
         True,  True,  False, False, False, False, False, False, #clothes
@@ -1974,10 +1818,10 @@ class modify_armature(bpy.types.Operator):
             bpy.ops.armature.armature_layers(layers=core_layers)
         else:
             for index, show_layer in enumerate(core_layers):
-                if self.armature.data.collections.get(str(index)):
-                    self.armature.data.collections.get(str(index)).is_visible = show_layer
-        self.armature.data.display_type = 'STICK'
-        c.switch(self.armature, 'object')
+                if armature.data.collections.get(str(index)):
+                    armature.data.collections.get(str(index)).is_visible = show_layer
+        armature.data.display_type = 'STICK'
+        c.switch(armature, 'object')
 
     # %% Supporting functions
     @staticmethod
@@ -2017,32 +1861,33 @@ class modify_armature(bpy.types.Operator):
 
     def set_armature_layer(self, bone_name, show_layer, hidden = False):
         '''Assigns a bone to a bone collection.'''
-        bone = self.armature.data.bones.get(bone_name)
+        armature = c.get_armature()
+        bone = armature.data.bones.get(bone_name)
         if bone:
             if bpy.app.version[0] == 3:
-                if self.armature.data.bones.get(bone_name):
-                    self.armature.data.bones[bone_name].layers = (
+                if armature.data.bones.get(bone_name):
+                    armature.data.bones[bone_name].layers = (
                         True, False, False, False, False, False, False, False,
                         False, False, False, False, False, False, False, False, 
                         False, False, False, False, False, False, False, False, 
                         False, False, False, False, False, False, False, False
                     )
                     #have to show the bone on both layer 1 and chosen layer before setting it to just chosen layer
-                    self.armature.data.bones[bone_name].layers[show_layer] = True 
-                    self.armature.data.bones[bone_name].layers[0] = False
-                    self.armature.data.bones[bone_name].hide = hidden
+                    armature.data.bones[bone_name].layers[show_layer] = True 
+                    armature.data.bones[bone_name].layers[0] = False
+                    armature.data.bones[bone_name].hide = hidden
             else:
                 original_mode = bpy.context.object.mode
                 bpy.ops.object.mode_set(mode = 'OBJECT')
                 show_layer = str(show_layer)
                 bone.collections.clear()
-                if self.armature.data.bones.get(bone_name):
-                    if self.armature.data.collections.get(show_layer):
-                        self.armature.data.collections[show_layer].assign(self.armature.data.bones.get(bone_name))
+                if armature.data.bones.get(bone_name):
+                    if armature.data.collections.get(show_layer):
+                        armature.data.collections[show_layer].assign(armature.data.bones.get(bone_name))
                     else:
-                        self.armature.data.collections.new(show_layer)
-                        self.armature.data.collections[show_layer].assign(self.armature.data.bones.get(bone_name))
-                    self.armature.data.bones[bone_name].hide = hidden
+                        armature.data.collections.new(show_layer)
+                        armature.data.collections[show_layer].assign(armature.data.bones.get(bone_name))
+                    armature.data.bones[bone_name].hide = hidden
                 bpy.ops.object.mode_set(mode = original_mode)
 
     @staticmethod
@@ -2165,10 +2010,10 @@ class modify_armature(bpy.types.Operator):
         '''Creates a new bone on the armature with the specified name and returns the blender bone'''
         if bpy.app.version[0] == 3:
             bpy.ops.armature.bone_primitive_add()
-            bone = self.armature.data.edit_bones['Bone']
+            bone = c.get_armature().data.edit_bones['Bone']
             bone.name = new_bone_name
         else:
-            bone = self.armature.data.edit_bones.new(new_bone_name)
+            bone = c.get_armature().data.edit_bones.new(new_bone_name)
         return bone
 
 if __name__ == "__main__":

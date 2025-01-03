@@ -78,7 +78,7 @@ def set_ob_mode(scn: Scene, data: SMCObData) -> None:
 def get_data(data: Sequence[bpy.types.PropertyGroup], object) -> SMCObData:
     mats = defaultdict(dict)
     if object.type == 'MESH':
-        for mat in [m for m in object.data.materials if 'Outline ' not in m.name and ' Outline' not in m.name]:
+        for mat in [m for m in object.data.materials if 'Outline ' not in m.name]:
             mats[object.name][mat] = 1 #layer, just set to always 1
     return mats
 
