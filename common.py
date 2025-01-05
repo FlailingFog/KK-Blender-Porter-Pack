@@ -51,7 +51,7 @@ def get_outfits() -> bpy.types.Object:
     outfits = [o for o in bpy.data.objects if o.type == 'MESH' and o.get('outfit') and o.get('name') == bpy.context.scene.kkbp.character_name]
     return outfits
 
-def get_alts() -> bpy.data.Object:
+def get_alts() -> bpy.types.Object:
     '''Returns a list of all the alternate outfit objects for this import'''
     alts = [o for o in bpy.data.objects if o.type == 'MESH' and o.get('alt') and o.get('name') == bpy.context.scene.kkbp.character_name]
     return alts
@@ -111,40 +111,60 @@ def get_name() -> str:
     '''Returns the character name'''
     return bpy.context.scene.kkbp.character_name
 
-def get_material_names(smr_name: str) -> str:
+def get_import_path() -> str:
+    '''Returns the import path'''
+    return bpy.context.scene.kkbp.import_dir
+
+def get_material_names(smr_name: str) -> list[str]:
     '''Returns a list of the material names this smr object is using'''
     material_data = get_json_file('KK_MaterialDataComplete.json')
-    material_infos = [m['MaterialInfo'] for m in material_data if m.get('MaterialInfo')]
-    return [m['MaterialName'] for m in material_infos if m.get('MaterialName') == smr_name]
+    material_infos = [m['MaterialInformation'] for m in material_data if m.get('MaterialInformation') and m.get('SMRName') == smr_name]
+    materials = []
+    for material_info in material_infos:
+        materials.extend([m['MaterialName'] for m in material_info if m.get('MaterialName')])
+    return materials
 
 def get_color(material_name: str, color: str) -> dict:
     '''Find the material material_name and return an RGBA dict list of the specified color ranging from 0-1. If material_name contains a space and the character name, it will be filtered out.'''
-    material_name = material_name.replace(' ' + get_name(), '') #remove character name
-    material_data = get_json_file('KK_MaterialDataComplete.json')
-    material_infos = [m['MaterialInfo'] for m in material_data if m.get('MaterialInfo')]
-    material_names = [m['MaterialName'] for m in material_infos if m.get('MaterialName') == material_name]
-    material_colors = [[m['ShaderPropNames'], m['ShaderPropColorValues']] for m in material_names if color in m.get('ShaderPropNames', '')]
-    if material_colors:
-        color_dict = zip(material_colors[0], material_colors[1])
-        return color_dict[color]
-    else:
-        kklog(f'Couldn\'t find {color} in {material_name}', 'warn')
-        return {'r':1, 'g':1, 'b':1, 'a':1}
+    material_name = bpy.data.materials[material_name].get('id')
+    if material_name:
+        material_data = get_json_file('KK_MaterialDataComplete.json')
+        material_infos = [m['MaterialInformation'] for m in material_data if m.get('MaterialInformation')]
+        #get all the colors
+        material_colors = []
+        for material_info in material_infos:
+            material_colors.extend([m for m in material_info if m.get('MaterialName') == material_name])
+        for material_color in material_colors:
+            #then zip them and find the shadow color
+            color_dict = zip(material_color['ShaderPropNames'], material_color['ShaderPropColorValues'])
+            #key names are not consistent, so look through all of them
+            for pair in color_dict:
+                if color in pair[0]:
+                    return pair[1]
+    kklog(f"Couldn't find {color} for {material_name}", 'warn')
+    return {'r':1, 'g':1, 'b':1, 'a':1}
 
 def get_shadow_color(material_name: str) -> dict:
     '''Find the material material_name and return an RGBA float list ranging from 0-1'''
-    material_name = material_name.replace(' ' + get_name(), '') #remove character name
-    material_data = get_json_file('KK_MaterialDataComplete.json')
-    material_infos = [m['MaterialInfo'] for m in material_data if m.get('MaterialInfo')]
-    material_names = [m['MaterialName'] for m in material_infos if m.get('MaterialName') == material_name]
-    material_colors = [[m['ShaderPropNames'], m['ShaderPropColorValues']] for m in material_names if '_shadowcolor' in str(m.get('ShaderPropNames')).lower()]
-    if material_colors:
-        material_colors = material_colors[0]
-        color_dict = zip(material_colors[0], material_colors[1])
-        #key names are not consistent, so look through all of them
-        for key in color_dict:
-            if '_shadowcolor' in key.lower():
-                return color_dict[key]
+    #remove character name
+    material_name = bpy.data.materials[material_name].get('id')
+    if material_name:
+        material_data = get_json_file('KK_MaterialDataComplete.json')
+        material_infos = [m['MaterialInformation'] for m in material_data if m.get('MaterialInformation')]
+        #get all the shadow colors
+        material_colors = []
+        for material_info in material_infos:
+            material_colors.extend([m for m in material_info if m.get('MaterialName') == material_name and '_shadowcolor' in str(m.get('ShaderPropNames')).lower()])
+        for material_color in material_colors:
+            #then zip them and find the shadow color
+            color_dict = zip(material_color['ShaderPropNames'], material_color['ShaderPropColorValues'])
+            #key names are not consistent, so look through all of them
+            for pair in color_dict:
+                if '_shadowcolor' in pair[0].lower():
+                    return pair[1]
+    #return a default color if not found
+    kklog(f'Couldn\'t find shadow color for {material_name}', 'warn')
+    return {'r':0.764, 'g':0.880, 'b':1}
 
 def initialize_timer():
     bpy.context.scene.kkbp.total_timer = datetime.datetime.now().minute * 60 + datetime.datetime.now().second + datetime.datetime.now().microsecond / 1e6
@@ -218,7 +238,7 @@ def import_from_library_file(category, list_of_items, use_fake_user = False):
     if blend_file_missing:
         #grab it from the plugin directory
         directory = Path(__file__)
-        filename = 'KK Shader V7.0.blend/'
+        filename = 'KK Shader V8.0.blend/'
     
     library_path=(Path(directory).parent / filename).resolve()
     template_list = [{'name':item} for item in list_of_items]

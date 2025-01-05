@@ -35,19 +35,19 @@ class modify_material(bpy.types.Operator):
 
             self.remove_unused_material_slots()
             self.remap_duplicate_material_slots()
-
+            
             self.replace_materials_for_body()
             self.replace_materials_for_hair()
             self.replace_materials_for_outfits()
             self.replace_materials_for_tears_tongue_gageye()
             self.remove_duplicate_node_groups()
-
+            
             self.load_images_and_create_dark_main_textures()
             self.link_textures_for_face_body()
             self.link_textures_for_hair()
             self.link_textures_for_clothes()
             self.link_textures_for_tongue_tear_gag()
-
+            
             self.import_and_setup_smooth_normals()
             self.setup_gag_eye_material_drivers()
 
@@ -97,7 +97,7 @@ class modify_material(bpy.types.Operator):
             #remap duplicate materials to the base one
             material_list = obj.data.materials
             for mat in material_list:
-                mat_name_list = c.get_material_names('cf_Ohitomi_R02')
+                mat_name_list = c.get_material_names('cf_Ohitomi_L02')
                 mat_name_list.extend(c.get_material_names('cf_Ohitomi_R02'))
                 mat_name_list.extend(c.get_material_names('cf_Ohitomi_L'))
                 mat_name_list.extend(c.get_material_names('cf_Ohitomi_R'))
@@ -106,9 +106,9 @@ class modify_material(bpy.types.Operator):
                 mat_name_list.extend(c.get_material_names('cf_O_namida_S'))
                 mat_name_list.extend(c.get_material_names('o_tang'))
                 #don't merge the above materials if categorize by SMR is chosen.
-                eye_flag = mat.name not in mat_name_list if bpy.context.scene.kkbp.categorize_dropdown == 'D' else True
+                can_merge = mat.name not in mat_name_list if bpy.context.scene.kkbp.categorize_dropdown == 'D' else True
                 
-                if '.' in mat.name[-4:] and eye_flag:
+                if '.' in mat.name[-4:] and can_merge:
                     try:
                         #the material name is normal
                         base_name, dupe_number = mat.name.split('.',2)
@@ -117,7 +117,7 @@ class modify_material(bpy.types.Operator):
                         base_name, rest_of_base_name, dupe_number = mat.name.split('.',2)
                         base_name = base_name + rest_of_base_name
                     #remap material if it's a dupe, but don't touch the eye dupe
-                    if material_list.get(base_name) and int(dupe_number) and 'cf_m_hitomi_00' not in base_name and [m['MaterialName'] for m in material_infos if m.get('MaterialName') == 'o_tang'][0] not in base_name:
+                    if material_list.get(base_name) and int(dupe_number):
                         mat.user_remap(material_list[base_name])
                         bpy.data.materials.remove(mat)
                     else:
@@ -128,10 +128,8 @@ class modify_material(bpy.types.Operator):
             for index, mat in enumerate(material_list):
                 if mat.name not in repeats:
                     repeats[mat.name] = [index]
-                    # print("First entry of {} in slot {}".format(mat.name, index))
                 else:
                     repeats[mat.name].append(index)
-                    # print("Additional entry of {} in slot {}".format(mat.name, index))
             
             for material_name in list(repeats.keys()):
                 if len(repeats[material_name]) > 1:
@@ -156,8 +154,6 @@ class modify_material(bpy.types.Operator):
             body.visible_shadow = False
         templateList = [
         'KK Body',
-        'KK Outline',
-        'KK Body Outline',
         'KK Tears',
         'KK Gag00',
         'KK Gag01',
@@ -168,42 +164,50 @@ class modify_material(bpy.types.Operator):
         'KK Eyeline down',
         'KK Eyeline kage',
         'KK Eyeline up',
-        'KK EyewhitesL (sirome)',
-        'KK EyewhitesR (sirome)',
+        'KK Eyewhites (sirome)',
         'KK Face',
         'KK General',
         'KK Hair',
         'KK Nose',
         'KK Teeth (tooth)',
-        'KK Simple'
+        'KK Simple',
+        'Outline General',
+        'Outline Body',
         ]
         c.import_from_library_file(category='Material', list_of_items=templateList, use_fake_user=True)
 
         #Replace all materials on the body with templates
-        def swap_body_material(original_materials: bpy.types.Material, template: bpy.types.Material):
-            for original_material in original_materials:
+        def swap_body_material(original_materials: list[str], template_name: str):
+            for index, original_material in enumerate(original_materials):
                 try:
-                    template = bpy.data.materials[template].copy()
-                    template.name = bpy.data.materials[template].name + ' ' + c.get_name()
+                    #The kage is bundled with Eyeline up, so make an exception for it
+                    if index == 1 and template_name == 'KK Eyeline up':
+                        template_name = 'KK Eyeline kage'
+                    template = bpy.data.materials[template_name].copy()
+                    template['body'] = True
+                    template['name'] = c.get_name()
+                    template['id'] = original_material
+                    template.name = bpy.data.materials[template_name].name + ' ' + c.get_name()
                     body.material_slots[original_material].material = template
                     template_group = template.node_tree.nodes['textures'].node_tree.copy()
+                    template_group.name = 'Tex ' + original_material + ' ' + c.get_name()
                     template.node_tree.nodes['textures'].node_tree = template_group
-                    template_group.name += ' ' + c.get_name()
                 except:
-                    c.kklog('material or template wasn\'t found when replacing body materials: ' + str(original_material) + ' / ' + template, 'warn')
+                    c.kklog(f'material or template wasn\'t found when replacing body materials: {str(original_material)} / {str(template_name)}', 'warn')
         
         swap_body_material(c.get_material_names('cf_O_face'),'KK Face')
         swap_body_material(c.get_material_names('cf_O_mayuge'),'KK Eyebrows (mayuge)')
         swap_body_material(c.get_material_names('cf_O_noseline'),'KK Nose')
         swap_body_material(c.get_material_names('cf_O_eyeline'),'KK Eyeline up')
         swap_body_material(c.get_material_names('cf_O_eyeline_low'),'KK Eyeline down')
-        swap_body_material(c.get_material_names('cf_Ohitomi_L'),'KK EyewhitesL (sirome)')
-        swap_body_material(c.get_material_names('cf_Ohitomi_R'),'KK EyewhitesR (sirome)')
+        swap_body_material(c.get_material_names('cf_Ohitomi_L'),'KK Eyewhites (sirome)')
+        swap_body_material(c.get_material_names('cf_Ohitomi_R'),'KK Eyewhites (sirome)')
         swap_body_material(c.get_material_names('cf_Ohitomi_L02'),'KK EyeL (hitomi)')
         swap_body_material(c.get_material_names('cf_Ohitomi_R02'),'KK EyeR (hitomi)')
         swap_body_material(c.get_material_names('o_body_a'),'KK Body')
         swap_body_material(c.get_material_names('cf_O_tooth'),'KK Teeth (tooth)')
         swap_body_material(c.get_material_names('o_tang'),'KK General')
+
         c.print_timer('replace_materials_for_body')
 
     def replace_materials_for_hair(self):
@@ -211,13 +215,23 @@ class modify_material(bpy.types.Operator):
         for hair in c.get_hairs():
             if bpy.app.version[0] != 3:
                 hair.visible_shadow = False
-            for original_material in hair.material_slots:
+            for material_slot in hair.material_slots:
+                original_name = material_slot.material.name
                 template = bpy.data.materials['KK Hair'].copy()
-                template.name = 'KK ' + original_material.name
-                original_material.material = bpy.data.materials[template.name]
+                template['hair'] = True
+                template['name'] = c.get_name()
+                template['id'] = original_name
+                template.name = 'KK ' + original_name + ' ' + c.get_name()
+                material_slot.material = bpy.data.materials[template.name]
+                
                 template_group = template.node_tree.nodes['textures'].node_tree.copy()
+                template_group.name = 'Tex ' + original_name + ' ' + c.get_name()
                 template.node_tree.nodes['textures'].node_tree = template_group
-                template_group.name = template_group.name.replace('Hair', template_group.name + ' ' + c.get_name()) 
+                
+                template_group_pos = template.node_tree.nodes['textures'].node_tree.nodes['pospattern'].node_tree.copy()
+                template_group_pos.name = 'Pos ' + original_name + ' ' + c.get_name()
+                template.node_tree.nodes['textures'].node_tree.nodes['pospattern'].node_tree = template_group_pos                
+
         c.print_timer('replace_materials_for_hair')
 
     def replace_materials_for_outfits(self):
@@ -227,16 +241,22 @@ class modify_material(bpy.types.Operator):
         for ob in outfits:
             if bpy.app.version[0] != 3:
                 ob.visible_shadow = False
-            for original_material in ob.material_slots:
+            for material_slot in ob.material_slots:
+                original_name = material_slot.material.name
                 template = bpy.data.materials['KK General'].copy()
-                template.name = 'KK ' + original_material.name
-                original_material.material = bpy.data.materials[template.name]
+                template['outfit'] = True
+                template['name'] = c.get_name()
+                template['id'] = original_name
+                template.name = 'KK ' + original_name + ' ' + c.get_name()
+                material_slot.material = bpy.data.materials[template.name]
+                
                 template_group = template.node_tree.nodes['textures'].node_tree.copy()
+                template_group.name = 'Tex ' + original_name + ' ' + c.get_name()
                 template.node_tree.nodes['textures'].node_tree = template_group
-                template_group.name = template_group.name.replace('General', template_group.name + ' ' + c.get_name()) 
-                template_group = template.node_tree.nodes['textures'].node_tree.nodes['pospattern'].node_tree.copy()
-                template.node_tree.nodes['textures'].node_tree = template_group
-                template_group.name = template_group.name.replace('General', template_group.name + ' ' + c.get_name()) 
+                
+                template_group_pos = template.node_tree.nodes['textures'].node_tree.nodes['pospattern'].node_tree.copy()
+                template_group_pos.name = 'Pos ' + original_name + ' ' + c.get_name()
+                template.node_tree.nodes['textures'].node_tree.nodes['pospattern'].node_tree = template_group_pos                
 
         c.print_timer('replace_materials_for_outfits')
 
@@ -248,38 +268,44 @@ class modify_material(bpy.types.Operator):
             tears = c.get_tears()
             template = bpy.data.materials['KK Tears'].copy()
             template.name = 'KK Tears ' + c.get_name() 
+            template['tears'] = True
+            template['id'] = c.get_material_names('cf_O_namida_L')[0]
             tears.material_slots[0].material = bpy.data.materials[template.name]
             template_group = template.node_tree.nodes['textures'].node_tree.copy()
             template.node_tree.nodes['textures'].node_tree = template_group
             template_group.name += ' ' + c.get_name()        
 
         #replace tongue material if it exists
-        if body.material_slots.get('KK General'):
+        if body.material_slots.get('KK General ' + c.get_name()):
             #Make the tongue material unique so parts of the General Template aren't overwritten
-            tongue_template = bpy.data.materials['KK General'].copy()
-            tongue_template.name = 'KK Tongue ' + c.get_name()
+            template = bpy.data.materials['KK General'].copy()
+            template.name = 'KK Tongue ' + c.get_name()
+            template['tongue'] = True
+            template['id'] = c.get_material_names('o_tang')[0]
+            body.material_slots['KK General ' + c.get_name()].material = template
             template_group = template.node_tree.nodes['textures'].node_tree.copy()
             template.node_tree.nodes['textures'].node_tree = template_group
             template_group.name = 'Tex Tongue ' + c.get_name()
-            template_group = template.node_tree.nodes['textures'].node_tree.nodes['pospattern'].node_tree.copy()
-            template.node_tree.nodes['textures'].node_tree = template_group
-            template_group.name = 'Position Tongue ' + c.get_name()
-
-            body.material_slots['KK General'].material = tongue_template
+            template_group_pos = template.node_tree.nodes['textures'].node_tree.nodes['pospattern'].node_tree.copy()
+            template.node_tree.nodes['textures'].node_tree.nodes['pospattern'].node_tree = template_group_pos
+            template_group_pos.name = 'Position Tongue ' + c.get_name()
             
             #give the rigged tongue the existing material template
             if c.get_tongue():
-                c.get_tongue().material_slots[0].material = tongue_template
+                c.get_tongue().material_slots[0].material = template
 
         #give the gag eyes a material template if they exist
         if c.get_gags():
             gag = c.get_gags()
-            for mat in ['00', '01', '02']:
-                template = bpy.data.materials['KK Gag'+mat].copy()
-                template.name = 'KK Gag' + mat + ' ' + c.get_name()
+            for num in ['00', '01', '02']:
+                template = bpy.data.materials['KK Gag'+num].copy()
+                template['gag'] = True
+                template['id'] = c.get_material_names('cf_O_gag_eye_'+num)[0]
+                gag.material_slots['cf_m_gageye_'+num].material = template
+                template.name = 'KK Gag' + num + ' ' + c.get_name()
                 template_group = template.node_tree.nodes['textures'].node_tree.copy()
                 template.node_tree.nodes['textures'].node_tree = template_group
-                template_group.name = 'Tex Gag' + mat + ' ' + c.get_name()
+                template_group.name = 'Tex Gag' + num + ' ' + c.get_name()
         c.print_timer('replace_materials_for_tears_tongue_gageye')
 
     def remove_duplicate_node_groups(self):
@@ -292,7 +318,6 @@ class modify_material(bpy.types.Operator):
             # Replace the numeric duplicate
             if ext.isnumeric():
                 if base in node_groups:
-                    #print("  Replace '%s' with '%s'" % (node.node_tree.name, base))
                     node.node_tree.use_fake_user = False
                     node.node_tree = node_groups.get(base)
         #--- Search for duplicates in actual node groups
@@ -336,17 +361,15 @@ class modify_material(bpy.types.Operator):
                 'cf_m_noseline_00', 
                 'cf_m_sirome_00', 
                 'cf_m_tooth', 
-                '_cf_Ohitomi_', 
-                'cf_m_emblem',
                 '_MT'] #skip MTs because there will be STs instead
             convert_this = True
             for item in skip_list:
                 if item in image.name:
                     convert_this = False
-            material_name = image.name[:-10]
-            shadow_color = c.get_shadow_color(material_name)
-            if '_ST_CT' in image.name and convert_this and bpy.context.scene.kkbp.colors_dropdown == Tru:
+            if '_ST_CT' in image.name and convert_this and bpy.context.scene.kkbp.colors_dropdown == True:
                 try:
+                    material_name = image.name.replace('_ST_CT.png', '')
+                    shadow_color = c.get_shadow_color(material_name)
                     _ = self.create_darktex(bpy.data.images[image.name], shadow_color)
                 except:
                     c.kklog('Tried to create a dark version of {} but it was missing a shadow color. Defaulting to shadow color of R=0.764, G=0.880, B=1].'.format(image.name), type='warn')
@@ -357,37 +380,36 @@ class modify_material(bpy.types.Operator):
     def link_textures_for_face_body(self):
         '''Load all body textures into their texture slots'''
         body = c.get_body()
-        body_mat = c.get_material_names('o_body_a')[0]
-        self.image_load('KK Body', body_mat + '_ST_CT.png')
-        self.image_load('KK Body', body_mat + '_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available
-        self.image_load('KK Body', body_mat + '_ST_DT.png')
+        self.image_load('Body', '_ST_CT.png')
+        self.image_load('Body', '_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available
+        self.image_load('Body', '_ST_DT.png')
         #default to colors if there's no maintex
-        if body.material_slots['KK Body'].material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].image.name == 'Template: Placeholder':
-            body.material_slots['KK Body'].material.node_tree.nodes['light'].inputs['Use main texture instead?'].default_value = 0
-            body.material_slots['KK Body'].material.node_tree.nodes['dark' ].inputs['Use main texture instead?'].default_value = 0
-        self.image_load('KK Body', body_mat + '_CM.png')
-        self.image_load('KK Body', body_mat + '_DM.png') #cfm female
-        self.image_load('KK Body', body_mat + '_LM.png')
-        self.image_load('KK Body', body_mat + '_NMP_CNV.png')
-        self.image_load('KK Body', body_mat + '_NMPD_CNV.png')
-        self.image_load('KK Body', 'cm_m_body_DM.png') #cmm male
-        self.image_load('KK Body', 'cm_m_body_LM.png')
-        self.image_load('KK Body', body_mat + '_ST.png', group_override='texturesnsfw') #chara main texture
-        self.image_load('KK Body', body_mat + '_ot2.png', group_override='texturesnsfw') #pubic hair
-        self.image_load('KK Body',  body_mat + '_ot1.png', group_override='texturesnsfw') #cfm female
-        self.image_load('KK Body',  body_mat + '_ot1.png', group_override='texturesnsfw', node_override='_ot1.pngleft')
-        self.image_load('KK Body', 'cm_m_body_ot1.png', group_override='texturesnsfw') #cmm male
-        self.image_load('KK Body', 'cm_m_body_ot1.png', group_override='texturesnsfw', node_override='_ot1.pngleft')
-        self.image_load('KK Body', body_mat + '_T3.png') #body overlays
-        self.image_load('KK Body', body_mat + '_T4.png')
-        self.set_uv_type('KK Body', 'nippleuv', 'uv_nipple_and_shine')
-        self.set_uv_type('KK Body', 'underuv', 'uv_underhair')
+        if body.material_slots['KK Body ' + c.get_name()].material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].image.name == 'Template: Placeholder':
+            body.material_slots['KK Body ' + c.get_name()].material.node_tree.nodes['dark' ].inputs['Use main texture instead?'].default_value = 0
+            body.material_slots['KK Body ' + c.get_name()].material.node_tree.nodes['light'].inputs['Use main texture instead?'].default_value = 0
+        self.image_load('Body', '_CM.png')
+        self.image_load('Body', '_DM.png') #cfm female
+        self.image_load('Body', '_LM.png')
+        self.image_load('Body', '_NMP_CNV.png')
+        self.image_load('Body', '_NMPD_CNV.png')
+        self.image_load('Body', 'cm_m_body_DM.png') #cmm male
+        self.image_load('Body', 'cm_m_body_LM.png')
+        self.image_load('Body', '_ST.png', group_override='texturesnsfw') #chara main texture
+        self.image_load('Body', '_ot2.png', group_override='texturesnsfw') #pubic hair
+        self.image_load('Body', '_ot1.png', group_override='texturesnsfw') #cfm female
+        self.image_load('Body', '_ot1.png', group_override='texturesnsfw', node_override='_ot1.pngleft')
+        self.image_load('Body', 'cm_m_body_ot1.png', group_override='texturesnsfw') #cmm male
+        self.image_load('Body', 'cm_m_body_ot1.png', group_override='texturesnsfw', node_override='_ot1.pngleft')
+        # self.image_load('Body', '_T3.png') #body overlays
+        # self.image_load('Body', '_T4.png')
+        self.set_uv_type('Body', 'nippleuv', 'uv_nipple_and_shine', group= 'texturesnsfw')
+        self.set_uv_type('Body', 'underuv', 'uv_underhair', group= 'texturesnsfw')
         #find the appropriate alpha mask
         alpha_mask = None
-        if bpy.data.images.get(body_mat + '_AM.png'):
-            alpha_mask = bpy.data.images.get(body_mat + '_AM.png')
-        elif bpy.data.images.get(body_mat + '_AM_00.png'):
-            alpha_mask = bpy.data.images.get(body_mat + '_AM_00.png')
+        if bpy.data.images.get('_AM.png'):
+            alpha_mask = bpy.data.images.get('_AM.png')
+        elif bpy.data.images.get('_AM_00.png'):
+            alpha_mask = bpy.data.images.get('_AM_00.png')
         else:
             #check the other alpha mask numbers
             for image in bpy.data.images:
@@ -395,59 +417,60 @@ class modify_material(bpy.types.Operator):
                     alpha_mask = image
                     break
         #if there was an alpha mask detected, load it in
-        self.image_load('KK Body', alpha_mask, node_override='_AM.png')
+        self.image_load('Body', image_override = alpha_mask.name, node_override='_AM.png')
 
         #load in face textures
-        face_mat = c.get_material_names('cf_O_face')[0]
-        self.image_load('KK Face', face_mat + '_ST_CT.png')
-        self.image_load('KK Face', face_mat + '_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available
-        self.image_load('KK Face', face_mat + '_ST_DT.png')
-        #default to colors if there's no maintex
-        if body.material_slots['KK Face'].material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].image.name == 'Template: Placeholder':
-            body.material_slots['KK Face'].material.node_tree.nodes['light'].inputs['Use main texture instead?'].default_value = 0
-            body.material_slots['KK Face'].material.node_tree.nodes['dark' ].inputs['Use main texture instead?'].default_value = 0
-        self.image_load('KK Face', face_mat + '_CM.png')
-        self.image_load('KK Face', face_mat + '_DM.png')
-        self.image_load('KK Face', face_mat + '_T4.png')
-        self.image_load('KK Face', face_mat + '_ST.png') 
-        self.image_load('KK Face', face_mat + '_LM.png')
-        self.image_load('KK Face', face_mat + '_T5.png')
-        self.image_load('KK Face', face_mat + '_ot1.png')
-        self.image_load('KK Face', face_mat + '_ot2.png')
-        self.image_load('KK Face', face_mat + '_T6.png')
-        self.image_load('KK Face', face_mat + '_T7.png')
-        self.image_load('KK Face', face_mat + '_T8.png')
-        self.image_load('KK Face', face_mat + '_ot3.png')
-        self.set_uv_type('KK Face', 'eyeshadowuv', 'uv_eyeshadow')
+        if c.get_material_names('cf_O_face'):
+            self.image_load('Face', '_ST_CT.png')
+            self.image_load('Face', '_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available
+            self.image_load('Face', '_ST_DT.png')
+            #default to colors if there's no maintex
+            if body.material_slots['KK Face ' + c.get_name()].material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].image.name == 'Template: Placeholder':
+                body.material_slots['KK Face ' + c.get_name()].material.node_tree.nodes['light'].inputs['Use main texture instead?'].default_value = 0
+                body.material_slots['KK Face ' + c.get_name()].material.node_tree.nodes['dark' ].inputs['Use main texture instead?'].default_value = 0
+            self.image_load('Face', '_CM.png')
+            self.image_load('Face', '_DM.png')
+            self.image_load('Face', '_T4.png') #blush
+            self.image_load('Face', '_ST.png') #mouth interior
+            self.image_load('Face', '_LM.png')
+            self.image_load('Face', '_T5.png') #lower lip mask
+            self.image_load('Face', '_ot1.png') #lipstick
+            self.image_load('Face', '_ot2.png') #flush
+            # self.image_load('Face', '_T6.png')
+            # self.image_load('Face', '_T7.png')
+            # self.image_load('Face', '_T8.png')
+            self.image_load('Face', '_ot3.png') #eyeshadow
+            self.set_uv_type('Face', 'eyeshadowuv', 'uv_eyeshadow')
         
         #load in the remaining face materials if they exist
         if c.get_material_names('cf_O_mayuge'):
-            self.image_load('KK Eyebrows (mayuge)', c.get_material_names('cf_O_mayuge')[0] + '_ST_CT.png')
+            self.image_load('Eyebrows (mayuge)', '_ST_CT.png')
         
         if c.get_material_names('cf_O_noseline'):
-            self.image_load('KK Nose', c.get_material_names('cf_O_noseline')[0] + '_ST_CT.png')
+            self.image_load('Nose', '_ST_CT.png')
         if c.get_material_names('cf_O_tooth'):
-            self.image_load('KK Teeth (tooth)', c.get_material_names('cf_O_tooth')[0] + '_ST_CT.png')
+            self.image_load('Teeth (tooth)', '_ST_CT.png')
         if c.get_material_names('cf_Ohitomi_R'):
-            self.image_load('KK EyewhitesL (sirome)',  c.get_material_names('cf_Ohitomi_L')[0] + '_00_ST_CT.png', node_override='_ST_CT.png')
-            self.image_load('KK EyewhitesR (sirome)',  c.get_material_names('cf_Ohitomi_R')[0] + '_00_ST_CT.png', node_override='_ST_CT.png')
+            self.image_load('Eyewhites (sirome)',  image_override = c.get_material_names('cf_Ohitomi_L')[0] + '_ST_CT.png', node_override = '_ST_CT.png')
+            self.image_load('Eyewhites (sirome)',  image_override = c.get_material_names('cf_Ohitomi_R')[0] + '_ST_CT.png', node_override = '_ST_CT.png')
 
         if c.get_material_names('cf_O_eyeline'):
-            self.image_load('KK Eyeline up', c.get_material_names('cf_O_eyeline')[0] + '_ST_CT.png')
-        if len(c.get_material_names('cf_O_eyeline')) > 2:
-            self.image_load('KK Eyeline up', c.get_material_names('cf_O_eyeline')[1] + '_ST_CT.png', node_override='_kage_ST_CT.png')
+            self.image_load('Eyeline up', '_ST_CT.png')
+        if len(c.get_material_names('cf_O_eyeline')) > 1:
+            self.image_load('Eyeline up', image_override=c.get_material_names('cf_O_eyeline')[1] + '_ST_CT.png', node_override='_ST_CT.pngkage')
         if c.get_material_names('cf_O_eyeline_low'):
-            self.image_load('KK Eyeline down', c.get_material_names('cf_O_eyeline_low') + '_ST_CT.png')
+            self.image_load('Eyeline up', image_override=c.get_material_names('cf_O_eyeline_low')[0] + '_ST_CT.png', node_override='_ST_CT.pngdown')
         
         #eyes
         for side in ['L', 'R']:
             eye_mat = c.get_material_names(f'cf_Ohitomi_{side}02')[0]
-            self.image_load(f'KK Eye{side} (hitomi)', eye_mat + '_ST_CT.png')
-            self.image_load(f'KK Eye{side} (hitomi)', eye_mat + '_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available
-            self.image_load(f'KK Eye{side} (hitomi)', eye_mat + '_ot1.png')
-            self.image_load(f'KK Eye{side} (hitomi)', eye_mat + '_ot2.png')
-            self.image_load(f'KK Eye{side} (hitomi)', eye_mat[:-15] + '_cf_t_expression_00_EXPR.png')
-            self.image_load(f'KK Eye{side} (hitomi)', eye_mat[:-15] + '_cf_t_expression_01_EXPR.png')
+            self.image_load(f'Eye{side} (hitomi)', '_ST_CT.png')
+            self.image_load(f'Eye{side} (hitomi)', '_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available
+            self.image_load(f'Eye{side} (hitomi)', '_ST_DT.png')
+            self.image_load(f'Eye{side} (hitomi)', '_ot1.png')
+            self.image_load(f'Eye{side} (hitomi)', '_ot2.png')
+            self.image_load(f'Eye{side} (hitomi)', image_override = eye_mat[:-15] + '_cf_t_expression_00_EXPR.png', node_override= '_cf_t_expression_00_EXPR.png')
+            self.image_load(f'Eye{side} (hitomi)', image_override = eye_mat[:-15] + '_cf_t_expression_01_EXPR.png', node_override= '_cf_t_expression_01_EXPR.png')
         
         #correct the eye scaling using info from the KK_ChaFileCustomFace.json
         face_data = c.get_json_file('KK_ChaFileCustomFace.json')
@@ -458,18 +481,18 @@ class modify_material(bpy.types.Operator):
 
     def link_textures_for_hair(self):
         '''Load all hair textures into their texture slots'''
-        for current_obj  in self.hairs:
+        for current_obj  in c.get_hairs():
             for hairMat in current_obj.material_slots:
-                hairType = hairMat.name.replace('KK ','')
+                hairType = hairMat.name.replace('KK ','').replace(' ' + c.get_name(), '')
                             
-                self.image_load(hairMat.name,  hairType+'_ST_CT.png')
-                self.image_load(hairMat.name,  hairType+'_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available
-                self.image_load(hairMat.name,  hairType+'_ST_DT.png')
-                self.image_load(hairMat.name,  hairType+'_DM.png')
-                self.image_load(hairMat.name,  hairType+'_CM.png')
-                self.image_load(hairMat.name,  hairType+'_HGLS.png')
-                self.image_load(hairMat.name,  hairType+'_AM.png')
-                self.set_uv_type(hairMat.name, 'hairuv', 'uv_nipple_and_shine')
+                self.image_load( hairType,  '_ST_CT.png')
+                self.image_load( hairType,  '_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available
+                self.image_load( hairType,  '_ST_DT.png')
+                self.image_load( hairType,  '_DM.png')
+                self.image_load( hairType,  '_CM.png')
+                self.image_load( hairType,  '_HGLS.png')
+                self.image_load( hairType,  '_AM.png')
+                self.set_uv_type(hairType, 'hairuv', 'uv_nipple_and_shine')
                 
         c.print_timer('link_textures_for_hair')
 
@@ -479,21 +502,21 @@ class modify_material(bpy.types.Operator):
         outfits.extend(c.get_alts())
         for outfit in outfits:
             for genMat in outfit.material_slots:
-                genType = genMat.name.replace('KK ','')
+                genType = genMat.name.replace('KK ','').replace(' ' + c.get_name(), '')
                 
                 #load these textures if they are present
-                self.image_load(genMat.name, genType + '_ST.png')
-                self.image_load(genMat.name, genType + '_ST_CT.png')
-                self.image_load(genMat.name, genType + '_ST_DT.png')
-                self.image_load(genMat.name, genType + '_AM.png')
-                self.image_load(genMat.name, genType + '_CM.png')
-                self.image_load(genMat.name, genType + '_DM.png')
-                self.image_load(genMat.name, genType + '_NMP.png')
-                self.image_load(genMat.name, genType + '_NMPD_CNV.png')
-                self.image_load(genMat.name, genType + '_PM1.png')
-                self.image_load(genMat.name, genType + '_PM2.png')
-                self.image_load(genMat.name, genType + '_PM3.png')
-                                
+                self.image_load(genType, '_ST.png')
+                self.image_load(genType, '_ST_CT.png')
+                self.image_load(genType, '_ST_DT.png')
+                self.image_load(genType, '_AM.png')
+                self.image_load(genType, '_CM.png')
+                self.image_load(genType, '_DM.png')
+                self.image_load(genType, '_NMP.png')
+                self.image_load(genType, '_NMPD_CNV.png')
+                self.image_load(genType, '_PM1.png')
+                self.image_load(genType, '_PM2.png')
+                self.image_load(genType, '_PM3.png')
+                
                 #If there's a plain maintex loaded, but no colored maintex loaded, make the shader use the plain maintex
                 plain_but_no_main = (
                     genMat.material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].image.name == 'Template: Placeholder' and
@@ -501,48 +524,48 @@ class modify_material(bpy.types.Operator):
                     )
                 if plain_but_no_main:
                     genMat.material.node_tree.nodes['combine'].inputs['Use plain main texture?'].default_value = 1
+                
+                #special exception to clip the emblem image
+                if 'KK cf_m_emblem ' in genMat.material.name:
+                    genMat.material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].extension = 'CLIP'
                                 
         c.print_timer('link_textures_for_clothes')
 
     def link_textures_for_tongue_tear_gag(self):
-        tongue_mat = c.get_material_names('cf_O_face')
+        tongue_mat = c.get_material_names('o_tang')
         if tongue_mat:
-            self.image_load('KK Tongue', tongue_mat[0] + '_CM.png', node_override='_ST_CT.png') #done on purpose
-            self.image_load('KK Tongue', tongue_mat[0] + '_CM.png')
-            self.image_load('KK Tongue', tongue_mat[0] + '_DM.png')
-            self.image_load('KK Tongue', tongue_mat[0] + '_NMP.png')
-            self.image_load('KK Tongue', tongue_mat[0] + '_NMP_CNV.png') #load regular map by default
-            self.image_load('KK Tongue', tongue_mat[0] + '_NMPD_CNV.png') #then the detail map if it's there
+            self.image_load('Tongue', '_CM.png', node_override='_ST_CT.png') #done on purpose
+            self.image_load('Tongue', '_CM.png')
+            self.image_load('Tongue', '_DM.png')
+            self.image_load('Tongue', '_NMP.png')
+            self.image_load('Tongue', '_NMP_CNV.png') #load regular map by default
+            self.image_load('Tongue', '_NMPD_CNV.png') #then the detail map if it's there
         else:
             c.kklog("SMR Tongue data bugged/missing", type = 'warn')
             tongue_mat = ['cf_m_tang']
-            self.image_load('KK Tongue', tongue_mat[0] + '_CM.png', node_override='_ST_CT.png') #done on purpose
-            self.image_load('KK Tongue', tongue_mat[0] + '_CM.png')
-            self.image_load('KK Tongue', tongue_mat[0] + '_DM.png')
-            self.image_load('KK Tongue', tongue_mat[0] + '_NMP.png')
-            self.image_load('KK Tongue', tongue_mat[0] + '_NMP_CNV.png') #load regular map by default
-            self.image_load('KK Tongue', tongue_mat[0] + '_NMPD_CNV.png') #then the detail map if it's there
+            self.image_load('Tongue', '_CM.png', node_override='_ST_CT.png') #done on purpose
+            self.image_load('Tongue', '_CM.png')
+            self.image_load('Tongue', '_DM.png')
+            self.image_load('Tongue', '_NMP.png')
+            self.image_load('Tongue', '_NMP_CNV.png') #load regular map by default
+            self.image_load('Tongue', '_NMPD_CNV.png') #then the detail map if it's there
 
-        #load all gag eyes in if it exists
-        if bpy.data.objects.get('Gag Eyes'):
-            gag_name0 = c.get_material_names('cf_O_gag_eye_00')[0]
-            gag_name1 = c.get_material_names('cf_O_gag_eye_01')[0]
-            gag_name2 = c.get_material_names('cf_O_gag_eye_02')[0]
-            self.image_load('KK Gag00', node_override='00gag00', image=gag_name0 + '_cf_t_gageye_00_ST_CT.png')
-            self.image_load('KK Gag00', node_override='00gag02', image=gag_name0 + '_cf_t_gageye_02_ST_CT.png')
-            self.image_load('KK Gag00', node_override='00gag04', image=gag_name0 + '_cf_t_gageye_04_ST_CT.png')
-            self.image_load('KK Gag00', node_override='00gag05', image=gag_name0 + '_cf_t_gageye_05_ST_CT.png')
-            self.image_load('KK Gag00', node_override='00gag06', image=gag_name0 + '_cf_t_gageye_06_ST_CT.png')
-            self.image_load('KK Gag01', node_override='01gag03', image=gag_name1 + '_cf_t_gageye_03_ST_CT.png')
-            self.image_load('KK Gag01', node_override='01gag01', image=gag_name1 + '_cf_t_gageye_01_ST_CT.png')
-            self.image_load('KK Gag02', node_override='02gag07', image=gag_name2 + '_cf_t_gageye_07_ST_CT.png')
-            self.image_load('KK Gag02', node_override='02gag08', image=gag_name2 + '_cf_t_gageye_08_ST_CT.png')
-            self.image_load('KK Gag02', node_override='02gag09', image=gag_name2 + '_cf_t_gageye_09_ST_CT.png')
+        #load all gag eye textures if it exists
+        if c.get_gags():
+            self.image_load('Gag00', '_cf_t_gageye_00_ST_CT.png')
+            self.image_load('Gag00', '_cf_t_gageye_02_ST_CT.png')
+            self.image_load('Gag00', '_cf_t_gageye_04_ST_CT.png')
+            self.image_load('Gag00', '_cf_t_gageye_05_ST_CT.png')
+            self.image_load('Gag00', '_cf_t_gageye_06_ST_CT.png')
+            self.image_load('Gag01', '_cf_t_gageye_03_ST_CT.png')
+            self.image_load('Gag01', '_cf_t_gageye_01_ST_CT.png')
+            self.image_load('Gag02', '_cf_t_gageye_07_ST_CT.png')
+            self.image_load('Gag02', '_cf_t_gageye_08_ST_CT.png')
+            self.image_load('Gag02', '_cf_t_gageye_09_ST_CT.png')
 
         #load the tears texture in
-        if bpy.data.objects.get('Tears'):
-            tear_mat = c.get_material_names('cf_O_namida_L')[0]
-            self.image_load('KK Tears', tear_mat + '_ST_CT.png')
+        if c.get_tears():
+            self.image_load('Tears', '_ST_CT.png')
         
         c.print_timer('link_textures_for_tongue_tear_gag')
         
@@ -576,7 +599,7 @@ class modify_material(bpy.types.Operator):
 
     def setup_gag_eye_material_drivers(self):
         '''setup gag eye drivers'''
-        if bpy.data.objects.get('Gag Eyes'):
+        if c.get_gags():
             body = c.get_body()
             gag_keys = [
                 'Circle Eyes 1',
@@ -614,19 +637,19 @@ class modify_material(bpy.types.Operator):
                 skey_driver.driver.expression = expression2
 
             create_driver (
-                'KK Gag00', 
+                'KK Gag00 ' + c.get_name(), 
                 '0 if CircleEyes1 else 1 if CircleEyes2 else 2 if CartoonyClosed else 3 if VerticalLine else 4', 
                 'CircleEyes1 or CircleEyes2 or CartoonyClosed or VerticalLine or HorizontalLine'
                 )
 
             create_driver (
-                'KK Gag01', 
+                'KK Gag01 ' + c.get_name(), 
                 '0 if HeartEyes else 1', 
                 'HeartEyes or SpiralEyes'
                 )
             
             create_driver (
-                'KK Gag02', 
+                'KK Gag02 ' + c.get_name(), 
                 '0 if CartoonyCrying else 1 if CartoonyWink else 2', 
                 'CartoonyCrying or CartoonyWink or FieryEyes'
                 )
@@ -645,11 +668,14 @@ class modify_material(bpy.types.Operator):
         mod.name = 'Outline Modifier'
         mod.show_expanded = False
         #face first
-        faceOutlineMat = bpy.data.materials['KK Outline'].copy()
-        faceOutlineMat.name = 'KK Face Outline ' + c.get_name()
+        faceOutlineMat = bpy.data.materials['Outline General'].copy()
+        faceOutlineMat.name = 'Outline Face ' + c.get_name()
         body.data.materials.append(faceOutlineMat)
         faceOutlineMat.blend_method = 'CLIP'
-        body.data.materials.append(bpy.data.materials['KK Body Outline'])
+        body_outline_mat = bpy.data.materials['Outline Body'].copy()
+        body_outline_mat.name = 'Outline Body ' + c.get_name()
+        body_outline_mat.node_tree.nodes['textures'].node_tree = bpy.data.materials['KK Body ' + c.get_name()].node_tree.nodes['textures'].node_tree
+        body.data.materials.append(body_outline_mat)
         c.print_timer('add_outlines_to_body')
 
     def add_outlines_to_hair(self):
@@ -682,9 +708,9 @@ class modify_material(bpy.types.Operator):
                     ob.data.materials.append(None)
                 #fill alpha user outline materials, and fill image node
                 for index, mat in enumerate(alpha_users):
-                    OutlineMat = bpy.data.materials['KK Outline'].copy()
+                    OutlineMat = bpy.data.materials['Outline General'].copy()
                     OutlineMat.name = mat.replace('KK ', 'Outline ')
-                    OutlineMat.node_tree.nodes['textures'].node_tree = mat.node_tree.nodes['textures'].node_tree
+                    OutlineMat.node_tree.nodes['textures'].node_tree = bpy.data.materials[mat].node_tree.nodes['textures'].node_tree
                     ob.material_slots[index + outlineStart].material = OutlineMat
                 #update polygon material indexes
                 for mat in mats_to_gons:
@@ -692,7 +718,7 @@ class modify_material(bpy.types.Operator):
                         gon.material_index = new_mat_list_order.index(mat)
 
         #Add a general outline that covers the rest of the materials on the hair object that don't need transparency
-        for ob in self.hairs:
+        for ob in c.get_hairs():
             bpy.context.view_layer.objects.active = ob
             mod = ob.modifiers.new(
                 type='SOLIDIFY',
@@ -703,8 +729,9 @@ class modify_material(bpy.types.Operator):
             mod.use_flip_normals = True
             mod.use_rim = False
             mod.show_expanded = False
-            hairOutlineMat = bpy.data.materials['KK Outline'].copy()
+            hairOutlineMat = bpy.data.materials['Outline General'].copy()
             hairOutlineMat.name = 'Outline Hair ' + c.get_name()
+            hairOutlineMat.node_tree.nodes['combine'].inputs['Force visibility'].default_value = 1
             ob.data.materials.append(hairOutlineMat)
         c.print_timer('add_outlines_to_hair')
 
@@ -745,9 +772,9 @@ class modify_material(bpy.types.Operator):
                     ob.data.materials.append(None)
                 #fill alpha user outline materials, and fill image node
                 for index, mat in enumerate(alpha_users):
-                    OutlineMat = bpy.data.materials['KK Outline'].copy()
+                    OutlineMat = bpy.data.materials['Outline General'].copy()
                     OutlineMat.name = mat.replace('KK ', 'Outline ')
-                    OutlineMat.node_tree.nodes['textures'].node_tree = mat.node_tree.nodes['textures'].node_tree
+                    OutlineMat.node_tree.nodes['textures'].node_tree = bpy.data.materials[mat].node_tree.nodes['textures'].node_tree
                     ob.material_slots[index + outlineStart[ob.name]].material = OutlineMat
                 #update polygon material indexes
                 for mat in mats_to_gons:
@@ -765,8 +792,9 @@ class modify_material(bpy.types.Operator):
             mod.use_flip_normals = True
             mod.use_rim = False
             mod.show_expanded = False
-            outline_mat = bpy.data.materials['KK Outline'].copy()
-            outline_mat.name += ' ' + c.get_name()
+            outline_mat = bpy.data.materials['Outline General'].copy()
+            outline_mat.name = 'Outline ' + ob.name
+            outline_mat.node_tree.nodes['combine'].inputs['Force visibility'].default_value = 1
             ob.data.materials.append(outline_mat)
         c.print_timer('add_outlines_to_clothes')
 
@@ -776,8 +804,8 @@ class modify_material(bpy.types.Operator):
         self.lut_selection = bpy.context.scene.kkbp.colors_dropdown
         self.lut_light = 'Lut_TimeDay.png'
         
-        self.lut_path = os.path.dirname(os.path.abspath(__file__))
-        day_lut = bpy.data.images.load(self.lut_path + self.lut_light, check_existing=True)
+        self.lut_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.lut_light)
+        day_lut = bpy.data.images.load(self.lut_path, check_existing=True)
         day_lut.use_fake_user = True
 
     def convert_main_textures(self):
@@ -798,16 +826,15 @@ class modify_material(bpy.types.Operator):
                 start_time = time.time()
                 image = bpy.data.images.load(str(image_file))
                 #saturate the image, save and remove the file
-                self.saturate_texture(image, lut_image)
+                self.saturate_texture(image)
                 image.save_render(str(os.path.join(bpy.context.scene.kkbp.import_dir, "saturated_files", image_file.name.replace('_MT', '_ST'))))
                 c.kklog('Saturated {} in {} sec'.format(image_file.name, round(time.time() - start_time, 1)))
 
         bpy.data.use_autopack = True #enable autopack on file save
 
     def load_json_colors(self):
-        json_color_data = c.get_json_file('KK_MaterialDataComplete.json')
-        self.update_shaders(json_color_data, self.lut_selection, self.lut_light, 'light') # Set light colors
-        self.update_shaders(json_color_data, self.lut_selection, self.lut_light, 'dark') # Set dark colors
+        self.update_shaders('light') # Set light colors
+        self.update_shaders('dark') # Set dark colors
         c.print_timer('load_json_colors')
 
     def set_color_management(self):
@@ -818,30 +845,37 @@ class modify_material(bpy.types.Operator):
 
     # %% Supporting functions
     @staticmethod
-    def apply_texture_data_to_image(mat: str, image: str, node):
+    def apply_texture_data_to_image(mat: str, image: str, node:str, group = 'textures'):
         '''Sets offset and scale of an image node using the TextureData.json '''
         json_tex_data = c.get_json_file('KK_TextureData.json')
         texture_data = [t for t in json_tex_data if t["textureName"] == image]
         if texture_data and bpy.data.materials.get(mat):
             #Apply Offset and Scale
-            bpy.data.materials[mat].node_tree.nodes['textures'].node_tree.nodes[node].texture_mapping.translation[0] = texture_data[0]["offset"]["x"]
-            bpy.data.materials[mat].node_tree.nodes['textures'].node_tree.nodes[node].texture_mapping.translation[1] = texture_data[0]["offset"]["y"]
-            bpy.data.materials[mat].node_tree.nodes['textures'].node_tree.nodes[node].texture_mapping.scale[0] = texture_data[0]["scale"]["x"]
-            bpy.data.materials[mat].node_tree.nodes['textures'].node_tree.nodes[node].texture_mapping.scale[1] = texture_data[0]["scale"]["y"]
+            bpy.data.materials[mat].node_tree.nodes[group].node_tree.nodes[node].texture_mapping.translation[0] = texture_data[0]["offset"]["x"]
+            bpy.data.materials[mat].node_tree.nodes[group].node_tree.nodes[node].texture_mapping.translation[1] = texture_data[0]["offset"]["y"]
+            bpy.data.materials[mat].node_tree.nodes[group].node_tree.nodes[node].texture_mapping.scale[0] = texture_data[0]["scale"]["x"]
+            bpy.data.materials[mat].node_tree.nodes[group].node_tree.nodes[node].texture_mapping.scale[1] = texture_data[0]["scale"]["y"]
 
-    def image_load(self, mat: str, image: str, node_override = None, group_override = None):
+    def image_load(self, material_name: str, image_suffix = '', image_override = None, node_override = None, group_override = None):
         '''Automatically load image into mat's texture slot'''
-        if bpy.data.images.get(image):
-            node = node_override if node_override else image.replace(mat, '')
+        #get the id from the material
+        material_name = 'KK ' + material_name + ' ' + c.get_name()
+        material = bpy.data.materials[material_name]
+        #get the image name using the id and the suffix
+        image_name = image_override if image_override else material['id'] + image_suffix
+        #then load the image into the texture slot
+        if bpy.data.images.get(image_name):
+            node = node_override if node_override else image_name.replace(material['id'], '')
             group = group_override if group_override else 'textures'
-            bpy.data.materials[mat].node_tree.nodes[group].node_tree.nodes[node].image = bpy.data.images[image]
-            self.apply_texture_data_to_image(mat, image, node)
+            bpy.data.materials[material_name].node_tree.nodes[group].node_tree.nodes[node].image = bpy.data.images[image_name]
+            #also apply scaling and offset data to the image
+            self.apply_texture_data_to_image(material_name, image_name, node, group)
         else:
-            c.kklog('File wasnt found, skipping: ' + image)
+            c.kklog('File wasnt found, skipping: ' + image_name)
 
     @staticmethod
-    def set_uv_type(mat: str, uvnode: str, uv_name: str):
-        bpy.data.materials[mat].node_tree.nodes['textures'].node_tree.nodes['pos'].node_tree.nodes[uv_name].uv_map = uv_name
+    def set_uv_type(mat: str, uvnode: str, uv_name: str, group = 'textures'):
+        bpy.data.materials['KK ' + mat + ' ' + c.get_name()].node_tree.nodes[group].node_tree.nodes['pos'].node_tree.nodes[uvnode].uv_map = uv_name
 
     def saturate_color(self, color: float, light_pass = 'light', shadow_color = {'r':0.764, 'g':0.880, 'b':1}) -> dict[str, float]:
         '''The Secret Sauce. Accepts a 0-1 float rgba color dict, saturates it to match the in-game look 
@@ -855,7 +889,7 @@ class modify_material(bpy.types.Operator):
         width, height = 1,1
 
         # Load image and LUT image pixels into array
-        image_pixels = numpy.array([color['r'], color['g'], color['b']]).reshape(height, width, 4)
+        image_pixels = numpy.array([color['r'], color['g'], color['b'], 1]).reshape(height, width, 4)
         lut_pixels = numpy.array(bpy.data.images['Lut_TimeDay.png'].pixels[:]).reshape(bpy.data.images['Lut_TimeDay.png'].size[1], bpy.data.images['Lut_TimeDay.png'].size[0], 4)
         
         #constants to ensure bot and top are within the 32 x 1024 dimensions of the lut
@@ -972,88 +1006,83 @@ class modify_material(bpy.types.Operator):
         '''Set the colors for everything. This is run once for the light colors and again for the dark colors'''                                
         #set the tongue colors if it exists
         if c.get_material_names('o_tang'):
-            shader_inputs = c.get_tongue().material_slots[0].material.nodes[light_pass].inputs
+            shader_inputs = c.get_tongue().material_slots[0].material.node_tree.nodes[light_pass].inputs
             shader_inputs['Maintex Saturation'].default_value = 0.6
             shader_inputs['Detail intensity (green)'].default_value = 0.01
-            shader_inputs['Color mask color (base)'].default_value = [1, 1, 1, 1]
+            shader_inputs['Color mask (base)'].default_value = [1, 1, 1, 1]
             mat_name = c.get_material_names('o_tang')[0]
-            shader_inputs['Color mask color (red)'].default_value =   self.saturate_color(c.get_color(mat_name, "_Color Color 0"),  light_pass, shadow_color = c.get_shadow_color(mat_name))
-            shader_inputs['Color mask color (green)'].default_value = self.saturate_color(c.get_color(mat_name, "_Color2 Color 1"), light_pass, shadow_color = c.get_shadow_color(mat_name))
-            shader_inputs['Color mask color (blue)'].default_value =  self.saturate_color(c.get_color(mat_name, "_Color3 Color 2"), light_pass, shadow_color = c.get_shadow_color(mat_name))
+            shader_inputs['Color mask (red)'].default_value =   self.saturate_color(c.get_color(mat_name, "_Color "),  light_pass, shadow_color = c.get_shadow_color(mat_name))
+            shader_inputs['Color mask (green)'].default_value = self.saturate_color(c.get_color(mat_name, "_Color2 "), light_pass, shadow_color = c.get_shadow_color(mat_name))
+            shader_inputs['Color mask (blue)'].default_value =  self.saturate_color(c.get_color(mat_name, "_Color3 "), light_pass, shadow_color = c.get_shadow_color(mat_name))
 
         #set all of the hair colors 
-        for hair_material in [m.material for m in c.get_hairs().material_slots if 'Outline ' not in m.material.name]:
-            shader_inputs = hair_material.nodes[light_pass].inputs
-            shader_inputs['Hair color'].default_value         = self.saturate_color(c.get_color(hair_material.name, "_Color Color 0" ),  light_pass, shadow_color = c.get_shadow_color(hair_material.name))
-            shader_inputs['Color mask (dark)'].default_value  = self.saturate_color(c.get_color(hair_material.name, "_Color2 Color 1"),  light_pass, shadow_color = c.get_shadow_color(hair_material.name))
-            shader_inputs['Color mask (light)'].default_value = self.saturate_color(c.get_color(hair_material.name, "_Color3 Color 2"),  light_pass, shadow_color = c.get_shadow_color(hair_material.name))
+        hair_materials = [m for m in bpy.data.materials if m.get('hair') == True and m.get('name') == c.get_name()]
+        for hair_material in hair_materials:
+            shader_inputs = hair_material.node_tree.nodes[light_pass].inputs
+            shader_inputs['Hair color'].default_value         = self.saturate_color(c.get_color(hair_material.name, "_Color " ),  light_pass, shadow_color = c.get_shadow_color(hair_material.name))
+            shader_inputs['Color mask (dark)'].default_value  = self.saturate_color(c.get_color(hair_material.name, "_Color2 "),  light_pass, shadow_color = c.get_shadow_color(hair_material.name))
+            shader_inputs['Color mask (light)'].default_value = self.saturate_color(c.get_color(hair_material.name, "_Color3 "),  light_pass, shadow_color = c.get_shadow_color(hair_material.name))
             #if there's a maintex, activate the slider
-            if hair_material.nodes['textures'].node_tree.nodes['_ST_CT.png'].image.name != 'Template: Placeholder':
+            if hair_material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].image.name != 'Template: Placeholder':
                 shader_inputs['Use main texture?'].default_value = 1
 
         #set body colors
         if c.get_body():
             if c.get_material_names('o_body_a'):
-                shader_inputs = c.get_body().material_slots['KK Body ' + c.get_name()].nodes[light_pass].inputs
-                mat_name = c.get_material_names('o_body_a')[0]
+                shader_inputs = c.get_body().material_slots['KK Body ' + c.get_name()].material.node_tree.nodes[light_pass].inputs
+                mat_name = 'KK Body ' + c.get_name()
                 if light_pass == 'light':
-                    shader_inputs['Skin color'].default_value = self.saturate_color(c.get_color(mat_name, "_Color Color 0"), light_pass = 'light')
+                    shader_inputs['Skin color'].default_value = self.saturate_color(c.get_color(mat_name, "_Color "), light_pass = 'light')
                 else:
-                    shader_inputs['Skin color'].default_value = self.saturate_color(self.skin_dark_color(c.get_color(mat_name, "_Color Color 0"), c.get_shadow_color(mat_name)), light_pass = 'light')
-                shader_inputs['Detail color'].default_value =               self.saturate_color(c.get_color(mat_name, "_Color2 Color 1" ),  light_pass, shadow_color = c.get_shadow_color(mat_name))
-                shader_inputs['Line mask color'].default_value =            self.saturate_color(c.get_color(mat_name, "_Color2 Color 1" ),  light_pass, shadow_color = c.get_shadow_color(mat_name)) #use same color for both detail and line
-                shader_inputs['Nail color (multiplied)'].default_value =    self.saturate_color(c.get_color(mat_name, "_Color5 Color 4" ),  light_pass, shadow_color = c.get_shadow_color(mat_name))
+                    shader_inputs['Skin color'].default_value = self.saturate_color(self.skin_dark_color(c.get_color(mat_name, "_Color ")), light_pass = 'light')
+                shader_inputs['Detail color'].default_value =               self.saturate_color(c.get_color(mat_name, "_Color2 " ),  light_pass, shadow_color = c.get_shadow_color(mat_name))
+                shader_inputs['Line mask color'].default_value =            self.saturate_color(c.get_color(mat_name, "_Color2 " ),  light_pass, shadow_color = c.get_shadow_color(mat_name)) #use same color for both detail and line
+                shader_inputs['Nail color (multiplied)'].default_value =    self.saturate_color(c.get_color(mat_name, "_Color5 " ),  light_pass, shadow_color = c.get_shadow_color(mat_name))
                 if not bpy.context.scene.kkbp.sfw_mode:
                     shader_inputs['Underhair color'].default_value =        [0, 0, 0, 1]
-                    shader_inputs['Nipple base'].default_value =            self.saturate_color(c.get_color(mat_name, "_overcolor1 Color 1"  ),  light_pass, shadow_color = c.get_shadow_color(mat_name))
-                    shader_inputs['Nipple base 2'].default_value =          [1, 0, 0, 1] # Red
-                    shader_inputs['Nipple shine'].default_value =           numpy.array(shader_inputs['Nipple base'].default_value) * 1.5
-                    shader_inputs['Nipple rim'].default_value =             numpy.array(shader_inputs['Nipple base'].default_value) * 0.5
+                    shader_inputs['Nipple base'].default_value =            [1.0, 0.48, 0.48, 1.0] #hardcode colors
+                    shader_inputs['Nipple base 2'].default_value =          [0.9, 0.0, 0.1, 1.0]
+                    shader_inputs['Nipple shine'].default_value =           [1.0, 0.8, 0.8, 1.0]
+                    shader_inputs['Nipple rim'].default_value =             [1.0, 0.5, 0.5, 1.0]
             
             #face
             if c.get_material_names('cf_O_face'):
                 #setup the face material 
-                shader_inputs = c.get_body().material_slots['KK Face ' + c.get_name()].nodes[light_pass].inputs
-                shader_inputs['Skin color'].default_value =             c.get_body().material_slots['KK Body ' + c.get_name()].nodes[light_pass].inputs['Skin color'].default_value
-                shader_inputs['Skin detail color'].default_value =      self.saturate_color(c.get_color(c.get_material_names('o_body_a')[0], "_Color2 Color 1" ),        light_pass, shadow_color = c.get_shadow_color(c.get_material_names('o_body_a')[0]))
-                shader_inputs['Light blush color'].default_value =      self.saturate_color(c.get_color(c.get_material_names('cf_O_face')[0], "_overcolor2 Color 2"  ),  light_pass, shadow_color = c.get_shadow_color(c.get_material_names('cf_O_face')[0]))
-                shader_inputs['Lipstick multiplier'].default_value =    self.saturate_color(c.get_color(c.get_material_names('cf_O_face')[0], "_overcolor1 Color 1"  ),  light_pass, shadow_color = c.get_shadow_color(c.get_material_names('cf_O_face')[0]))
+                mat_name = 'KK Face ' + c.get_name()
+                shader_inputs = c.get_body().material_slots[mat_name].material.node_tree.nodes[light_pass].inputs
+                shader_inputs['Skin color'].default_value =             c.get_body().material_slots['KK Body ' + c.get_name()].material.node_tree.nodes[light_pass].inputs['Skin color'].default_value
+                shader_inputs['Detail color'].default_value =      self.saturate_color(c.get_color('KK Body ' + c.get_name(), "_Color2 " ),         light_pass, shadow_color = c.get_shadow_color('KK Body ' + c.get_name()))
+                shader_inputs['Light blush color'].default_value =      self.saturate_color(c.get_color(mat_name, "_overcolor2 "  ),                light_pass, shadow_color = c.get_shadow_color(mat_name))
+                shader_inputs['Lipstick multiplier'].default_value =    self.saturate_color(c.get_color(mat_name, "_overcolor1 "  ),                light_pass, shadow_color = c.get_shadow_color(mat_name))
 
             #eyebrows
             if c.get_material_names('cf_O_mayuge'):
-                shader_inputs = c.get_body().material_slots['KK Eyebrows (mayuge) ' + c.get_name()].nodes['combine'].inputs
-                shader_inputs['Light colors'].default_value = self.saturate_color(c.get_color(c.get_material_names('cf_O_mayuge')[0], "_Color Color 0"),  'light', shadow_color = c.get_shadow_color(c.get_material_names('cf_O_mayuge')[0]))
-                shader_inputs['Dark colors'].default_value =  self.saturate_color(c.get_color(c.get_material_names('cf_O_mayuge')[0], "_Color Color 0"),  'dark' , shadow_color = c.get_shadow_color(c.get_material_names('cf_O_mayuge')[0]))
+                mat_name = 'KK Eyebrows (mayuge) ' + c.get_name()
+                shader_inputs = c.get_body().material_slots[mat_name].material.node_tree.nodes['combine'].inputs
+                shader_inputs['Light colors'].default_value = self.saturate_color(c.get_color(mat_name, "_Color "),  'light', shadow_color = c.get_shadow_color(mat_name))
+                shader_inputs['Dark colors'].default_value =  self.saturate_color(c.get_color(mat_name, "_Color "),  'dark' , shadow_color = c.get_shadow_color(mat_name))
             
             #eyeline
             if c.get_material_names('cf_O_eyeline'):
-                shader_inputs = c.get_body().material_slots['KK Eyeline up ' + c.get_name()].nodes['light'].inputs
-                shader_inputs['Eyeline color'].default_value = self.saturate_color(c.get_color(c.get_material_names('cf_O_eyeline')[0], "_Color Color 0"),  light_pass, shadow_color = c.get_shadow_color(c.get_material_names('cf_O_eyeline')[0]))
+                mat_name = 'KK Eyeline up ' + c.get_name()
+                shader_inputs = c.get_body().material_slots[mat_name].material.node_tree.nodes['light'].inputs
+                shader_inputs['Eyeline fade color'].default_value = self.saturate_color(c.get_color(mat_name, "_Color "),  light_pass, shadow_color = c.get_shadow_color(mat_name))
                 if len(c.get_material_names('cf_O_eyeline')) > 1:
-                    shader_inputs['Kage color'].default_value =  self.saturate_color(c.get_color(c.get_material_names('cf_O_eyeline')[1], "_Color Color 0"),  light_pass, shadow_color = c.get_shadow_color(c.get_material_names('cf_O_eyeline')[1]))
-
-        #set the hair colors
-        for hair in c.get_hairs():
-            for mat_slot in hair.material_slots:
-                material = mat_slot.material
-                shader_inputs = material.node_tree.nodes[light_pass].inputs
-                shader_inputs['Hair color'].default_value =         self.saturate_color(c.get_color(material, "_Color Color 0" ),  light_pass, shadow_color = c.get_shadow_color(material.name))
-                shader_inputs['Color mask (dark)'].default_value =  self.saturate_color(c.get_color(material, "_Color2 Color 1"),  light_pass, shadow_color = c.get_shadow_color(material.name))
-                shader_inputs['Color mask (light)'].default_value = self.saturate_color(c.get_color(material, "_Color3 Color 2"),  light_pass, shadow_color = c.get_shadow_color(material.name))
+                    shader_inputs['Kage color'].default_value =  self.saturate_color(c.get_color('KK Eyeline kage ' + c.get_name(), "_Color "),  light_pass, shadow_color = c.get_shadow_color('KK Eyeline kage ' + c.get_name()))
+                if c.get_material_names('cf_O_eyeline_low'):
+                    shader_inputs = c.get_body().material_slots[mat_name].material.node_tree.nodes['light'].inputs
+                    shader_inputs['Eyeline down fade color'].default_value = self.saturate_color(c.get_color('KK Eyeline down ' + c.get_name(), "_Color "),  light_pass, shadow_color = c.get_shadow_color('KK Eyeline down ' + c.get_name()))
 
         #set the clothes colors
-        outfits = c.get_outfits()
-        outfits.extend(c.get_alts())
-        for outfit in outfits:
-            for mat_slot in outfit.material_slots:
-                material = mat_slot.material
-                shader_inputs = material.node_tree.nodes[light_pass].inputs
-                shader_inputs['Color mask (red)'].default_value =       self.saturate_color(c.get_color(material, "_Color Color 0"),     light_pass, shadow_color = c.get_shadow_color(material.name))
-                shader_inputs['Color mask (green)'].default_value =     self.saturate_color(c.get_color(material, "_Color2 Color 1"),    light_pass, shadow_color = c.get_shadow_color(material.name))
-                shader_inputs['Color mask (blue)'].default_value =      self.saturate_color(c.get_color(material, "_Color3 Color 2"),    light_pass, shadow_color = c.get_shadow_color(material.name))
-                shader_inputs['Pattern color (red)'].default_value =    self.saturate_color(c.get_color(material, "_Color1_2 Color 1"),  light_pass, shadow_color = c.get_shadow_color(material.name))
-                shader_inputs['Pattern color (green)'].default_value =  self.saturate_color(c.get_color(material, "_Color2_2 Color 3"),  light_pass, shadow_color = c.get_shadow_color(material.name))
-                shader_inputs['Pattern color (blue)'].default_value =   self.saturate_color(c.get_color(material, "_Color3_2 Color 5"),  light_pass, shadow_color = c.get_shadow_color(material.name))
+        materials = [m for m in bpy.data.materials if m.get('outfit') == True and m.get('name') == c.get_name()]
+        for material in materials:
+            shader_inputs = material.node_tree.nodes[light_pass].inputs
+            shader_inputs['Color mask (red)'].default_value =       self.saturate_color(c.get_color(material.name, "_Color "),     light_pass, shadow_color = c.get_shadow_color(material.name))
+            shader_inputs['Color mask (green)'].default_value =     self.saturate_color(c.get_color(material.name, "_Color2 "),    light_pass, shadow_color = c.get_shadow_color(material.name))
+            shader_inputs['Color mask (blue)'].default_value =      self.saturate_color(c.get_color(material.name, "_Color3 "),    light_pass, shadow_color = c.get_shadow_color(material.name))
+            shader_inputs['Pattern color (red)'].default_value =    self.saturate_color(c.get_color(material.name, "_Color1_2 "),  light_pass, shadow_color = c.get_shadow_color(material.name))
+            shader_inputs['Pattern color (green)'].default_value =  self.saturate_color(c.get_color(material.name, "_Color2_2 "),  light_pass, shadow_color = c.get_shadow_color(material.name))
+            shader_inputs['Pattern color (blue)'].default_value =   self.saturate_color(c.get_color(material.name, "_Color3_2 "),  light_pass, shadow_color = c.get_shadow_color(material.name))
 
     #something is wrong with this one, currently unused
     # def hair_dark_color(self, color, shadow_color):
@@ -1193,11 +1222,8 @@ class modify_material(bpy.types.Operator):
         '''Takes a 1.0 max rgba dict and returns a 1.0 max rgba dict.
         clothes is from https://github.com/xukmi/KKShadersPlus/blob/main/Shaders/Item/MainItemPlus.shader
         This was stripped down to just the shadow portion, and to remove all constants'''
-        #print(color)
-        #print(shadow_color)
         ################### variable setup
         _ambientshadowG = float4(0.15, 0.15, 0.15, 0.15) #constant from experimentation
-        # print(color)
         diffuse = float4(color['r'],color['g'],color['b'],1) #maintex color
         _ShadowColor = float4(shadow_color['r'],shadow_color['g'],shadow_color['b'],1) #the shadow color from material editor
         ##########################

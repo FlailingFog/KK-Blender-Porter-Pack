@@ -18,8 +18,8 @@ class PlaceholderProperties(PropertyGroup):
     #this will let the plugin know where the user is in the import / export process
     plugin_state:StringProperty(default='')
 
-    #This lets the plugin know if the model was exported with KKBP exporter V4.21 instead of V4.30
-    V421_export: BoolProperty(default=False)
+    #This will let the plugin track what objects belong to what character
+    character_name: StringProperty(default='')
 
     #this lets the plugin time various actions
     total_timer : FloatProperty(default=0)
@@ -201,6 +201,9 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         box = layout.box()
         col = box.column(align=True)
         
+        # row = col.row(align=True)
+        # row.operator('kkbp.debug', text = 'Debug', icon='FILE_FOLDER')
+
         row = col.row(align=True)
         row.operator('kkbp.kkbpimport', text = t('import_model'), icon='FILE_FOLDER')
         row.enabled = scene.plugin_state not in ['imported', 'prepped']

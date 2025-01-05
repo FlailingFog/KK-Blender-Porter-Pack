@@ -51,12 +51,13 @@ class post_operations(bpy.types.Operator):
         if outfits:
             for outfit in outfits:
                 outfit.hide_set(True)
-                for child in outfit.children:
-                    child.hide_set(True)
-            #unhide the first outfit and the hair that goes with it
-            outfit[0].hide_set(False)
-            for child in [c for c in outfit[0].children if c in c.get_hairs()]:
-                outfit[0].hide_set(False)
+            #unhide the first outfit
+            outfits[0].hide_set(False)
+        if c.get_hairs():
+            for hair in c.get_hairs():
+                hair.hide_set(True)
+            #unhide the first hair
+            c.get_hairs()[0].hide_set(False)
         #hide rigged tongue
         if c.get_tongue():
             c.get_tongue().hide_set(True)

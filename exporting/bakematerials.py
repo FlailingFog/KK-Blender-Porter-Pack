@@ -110,7 +110,7 @@ def setup_geometry_nodes_and_fillerplane(camera: bpy.types.Object):
     ###########################
     #import the premade flattener node to unwrap the mesh into the UV structure
     script_dir=pathlib.Path(__file__).parent
-    template_path=(script_dir / '../KK Shader V7.0.blend').resolve()
+    template_path=(script_dir / '../KK Shader V8.0.blend').resolve()
     filepath = str(template_path)
     innerpath = 'NodeTree'
     geonodename = 'Geometry Nodes'

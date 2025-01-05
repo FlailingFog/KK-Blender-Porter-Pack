@@ -67,7 +67,7 @@ class modify_armature(bpy.types.Operator):
             self.remove_empty_vertex_groups()
             self.reorganize_armature_layers()
             self.move_accessory_bones_to_layer10()
-
+        
             self.create_eye_reference_bone()
             self.create_eye_controller_bone()
             self.shorten_kokan_bone()
@@ -76,11 +76,11 @@ class modify_armature(bpy.types.Operator):
             self.prepare_ik_bones()
             self.create_ik_bones()
             self.create_joint_drivers()
-            
+
             self.categorize_bones()
             self.rename_bones_for_clarity()
             self.rename_mmd_bones()
-            
+
             self.apply_bone_widgets()
             self.hide_widgets()
 
@@ -121,15 +121,31 @@ class modify_armature(bpy.types.Operator):
             bpy.data.objects.remove(empty)
         #reparent the alts and hairs to the main outfit object
         for alt in c.get_alts():
-            alt_parent = [p for p in c.get_outfits() if p['id'] == alt['id']][0]
-            alt.parent = alt_parent
-        for hair in self.hairs:
-            hair_parent = [p for p in c.get_outfits() if p['id'] == hair['id']][0]
-            hair.parent = hair_parent if bpy.context.scene.kkbp.categorize_dropdown not in ['D'] else hair.parent #don't reparent hair if Categorize by SMR
+            alt.parent = armature
+            alt.modifiers[0].object = armature
+            alt.modifiers[0].show_in_editmode = True
+            alt.modifiers[0].show_on_cage = True
+            alt.modifiers[0].show_expanded = False
+            alt.modifiers[0].name = 'Armature modifier'
+
+        for hair in c.get_hairs():
+            hair.parent = armature if bpy.context.scene.kkbp.categorize_dropdown not in ['D'] else hair.parent #don't reparent hair if Categorize by SMR
+            hair.modifiers[0].object = armature
+            hair.modifiers[0].show_in_editmode = True
+            hair.modifiers[0].show_on_cage = True
+            hair.modifiers[0].show_expanded = False
+            hair.modifiers[0].name = 'Armature modifier'
+
         #reparent the tongue, tears and gag eyes if they exist
-        for object in ['Tongue (rigged)', 'Tears', 'Gag Eyes']:
-            if bpy.data.objects.get(object):
-                bpy.data.objects[object].parent = body
+        objects = []
+        if c.get_tongue():
+            objects.append(c.get_tongue())
+        if c.get_tears():
+            objects.append(c.get_tears())
+        if c.get_gags():
+            objects.append(c.get_gags())
+        for object in objects:
+            object.parent = body
         #reparent hitboxes if they exist
         for hb in c.get_hitboxes():
             hb.parent = armature
@@ -1048,7 +1064,7 @@ class modify_armature(bpy.types.Operator):
 
         #Create a UV warp modifier for the eyes. Controlled by the Eye controller bone
         def eyeUV(modifiername, eyevertexgroup):
-            mod = bpy.data.objects['Body'].modifiers.new(modifiername, 'UV_WARP')
+            mod = c.get_body().modifiers.new(modifiername, 'UV_WARP')
             mod.axis_u = 'Z'
             mod.axis_v = 'X'
             mod.object_from = armature
@@ -1649,13 +1665,10 @@ class modify_armature(bpy.types.Operator):
                     c.get_armature().data.bones[bone].name = unity_rename_dict[bone]
             
             #reset the eye vertex groups after renaming the bones
-            mod = bpy.data.objects['Body'].modifiers[2]
+            mod = c.get_body().modifiers[1]
             mod.vertex_group = 'Left Eye'
-            mod = bpy.data.objects['Body'].modifiers[3]
+            mod = c.get_body().modifiers[2]
             mod.vertex_group = 'Right Eye'
-
-            #rename the name of the armature modifier
-            bpy.data.objects['Body'].modifiers[0].name = 'Armature'
 
     def apply_bone_widgets(self):
         '''apply custom bone shapes from library file'''
@@ -1663,8 +1676,8 @@ class modify_armature(bpy.types.Operator):
             #Import custom bone shapes
             c.import_from_library_file('Collection', ['Bone Widgets'], use_fake_user=False)
         
-            #Add custom shapes to the armature   
-            armature = c.get_armature()     
+            #Add custom shapes to the armature
+            armature = c.get_armature()
             armature.data.show_bone_custom_shapes = True
             c.switch(armature, 'pose')
             
