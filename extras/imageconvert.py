@@ -60,9 +60,3 @@ class image_dark_convert(bpy.types.Operator):
             c.kklog('Tried to create a dark version of {} but there was no shadow color available. \nDark color conversion is only available for Koikatsu images that end in \'_MT_CT.png\''.format(image.name), type='error')
         
         return {'FINISHED'}
-
-if __name__ == "__main__":
-    bpy.utils.register_class(image_convert)
-
-    # test call
-    #print((bpy.ops.kkbp.imageconvert('INVOKE_DEFAULT')))

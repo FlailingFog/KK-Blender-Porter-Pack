@@ -105,7 +105,6 @@ def import_studio_objects(directory):
                             if ext.isnumeric():
                                 if bpy.data.images.get(base):
                                     node.image = bpy.data.images.get(base)
-                                    #print("replaced {} with {}".format(node.image.name, base_name + filetype))
 
                     #DDS files need to be converted to pngs or tgas or the color conversion scripts won't work
                     #also set images to srgb
@@ -113,8 +112,6 @@ def import_studio_objects(directory):
                         if node.type == 'TEX_IMAGE':
                             bpy.data.images[node.image.name].colorspace_settings.name = 'sRGB'
                             image = bpy.data.images[node.image.name]
-                            #print(already_loaded_images)
-                            #print(image.name.replace('.dds', '.png'))
                             if ('.dds' in image.name or '.DDS' in image.name) and image.name.replace('.dds', '.png') not in already_loaded_images:
                                 new_path = image.filepath.replace(".dds", ".png").replace(".DDS", ".png")
                                 new_image_name = image.name.replace(".dds", ".png").replace(".DDS", ".png")
@@ -239,7 +236,7 @@ def import_studio_objects(directory):
                                 if raw:
                                     nodes[group].node_tree.nodes[node].image.colorspace_settings.name = 'Raw'
                             except:
-                                print('Image not found, skipping: ' + str(image))
+                                c.kklog('Image not found, skipping: ' + str(image), type = 'warn')
 
                         gen_type = material_slot.name.replace('KK ','')
 
@@ -249,7 +246,6 @@ def import_studio_objects(directory):
                         new_node.name = gen_type + ' Textures'
                         
                         if image != 'noimage':
-                            #print(image)
                             image_load('Gentex', 'Maintex', image.name)#, True)
                         else:
                             #if there's no image, fallback to the detected maintex
@@ -384,7 +380,6 @@ def import_studio_objects(directory):
                     saturated_image = bpy.data.images.load(image.filepath.replace(image.name, 'saturated_files\\' + image.name.replace('.dds','.png').replace('.DDS','.png')))
                     image.user_remap(saturated_image)
                 except:
-                    # print('image: ', image, ' file: ', image.filepath.replace(image.name, image.name.replace('.dds','.png').replace('.DDS','.png')).replace('/', '\\'))
                     saturated_image = bpy.data.images.load(image.filepath.replace(image.name, image.name.replace('.dds','.png').replace('.DDS','.png')))
                     image.user_remap(saturated_image)
     
@@ -416,8 +411,3 @@ class import_studio(bpy.types.Operator):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
     
-if __name__ == "__main__":
-    bpy.utils.register_class(import_studio)
-    
-    # test call
-    print((bpy.ops.kkbp.importstudio('INVOKE_DEFAULT')))

@@ -769,8 +769,3 @@ class modify_mesh(bpy.types.Operator):
                 bpy.ops.mesh.delete(type='VERT')
 
 
-if __name__ == "__main__":
-    bpy.utils.register_class(modify_mesh)
-
-    # test call
-    print((bpy.ops.kkbp.modifymesh('INVOKE_DEFAULT')))

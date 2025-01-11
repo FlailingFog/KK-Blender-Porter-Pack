@@ -467,7 +467,6 @@ def _assign_mats_to_polys(item: SMCObDataItem, comb_mats: CombMats, ob: bpy.type
     for idx, polys in get_polys(ob).items():
         if ob_materials[idx] not in item:
             continue
-        print( f'{idx}\n\n{ob_materials[idx]}\n\n{comb_mats}')
         mat_name = comb_mats[item[ob_materials[idx]]].name
         mat_idx = ob_materials.find(mat_name)
         for poly in polys:

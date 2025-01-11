@@ -517,9 +517,3 @@ class post_operations(bpy.types.Operator):
             delete_bone(delete_list)
             if bpy.app.version[0] != 3:
                 rig.data.collections_all['29'].is_visible = False
-
-if __name__ == "__main__":
-    bpy.utils.register_class(post_operations)
-
-    # test call
-    print((bpy.ops.kkbp.postoperations('INVOKE_DEFAULT')))

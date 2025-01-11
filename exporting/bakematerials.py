@@ -85,7 +85,6 @@ def setup_geometry_nodes_and_fillerplane(camera: bpy.types.Object):
         resolution_y.targets[0].data_path = 'render.resolution_y'
     
     #setup X scale for bake object and plane
-    # print(object_to_bake)
     driver = object_to_bake.driver_add('scale',0).driver
     driver.type = 'SCRIPTED'
     setup_driver_variables(driver, camera)
@@ -219,7 +218,7 @@ def bake_pass(folderpath: str, bake_type: str):
             bpy.context.scene.render.image_settings.file_format='PNG'
             bpy.context.scene.render.image_settings.color_mode='RGBA'
             
-            print('Rendering {} / {}'.format(index+1, len(object_to_bake.data.materials)))
+            c.kklog('Rendering {} / {}'.format(index+1, len(object_to_bake.data.materials)))
             bpy.ops.render.render(write_still = True)
 
             #reset folderpath after render
@@ -277,7 +276,6 @@ def replace_all_baked_materials(folderpath: str, bake_object: bpy.types.Object):
         for mat in bake_object.material_slots:
             matname = mat.name[:-4] if mat.name[-4:] == '-ORG' else mat.name
             image_path = os.join(folderpath, sanitizeMaterialName(matname) + ' ' + bake_type + '.png')
-            print(image_path)
             if image_path in files:
                 image = bpy.data.images.load(filepath=str(image_path))
                 image.pack()
@@ -370,7 +368,7 @@ def create_material_atlas(folderpath: str):
                     cat.remove(block)
 
     if bpy.data.collections.get(c.get_name() + ' atlas'):
-        print(f'deleting previous collection "{c.get_name()} atlas" and regenerating atlas model...')
+        c.kklog(f'deleting previous collection "{c.get_name()} atlas" and regenerating atlas model...')
         def del_collection(coll):
             for c in coll.children:
                 del_collection(c)
@@ -406,7 +404,6 @@ def create_material_atlas(folderpath: str):
                 _copy(cc, c, linked)
             parent.children.link(cc)
         _copy(parent, collection, linked)
-        # print(dupe_lut)
         for o, dupe in tuple(dupe_lut.items()):
             parent = dupe_lut[o.parent]
             if parent:
@@ -414,7 +411,6 @@ def create_material_atlas(folderpath: str):
     context = bpy.context
     scene = context.scene
     col = context.collection
-    # print(col, scene.collection)
     assert(col is not scene.collection)
     copy(scene.collection, col)
     bpy.data.collections[c.get_name() + '.001'].name = c.get_name() + ' atlas'
@@ -423,7 +419,6 @@ def create_material_atlas(folderpath: str):
     for obj in [o for o in bpy.data.collections[c.get_name() + ' atlas'].all_objects if not o.hide_get() and o.type == 'MESH']:
         for mat in [mat_slot.material for mat_slot in obj.material_slots if 'KK ' in mat_slot.material.name and 'Outline ' not in mat_slot.material.name and ' Atlas' not in mat_slot.material.name]:
             if bpy.data.materials.get(mat.name + '-ORG'):
-                print('adding emission to {}'.format(mat))
                 #this is a simple material
                 nodes = mat.node_tree.nodes
                 links = mat.node_tree.links
@@ -621,8 +616,3 @@ class bake_materials(bpy.types.Operator):
             self.report({'ERROR'}, traceback.format_exc())
             return {"CANCELLED"}
 
-if __name__ == "__main__":
-    bpy.utils.register_class(bake_materials)
-
-    # test call
-    print((bpy.ops.kkbp.bakematerials('INVOKE_DEFAULT')))

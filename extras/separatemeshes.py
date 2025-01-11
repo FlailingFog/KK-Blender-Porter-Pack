@@ -248,12 +248,6 @@ class separate_meshes(bpy.types.Operator):
 
         return {'FINISHED'}
     
-if __name__ == "__main__":
-    bpy.utils.register_class(separate_meshes)
-
-    # test call
-    print((bpy.ops.kkbp.separatemeshes('INVOKE_DEFAULT')))
-
 
 ########## EXPORTER ##########
 def export_meshes(directory):

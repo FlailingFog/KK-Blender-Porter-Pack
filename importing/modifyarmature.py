@@ -2029,8 +2029,3 @@ class modify_armature(bpy.types.Operator):
             bone = c.get_armature().data.edit_bones.new(new_bone_name)
         return bone
 
-if __name__ == "__main__":
-    bpy.utils.register_class(modify_armature)
-
-    # test call
-    print((bpy.ops.kkbp.modifyarmature('INVOKE_DEFAULT')))

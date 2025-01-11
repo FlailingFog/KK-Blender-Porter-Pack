@@ -166,7 +166,7 @@ class kkbp_debug(bpy.types.Operator):
     def execute(self, context):
 
         filepath = r"C:\Koi\Koikatsu\Export_PMX\20250104133404_singleoutfit\model.pmx"
-        # filepath = r"C:\Koi\Koikatsu\Export_PMX\20250111150404_alloutfitsvariations\model.pmx"
+        filepath = r"C:\Koi\Koikatsu\Export_PMX\20250111150404_alloutfitsvariations\model.pmx"
         bpy.context.scene.kkbp.import_dir = str(filepath)[:-9]
         
         #do this thing because cats does it

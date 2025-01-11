@@ -3,7 +3,6 @@ from pathlib import Path
 
 def toggle_console():
     '''toggle the console. will do nothing on Linux or Mac'''
-    print('console toggled')
     try:
         bpy.ops.wm.console_toggle()
     except:
@@ -160,7 +159,6 @@ def get_shadow_color(material_name: str) -> dict[float]:
             color_dict = zip(material_color['ShaderPropNames'], material_color['ShaderPropColorValues'])
             #key names are not consistent, so look through all of them
             for pair in color_dict:
-                print(pair)
                 if '_shadowcolor' in pair[0].lower():
                     return pair[1]
     #return a default color if not found

@@ -33,7 +33,6 @@ def main(prep_type, simp_type):
     no_move_objects = ['Bonelyfans', 'Shadowcast', 'Hitboxes', body_name, armature_name]
     for object in bpy.context.scene.objects:
         try:
-            #print(object.name)
             move_this_one = object.name not in no_move_objects and 'Widget' not in object.name and object.hide_get()
             if move_this_one:
                 object.hide_set(False)
@@ -286,9 +285,3 @@ class export_prep(bpy.types.Operator):
             self.report({'ERROR'}, traceback.format_exc())
             return {"CANCELLED"}
     
-
-if __name__ == "__main__":
-    bpy.utils.register_class(export_prep)
-
-    # test call
-    print((bpy.ops.kkbp.exportprep('INVOKE_DEFAULT')))

@@ -31,7 +31,7 @@ class Combiner(bpy.types.Operator):
 
             if max(atlas_size, default=0) > 20000:
                 text = 'The output image size of {0}x{1}px is too large'.format(*atlas_size)
-                print(text)
+                c.kklog(text)
                 self.report({'ERROR'}, text)
                 return {'FINISHED'}
             

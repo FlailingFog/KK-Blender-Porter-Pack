@@ -1446,8 +1446,3 @@ class float4:
         return str([self.x, self.y, self.z, self.w])
     __repr__ = __str__
 
-if __name__ == "__main__":
-    bpy.utils.register_class(modify_material)
-
-    # test call
-    print((bpy.ops.kkbp.modifymaterial('INVOKE_DEFAULT')))
