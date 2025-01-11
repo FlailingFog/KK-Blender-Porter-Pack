@@ -134,9 +134,10 @@ class modify_mesh(bpy.types.Operator):
                         materials_to_separate.extend(c.get_material_names(smr_item['SMRName']))
                 if materials_to_separate:
                     alt_clothes = self.separate_materials(outfit, materials_to_separate, clothes_labels[label] + ' ' + outfit['id'] + ' ' + c.get_name())
-                    alt_clothes['alt'] = True
-                    alt_clothes['outfit'] = False
-                    c.kklog('Separated {} alternate clothing {} automatically'.format(materials_to_separate, clothes_labels[label]))
+                    if alt_clothes:
+                        alt_clothes['alt'] = True
+                        alt_clothes['outfit'] = False
+                        c.kklog('Separated {} alternate clothing {} automatically'.format(materials_to_separate, clothes_labels[label]))
 
         c.print_timer('separate_alternate_clothing')
 

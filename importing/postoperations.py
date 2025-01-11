@@ -68,7 +68,7 @@ class post_operations(bpy.types.Operator):
         #put any clothes variations into their own collection
         outfit_ids = (int(c['id']) for c in c.get_alts() if c.get('id'))
         outfit_ids = list(set(outfit_ids))
-        for id in outfit_ids:
+        for index, id in enumerate(outfit_ids):
             clothes_in_this_id = [c for c in c.get_alts() if c.get('id') == str(id).zfill(2)]
             c.switch(clothes_in_this_id[0], 'OBJECT')
             #find the character index
@@ -81,8 +81,8 @@ class post_operations(bpy.types.Operator):
                 ob.select_set(True)
                 bpy.context.view_layer.objects.active=ob
             new_collection_name = 'Alts ' + str(id).zfill(2) + ' ' + c.get_name()
-            #extremely confusing move to under the clothes collection. Index is outfit collection index (starts at 1) + Scene collection (1) +  + character collection index (usually 0) + 1
-            bpy.ops.object.move_to_collection(collection_index= i + 1 + (character_collection_index + 1), is_new = True, new_collection_name = new_collection_name)
+            #extremely confusing move to under the clothes collection. Index is the outfit index + outfit collection index (starts at 1) + Scene collection (1) +  + character collection index (usually 0) + 1
+            bpy.ops.object.move_to_collection(collection_index = (index+i) + 1 + (character_collection_index + 1), is_new = True, new_collection_name = new_collection_name)
             #then hide the alts
             child.children[0].exclude = True
 
