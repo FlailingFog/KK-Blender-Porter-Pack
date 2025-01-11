@@ -42,11 +42,12 @@ class modify_material(bpy.types.Operator):
             self.replace_materials_for_tears_tongue_gageye()
             self.remove_duplicate_node_groups()
             
-            self.load_images_and_create_dark_main_textures()
+            self.load_images()
             self.link_textures_for_face_body()
             self.link_textures_for_hair()
             self.link_textures_for_clothes()
             self.link_textures_for_tongue_tear_gag()
+            self.create_dark_textures()
             
             self.import_and_setup_smooth_normals()
             self.setup_gag_eye_material_drivers()
@@ -336,7 +337,7 @@ class modify_material(bpy.types.Operator):
                         eliminate(node)
         c.print_timer('remove_duplicate_node_groups')
 
-    def load_images_and_create_dark_main_textures(self):
+    def load_images(self):
         '''Load all images from the pmx folder'''
         c.switch(c.get_body(), 'object')
 
@@ -347,53 +348,31 @@ class modify_material(bpy.types.Operator):
         fileList = Path(bpy.context.scene.kkbp.import_dir).rglob('*.png')
         files = [file for file in fileList if file.is_file()]
 
-        #open all images into blender and create dark variants if the image is a maintex
+        #open all images into blender
         for image in files:
             bpy.ops.image.open(filepath=str(image), use_udim_detecting=False)
             try:
                 bpy.data.images[image.name].pack()
             except:
                 c.kklog('This image was not automatically loaded in because its filename exceeds 64 characters: ' + image.name, type = 'error')
-            skip_list = ['cf_m_gageye', 
-                'cf_m_eyeline', 
-                'cf_m_mayuge', 
-                'cf_m_namida_00', 
-                'cf_m_noseline_00', 
-                'cf_m_sirome_00', 
-                'cf_m_tooth', 
-                '_MT'] #skip MTs because there will be STs instead
-            convert_this = True
-            for item in skip_list:
-                if item in image.name:
-                    convert_this = False
-            if '_ST_CT' in image.name and convert_this and bpy.context.scene.kkbp.colors_dropdown == True:
-                try:
-                    material_name = image.name.replace('_ST_CT.png', '')
-                    shadow_color = c.get_shadow_color(material_name)
-                    _ = self.create_darktex(bpy.data.images[image.name], shadow_color)
-                except:
-                    c.kklog('Tried to create a dark version of {} but it was missing a shadow color. Defaulting to shadow color of R=0.764, G=0.880, B=1].'.format(image.name), type='warn')
-                    shadow_color = {'r':0.764, 'g':0.880, 'b':1}
-                    _ = self.create_darktex(bpy.data.images[image.name], shadow_color) #create the darktex now and load it in later
-        c.print_timer('load_images_and_shadow_colors')
+        c.print_timer('load_images')
 
     def link_textures_for_face_body(self):
         '''Load all body textures into their texture slots'''
         body = c.get_body()
         self.image_load('Body', '_ST_CT.png')
         self.image_load('Body', '_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available
-        self.image_load('Body', '_ST_DT.png')
         #default to colors if there's no maintex
         if body.material_slots['KK Body ' + c.get_name()].material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].image.name == 'Template: Placeholder':
             body.material_slots['KK Body ' + c.get_name()].material.node_tree.nodes['dark' ].inputs['Use main texture instead?'].default_value = 0
             body.material_slots['KK Body ' + c.get_name()].material.node_tree.nodes['light'].inputs['Use main texture instead?'].default_value = 0
-        self.image_load('Body', '_CM.png')
+        self.image_load('Body', '_CM.png') #color mask
         self.image_load('Body', '_DM.png') #cfm female
-        self.image_load('Body', '_LM.png')
+        self.image_load('Body', '_LM.png') #line mask for lips
         self.image_load('Body', '_NMP_CNV.png')
         self.image_load('Body', '_NMPD_CNV.png')
         self.image_load('Body', 'cm_m_body_DM.png') #cmm male
-        self.image_load('Body', 'cm_m_body_LM.png')
+        self.image_load('Body', 'cm_m_body_LM.png') 
         self.image_load('Body', '_ST.png', group_override='texturesnsfw') #chara main texture
         self.image_load('Body', '_ot2.png', group_override='texturesnsfw') #pubic hair
         self.image_load('Body', '_ot1.png', group_override='texturesnsfw') #cfm female
@@ -423,7 +402,6 @@ class modify_material(bpy.types.Operator):
         if c.get_material_names('cf_O_face'):
             self.image_load('Face', '_ST_CT.png')
             self.image_load('Face', '_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available
-            self.image_load('Face', '_ST_DT.png')
             #default to colors if there's no maintex
             if body.material_slots['KK Face ' + c.get_name()].material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].image.name == 'Template: Placeholder':
                 body.material_slots['KK Face ' + c.get_name()].material.node_tree.nodes['light'].inputs['Use main texture instead?'].default_value = 0
@@ -466,7 +444,6 @@ class modify_material(bpy.types.Operator):
             eye_mat = c.get_material_names(f'cf_Ohitomi_{side}02')[0]
             self.image_load(f'Eye{side} (hitomi)', '_ST_CT.png')
             self.image_load(f'Eye{side} (hitomi)', '_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available
-            self.image_load(f'Eye{side} (hitomi)', '_ST_DT.png')
             self.image_load(f'Eye{side} (hitomi)', '_ot1.png')
             self.image_load(f'Eye{side} (hitomi)', '_ot2.png')
             self.image_load(f'Eye{side} (hitomi)', image_override = eye_mat[:-15] + '_cf_t_expression_00_EXPR.png', node_override= '_cf_t_expression_00_EXPR.png')
@@ -474,8 +451,8 @@ class modify_material(bpy.types.Operator):
         
         #correct the eye scaling using info from the KK_ChaFileCustomFace.json
         face_data = c.get_json_file('KK_ChaFileCustomFace.json')
-        bpy.data.node_groups['Eye Textures positioning'].nodes['eye_scale'].inputs[1].default_value = 1/(float(face_data[18]['Value']) + 0.0001)
-        bpy.data.node_groups['Eye Textures positioning'].nodes['eye_scale'].inputs[2].default_value = 1/(float(face_data[19]['Value']) + 0.0001)
+        bpy.data.node_groups['.Eye Textures positioning'].nodes['eye_scale'].inputs[1].default_value = 1/(float(face_data[18]['Value']) + 0.0001)
+        bpy.data.node_groups['.Eye Textures positioning'].nodes['eye_scale'].inputs[2].default_value = 1/(float(face_data[19]['Value']) + 0.0001)
 
         c.print_timer('link_textures_for_face_body')
 
@@ -487,7 +464,6 @@ class modify_material(bpy.types.Operator):
                             
                 self.image_load( hairType,  '_ST_CT.png')
                 self.image_load( hairType,  '_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available
-                self.image_load( hairType,  '_ST_DT.png')
                 self.image_load( hairType,  '_DM.png')
                 self.image_load( hairType,  '_CM.png')
                 self.image_load( hairType,  '_HGLS.png')
@@ -507,7 +483,6 @@ class modify_material(bpy.types.Operator):
                 #load these textures if they are present
                 self.image_load(genType, '_ST.png')
                 self.image_load(genType, '_ST_CT.png')
-                self.image_load(genType, '_ST_DT.png')
                 self.image_load(genType, '_AM.png')
                 self.image_load(genType, '_CM.png')
                 self.image_load(genType, '_DM.png')
@@ -568,28 +543,51 @@ class modify_material(bpy.types.Operator):
             self.image_load('Tears', '_ST_CT.png')
         
         c.print_timer('link_textures_for_tongue_tear_gag')
-        
+    
+    def create_dark_textures(self):
+        """
+        Creates dark versions of textures for body, hair, and outfit materials.
+
+        This method retrieves all body, hair, and outfit materials, and for each material,
+        it checks if the material has a 'textures' node and if it contains a '_ST_DT.png' texture.
+        If the texture is not a placeholder, it creates a dark version of the texture using the
+        shadow color specific to the material and assigns it to the '_ST_DT.png' texture node.
+        """
+        materials = c.get_body_materials()
+        materials.extend(c.get_hair_materials())
+        materials.extend(c.get_outfit_materials())
+        for material in materials:
+            if material.node_tree.nodes.get('textures'):
+                if material.node_tree.nodes['textures'].node_tree.nodes.get('_ST_DT.png'):
+                    maintex = material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].image
+                    #if this isn't a placeholder image, create a dark version of it
+                    if maintex.name != 'Template: Placeholder':
+                        shadow_color = c.get_shadow_color(material.name)
+                        darktex = self.create_darktex(maintex, shadow_color)
+                        material.node_tree.nodes['textures'].node_tree.nodes['_ST_DT.png'].image = darktex
+        c.print_timer('create_dark_textures')
+
     def import_and_setup_smooth_normals(self):
         '''Sets up the Smooth Normals geo nodes setup for smoother face, body, hair and clothes normals'''
         try:
             #import all the node groups
             body = c.get_body()
-            c.import_from_library_file('NodeTree', ['Raw Shading (smooth normals)', 'Raw Shading (smooth body normals)', 'Smooth Normals', 'Other Smooth Normals'], bpy.context.scene.kkbp.use_material_fake_user)
+            c.import_from_library_file('NodeTree', ['.Raw Shading (smooth normals)', '.Raw Shading (smooth body normals)', '.Smooth Normals', '.Other Smooth Normals'], bpy.context.scene.kkbp.use_material_fake_user)
             c.switch(body, 'object')
             geo_nodes = body.modifiers.new(name = 'Normal Smoothing', type = 'NODES')
-            geo_nodes.node_group = bpy.data.node_groups['Smooth Normals']
+            geo_nodes.node_group = bpy.data.node_groups['.Smooth Normals']
             geo_nodes.show_viewport = False
             geo_nodes.show_render = False
             for ob in c.get_hairs():
                 geo_nodes = ob.modifiers.new(name = 'Normal Smoothing', type = 'NODES')
-                geo_nodes.node_group = bpy.data.node_groups['Other Smooth Normals']
+                geo_nodes.node_group = bpy.data.node_groups['.Other Smooth Normals']
                 geo_nodes.show_viewport = False
                 geo_nodes.show_render = False
             outfits = c.get_outfits()
             outfits.extend(c.get_alts())
             for ob in outfits:
                 geo_nodes = ob.modifiers.new(name = 'Normal Smoothing', type = 'NODES')
-                geo_nodes.node_group = bpy.data.node_groups['Other Smooth Normals']
+                geo_nodes.node_group = bpy.data.node_groups['.Other Smooth Normals']
                 geo_nodes.show_viewport = False
                 geo_nodes.show_render = False
         except:
@@ -1040,10 +1038,10 @@ class modify_material(bpy.types.Operator):
                 shader_inputs['Nail color (multiplied)'].default_value =    self.saturate_color(c.get_color(mat_name, "_Color5 " ),  light_pass, shadow_color = c.get_shadow_color(mat_name))
                 if not bpy.context.scene.kkbp.sfw_mode:
                     shader_inputs['Underhair color'].default_value =        [0, 0, 0, 1]
-                    shader_inputs['Nipple base'].default_value =            [1.0, 0.48, 0.48, 1.0] #hardcode colors
-                    shader_inputs['Nipple base 2'].default_value =          [0.9, 0.0, 0.1, 1.0]
-                    shader_inputs['Nipple shine'].default_value =           [1.0, 0.8, 0.8, 1.0]
-                    shader_inputs['Nipple rim'].default_value =             [1.0, 0.5, 0.5, 1.0]
+                    # shader_inputs['Nipple base'].default_value =            [1.0, 0.48, 0.48, 1.0] #these don't seem to be the correct colors. Just use hardcoded colors in .blend file
+                    # shader_inputs['Nipple base 2'].default_value =          [0.9, 0.0, 0.1, 1.0]
+                    # shader_inputs['Nipple shine'].default_value =           [1.0, 0.8, 0.8, 1.0]
+                    # shader_inputs['Nipple rim'].default_value =             [1.0, 0.08, 0.09, 1.0]
             
             #face
             if c.get_material_names('cf_O_face'):
@@ -1067,8 +1065,9 @@ class modify_material(bpy.types.Operator):
                 mat_name = 'KK Eyeline up ' + c.get_name()
                 shader_inputs = c.get_body().material_slots[mat_name].material.node_tree.nodes['light'].inputs
                 shader_inputs['Eyeline fade color'].default_value = self.saturate_color(c.get_color(mat_name, "_Color "),  light_pass, shadow_color = c.get_shadow_color(mat_name))
-                if len(c.get_material_names('cf_O_eyeline')) > 1:
-                    shader_inputs['Kage color'].default_value =  self.saturate_color(c.get_color('KK Eyeline kage ' + c.get_name(), "_Color "),  light_pass, shadow_color = c.get_shadow_color('KK Eyeline kage ' + c.get_name()))
+                #the below doesn't seem to be the correct color. Use the hardcoded one in the blend file for now
+                # if len(c.get_material_names('cf_O_eyeline')) > 1:
+                #     shader_inputs['Kage color'].default_value =  self.saturate_color(c.get_color('KK Eyeline kage ' + c.get_name(), "_Color "),  light_pass, shadow_color = c.get_shadow_color('KK Eyeline kage ' + c.get_name())) 
                 if c.get_material_names('cf_O_eyeline_low'):
                     shader_inputs = c.get_body().material_slots[mat_name].material.node_tree.nodes['light'].inputs
                     shader_inputs['Eyeline down fade color'].default_value = self.saturate_color(c.get_color('KK Eyeline down ' + c.get_name(), "_Color "),  light_pass, shadow_color = c.get_shadow_color('KK Eyeline down ' + c.get_name()))
@@ -1333,7 +1332,7 @@ class modify_material(bpy.types.Operator):
 
             #make a new image and place the dark pixels into it
             dark_array = diffuseShadow
-            darktex = bpy.data.images.new(maintex.name[:-7] + '_DT.png', width=maintex.size[0], height=maintex.size[1])
+            darktex = bpy.data.images.new(maintex.name[:-7] + '_DT.png', width=maintex.size[0], height=maintex.size[1], alpha = True)
             darktex.file_format = 'PNG'
             darktex.pixels = dark_array.ravel()
             darktex.use_fake_user = True

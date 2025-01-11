@@ -29,6 +29,7 @@ class modify_mesh(bpy.types.Operator):
     
     def execute(self, context):
         try:
+            self.rename_uv_maps()
             self.separate_rigged_tongue()
             self.separate_hair()
             self.separate_alternate_clothing()
@@ -37,7 +38,6 @@ class modify_mesh(bpy.types.Operator):
             self.delete_mask_quad()
 
             self.remove_unused_shapekeys()
-            self.rename_uv_maps()
             self.translate_shapekeys()
             self.combine_shapekeys()
             self.create_tear_shapekeys()
@@ -177,7 +177,7 @@ class modify_mesh(bpy.types.Operator):
                 if hitbox:
                     hitbox['hitbox'] = True
                     hitbox['outfit'] = False
-        self.move_and_hide_collection(c.get_hitboxes(), "Hitboxes " + c.get_name())
+        c.move_and_hide_collection(c.get_hitboxes(), "Hitboxes " + c.get_name())
         c.print_timer('separate_hitboxes')
 
     def delete_mask_quad(self):
@@ -726,30 +726,6 @@ class modify_mesh(bpy.types.Operator):
         bpy.ops.object.mode_set(mode = 'OBJECT')
         c.print_timer('mark_body_freestyle_faces')
 
-    # %% Supporting functions
-    def move_and_hide_collection(self, objects: bpy.types.Object, new_collection: str):
-        '''Move the objects into a new collection called "new_collection" and hide the new collection'''
-        if not objects:
-            return
-        
-        c.switch(objects[0], 'object')
-        for object in objects:
-            object.select_set(True)
-            bpy.context.view_layer.objects.active=object
-        #move
-        bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name=new_collection)
-        #then hide the new collection
-        try:
-            bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children[new_collection]
-            bpy.context.scene.view_layers[0].active_layer_collection.exclude = True
-        except:
-            try:
-                #maybe the collection is in the default Collection collection
-                bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children['Collection'].children[new_collection]
-                bpy.context.scene.view_layers[0].active_layer_collection.exclude = True
-            except:
-                #maybe the collection is already hidden, or doesn't exist
-                pass
 
     def separate_materials(self, object: bpy.types.Object, mat_list: list[bpy.types.Material], new_object_name: str, search_type = 'exact') -> bpy.types.Object:
         '''Separates the materials in the mat_list on object, and renames the separated object to "new_object_name". 

@@ -41,34 +41,84 @@ class post_operations(bpy.types.Operator):
 
     # %% Main functions    
     def hide_unused_objects(self):
+        """
+        Hides unused objects in the Blender scene based on certain conditions.
+
+        This method performs the following operations:
+        1. Ensures the armature is not hidden.
+        2. If the 'categorize_dropdown' property in the scene is not set to 'A', it exits early.
+        3. Hides all outfits except the one with the lowest ID.
+        4. Moves eyegags and tears into their own collection.
+        5. Always hides the rigged tongue if present.
+        6. Always hides the Bone Widgets collection.
+        """
         c.get_armature().hide_set(False)
         #don't hide any outfits if not automatically categorizing
         if not bpy.context.scene.kkbp.categorize_dropdown in ['A']:
             return
         #hide all outfits except the first one
-        outfits = c.get_outfits()
-        outfits.extend(c.get_alts())
-        if outfits:
-            for outfit in outfits:
-                outfit.hide_set(True)
-            #unhide the first outfit
-            outfits[0].hide_set(False)
-        if c.get_hairs():
-            for hair in c.get_hairs():
-                hair.hide_set(True)
-            #unhide the first hair
-            c.get_hairs()[0].hide_set(False)
-        #hide rigged tongue
+        clothes_and_hair = c.get_outfits()
+        clothes_and_hair.extend(c.get_hairs())
+        outfit_ids = (int(c['id']) for c in c.get_outfits() if c.get('id'))
+        outfit_ids = list(set(outfit_ids))
+        for id in outfit_ids:
+            clothes_in_this_id = [c for c in clothes_and_hair if c.get('id') == str(id).zfill(2)]
+            c.move_and_hide_collection(clothes_in_this_id, 'Outfit ' + str(id).zfill(2) + ' ' + c.get_name(), hide = (id != min(outfit_ids)))
+
+        #put any clothes variations into their own collection
+        outfit_ids = (int(c['id']) for c in c.get_alts() if c.get('id'))
+        outfit_ids = list(set(outfit_ids))
+        for id in outfit_ids:
+            clothes_in_this_id = [c for c in c.get_alts() if c.get('id') == str(id).zfill(2)]
+            c.switch(clothes_in_this_id[0], 'OBJECT')
+            #find the character index
+            character_collection_index = len(bpy.context.view_layer.layer_collection.children)-1
+            #find the index of the outfit collection
+            for i, child in enumerate(bpy.context.view_layer.layer_collection.children[character_collection_index].children):
+                if child.name == 'Outfit ' + str(id).zfill(2) + ' ' + c.get_name():
+                    break
+            for ob in clothes_in_this_id:
+                ob.select_set(True)
+                bpy.context.view_layer.objects.active=ob
+            new_collection_name = 'Alts ' + str(id).zfill(2) + ' ' + c.get_name()
+            #extremely confusing move to under the clothes collection. Index is outfit collection index (starts at 1) + Scene collection (1) +  + character collection index (usually 0) + 1
+            bpy.ops.object.move_to_collection(collection_index= i + 1 + (character_collection_index + 1), is_new = True, new_collection_name = new_collection_name)
+            #then hide the alts
+            child.children[0].exclude = True
+
+        #put the eyegags and tears into their own collection
+        face_objects = []
+        if c.get_gags():
+            face_objects.append(c.get_gags())
+        if c.get_tears():
+            face_objects.append(c.get_tears())
+        if face_objects:
+            c.move_and_hide_collection(face_objects, 'Tears and gag eyes ' + c.get_name(), hide = False)
+
+        #always hide the rigged tongue if present
         if c.get_tongue():
-            c.get_tongue().hide_set(True)
+            c.move_and_hide_collection([c.get_tongue()], 'Rigged tongue ' + c.get_name(), hide = True)
+        
+        #always hide the hitboxes collection
+        if bpy.data.collections.get('Hitboxes ' + c.get_name()):
+            c.switch(c.get_armature(), 'OBJECT')
+            for child in bpy.context.view_layer.layer_collection.children[0].children:
+                if ('Hitboxes ' + c.get_name()) in child.name:
+                    child.exclude = True
+
+        #always hide the bone widgets collection
+        if bpy.data.collections.get('Bone Widgets'):
+            c.switch(c.get_armature(), 'OBJECT')
+            for child in bpy.context.view_layer.layer_collection.children[0].children:
+                if child.name == 'Bone Widgets':
+                    child.exclude = True
 
     def apply_cycles(self):
         if not bpy.context.scene.kkbp.shader_dropdown == 'B':
             return
         c.kklog('Applying Cycles adjustments...')
-        c.import_from_library_file('NodeTree', ['Cycles', 'Cycles no shadows'], bpy.context.scene.kkbp.use_material_fake_user)
+        c.import_from_library_file('NodeTree', ['.Cycles', '.Cycles no shadows'], bpy.context.scene.kkbp.use_material_fake_user)
 
-        
         #remove outline modifier
         for o in bpy.context.view_layer.objects:
             for m in o.modifiers:
@@ -143,7 +193,7 @@ class post_operations(bpy.types.Operator):
         shadowless_mats =      [m.material for m in c.get_body().material_slots if 'KK Eyeline up'          in m.material.name]
         shadowless_mats.extend([m.material for m in c.get_body().material_slots if 'KK Eyebrows (mayuge)'   in m.material.name])
         for mat in shadowless_mats:
-            mat.node_tree.nodes['combine'].node_tree = bpy.data.node_groups['Cycles no shadows']
+            mat.node_tree.nodes['combine'].node_tree = bpy.data.node_groups['.Cycles no shadows']
         
         bpy.context.scene.render.engine = 'CYCLES'
         bpy.context.scene.cycles.preview_samples = 10
@@ -153,7 +203,7 @@ class post_operations(bpy.types.Operator):
     def apply_eeveemod(self):
         if not bpy.context.scene.kkbp.shader_dropdown == 'C':
             return
-        c.import_from_library_file('NodeTree', ['Eevee Mod', 'Eevee Mod (face)'], bpy.context.scene.kkbp.use_material_fake_user)
+        c.import_from_library_file('NodeTree', ['.Eevee Mod', '.Eevee Mod (face)'], bpy.context.scene.kkbp.use_material_fake_user)
 
         c.kklog('Applying Eevee Shader adjustments...')
         #Import eevee mod node group and replace the combine colors group with the eevee mod group
@@ -171,7 +221,7 @@ class post_operations(bpy.types.Operator):
             nodes = tree.nodes
             links = tree.links
             if nodes.get('combine'):
-                nodes['combine'].node_tree = bpy.data.node_groups['Eevee Mod']
+                nodes['combine'].node_tree = bpy.data.node_groups['.Eevee Mod']
                 #setup the node links again because they break when you replace the node group
                 def relink(outnode, outport, innode, inport):
                     try:
@@ -194,7 +244,7 @@ class post_operations(bpy.types.Operator):
 
             #face has special normal setup. make a copy and add the normals inside of the copy
             #this group prevents Amb Occ issues around nose, and mouth interior
-            face_nodes = bpy.data.node_groups['Eevee Mod (face)']
+            face_nodes = bpy.data.node_groups['.Eevee Mod (face)']
             face_nodes.use_fake_user = True
 
         #select entire face and body, then reset vectors to prevent Amb Occ seam around the neck 
@@ -261,13 +311,11 @@ class post_operations(bpy.types.Operator):
                             armature.data.collections[show_layer].assign(armature.data.bones.get(bone_name))
                         armature.data.bones[bone_name].hide = hidden
         
-        original_mode = bpy.context.object.mode
-        bpy.ops.object.mode_set(mode = 'OBJECT')
+        c.switch(armature, 'OBJECT')
         for bone in layer0_bones:
             set_armature_layer(bone, 0)
         for bone in layer1_bones:
             set_armature_layer(bone, 1)
-        bpy.ops.object.mode_set(mode = original_mode)
         
         if not bpy.context.scene.kkbp.armature_dropdown == 'B':
             return

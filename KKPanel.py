@@ -201,8 +201,8 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         box = layout.box()
         col = box.column(align=True)
         
-        # row = col.row(align=True)
-        # row.operator('kkbp.debug', text = 'Debug', icon='FILE_FOLDER')
+        row = col.row(align=True)
+        row.operator('kkbp.debug', text = 'Debug', icon='FILE_FOLDER')
 
         row = col.row(align=True)
         row.operator('kkbp.kkbpimport', text = t('import_model'), icon='FILE_FOLDER')

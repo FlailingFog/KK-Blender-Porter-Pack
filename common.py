@@ -41,22 +41,22 @@ def get_json_file(filename: str) -> json:
         json_data = json.load(json_file)
         return json_data
 
-def get_hairs() -> bpy.types.Object:
+def get_hairs() -> list[bpy.types.Object]:
     '''Returns a list of all the hair objects for this import'''
     hairs = [o for o in bpy.data.objects if o.type == 'MESH' and o.get('hair') and o.get('name') == bpy.context.scene.kkbp.character_name]
     return hairs
 
-def get_outfits() -> bpy.types.Object:
+def get_outfits() -> list[bpy.types.Object]:
     '''Returns a list of all the outfit objects for this import'''
     outfits = [o for o in bpy.data.objects if o.type == 'MESH' and o.get('outfit') and o.get('name') == bpy.context.scene.kkbp.character_name]
     return outfits
 
-def get_alts() -> bpy.types.Object:
+def get_alts() -> list[bpy.types.Object]:
     '''Returns a list of all the alternate outfit objects for this import'''
     alts = [o for o in bpy.data.objects if o.type == 'MESH' and o.get('alt') and o.get('name') == bpy.context.scene.kkbp.character_name]
     return alts
 
-def get_hitboxes() -> bpy.types.Object:
+def get_hitboxes() -> list[bpy.types.Object]:
     '''Returns a list of all the hitbox objects for this import'''
     hits = [o for o in bpy.data.objects if o.type == 'MESH' and o.get('hitbox') and o.get('name') == bpy.context.scene.kkbp.character_name]
     return hits
@@ -76,7 +76,7 @@ def get_rig() -> bpy.types.Object:
     arms = [o for o in bpy.data.objects if o.get('rig') and o.get('name') == bpy.context.scene.kkbp.character_name]
     return arms[0] if arms else None
 
-def get_empties() -> bpy.types.Object:
+def get_empties() -> list[bpy.types.Object]:
     '''Returns a list of all empty objects for this import'''
     empties = [o for o in bpy.data.objects if o.type == 'EMPTY' and o.get('name') == bpy.context.scene.kkbp.character_name]
     return empties
@@ -96,7 +96,7 @@ def get_tongue() -> bpy.types.Object:
     tongues = [o for o in bpy.data.objects if o.get('tongue') and o.get('name') == bpy.context.scene.kkbp.character_name]
     return tongues[0] if tongues else None
 
-def get_all_objects() -> bpy.types.Object:
+def get_all_objects() -> list[bpy.types.Object]:
     '''Returns all objects associated with this import'''
     everything = get_outfits()
     everything.extend(get_alts())
@@ -124,7 +124,7 @@ def get_material_names(smr_name: str) -> list[str]:
         materials.extend([m['MaterialName'] for m in material_info if m.get('MaterialName')])
     return materials
 
-def get_color(material_name: str, color: str) -> dict:
+def get_color(material_name: str, color: str) -> dict[float]:
     '''Find the material material_name and return an RGBA dict list of the specified color ranging from 0-1. If material_name contains a space and the character name, it will be filtered out.'''
     material_name = bpy.data.materials[material_name].get('id')
     if material_name:
@@ -144,9 +144,9 @@ def get_color(material_name: str, color: str) -> dict:
     kklog(f"Couldn't find {color} for {material_name}", 'warn')
     return {'r':1, 'g':1, 'b':1, 'a':1}
 
-def get_shadow_color(material_name: str) -> dict:
+def get_shadow_color(material_name: str) -> dict[float]:
     '''Find the material material_name and return an RGBA float list ranging from 0-1'''
-    #remove character name
+    #get original name
     material_name = bpy.data.materials[material_name].get('id')
     if material_name:
         material_data = get_json_file('KK_MaterialDataComplete.json')
@@ -154,17 +154,33 @@ def get_shadow_color(material_name: str) -> dict:
         #get all the shadow colors
         material_colors = []
         for material_info in material_infos:
-            material_colors.extend([m for m in material_info if m.get('MaterialName') == material_name and '_shadowcolor' in str(m.get('ShaderPropNames')).lower()])
+            material_colors.extend([m for m in material_info if m.get('MaterialName') == material_name])
         for material_color in material_colors:
             #then zip them and find the shadow color
             color_dict = zip(material_color['ShaderPropNames'], material_color['ShaderPropColorValues'])
             #key names are not consistent, so look through all of them
             for pair in color_dict:
+                print(pair)
                 if '_shadowcolor' in pair[0].lower():
                     return pair[1]
     #return a default color if not found
     kklog(f'Couldn\'t find shadow color for {material_name}', 'warn')
     return {'r':0.764, 'g':0.880, 'b':1}
+
+def get_body_materials() -> list[bpy.types.Material]:
+    '''Returns a list of all the body materials'''
+    materials = [m for m in bpy.data.materials if m.get('body') and m.get('name') == bpy.context.scene.kkbp.character_name]
+    return materials
+
+def get_hair_materials() -> list[bpy.types.Material]:
+    '''Returns a list of all the body materials'''
+    materials = [m for m in bpy.data.materials if m.get('hair') and m.get('name') == bpy.context.scene.kkbp.character_name]
+    return materials
+
+def get_outfit_materials() -> list[bpy.types.Material]:
+    '''Returns a list of all the outfit materials'''
+    materials = [m for m in bpy.data.materials if m.get('outfit') and m.get('name') == bpy.context.scene.kkbp.character_name]
+    return materials
 
 def initialize_timer():
     bpy.context.scene.kkbp.total_timer = datetime.datetime.now().minute * 60 + datetime.datetime.now().second + datetime.datetime.now().microsecond / 1e6
@@ -207,6 +223,21 @@ def switch(object: bpy.types.Object, mode = 'OBJECT'):
         kklog('INVALID MODE CHOICE', type = 'error')
         raise('INVALID MODE CHOICE')
 
+def move_and_hide_collection(objects: bpy.types.Object, new_collection: str, hide = True):
+    '''Move the objects into a new collection called "new_collection" and hide the new collection'''
+    if not objects:
+        return
+    switch(objects[0], 'object')
+    for object in objects:
+        object.select_set(True)
+        bpy.context.view_layer.objects.active=object
+    #move
+    character_collection_index = len(bpy.context.view_layer.layer_collection.children)
+    bpy.ops.object.move_to_collection(collection_index=character_collection_index, is_new=True, new_collection_name=new_collection)
+    #then hide the new collection
+    bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children[-1].children[new_collection]
+    bpy.context.scene.view_layers[0].active_layer_collection.exclude = hide
+
 def clean_orphaned_data():
     '''clean data that is no longer being used'''
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -225,9 +256,9 @@ def clean_orphaned_data():
 
 def import_from_library_file(category, list_of_items, use_fake_user = False):
     '''Import items from the KKBP library file. The category is 'Armature', 'Brush', 'Collection' etc and
-    the list_of_items is an array with all of the item names that you want to import'''
-    # try to import the material templates from the KK Shader.blend file in the plugin directory.
-    # If not available, default to the one that comes with the plugin
+    the list_of_items is an array with all of the item names that you want to import.
+    This will try to import the material templates from the KK Shader.blend file in the PMX import folder.
+    If there's no KK Shader.blend file in the PMX folder, it will default to the one that comes with the plugin'''
     fileList = Path(bpy.context.scene.kkbp.import_dir).glob('*.*')
     files = [file for file in fileList if file.is_file()]
     blend_file_missing = True

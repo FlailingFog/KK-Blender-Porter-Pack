@@ -109,20 +109,11 @@ def setup_geometry_nodes_and_fillerplane(camera: bpy.types.Object):
 
     ###########################
     #import the premade flattener node to unwrap the mesh into the UV structure
-    script_dir=pathlib.Path(__file__).parent
-    template_path=(script_dir / '../KK Shader V8.0.blend').resolve()
-    filepath = str(template_path)
-    innerpath = 'NodeTree'
-    geonodename = 'Geometry Nodes'
-    bpy.ops.wm.append(
-            filepath=os.path.join(filepath, innerpath, geonodename),
-            directory=os.path.join(filepath, innerpath),
-            filename=geonodename
-            )
+    c.import_from_library_file('NodeTree', ['.Geometry Nodes'])
 
     #give the object a geometry node modifier
     geonodes_mod = object_to_bake.modifiers.new('Flattener', 'NODES')
-    geonodes_mod.node_group = bpy.data.node_groups['Geometry Nodes']
+    geonodes_mod.node_group = bpy.data.node_groups['.Geometry Nodes']
     identifier = [str(i) for i in geonodes_mod.keys()][0]
     geonodes_mod[identifier+'_attribute_name'] = 'uv_main'
     geonodes_mod[identifier+'_use_attribute'] = True
@@ -276,7 +267,7 @@ def cleanup():
             ob.animation_data.drivers.remove(ob.animation_data.drivers[0])
             ob.animation_data.drivers.remove(ob.animation_data.drivers[0])
             ob.scale = (1,1,1)
-    bpy.data.node_groups.remove(bpy.data.node_groups['Geometry Nodes'])
+    bpy.data.node_groups.remove(bpy.data.node_groups['.Geometry Nodes'])
 
 def replace_all_baked_materials(folderpath: str, bake_object: bpy.types.Object):
     #load all baked images into blender
@@ -336,10 +327,10 @@ def replace_all_baked_materials(folderpath: str, bake_object: bpy.types.Object):
                     #load the Eevee Mod simple shader if using Eevee Mod
                     if bpy.context.scene.kkbp.shader_dropdown == 'C':
                         try:
-                            em_simple = bpy.data.node_groups['Simple Shader (Eevee Mod)'].copy()
+                            em_simple = bpy.data.node_groups['.Simple Shader (Eevee Mod)'].copy()
                         except:
-                            c.import_from_library_file('NodeTree', ['Simple Shader (Eevee Mod)'], use_fake_user = False)
-                            em_simple = bpy.data.node_groups['Simple Shader (Eevee Mod)'].copy()
+                            c.import_from_library_file('NodeTree', ['.Simple Shader (Eevee Mod)'], use_fake_user = False)
+                            em_simple = bpy.data.node_groups['.Simple Shader (Eevee Mod)'].copy()
 
                         if mat.name not in alpha_blend_mats:
                             simple.node_tree.nodes['combine'].node_tree = em_simple
