@@ -208,7 +208,8 @@ class modify_material(bpy.types.Operator):
         swap_body_material(c.get_material_names('o_tang'),'KK General')
 
         #Replace the eyeline materials separately
-        swap_body_material([c.get_material_names('cf_O_eyeline')[0]],'KK Eyeline up')
+        if c.get_material_names('cf_O_eyeline'):
+            swap_body_material([c.get_material_names('cf_O_eyeline')[0]],'KK Eyeline up')
         if len(c.get_material_names('cf_O_eyeline')) > 1:
             swap_body_material([c.get_material_names('cf_O_eyeline')[1]],'KK Eyeline kage')
 
@@ -454,13 +455,14 @@ class modify_material(bpy.types.Operator):
         
         #eyes
         for side in ['L', 'R']:
-            eye_mat = c.get_material_names(f'cf_Ohitomi_{side}02')[0]
-            self.image_load(f'Eye{side} (hitomi)', '_ST_CT.png')
-            self.image_load(f'Eye{side} (hitomi)', '_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available
-            self.image_load(f'Eye{side} (hitomi)', '_ot1.png')
-            self.image_load(f'Eye{side} (hitomi)', '_ot2.png')
-            self.image_load(f'Eye{side} (hitomi)', image_override = eye_mat[:-15] + '_cf_t_expression_00_EXPR.png', node_override= '_cf_t_expression_00_EXPR.png')
-            self.image_load(f'Eye{side} (hitomi)', image_override = eye_mat[:-15] + '_cf_t_expression_01_EXPR.png', node_override= '_cf_t_expression_01_EXPR.png')
+            if c.get_material_names(f'cf_Ohitomi_{side}02'):
+                eye_mat = c.get_material_names(f'cf_Ohitomi_{side}02')[0]
+                self.image_load(f'Eye{side} (hitomi)', '_ST_CT.png')
+                self.image_load(f'Eye{side} (hitomi)', '_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available
+                self.image_load(f'Eye{side} (hitomi)', '_ot1.png')
+                self.image_load(f'Eye{side} (hitomi)', '_ot2.png')
+                self.image_load(f'Eye{side} (hitomi)', image_override = eye_mat[:-15] + '_cf_t_expression_00_EXPR.png', node_override= '_cf_t_expression_00_EXPR.png')
+                self.image_load(f'Eye{side} (hitomi)', image_override = eye_mat[:-15] + '_cf_t_expression_01_EXPR.png', node_override= '_cf_t_expression_01_EXPR.png')
         
         #correct the eye scaling using info from the KK_ChaFileCustomFace.json
         face_data = c.get_json_file('KK_ChaFileCustomFace.json')
@@ -520,35 +522,35 @@ class modify_material(bpy.types.Operator):
                     genMat.material.node_tree.nodes['light'].inputs['Detail intensity (shine)'].default_value = 0
                     genMat.material.node_tree.nodes['dark' ].inputs['Detail intensity (shine)'].default_value = 0
                 
+                shader_name = c.get_shader_name(genMat.material['id'])
+
                 #If the shader of this material is set to "main opaque" then there is NOT supposed to be a color mask, but the kkbp exporter exports one anyway
                 #Move the colormask to the opaque slot if one was loaded in. This way it can still be used by the plain main texture
                 if genMat.material.node_tree.nodes['textures'].node_tree.nodes['_CM.png'].image:
-                    non_cm_shaders = ['Koikano/main_clothes_opaque', 'Shader Forge/main_opaque', 'xukmi/MainOpaquePlus', 'xukmi/MainOpaquePlusTess', 'Shader Forge/main_opaque2', 'Shader Forge/main_opaque_low']
-                    #find this material in the MaterialDataComplete.json and see if it's a non color mask shader
-                    material_data = c.get_json_file('KK_MaterialDataComplete.json')
-                    material_infos = [m['MaterialInformation'] for m in material_data if m.get('MaterialInformation')]
-                    materials = []
-                    for material_info in material_infos:
-                        materials.extend([m['MaterialName'] for m in material_info if m.get('MaterialName') == genMat.material['id'] and m.get('ShaderName') in non_cm_shaders])
-                    if materials:
+                    shaders = ['Koikano/main_clothes_opaque', 'Shader Forge/main_opaque', 'xukmi/MainOpaquePlus', 'xukmi/MainOpaquePlusTess', 'Shader Forge/main_opaque2', 'Shader Forge/main_opaque_low']
+                    if shader_name in shaders:
                         c.kklog('Detected opaque shader. Moving color mask to color mask (plain) slot: {}'.format(genMat.material['id']))
                         genMat.material.node_tree.nodes['textures'].node_tree.nodes['_CM.pngopaque'].image = genMat.material.node_tree.nodes['textures'].node_tree.nodes['_CM.png'].image
                         genMat.material.node_tree.nodes['textures'].node_tree.nodes['_CM.png'].image = None
                 
                 #If the shader of this material is set to "main alpha", set the material to "blended" in blender
-                alpha_shaders = ['Shader Forge/main_alpha', 'Koikano/main_clothes_alpha', 'xukmi/MainAlphaPlus', 'xukmi/MainAlphaPlusTess', 'xukmi/MainItemAlphaPlus', 'IBL_Shader_alpha', ]
+                shaders = ['Shader Forge/main_alpha', 'Koikano/main_clothes_alpha', 'xukmi/MainAlphaPlus', 'xukmi/MainAlphaPlusTess', 'xukmi/MainItemAlphaPlus', 'IBL_Shader_alpha', ]
                 #find this material in the MaterialDataComplete.json and see if it's an alpha shader
-                material_data = c.get_json_file('KK_MaterialDataComplete.json')
-                material_infos = [m['MaterialInformation'] for m in material_data if m.get('MaterialInformation')]
-                materials = []
-                for material_info in material_infos:
-                    materials.extend([m['MaterialName'] for m in material_info if m.get('MaterialName') == genMat.material['id'] and m.get('ShaderName') in alpha_shaders])
-                if materials:
+                if shader_name in shaders:
                     c.kklog('Detected alpha shader. Setting render method to blended: {}'.format(genMat.material['id']))
                     if bpy.app.version[0] == 3:
                         genMat.material.blend_method = 'BLEND'
                     else:
                         genMat.material.surface_render_method = 'BLENDED'
+
+                #If the shader of this material is set to "glasses", remove the alpha socket from the texture group
+                shaders = ['Shader Forge/main_alpha', 'Shader Forge/toon_glasses_lod0', 'Koikano/main_clothes_item_glasses',]
+                #find this material in the MaterialDataComplete.json and see if it's a glasses shader
+                if shader_name in shaders:
+                    c.kklog('Detected glasses shader. Removing alpha node in texture group: {}'.format(genMat.material['id']))
+                    nodes = genMat.material.node_tree.nodes['textures'].node_tree.nodes
+                    links = genMat.material.node_tree.nodes['textures'].node_tree.links
+                    links.remove(nodes['_AM.png'].outputs[1].links[0])
 
                 #special exception to clip the emblem image because I am tired of seeing it repeat at the edges
                 if 'KK cf_m_emblem ' in genMat.material.name:
