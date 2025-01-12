@@ -255,7 +255,12 @@ class modify_material(bpy.types.Operator):
                 template = bpy.data.materials['KK General'].copy()
                 template['outfit'] = True
                 template['name'] = c.get_name()
-                template['id'] = original_name
+                #Some outfit materials are repeated. The order goes 'outfit_material', 'outfit_material 00', 'outfit_material 01', etc. 
+                #If this happens use the name without numbers or the color information from the json will not be loaded correctly
+                if original_name[-2:].isnumeric() and original_name[-3] == ' ':
+                    template['id'] = original_name[:-3]
+                else:
+                    template['id'] = original_name
                 template.name = 'KK ' + original_name + ' ' + c.get_name()
                 material_slot.material = bpy.data.materials[template.name]
                 
@@ -515,7 +520,37 @@ class modify_material(bpy.types.Operator):
                     genMat.material.node_tree.nodes['light'].inputs['Detail intensity (shine)'].default_value = 0
                     genMat.material.node_tree.nodes['dark' ].inputs['Detail intensity (shine)'].default_value = 0
                 
-                #special exception to clip the emblem image
+                #If the shader of this material is set to "main opaque" then there is NOT supposed to be a color mask, but the kkbp exporter exports one anyway
+                #Move the colormask to the opaque slot if one was loaded in. This way it can still be used by the plain main texture
+                if genMat.material.node_tree.nodes['textures'].node_tree.nodes['_CM.png'].image:
+                    non_cm_shaders = ['Koikano/main_clothes_opaque', 'Shader Forge/main_opaque', 'xukmi/MainOpaquePlus', 'xukmi/MainOpaquePlusTess', 'Shader Forge/main_opaque2', 'Shader Forge/main_opaque_low']
+                    #find this material in the MaterialDataComplete.json and see if it's a non color mask shader
+                    material_data = c.get_json_file('KK_MaterialDataComplete.json')
+                    material_infos = [m['MaterialInformation'] for m in material_data if m.get('MaterialInformation')]
+                    materials = []
+                    for material_info in material_infos:
+                        materials.extend([m['MaterialName'] for m in material_info if m.get('MaterialName') == genMat.material['id'] and m.get('ShaderName') in non_cm_shaders])
+                    if materials:
+                        c.kklog('Detected opaque shader. Moving color mask to color mask (plain) slot: {}'.format(genMat.material['id']))
+                        genMat.material.node_tree.nodes['textures'].node_tree.nodes['_CM.pngopaque'].image = genMat.material.node_tree.nodes['textures'].node_tree.nodes['_CM.png'].image
+                        genMat.material.node_tree.nodes['textures'].node_tree.nodes['_CM.png'].image = None
+                
+                #If the shader of this material is set to "main alpha", set the material to "blended" in blender
+                alpha_shaders = ['Shader Forge/main_alpha', 'Koikano/main_clothes_alpha', 'xukmi/MainAlphaPlus', 'xukmi/MainAlphaPlusTess', 'xukmi/MainItemAlphaPlus', 'IBL_Shader_alpha', ]
+                #find this material in the MaterialDataComplete.json and see if it's an alpha shader
+                material_data = c.get_json_file('KK_MaterialDataComplete.json')
+                material_infos = [m['MaterialInformation'] for m in material_data if m.get('MaterialInformation')]
+                materials = []
+                for material_info in material_infos:
+                    materials.extend([m['MaterialName'] for m in material_info if m.get('MaterialName') == genMat.material['id'] and m.get('ShaderName') in alpha_shaders])
+                if materials:
+                    c.kklog('Detected alpha shader. Setting render method to blended: {}'.format(genMat.material['id']))
+                    if bpy.app.version[0] == 3:
+                        genMat.material.blend_method = 'BLEND'
+                    else:
+                        genMat.material.surface_render_method = 'BLENDED'
+
+                #special exception to clip the emblem image because I am tired of seeing it repeat at the edges
                 if 'KK cf_m_emblem ' in genMat.material.name:
                     genMat.material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].extension = 'CLIP'
                                 
