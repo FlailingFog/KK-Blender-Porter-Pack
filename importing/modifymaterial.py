@@ -200,7 +200,7 @@ class modify_material(bpy.types.Operator):
         swap_body_material(c.get_material_names('cf_O_noseline'),'KK Nose')
         swap_body_material(c.get_material_names('cf_O_eyeline_low'),'KK Eyeline down')
         swap_body_material(c.get_material_names('cf_Ohitomi_L'),'KK Eyewhites (sirome)')
-        swap_body_material(c.get_material_names('cf_Ohitomi_R'),'KK Eyewhites (sirome)')
+        # swap_body_material(c.get_material_names('cf_Ohitomi_R'),'KK Eyewhites (sirome)')
         swap_body_material(c.get_material_names('cf_Ohitomi_L02'),'KK EyeL (hitomi)')
         swap_body_material(c.get_material_names('cf_Ohitomi_R02'),'KK EyeR (hitomi)')
         swap_body_material(c.get_material_names('o_body_a'),'KK Body')
@@ -437,6 +437,7 @@ class modify_material(bpy.types.Operator):
         #load in the remaining face materials if they exist
         if c.get_material_names('cf_O_mayuge'):
             self.image_load('Eyebrows (mayuge)', '_ST_CT.png')
+            self.image_load('Eyebrows (mayuge)', '_ST_CT.png')
         
         if c.get_material_names('cf_O_noseline'):
             self.image_load('Nose', '_ST_CT.png')
@@ -544,7 +545,7 @@ class modify_material(bpy.types.Operator):
                         genMat.material.surface_render_method = 'BLENDED'
 
                 #If the shader of this material is set to "glasses", remove the alpha socket from the texture group
-                shaders = ['Shader Forge/main_alpha', 'Shader Forge/toon_glasses_lod0', 'Koikano/main_clothes_item_glasses',]
+                shaders = ['Shader Forge/toon_glasses_lod0', 'Koikano/main_clothes_item_glasses',]
                 #find this material in the MaterialDataComplete.json and see if it's a glasses shader
                 if shader_name in shaders:
                     c.kklog('Detected glasses shader. Removing alpha node in texture group: {}'.format(genMat.material['id']))
@@ -1100,9 +1101,9 @@ class modify_material(bpy.types.Operator):
             #eyebrows
             if c.get_material_names('cf_O_mayuge'):
                 mat_name = 'KK Eyebrows (mayuge) ' + c.get_name()
-                shader_inputs = c.get_body().material_slots[mat_name].material.node_tree.nodes['combine'].inputs
-                shader_inputs['Light colors'].default_value = self.saturate_color(c.get_color(mat_name, "_Color "),  'light', shadow_color = c.get_shadow_color(mat_name))
-                shader_inputs['Dark colors'].default_value =  self.saturate_color(c.get_color(mat_name, "_Color "),  'dark' , shadow_color = c.get_shadow_color(mat_name))
+                shader_inputs = c.get_body().material_slots[mat_name].material.node_tree.nodes['light'].inputs
+                shader_inputs['Eyebrow color'].default_value =       self.saturate_color(c.get_color(mat_name, "_Color Color"))
+                shader_inputs['Eyebrow color dark'].default_value =  self.saturate_color(c.get_color(mat_name, "_Color Color"),  'dark' , shadow_color = c.get_shadow_color(mat_name))
             
             #eyeline
             if c.get_material_names('cf_O_eyeline'):
