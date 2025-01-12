@@ -92,8 +92,8 @@ class modify_mesh(bpy.types.Operator):
             json_materials = [m['MaterialInformation'] for m in material_data if m.get('MaterialInformation')]
             for material_array in json_materials:
                 for material in material_array:
-                    if material['isHair'] == True and material.get('MaterialName') in outfit_materials:
-                        hair_mat_list.append(material['MaterialName'])
+                    #some hair materials are repeated. The order goes 'hair_material', 'hair_material 00', 'hair_material 01', etc. Check for those too.
+                    hair_mat_list.extend([m for m in outfit_materials if material['isHair'] == True and material.get('MaterialName') in m])
             #separate hair and tag it
             if hair_mat_list:
                 hair_object = self.separate_materials(outfit, hair_mat_list, 'Hair ' + outfit.name + ' ' + outfit['name'])

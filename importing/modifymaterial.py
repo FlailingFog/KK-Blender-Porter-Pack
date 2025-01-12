@@ -183,9 +183,6 @@ class modify_material(bpy.types.Operator):
             original_materials = list(set(original_materials))
             for index, original_material in enumerate(original_materials):
                 try:
-                    #The kage is bundled with Eyeline up, so make an exception for it
-                    if index == 1 and template_name == 'KK Eyeline up':
-                        template_name = 'KK Eyeline kage'
                     template = bpy.data.materials[template_name].copy()
                     template['body'] = True
                     template['name'] = c.get_name()
@@ -201,7 +198,6 @@ class modify_material(bpy.types.Operator):
         swap_body_material(c.get_material_names('cf_O_face'),'KK Face')
         swap_body_material(c.get_material_names('cf_O_mayuge'),'KK Eyebrows (mayuge)')
         swap_body_material(c.get_material_names('cf_O_noseline'),'KK Nose')
-        swap_body_material(c.get_material_names('cf_O_eyeline'),'KK Eyeline up')
         swap_body_material(c.get_material_names('cf_O_eyeline_low'),'KK Eyeline down')
         swap_body_material(c.get_material_names('cf_Ohitomi_L'),'KK Eyewhites (sirome)')
         swap_body_material(c.get_material_names('cf_Ohitomi_R'),'KK Eyewhites (sirome)')
@@ -210,6 +206,11 @@ class modify_material(bpy.types.Operator):
         swap_body_material(c.get_material_names('o_body_a'),'KK Body')
         swap_body_material(c.get_material_names('cf_O_tooth'),'KK Teeth (tooth)')
         swap_body_material(c.get_material_names('o_tang'),'KK General')
+
+        #Replace the eyeline materials separately
+        swap_body_material([c.get_material_names('cf_O_eyeline')[0]],'KK Eyeline up')
+        if len(c.get_material_names('cf_O_eyeline')) > 1:
+            swap_body_material([c.get_material_names('cf_O_eyeline')[1]],'KK Eyeline kage')
 
         c.print_timer('replace_materials_for_body')
 
@@ -223,7 +224,12 @@ class modify_material(bpy.types.Operator):
                 template = bpy.data.materials['KK Hair'].copy()
                 template['hair'] = True
                 template['name'] = c.get_name()
-                template['id'] = original_name
+                #Some hair materials are repeated. The order goes 'hair_material', 'hair_material 00', 'hair_material 01', etc. 
+                #If this happens use the name without numbers or the color information from the json will not be loaded correctly
+                if original_name[-2:].isnumeric() and original_name[-3] == ' ':
+                    template['id'] = original_name[:-3]
+                else:
+                    template['id'] = original_name
                 template.name = 'KK ' + original_name + ' ' + c.get_name()
                 material_slot.material = bpy.data.materials[template.name]
                 
@@ -435,11 +441,9 @@ class modify_material(bpy.types.Operator):
             self.image_load('Eyewhites (sirome)',  image_override = c.get_material_names('cf_Ohitomi_R')[0] + '_ST_CT.png', node_override = '_ST_CT.png')
 
         if c.get_material_names('cf_O_eyeline'):
-            self.image_load('Eyeline up', '_ST_CT.png')
+            self.image_load('Eyeline up', image_override= c.get_material_names('cf_O_eyeline')[0] + '_ST_CT.png', node_override='_ST_CT.png')
         if len(c.get_material_names('cf_O_eyeline')) > 1:
-            #remove dupes
-            kage_material = list(set(c.get_material_names('cf_O_eyeline')))[1]
-            self.image_load('Eyeline up', image_override=kage_material + '_ST_CT.png', node_override='_ST_CT.pngkage')
+            self.image_load('Eyeline up', image_override=c.get_material_names('cf_O_eyeline')[1] + '_ST_CT.png', node_override='_ST_CT.pngkage')
         if c.get_material_names('cf_O_eyeline_low'):
             self.image_load('Eyeline up', image_override=c.get_material_names('cf_O_eyeline_low')[0] + '_ST_CT.png', node_override='_ST_CT.pngdown')
         
@@ -503,6 +507,13 @@ class modify_material(bpy.types.Operator):
                     )
                 if plain_but_no_main:
                     genMat.material.node_tree.nodes['combine'].inputs['Use plain main texture?'].default_value = 1
+                
+                #If there's an AnotherRamp (AR) texture present, the material is likely supposed to be metallic on the red parts of the detail mask
+                #I don't have a template for this, so the material will just look pure white. Turn off the shine intensity to avoid this
+                image_name = genMat.material['id'] + '_AR.png'
+                if bpy.data.images.get(image_name):
+                    genMat.material.node_tree.nodes['light'].inputs['Detail intensity (shine)'].default_value = 0
+                    genMat.material.node_tree.nodes['dark' ].inputs['Detail intensity (shine)'].default_value = 0
                 
                 #special exception to clip the emblem image
                 if 'KK cf_m_emblem ' in genMat.material.name:

@@ -121,7 +121,9 @@ def get_material_names(smr_name: str) -> list[str]:
     materials = []
     for material_info in material_infos:
         materials.extend([m['MaterialName'] for m in material_info if m.get('MaterialName')])
-    return materials
+    #remove dupes and sort
+    materials = list(set(materials))
+    return sorted(materials)
 
 def get_color(material_name: str, color: str) -> dict[float]:
     '''Find the material material_name and return an RGBA dict list of the specified color ranging from 0-1. If material_name contains a space and the character name, it will be filtered out.'''
