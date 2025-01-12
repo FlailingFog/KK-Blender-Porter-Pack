@@ -179,6 +179,8 @@ class modify_material(bpy.types.Operator):
 
         #Replace all materials on the body with templates
         def swap_body_material(original_materials: list[str], template_name: str):
+            #remove dupes
+            original_materials = list(set(original_materials))
             for index, original_material in enumerate(original_materials):
                 try:
                     #The kage is bundled with Eyeline up, so make an exception for it
@@ -435,7 +437,9 @@ class modify_material(bpy.types.Operator):
         if c.get_material_names('cf_O_eyeline'):
             self.image_load('Eyeline up', '_ST_CT.png')
         if len(c.get_material_names('cf_O_eyeline')) > 1:
-            self.image_load('Eyeline up', image_override=c.get_material_names('cf_O_eyeline')[1] + '_ST_CT.png', node_override='_ST_CT.pngkage')
+            #remove dupes
+            kage_material = list(set(c.get_material_names('cf_O_eyeline')))[1]
+            self.image_load('Eyeline up', image_override=kage_material + '_ST_CT.png', node_override='_ST_CT.pngkage')
         if c.get_material_names('cf_O_eyeline_low'):
             self.image_load('Eyeline up', image_override=c.get_material_names('cf_O_eyeline_low')[0] + '_ST_CT.png', node_override='_ST_CT.pngdown')
         
@@ -508,22 +512,14 @@ class modify_material(bpy.types.Operator):
 
     def link_textures_for_tongue_tear_gag(self):
         tongue_mat = c.get_material_names('o_tang')
-        if tongue_mat:
-            self.image_load('Tongue', '_CM.png', node_override='_ST_CT.png') #done on purpose
-            self.image_load('Tongue', '_CM.png')
-            self.image_load('Tongue', '_DM.png')
-            self.image_load('Tongue', '_NMP.png')
-            self.image_load('Tongue', '_NMP_CNV.png') #load regular map by default
-            self.image_load('Tongue', '_NMPD_CNV.png') #then the detail map if it's there
-        else:
-            c.kklog("SMR Tongue data bugged/missing", type = 'warn')
-            tongue_mat = ['cf_m_tang']
-            self.image_load('Tongue', '_CM.png', node_override='_ST_CT.png') #done on purpose
-            self.image_load('Tongue', '_CM.png')
-            self.image_load('Tongue', '_DM.png')
-            self.image_load('Tongue', '_NMP.png')
-            self.image_load('Tongue', '_NMP_CNV.png') #load regular map by default
-            self.image_load('Tongue', '_NMPD_CNV.png') #then the detail map if it's there
+        tongue_mat = tongue_mat if tongue_mat else ['cf_m_tang'] #check for bugged/missing SMR Tongue data
+        self.image_load('Tongue', '_CM.png', node_override='_ST_CT.png') #done on purpose
+        self.image_load('Tongue', '_CM.png', node_override='_ST_DT.png') #still done on purpose
+        self.image_load('Tongue', '_CM.png')
+        self.image_load('Tongue', '_DM.png')
+        self.image_load('Tongue', '_NMP.png')
+        self.image_load('Tongue', '_NMP_CNV.png') #load regular map by default
+        self.image_load('Tongue', '_NMPD_CNV.png') #then the detail map if it's there
 
         #load all gag eye textures if it exists
         if c.get_gags():
@@ -561,7 +557,7 @@ class modify_material(bpy.types.Operator):
                 if material.node_tree.nodes['textures'].node_tree.nodes.get('_ST_DT.png'):
                     maintex = material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].image
                     #if this isn't a placeholder image, create a dark version of it
-                    if maintex.name != 'Template: Placeholder':
+                    if maintex.name != 'Template: Placeholder' and maintex.name != 'cf_m_tang_CM.png':
                         shadow_color = c.get_shadow_color(material.name)
                         darktex = self.create_darktex(maintex, shadow_color)
                         material.node_tree.nodes['textures'].node_tree.nodes['_ST_DT.png'].image = darktex
