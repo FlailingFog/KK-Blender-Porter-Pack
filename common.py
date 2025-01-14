@@ -99,11 +99,11 @@ def get_all_objects() -> list[bpy.types.Object]:
     '''Returns all objects associated with this import'''
     everything = get_outfits()
     everything.extend(get_alts())
-    everything.extend(get_body())
+    everything.append(get_body())
     everything.extend(get_hairs())
-    everything.extend(get_tears())
-    everything.extend(get_gags())
-    everything.extend(get_tongue())
+    everything.append(get_tears())
+    everything.append(get_gags())
+    everything.append(get_tongue())
     return everything
 
 def get_name() -> str:

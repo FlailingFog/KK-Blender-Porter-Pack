@@ -132,7 +132,7 @@ def sanitizeMaterialName(text: str) -> str:
     return text
 
 def bake_pass(folderpath: str, bake_type: str):
-    '''Folds the body / clothes / whatever down to a UV rectangle
+    '''Folds the body / clothes / hair down to a UV rectangle
     Places a filler plane right below it to fill in the rest of the image
     Bakes all materials on this object down to an image using the orthographic camera
     '''
@@ -144,24 +144,19 @@ def bake_pass(folderpath: str, bake_type: str):
         original_material_order.append(matslot.name)
 
     #if this is a light or dark pass, make sure the RawShade group is a constant light or dark
-    combine = bpy.data.node_groups['Combine colors']
+    combine = bpy.data.node_groups['.Combine colors']
     combine.links.remove(combine.nodes['mix'].inputs[0].links[0])
     combine.nodes['mix'].inputs[0].default_value = 1 if bake_type == 'light' else 0
 
     #go through each material slot
     for index, current_material in enumerate(object_to_bake.data.materials):
+        #Don't bake this material if it doesn't have the bake tag
+        if not current_material.get('bake'):
+            c.kklog(f'Detected material that cannot be finalized. Skipping: {current_material.name}')
+            continue
+
         nodes = current_material.node_tree.nodes
         links = current_material.node_tree.links
-
-        #Don't bake this material if it's an outline material
-        if 'Outline ' in current_material.name:
-            c.kklog(f'Skipping {current_material.name} because it is an outline material')
-            continue
-
-        #Don't bake this material if it is a simplified material (meaning it has already been baked)
-        if bpy.data.materials.get(current_material.name + '-ORG') or ' Atlas' in current_material.name:
-            c.kklog(f'Skipping {current_material.name} because it has already been finalized')
-            continue
         
         #Turn off the normals for the toon_shading shading node group input if this isn't a normal pass
         if nodes.get('textures') and bake_type != 'normal':
@@ -170,16 +165,13 @@ def bake_pass(folderpath: str, bake_type: str):
             toon_shading.inputs[1].default_value = 0
 
         #if this is a normal pass, attach the normal passthrough to the output
-        else:
+        elif nodes.get('textures') and bake_type == 'normal':
             links.remove(nodes['out'].inputs[0].links[0])
             links.new(nodes['textures'].outputs[-1], nodes['out'].inputs[0])
         
-        #get the filler plane for later
-        fillerplane = bpy.data.objects['fillerplane']
-
         if nodes.get('textures'):
             #Go through each of the textures loaded into the textures group and get the highest resolution one
-            highest_resolution = None
+            highest_resolution = [0, 0]
             for image_node in nodes['textures'].node_tree.nodes:
                 if image_node.type == 'TEX_IMAGE' and image_node.image:
                     image_size = image_node.image.size[0] * image_node.image.size[1]
@@ -198,18 +190,13 @@ def bake_pass(folderpath: str, bake_type: str):
                 bpy.context.scene.render.resolution_x=64
                 bpy.context.scene.render.resolution_y=64
 
-            #manually set gag02 resolution or it will be stretched
-            if 'KK Gag02' in current_material.name:
-                bpy.context.scene.render.resolution_x = 512 * resolution_multiplier
-                bpy.context.scene.render.resolution_y = 512 * resolution_multiplier
-
             #set every material slot except the current material to be transparent
             for matslot in object_to_bake.material_slots:
                 if matslot.material != current_material:
                     matslot.material = bpy.data.materials['KK Eyeline kage ' + c.get_name()]
             
             #set the filler plane to the current material
-            fillerplane.material_slots[0].material = current_material
+            bpy.data.objects['fillerplane'].material_slots[0].material = current_material
 
             #then render it
             matname = sanitizeMaterialName(current_material.name)
@@ -223,14 +210,14 @@ def bake_pass(folderpath: str, bake_type: str):
 
             #reset folderpath after render
             bpy.context.scene.render.filepath = folderpath
-                        
+            
         #Restore the value in the toon_shading shading node group for the normals
         if nodes.get('textures') and bake_type != 'normal':
             toon_shading = nodes.get('textures').node_tree.nodes['shade']
             toon_shading.inputs[1].default_value = original_normal_state
         
         #Restore the links if they were edited for the normal pass
-        else:
+        elif nodes.get('textures') and bake_type == 'normal':
             links.remove(nodes['out'].inputs[0].links[0])
             links.new(nodes['combine'].outputs[0], nodes['out'].inputs[0])
 
@@ -239,8 +226,8 @@ def bake_pass(folderpath: str, bake_type: str):
             object_to_bake.material_slots[material_index].material = bpy.data.materials[original_material_order[material_index]]
     
     #reset the toon_shading group link
-    combine = bpy.data.node_groups['Combine colors']
-    combine.links.new(combine.nodes['input'].inputs[2], combine.nodes['mix'].inputs[0].links[0])
+    combine = bpy.data.node_groups['.Combine colors']
+    combine.links.new(combine.nodes['input'].outputs[2], combine.nodes['mix'].inputs[0])
 
 def cleanup():
     # Deselect all objects
@@ -272,27 +259,26 @@ def replace_all_baked_materials(folderpath: str, bake_object: bpy.types.Object):
     #load all baked images into blender
     fileList = pathlib.Path(folderpath).glob('*.png')
     files = [file for file in fileList if file.is_file()]
-    for bake_type in ['light', 'dark', 'normal']:
-        for mat in bake_object.material_slots:
-            matname = mat.name[:-4] if mat.name[-4:] == '-ORG' else mat.name
-            image_path = os.join(folderpath, sanitizeMaterialName(matname) + ' ' + bake_type + '.png')
-            if image_path in files:
-                image = bpy.data.images.load(filepath=str(image_path))
-                image.pack()
-                #if there was an older version of this image, get rid of it
-                if image.name[-4:] == '.001':
-                    if bpy.data.images.get(image.name[:-4]):
-                        bpy.data.images[image.name[:-4]].user_remap(image)
-                        bpy.data.images.remove(bpy.data.images[image.name[:-4]])
-                        image.name = image.name[:-4]
-
+    for file in files:
+        try:
+            image = bpy.data.images.load(filepath=str(file))
+            image.pack()
+            #if there was an older version of this image, get rid of it
+            if image.name[-4:] == '.001':
+                if bpy.data.images.get(image.name[:-4]):
+                    bpy.data.images[image.name[:-4]].user_remap(image)
+                    bpy.data.images.remove(bpy.data.images[image.name[:-4]])
+                    image.name = image.name[:-4]
+        except:
+            c.kklog(f'Could not load in file because the name exceeds 64 characters: {file}')
+    
     #now all needed images are loaded into the file. Match each material to it's image textures
     for bake_type in ['light', 'dark', 'normal']:
         for mat in bake_object.material_slots:
-            image = bpy.data.images.get(matname + f' {bake_type}.png', '')
+            image = bpy.data.images.get(mat.material.name + f' {bake_type}.png', '')
             if image:
                 #check if a simplified version of this material exists yet. If it doesn't, create it
-                if '-ORG' not in mat.material.name:
+                if mat.material.get('bake'):
                     #rename the original material to "material_name-ORG" and create the simplified material
                     mat.material.name += '-ORG'
                     try:
@@ -300,38 +286,40 @@ def replace_all_baked_materials(folderpath: str, bake_object: bpy.types.Object):
                     except:
                         c.import_from_library_file('Material', ['KK Simple'], use_fake_user = False)
                         simple = bpy.data.materials['KK Simple'].copy()
-                    simple.name = mat.material.name.replace('-ORG','')
+                    simple.name = mat.material.name.replace('-ORG', '')
                     textures_group = simple.node_tree.nodes['textures'].node_tree.copy()
                     textures_group.name = simple.name
                     simple.node_tree.nodes['textures'].node_tree = textures_group
                     textures_group.nodes[bake_type].image = image
+                    # you have the ability to only bake the light textures, but it looks weird if there is no dark texture to go along with it, 
+                    # put the light image into the dark slot. it will be overwritten if the dark texture exists on the next loop
+                    if bake_type == 'light':
+                        textures_group.nodes['dark'].image = image
 
                     #and then replace the original material with this new simplified one
                     mat.material.use_fake_user = True
-                    alpha_blend_mats = [
-                        'KK Nose',
-                        'KK Eyebrows (mayuge)',
-                        'KK Eyeline up',
-                        'KK Eyeline kage',
-                        'KK Eyeline down',
-                        'KK EyewhitesL (sirome)',
-                        'KK EyewhitesR (sirome)',
-                        'KK EyeL (hitomi)',
-                        'KK EyeR (hitomi)']
-                    mat_slot.material = simple
-                    if simple.name in alpha_blend_mats:
-                        mat_slot.material.blend_method = 'BLEND'
+                    def replace_mat():
+                        if bpy.app.version[0] > 3:
+                            blend_method = mat.material.surface_render_method
+                            mat.material = simple
+                            mat.material.surface_render_method = blend_method
+                        else:
+                            blend_method = mat.material.blend_method
+                            mat.material = simple
+                            mat.material.blend_method = blend_method
+                            mat.material.show_transparent_back = False
+                    replace_mat()
 
                     #load the Eevee Mod simple shader if using Eevee Mod
                     if bpy.context.scene.kkbp.shader_dropdown == 'C':
                         try:
-                            em_simple = bpy.data.node_groups['.Simple Shader (Eevee Mod)'].copy()
+                            simple = bpy.data.node_groups['.Simple Shader (Eevee Mod)'].copy()
                         except:
                             c.import_from_library_file('NodeTree', ['.Simple Shader (Eevee Mod)'], use_fake_user = False)
-                            em_simple = bpy.data.node_groups['.Simple Shader (Eevee Mod)'].copy()
-
-                        if mat.name not in alpha_blend_mats:
-                            simple.node_tree.nodes['combine'].node_tree = em_simple
+                            simple = bpy.data.node_groups['.Simple Shader (Eevee Mod)'].copy()
+                        #and then replace the original material with this new simplified one
+                        mat.material.use_fake_user = True
+                        replace_mat()
 
                 #the simplified material already exists, so just load in the image
                 else:
@@ -529,15 +517,14 @@ class bake_materials(bpy.types.Operator):
             bpy.context.scene.render.engine = 'BLENDER_EEVEE_NEXT' if bpy.app.version[0] > 3 else 'BLENDER_EEVEE'
             c.switch(c.get_body(), 'OBJECT')
             c.set_viewport_shading('SOLID')
-            camera = setup_camera()
-
+            
             #enable transparency
             bpy.context.scene.render.film_transparent = True
             bpy.context.scene.render.filter_size = 0.50
 
             for bake_object in c.get_all_objects():
                 #do a quick check to make sure this object has any materials that can be baked
-                worth_baking = [m for m in bake_object.material_slots if 'Outline ' not in m.name and (not bpy.data.materials.get(m.name + '-ORG') or ' Atlas' not in m.name)]
+                worth_baking = [m for m in bake_object.material_slots if m.material.get('bake')]
                 if not worth_baking:
                     c.kklog(f'Not finalizing object because there were no materials worth baking: {bake_object.name}')
                     continue
@@ -548,23 +535,24 @@ class bake_materials(bpy.types.Operator):
                 #unhide the object to bake (but only if the old baking system is not used)
                 if not bpy.context.scene.kkbp.old_bake_bool:
                     bake_object.hide_render = False
+                camera = setup_camera()
                 c.switch(bake_object)
                 setup_geometry_nodes_and_fillerplane(camera)
                 bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)                
 
                 #perform the baking operation
                 bake_types = []
-                if scene.kkbp.bake_light_bool:
+                if scene.bake_light_bool:
                     bake_types.append('light')
-                if scene.kkbp.bake_dark_bool:
+                if scene.bake_dark_bool:
                     bake_types.append('dark')
-                if scene.kkbp.bake_norm_bool:
+                if scene.bake_norm_bool:
                     bake_types.append('normal')
                 for bake_type in bake_types:
                     bake_pass(folderpath, bake_type)
                 cleanup()
             
-            #disable alpha on the output
+            #disable transparency
             bpy.context.scene.render.film_transparent = False
             bpy.context.scene.render.filter_size = 1.5
             for bake_object in c.get_all_objects():

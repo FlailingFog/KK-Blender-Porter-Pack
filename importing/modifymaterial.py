@@ -187,6 +187,7 @@ class modify_material(bpy.types.Operator):
                     template['body'] = True
                     template['name'] = c.get_name()
                     template['id'] = original_material
+                    template['bake'] = True
                     template.name = bpy.data.materials[template_name].name + ' ' + c.get_name()
                     body.material_slots[original_material].material = template
                     template_group = template.node_tree.nodes['textures'].node_tree.copy()
@@ -225,6 +226,7 @@ class modify_material(bpy.types.Operator):
                 template = bpy.data.materials['KK Hair'].copy()
                 template['hair'] = True
                 template['name'] = c.get_name()
+                template['bake'] = True
                 #Some hair materials are repeated. The order goes 'hair_material', 'hair_material 00', 'hair_material 01', etc. 
                 #If this happens use the name without numbers or the color information from the json will not be loaded correctly
                 if original_name[-2:].isnumeric() and original_name[-3] == ' ':
@@ -256,6 +258,7 @@ class modify_material(bpy.types.Operator):
                 template = bpy.data.materials['KK General'].copy()
                 template['outfit'] = True
                 template['name'] = c.get_name()
+                template['bake'] = True
                 #Some outfit materials are repeated. The order goes 'outfit_material', 'outfit_material 00', 'outfit_material 01', etc. 
                 #If this happens use the name without numbers or the color information from the json will not be loaded correctly
                 if original_name[-2:].isnumeric() and original_name[-3] == ' ':
