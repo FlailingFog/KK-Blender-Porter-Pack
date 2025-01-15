@@ -407,17 +407,15 @@ def create_material_atlas(folderpath: str):
 
     #setup materials for the combiner script
     for obj in [o for o in bpy.data.collections[c.get_name() + ' atlas'].all_objects if not o.hide_get() and o.type == 'MESH']:
-        for mat in [mat_slot.material for mat_slot in obj.material_slots if 'KK ' in mat_slot.material.name and 'Outline ' not in mat_slot.material.name and ' Atlas' not in mat_slot.material.name]:
-            if bpy.data.materials.get(mat.name + '-ORG'):
-                #this is a simple material
-                nodes = mat.node_tree.nodes
-                links = mat.node_tree.links
-                emissive_node = nodes.new('ShaderNodeEmission')
-                emissive_node.name = 'Emission'
-                image_node = nodes.new('ShaderNodeTexImage')
-                image_node.name = 'Image Texture'
-                links.new(emissive_node.inputs[0], image_node.outputs[0])
-                image_node.image = nodes['textures'].node_tree.nodes['light'].image
+        for mat in [mat_slot.material for mat_slot in obj.material_slots if mat_slot.material.get('simple')]:
+            nodes = mat.node_tree.nodes
+            links = mat.node_tree.links
+            emissive_node = nodes.new('ShaderNodeEmission')
+            emissive_node.name = 'Emission'
+            image_node = nodes.new('ShaderNodeTexImage')
+            image_node.name = 'Image Texture'
+            links.new(emissive_node.inputs[0], image_node.outputs[0])
+            image_node.image = nodes['textures'].node_tree.nodes['light'].image
         context.view_layer.objects.active = obj
         bpy.ops.object.material_slot_remove_unused()
 

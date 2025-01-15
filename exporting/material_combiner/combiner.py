@@ -45,18 +45,15 @@ class Combiner(bpy.types.Operator):
 
             for type in bake_types:
                 #replace all images
-                for material in [mat_slot.material for mat_slot in object.material_slots if 'KK ' in mat_slot.name and 'Outline ' not in mat_slot.name and ' Atlas' not in mat_slot.name]:
-                    if bpy.data.materials.get(material.name + '-ORG'):
-                        try:
-                            image = material.node_tree.nodes['textures'].node_tree.nodes[type].image
-                            if image.name == 'Template: Placeholder':
-                                image = None
-                        except:
+                for material in [mat_slot.material for mat_slot in object.material_slots if mat_slot.material.get('simple')]:
+                    image = material.node_tree.nodes['textures'].node_tree.nodes[type].image
+                    if image:
+                        if image.name == 'Template: Placeholder':
                             image = None
-                        if not image:
-                            continue
-                        else:
-                            material.node_tree.nodes['Image Texture'].image = image
+                    if not image:
+                        continue
+                    else:
+                        material.node_tree.nodes['Image Texture'].image = image
                 
                 #then run the atlas creation
                 atlas = get_atlas(scn, self.structure, atlas_size)
