@@ -18,6 +18,7 @@ from typing import cast
 import bpy
 import numpy as np
 
+from ... import common as c
 from . import globs
 from .type_annotations import CombMats
 from .type_annotations import Diffuse
@@ -71,7 +72,7 @@ atlas_material_prefix = 'material_atlas_'
 
 
 def set_ob_mode(scn: Scene, data: SMCObData) -> None:
-    scn.objects.active = bpy.data.objects['Body.001']
+    scn.objects.active = bpy.data.objects['Body ' + c.get_name() + '.001']
     bpy.ops.object.mode_set(mode='OBJECT')
 
 
@@ -435,6 +436,7 @@ def _create_material(texture: bpy.types.Texture, unique_id: str, idx: int) -> bp
 
 
 def _configure_material(mat: bpy.types.Material, texture: bpy.types.Texture) -> None:
+    mat['atlas'] = True
     mat.blend_method = 'CLIP'
     mat.use_backface_culling = True
     mat.use_nodes = True

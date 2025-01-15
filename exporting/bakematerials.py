@@ -303,11 +303,13 @@ def replace_all_baked_materials(folderpath: str, bake_object: bpy.types.Object):
                             blend_method = mat.material.surface_render_method
                             mat.material = simple
                             mat.material.surface_render_method = blend_method
+                            mat.material.use_transparency_overlap = True if ('KK Eyewhites ' + c.get_name() in mat.name) else False
                         else:
                             blend_method = mat.material.blend_method
                             mat.material = simple
                             mat.material.blend_method = blend_method
                             mat.material.show_transparent_back = False
+                        simple['simple'] = True
                     replace_mat()
 
                     #load the Eevee Mod simple shader if using Eevee Mod
@@ -348,7 +350,7 @@ def create_material_atlas(folderpath: str):
                 if bpy.data.materials.get(simplified_name):
                     simplified_mat = bpy.data.materials[simplified_name]
                     for bake_type in ['light', 'dark', 'normal']:
-                        simplified_mat.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image = bpy.data.images.get(simplified_name + ' ' + bake_type + '.png')
+                        simplified_mat.node_tree.nodes['textures'].node_tree.nodes[bake_type].image = bpy.data.images.get(simplified_name + ' ' + bake_type + '.png')
         #delete orphan data
         for cat in [bpy.data.armatures, bpy.data.objects, bpy.data.meshes, bpy.data.materials, bpy.data.images, bpy.data.node_groups]:
             for block in cat:
@@ -430,72 +432,80 @@ def create_material_atlas(folderpath: str):
         bake_types.append('dark')
     if scene.kkbp.bake_norm_bool:
         bake_types.append('normal')
-    for index, obj in enumerate([o for o in bpy.data.collections['Collection.001'].all_objects if not o.hide_get() and o.type == 'MESH']):
+    for index, obj in enumerate([o for o in bpy.data.collections[c.get_name() + ' atlas'].all_objects if not o.hide_get() and o.type == 'MESH']):
         #disable the outline on the atlased object because I don't feel like fixing it
         if obj.modifiers.get('Outline Modifier'):
             obj.modifiers['Outline Modifier'].show_render = False
             obj.modifiers['Outline Modifier'].show_viewport = False
         #fix the armature modifier
-        if obj.modifiers[0].type == 'ARMATURE':
-            obj.modifiers[0].object = bpy.data.objects["Armature.001"]
+        if obj.modifiers:
+            if obj.modifiers[0].type == 'ARMATURE':
+                obj.modifiers[0].object = bpy.data.objects["Armature.001"]
         for bake_type in bake_types:
             #check for atlas dupes
             if bpy.data.images.get(f'{index}_{bake_type}.png'):
                 bpy.data.images.remove(bpy.data.images.get(f'{index}_{bake_type}.png'))
             atlas_image = bpy.data.images.load(os.path.join(context.scene.kkbp.import_dir, 'atlas_files', f'{index}_{bake_type}.png'))
-            for material in [mat_slot.material for mat_slot in obj.material_slots if 'KK ' in mat_slot.name and 'Outline ' not in mat_slot.name and ' Outline' not in mat_slot.name and ' Atlas' not in mat_slot.name]:
-                if bpy.data.materials.get(material.name + '-ORG'):
-                    image = None
-                    try:
-                        image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
-                        if image.name == 'Template: Pattern Placeholder':
-                            image = None
-                    except:
+            for material in [mat_slot.material for mat_slot in obj.material_slots if mat_slot.material.get('simple')]:
+                image = material.node_tree.nodes['textures'].node_tree.nodes[bake_type].image
+                if image:
+                    if image.name == 'Template: Pattern Placeholder':
                         image = None
-                    if not image:
-                        continue
+                if not image:
+                    print(image)
+                    continue
+                else:
+                    if not bpy.data.materials.get('{} Atlas'.format(material.name)):
+                        #remove the emission nodes from earlier
+                        if material.node_tree.nodes.get('Emission'):
+                            material.node_tree.nodes.remove(material.node_tree.nodes['Image Texture'])
+                            material.node_tree.nodes.remove(material.node_tree.nodes['Emission'])
+                        atlas_material = material.copy()
+                        atlas_material['simple'] = False
+                        atlas_material['atlas'] = True
+                        atlas_material.name = '{} Atlas'.format(material.name)
+                        new_group = atlas_material.node_tree.nodes['textures'].node_tree.copy()
+                        new_group.name = '{} Atlas'.format(material.name)
                     else:
-                        if not bpy.data.materials.get('{} Atlas'.format(material.name)):
-                            #remove the emission nodes from earlier
-                            if material.node_tree.nodes.get('Emission'):
-                                material.node_tree.nodes.remove(material.node_tree.nodes['Image Texture'])
-                                material.node_tree.nodes.remove(material.node_tree.nodes['Emission'])
-                            atlas_material = material.copy()
-                            atlas_material.name = '{} Atlas'.format(material.name)
-                            new_group = atlas_material.node_tree.nodes['Gentex'].node_tree.copy()
-                            new_group.name = '{} Atlas'.format(material.name)
-                        else:
-                            atlas_material =  bpy.data.materials.get('{} Atlas'.format(material.name))
-                            new_group = bpy.data.node_groups.get('{} Atlas'.format(material.name))
-                        atlas_material.node_tree.nodes['Gentex'].node_tree = new_group
-                        new_group.nodes[bake_type].image = atlas_image
+                        atlas_material =  bpy.data.materials.get('{} Atlas'.format(material.name))
+                        new_group = bpy.data.node_groups.get('{} Atlas'.format(material.name))
+                    atlas_material.node_tree.nodes['textures'].node_tree = new_group
+                    new_group.nodes[bake_type].image = atlas_image
+                    #load in the light image to the dark slot to make it look better when only the light colors are baked.
+                    # This will be overwritten with the dark image in the next loop if the user baked it
+                    if bake_type == 'light':
+                        new_group.nodes['dark'].image = atlas_image
 
         #replace all images with the atlas in a new atlas material
-        for mat_slot in [m for m in obj.material_slots if ('KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name)]:
+        for mat_slot in [m for m in obj.material_slots if m.material.get('simple')]:
             material = mat_slot.material
-            if bpy.data.materials.get(material.name + '-ORG'):
-                atlas_material = bpy.data.materials.get('{} Atlas'.format(material.name))
-                mat_slot.material = atlas_material
+            atlas_material = bpy.data.materials.get('{} Atlas'.format(material.name))
+            mat_slot.material = atlas_material
 
     #setup the new collection for exporting
-    layer_collection = bpy.context.view_layer.layer_collection
-    layerColl = recurLayerCollection(layer_collection, c.get_name() + ' atlas')
-    bpy.context.view_layer.active_layer_collection = layerColl
-    bpy.ops.collection.exporter_add(name="IO_FH_fbx")
-    bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.object_types = {'EMPTY', 'ARMATURE', 'MESH', 'OTHER'}
-    bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.use_mesh_modifiers = False
-    bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.add_leaf_bones = False
-    bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.bake_anim = False
-    bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.apply_scale_options = 'FBX_SCALE_ALL'
-    bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.path_mode = 'COPY'
-    bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.embed_textures = False
-    bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.mesh_smooth_type = 'OFF'
-    bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.filepath = os.path.join(folderpath.replace('baked_files', 'atlas_files'), f'{sanitizeMaterialName(c.get_name())} exported model atlas.fbx')
+    if bpy.app.version[0] > 3:
+        layer_collection = bpy.context.view_layer.layer_collection
+        layerColl = recurLayerCollection(layer_collection, c.get_name() + ' atlas')
+        bpy.context.view_layer.active_layer_collection = layerColl
+        bpy.ops.collection.exporter_add(name="IO_FH_fbx")
+        bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.object_types = {'EMPTY', 'ARMATURE', 'MESH', 'OTHER'}
+        bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.use_mesh_modifiers = False
+        bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.add_leaf_bones = False
+        bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.bake_anim = False
+        bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.apply_scale_options = 'FBX_SCALE_ALL'
+        bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.path_mode = 'COPY'
+        bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.embed_textures = False
+        bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.mesh_smooth_type = 'OFF'
+        bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.filepath = os.path.join(folderpath.replace('baked_files', 'atlas_files'), f'{sanitizeMaterialName(c.get_name())} exported model atlas.fbx')
 
     #hide the new collection
     layerColl = recurLayerCollection(layer_collection, 'Scene Collection')
     bpy.context.view_layer.active_layer_collection = layerColl
     bpy.context.scene.view_layers[0].active_layer_collection.children[0].exclude = False
+    bpy.context.scene.view_layers[0].active_layer_collection.children[0].children[0].exclude =  True #hide the bone widgets again...
+    bpy.context.scene.view_layers[0].active_layer_collection.children[-1].children[0].exclude = True #hide the bone widgets again...
+    bpy.context.scene.view_layers[0].active_layer_collection.children[0].children[3].exclude =  True #hide the rigged tongue again...
+    bpy.context.scene.view_layers[0].active_layer_collection.children[-1].children[3].exclude = True #hide the rigged tongue again...
     bpy.context.scene.view_layers[0].active_layer_collection.children[-1].exclude = True
     remove_orphan_data()
 
@@ -530,7 +540,7 @@ class bake_materials(bpy.types.Operator):
                     continue
 
                 #hide all objects except this one
-                for obj in bpy.context.view_layer.objects:
+                for obj in [o for o in bpy.context.view_layer.objects if o]:
                     obj.hide_render = True
                 #unhide the object to bake (but only if the old baking system is not used)
                 if not bpy.context.scene.kkbp.old_bake_bool:
