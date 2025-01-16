@@ -172,7 +172,7 @@ def main():
                         if target.subtarget.endswith(koikatsuCommons.placeholderBoneSuffix):
                             target.subtarget = target.subtarget[:-len(koikatsuCommons.placeholderBoneSuffix)]
     
-    for driver in bpy.data.objects[koikatsuCommons.bodyName].data.shape_keys.animation_data.drivers:
+    for driver in bpy.data.objects[koikatsuCommons.bodyName()].data.shape_keys.animation_data.drivers:
         if driver.data_path.startswith("key_blocks"):
             ownerName = driver.data_path.split('"')[1]
             if ownerName == koikatsuCommons.eyelidsShapeKeyCopyName:
