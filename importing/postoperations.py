@@ -149,51 +149,77 @@ class post_operations(bpy.types.Operator):
         object.active_material_index = 5
         obj.material_slot_select()
         mesh.delete(type='ONLY_FACE')
-        #delete nose if no texture loaded in
-        if not bpy.data.node_groups['Nose ' + c.get_name()].nodes[1].image:
-            object.active_material_index = 2
-            obj.material_slot_select()
-            mesh.delete(type='VERT')
         mesh.select_all(action='DESELECT')
 
+        ignore_list = [
+            'KK Eyebrows (mayuge) ' + c.get_name(),
+            'KK EyeL (hitomi) ' + c.get_name(),
+            'KK EyeR (hitomi) ' + c.get_name(),
+            'KK Eyeline up ' + c.get_name(),
+            'KK Eyewhites (sirome) ' + c.get_name()]
+        everything = [c.get_body()]
+        everything.extend(c.get_hairs())
+        everything.extend(c.get_alts())
+        everything.extend(c.get_outfits())
+
         #add cycles node group
-        for tree in [mat.node_tree for mat in bpy.data.materials if 'KK ' in mat.name]:
-            nodes = tree.nodes
-            links = tree.links
-            if nodes.get('combine'):
-                nodes['combine'].node_tree = bpy.data.node_groups['Eevee Mod']
-                #setup the node links again because they break when you replace the node group
-                def relink(outnode, outport, innode, inport):
-                    try:
-                        links.new(nodes[outnode].outputs[outport], nodes[innode].inputs[inport])
-                    except:
-                        c.kklog(f'Could not link these nodes on tree: {tree} | {outnode}:{outport} to {innode}:{inport}')
-                relink('light',     0,                      'combine', 'Light colors')
-                relink('dark',      0,                      'combine', 'Dark colors')
-                relink('textures', 'Main texture (alpha)',  'combine', 'Main texture (alpha)')
-                relink('textures', 'Alpha mask',            'combine', 'Alpha mask')
-                relink('textures', 'Alpha mask (alpha)',    'combine', 'Alpha mask (alpha)')
-                relink('textures', 'Alpha mask (custom)',   'combine', 'Alpha mask (custom)')
-                #disable detail shine color too
-                if nodes.get('light'):
-                    if nodes['light'].inputs.get('Detail intensity (shine)'):
-                        nodes['light'].inputs['Detail intensity (shine)'].default_value = 0
-                        nodes['dark']. inputs['Detail intensity (shine)'].default_value = 0
+        for object in everything:
+            for node_tree in [mat_slot.material.node_tree for mat_slot in object.material_slots if mat_slot.material.get('bake') and mat_slot.material.name not in ignore_list]:
+                nodes = node_tree.nodes
+                links = node_tree.links
+                if nodes.get('combine'):
+                    nodes['combine'].node_tree = bpy.data.node_groups['.Cycles']
+                    #setup the node links again because they break when you replace the node group
+                    def relink(outnode, outport, innode, inport):
+                        try:
+                            links.new(nodes[outnode].outputs[outport], nodes[innode].inputs[inport])
+                        except:
+                            c.kklog(f'Could not link these nodes on tree: {node_tree.name} | {outnode}:{outport} to {innode}:{inport}')
+                    relink('combine',   0,                      'out',     0)
+                    relink('light',     0,                      'combine', 'Light colors')
+                    relink('dark',      0,                      'combine', 'Dark colors')
+                    relink('textures', 'Main texture (alpha)',  'combine', 'Main texture (alpha)')
+                    relink('textures', 'Alpha mask',            'combine', 'Alpha mask')
+                    relink('textures', 'Alpha mask (alpha)',    'combine', 'Alpha mask (alpha)')
+                    relink('textures', 'Alpha mask (custom)',   'combine', 'Alpha mask (custom)')
+
+                    #disable detail shine color too
+                    if nodes.get('light'):
+                        if nodes['light'].inputs.get('Detail intensity (shine)'):
+                            nodes['light'].inputs['Detail intensity (shine)'].default_value = 0
+
+                    if nodes.get('dark'):
+                        if nodes['dark'].inputs.get('Detail intensity (shine)'):
+                            nodes['dark'].inputs['Detail intensity (shine)'].default_value = 0
         
         #remove linemask and blush on face material
         if c.get_body():
             face_material = [m.material for m in c.get_body().material_slots if 'KK Face' in m.material.name]
             if face_material:
-                face_material[0].nodes['light'].inputs['Line mask intensity'].default_value = 0
-                face_material[0].nodes['dark'].inputs['Line mask intensity'].default_value = 0
-                face_material[0].nodes['light'].inputs['Blush intensity'].default_value = 0
-                face_material[0].nodes['dark'].inputs['Blush intensity'].default_value = 0
+                face_material[0].node_tree.nodes['light'].inputs['Linemask intensity'].default_value = 0
+                face_material[0].node_tree.nodes['dark'].inputs['Linemask intensity'].default_value = 0
+                face_material[0].node_tree.nodes['light'].inputs['Blush intensity'].default_value = 0
+                face_material[0].node_tree.nodes['dark'].inputs['Blush intensity'].default_value = 0
 
         #set eyeline up and eyebrows as shadowless
         shadowless_mats =      [m.material for m in c.get_body().material_slots if 'KK Eyeline up'          in m.material.name]
         shadowless_mats.extend([m.material for m in c.get_body().material_slots if 'KK Eyebrows (mayuge)'   in m.material.name])
         for mat in shadowless_mats:
             mat.node_tree.nodes['combine'].node_tree = bpy.data.node_groups['.Cycles no shadows']
+            nodes = mat.node_tree.nodes
+            links = mat.node_tree.links
+            def relink(outnode, outport, innode, inport):
+                try:
+                    links.new(nodes[outnode].outputs[outport], nodes[innode].inputs[inport])
+                except:
+                    c.kklog(f'Could not link these nodes on tree: {node_tree.name} | {outnode}:{outport} to {innode}:{inport}')
+            relink('combine',   0,                      'out',     0)
+            relink('light',     0,                      'combine', 'Light colors')
+            relink('dark',      0,                      'combine', 'Dark colors')
+            relink('textures', 'Main texture (alpha)',  'combine', 'Main texture (alpha)')
+            relink('textures', 'Alpha mask',            'combine', 'Alpha mask')
+            relink('textures', 'Alpha mask (alpha)',    'combine', 'Alpha mask (alpha)')
+            relink('textures', 'Alpha mask (custom)',   'combine', 'Alpha mask (custom)')
         
         bpy.context.scene.render.engine = 'CYCLES'
         bpy.context.scene.cycles.preview_samples = 10
@@ -207,33 +233,36 @@ class post_operations(bpy.types.Operator):
 
         c.kklog('Applying Eevee Shader adjustments...')
         #Import eevee mod node group and replace the combine colors group with the eevee mod group
-        keep_list = [
+        ignore_list = [
             'KK Eyebrows (mayuge) ' + c.get_name(),
             'KK EyeL (hitomi) ' + c.get_name(),
             'KK EyeR (hitomi) ' + c.get_name(),
-            'KK Eyeline up ' + c.get_name()]
+            'KK Eyeline up ' + c.get_name(),
+            'KK Eyewhites (sirome) ' + c.get_name()]
         everything = [c.get_body()]
         everything.extend(c.get_hairs())
         everything.extend(c.get_alts())
         everything.extend(c.get_outfits())
         
-        for tree in [mat_slot.material.node_tree for mat_slot in everything if ('KK ' in mat_slot.material.name and mat_slot.material.name not in keep_list)]:
-            nodes = tree.nodes
-            links = tree.links
-            if nodes.get('combine'):
-                nodes['combine'].node_tree = bpy.data.node_groups['.Eevee Mod']
-                #setup the node links again because they break when you replace the node group
-                def relink(outnode, outport, innode, inport):
-                    try:
-                        links.new(nodes[outnode].outputs[outport], nodes[innode].inputs[inport])
-                    except:
-                        c.kklog(f'Could not link these nodes on tree: {tree} | {outnode}:{outport} to {innode}:{inport}')
-                relink('light',     0,                      'combine', 'Light colors')
-                relink('dark',      0,                      'combine', 'Dark colors')
-                relink('textures', 'Main texture (alpha)',  'combine', 'Main texture (alpha)')
-                relink('textures', 'Alpha mask',            'combine', 'Alpha mask')
-                relink('textures', 'Alpha mask (alpha)',    'combine', 'Alpha mask (alpha)')
-                relink('textures', 'Alpha mask (custom)',   'combine', 'Alpha mask (custom)')
+        for object in everything:
+            for node_tree in [mat_slot.material.node_tree for mat_slot in object.material_slots if mat_slot.material.get('bake') and mat_slot.material.name not in ignore_list]:
+                nodes = node_tree.nodes
+                links = node_tree.links
+                if nodes.get('combine'):
+                    nodes['combine'].node_tree = bpy.data.node_groups['.Eevee Mod']
+                    #setup the node links again because they break when you replace the node group
+                    def relink(outnode, outport, innode, inport):
+                        try:
+                            links.new(nodes[outnode].outputs[outport], nodes[innode].inputs[inport])
+                        except:
+                            c.kklog(f'Could not link these nodes on tree: {node_tree.name} | {outnode}:{outport} to {innode}:{inport}')
+                    relink('combine',   0,                      'out',     0)
+                    relink('light',     0,                      'combine', 'Light colors')
+                    relink('dark',      0,                      'combine', 'Dark colors')
+                    relink('textures', 'Main texture (alpha)',  'combine', 'Main texture (alpha)')
+                    relink('textures', 'Alpha mask',            'combine', 'Alpha mask')
+                    relink('textures', 'Alpha mask (alpha)',    'combine', 'Alpha mask (alpha)')
+                    relink('textures', 'Alpha mask (custom)',   'combine', 'Alpha mask (custom)')
 
         if bpy.app.version[0] == 3:
             #turn on ambient occlusion and bloom in render settings
