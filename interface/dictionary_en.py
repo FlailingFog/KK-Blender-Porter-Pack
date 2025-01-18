@@ -120,7 +120,7 @@ translation_dictionary = {
     'link_hair_tt'              : 'Click to copy the current colors, detail intensity, etc to the other hair materials on this object',
 
     'kkbp_import_tt'    : "Imports a Koikatsu model (.pmx format) and applies fixes to it",
-    'export_prep_tt'    : "Not available for the Rigify Armature. Check the dropdown for more info",
+    'export_prep_tt'    : "Use the Koikatsu Armature for the best results. Check the dropdown for more info",
     'bake_mats_tt'      : "Finalize materials as .png files. These will be stored in the original .pmx folder",
 
     'delete_cache' : 'Delete cache',
@@ -132,6 +132,9 @@ translation_dictionary = {
 
     'mat_comb_tt' : 'KKBP uses parts of Shotariya\'s Material Combiner addon to automatically merge your materials into an atlas. Click this if you want to manually combine your materials instead of letting KKBP do it for you (requires you to download the Material Combiner addon. Also, make sure you have already clicked the Finalize Materials button in the KKBP panel or it will not work) ',
     'matcomb' : 'Setup materials for Material Combiner',
+    'mat_comb_switch' : 'Toggle light / dark for Material Combiner',
+    'mat_comb_switch_tt' : 'Click this to toggle texture state to get both a light and dark atlas from Material Combiner',
+
     'pillow' : 'Install PIL to use atlas feature',
     'pillow_tt':'Click to install Pillow. This could take a while and might require you to run Blender as Admin',
     'reset_mats' : 'Reset finalized materials',

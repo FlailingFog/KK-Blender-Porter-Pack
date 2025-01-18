@@ -53,6 +53,7 @@ def reg_unreg(register_bool):
     from .extras.importanimation import anim_import
     from .extras.splitobjects import split_objects
     from .extras.matcombsetup import mat_comb_setup
+    from .extras.matcombswitch import mat_comb_switch
     from .extras.resetmaterials import reset_materials
     from .extras.linkhair import link_hair
 
@@ -90,6 +91,7 @@ def reg_unreg(register_bool):
         CombineSwitch,
         CombineList,
         mat_comb_setup,
+        mat_comb_switch,
         InstallPIL,
         reset_materials,
         link_hair,

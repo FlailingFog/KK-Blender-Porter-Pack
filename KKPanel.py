@@ -384,7 +384,11 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         split = row.split(align=True, factor=splitfac)
         split.label(text=t('matcomb'))
         split.operator('kkbp.matcombsetup', text = '', icon='COLLAPSEMENU')
-        
+        row = col.row(align=True)
+        split = row.split(align=True, factor=splitfac)
+        split.label(text=t('mat_comb_switch'))
+        split.operator('kkbp.matcombswitch', text = '', icon='FILE_REFRESH')
+
         box = layout.box()
         col = box.column(align=True)
         row = col.row(align=True)
