@@ -275,10 +275,10 @@ def replace_all_baked_materials(folderpath: str, bake_object: bpy.types.Object):
     #now all needed images are loaded into the file. Match each material to it's image textures
     for bake_type in ['light', 'dark', 'normal']:
         for mat in bake_object.material_slots:
-            image = bpy.data.images.get(mat.material.name + f' {bake_type}.png', '')
+            image = bpy.data.images.get(mat.material.name.replace('-ORG', '') + f' {bake_type}.png', '')
             if image:
                 #check if a simplified version of this material exists yet. If it doesn't, create it
-                if mat.material.get('bake'):
+                if mat.material.get('bake') and not bpy.data.materials.get(mat.material.name.replace('-ORG','')):
                     #rename the original material to "material_name-ORG" and create the simplified material
                     mat.material.name += '-ORG'
                     try:
@@ -325,7 +325,8 @@ def replace_all_baked_materials(folderpath: str, bake_object: bpy.types.Object):
 
                 #the simplified material already exists, so just load in the image
                 else:
-                    simple = bpy.data.materials[mat.name.replace('-ORG','')]
+                    simple = bpy.data.materials[mat.material.name.replace('-ORG','')]
+                    mat.material = simple
                     textures_group = simple.node_tree.nodes['textures'].node_tree
                     textures_group.nodes[bake_type].image = image
                         
