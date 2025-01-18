@@ -96,7 +96,7 @@ class modify_mesh(bpy.types.Operator):
                     hair_mat_list.extend([m for m in outfit_materials if material['isHair'] == True and material.get('MaterialName') in m])
             #separate hair and tag it
             if hair_mat_list:
-                hair_object = self.separate_materials(outfit, hair_mat_list, 'Hair ' + outfit.name + ' ' + outfit['name'])
+                hair_object = self.separate_materials(outfit, hair_mat_list, 'Hair ' + outfit.name)
                 hair_object['hair'] = True
                 hair_object['outfit'] = False
         c.print_timer('separate_hair')
