@@ -78,7 +78,8 @@ translation_dictionary = {
     'shape_C_tt'    : "コイカツのシェイプキーにする。シェイプキーが変更されない",
 
     'shader_A'       : 'Eeveeにする',
-    'shader_B'       : "Cyclesにする",
+    'shader_B'       : "Cycles（トゥーンレンダリング）にする",
+    'shader_D'       : "Cyclesにする",
     'shader_C'       : "Eevee modにする",
     'shader_C_tt'    : "別のEeveeシェーダー設定にする", 
 

@@ -82,7 +82,8 @@ translation_dictionary = {
     'shape_C_tt'    : "Use the stock Koikatsu shapekeys. This will not change the shapekeys in any way",
 
     'shader_A'       : 'Use Eevee',
-    'shader_B'       : "Use Cycles",
+    'shader_B'       : "Use Cycles (toon)",
+    'shader_D'       : "Use Cycles (classic)",
     'shader_C'       : "Use Eevee mod",
     'shader_C_tt'    : "Uses a modified shader setup for Eevee",
 

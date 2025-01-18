@@ -114,10 +114,11 @@ class post_operations(bpy.types.Operator):
                     child.exclude = True
 
     def apply_cycles(self):
-        if not bpy.context.scene.kkbp.shader_dropdown == 'B':
+        if not bpy.context.scene.kkbp.shader_dropdown in ['B', 'D']:
             return
         c.kklog('Applying Cycles adjustments...')
-        c.import_from_library_file('NodeTree', ['.Cycles', '.Cycles no shadows'], bpy.context.scene.kkbp.use_material_fake_user)
+        c.import_from_library_file('NodeTree', ['.Cycles', '.Cycles no shadows', '.Cycles Classic'], bpy.context.scene.kkbp.use_material_fake_user)
+        c.import_from_library_file('Image', ['Template: Black'], bpy.context.scene.kkbp.use_material_fake_user)
 
         #remove outline modifier
         for o in bpy.context.view_layer.objects:
@@ -168,7 +169,7 @@ class post_operations(bpy.types.Operator):
                 nodes = node_tree.nodes
                 links = node_tree.links
                 if nodes.get('combine'):
-                    nodes['combine'].node_tree = bpy.data.node_groups['.Cycles']
+                    nodes['combine'].node_tree = bpy.data.node_groups['.Cycles' if bpy.context.scene.kkbp.shader_dropdown == 'B' else '.Cycles Classic']
                     #setup the node links again because they break when you replace the node group
                     def relink(outnode, outport, innode, inport):
                         try:
@@ -182,6 +183,13 @@ class post_operations(bpy.types.Operator):
                     relink('textures', 'Alpha mask',            'combine', 'Alpha mask')
                     relink('textures', 'Alpha mask (alpha)',    'combine', 'Alpha mask (alpha)')
                     relink('textures', 'Alpha mask (custom)',   'combine', 'Alpha mask (custom)')
+
+                    #Cycles makes missing images PINK (?!) instead of black for some reason and this screws with the shaders
+                    #If an image is missing, fill it in with Template: Black
+                    if nodes.get('textures'):
+                        for image_node in [n for n in nodes['textures'].node_tree.nodes if n.type == 'TEX_IMAGE']:
+                            if not image_node.image:
+                                image_node.image = bpy.data.images['Template: Black']
 
                     #disable detail shine color too
                     if nodes.get('light'):

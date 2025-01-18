@@ -72,6 +72,10 @@ class kkbp_import(bpy.types.Operator):
         if force_current_pose:
             bpy.context.scene.kkbp.armature_dropdown = 'C'
 
+        #force no dark colors if Cycles classic is chosen as the shader (this mode does not use dark colors at all)
+        if bpy.context.scene.kkbp.shader_dropdown == 'D':
+            bpy.context.scene.kkbp.colors_dropdown = False
+
         #run functions based on selection
         if bpy.context.scene.kkbp.categorize_dropdown == 'A': #Automatic separation
             functions = [
