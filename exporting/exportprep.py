@@ -100,9 +100,6 @@ def main(prep_type, simp_type):
             for constraint in bone.constraints:
                 bone.constraints.remove(constraint)
 
-        #bpy.ops.object.mode_set(mode='POSE')
-        #bpy.ops.pose.select_all(action='DESELECT')
-
         #Rename some bones to make it match Mannequin skeleton
         #Not necessary, but allows Unreal automatically recognize and match bone names when retargeting
         ue_rename_dict = {
@@ -135,7 +132,6 @@ def main(prep_type, simp_type):
                 armature.data.bones[bone].name = ue_rename_dict[bone]
 
         bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.kkbp.cats_merge_weights()
 
         #Make all the bones on the legs face the same direction, otherwise IK won't work in Unreal
         armature.data.edit_bones["calf_l"].tail.z = armature.data.edit_bones["calf_l"].head.z + 0.1
