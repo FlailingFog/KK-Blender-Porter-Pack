@@ -87,6 +87,69 @@ def main(prep_type, simp_type):
     bpy.context.view_layer.objects.active=bpy.data.objects[armature_name]
     bpy.ops.object.mode_set(mode='POSE')
 
+    # If exporting for Unreal...
+    if prep_type == 'E':
+        armature = bpy.data.objects['Armature']
+        bpy.context.view_layer.objects.active = armature
+        bpy.ops.armature.collection_show_all()
+
+        bpy.ops.object.mode_set(mode='EDIT')
+
+        #Clear IK, it won't work in unreal
+        for bone in armature.pose.bones:
+            for constraint in bone.constraints:
+                bone.constraints.remove(constraint)
+
+        #bpy.ops.object.mode_set(mode='POSE')
+        #bpy.ops.pose.select_all(action='DESELECT')
+
+        #Rename some bones to make it match Mannequin skeleton
+        #Not necessary, but allows Unreal automatically recognize and match bone names when retargeting
+        ue_rename_dict = {
+            'Hips': 'pelvis',
+            'Spine': 'spine_01',
+            'Chest': 'spine_02',
+            'Upper Chest': 'spine_03',
+            'Neck': 'neck',
+            'Head': 'head',
+            'Left shoulder': 'clavicle_l',
+            'Right shoulder': 'clavicle_r',
+            'Left arm': 'upperarm_l',
+            'Right arm': 'upperarm_r',
+            'Left elbow': 'lowerarm_l',
+            'Right elbow': 'lowerarm_r',
+            'Left wrist': 'hand_l',
+            'Right wrist': 'hand_r',
+
+            'Left leg': 'thigh_l',
+            'Right leg': 'thigh_r',
+            'Left knee': 'calf_l',
+            'Right knee': 'calf_r',
+            'cf_j_leg03_L': 'foot_l',
+            'cf_j_leg03_R': 'foot_r',
+            'Left toe': 'ball_l',
+            'Right toe': 'ball_r',
+        }
+        for bone in ue_rename_dict:
+            if armature.data.bones.get(bone):
+                armature.data.bones[bone].name = ue_rename_dict[bone]
+
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.kkbp.cats_merge_weights()
+
+        #Make all the bones on the legs face the same direction, otherwise IK won't work in Unreal
+        armature.data.edit_bones["calf_l"].tail.z = armature.data.edit_bones["calf_l"].head.z + 0.1
+        armature.data.edit_bones["calf_l"].head.y += 0.01
+        armature.data.edit_bones["calf_r"].tail.z = armature.data.edit_bones["calf_r"].head.z + 0.1
+        armature.data.edit_bones["calf_r"].head.y += 0.01
+
+        armature.data.edit_bones["ball_l"].tail.z = armature.data.edit_bones["ball_l"].head.z
+        armature.data.edit_bones["ball_l"].tail.y = armature.data.edit_bones["ball_l"].head.y - 0.05
+        armature.data.edit_bones["ball_r"].tail.z = armature.data.edit_bones["ball_r"].head.z
+        armature.data.edit_bones["ball_r"].tail.y = armature.data.edit_bones["ball_r"].head.y - 0.05
+
+        bpy.ops.object.mode_set(mode='POSE')
+
     #If simplifying the bones...
     if simp_type in ['A', 'B']:
         #show all bones on the armature

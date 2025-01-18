@@ -62,6 +62,11 @@ translation_dictionary = {
     removes the "Upper Chest" bone,
     edits bone hierarchy to allow Unity to automatically detect the right bones""",
 
+    'prep_drop_E'       : "Unreal Engine",
+    'prep_drop_E_tt'    : """Removes the outline and...
+    removes duplicate Eyewhite material slot if present,
+    edits bone hierarchy to match Epic Mannequin skeleton""",
+
     'simp_drop'     : 'Armature simplification type',
     'simp_drop_A'   : 'Very simple (SLOW)',
     'simp_drop_A_tt': 'Use this option if you want a very low bone count. Moves the pupil bones to layer 1 and simplifies bones on armature layers 3-5, 11-12, and 17-19 (Leaves you with ~100 bones not counting the skirt bones)',
