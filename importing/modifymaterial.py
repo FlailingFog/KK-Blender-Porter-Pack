@@ -378,7 +378,7 @@ class modify_material(bpy.types.Operator):
         '''Load all body textures into their texture slots'''
         body = c.get_body()
         self.image_load('Body', '_ST_CT.png')
-        self.image_load('Body', '_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available
+        self.image_load('Body', '_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available later on
         #default to colors if there's no maintex
         if body.material_slots['KK Body ' + c.get_name()].material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].image.name == 'Template: Placeholder':
             body.material_slots['KK Body ' + c.get_name()].material.node_tree.nodes['dark' ].inputs['Use main texture instead?'].default_value = 0
@@ -388,14 +388,10 @@ class modify_material(bpy.types.Operator):
         self.image_load('Body', '_LM.png') #line mask for lips
         self.image_load('Body', '_NMP_CNV.png')
         self.image_load('Body', '_NMPD_CNV.png')
-        self.image_load('Body', 'cm_m_body_DM.png') #cmm male
-        self.image_load('Body', 'cm_m_body_LM.png') 
         self.image_load('Body', '_ST.png', group_override='texturesnsfw') #chara main texture
         self.image_load('Body', '_ot2.png', group_override='texturesnsfw') #pubic hair
         self.image_load('Body', '_ot1.png', group_override='texturesnsfw') #cfm female
         self.image_load('Body', '_ot1.png', group_override='texturesnsfw', node_override='_ot1.pngleft')
-        self.image_load('Body', 'cm_m_body_ot1.png', group_override='texturesnsfw') #cmm male
-        self.image_load('Body', 'cm_m_body_ot1.png', group_override='texturesnsfw', node_override='_ot1.pngleft')
         # self.image_load('Body', '_T3.png') #body overlays
         # self.image_load('Body', '_T4.png')
         self.set_uv_type('Body', 'nippleuv', 'uv_nipple_and_shine', group= 'texturesnsfw')
