@@ -2,14 +2,14 @@ schema_version = "1.0.0"
 # https://docs.blender.org/manual/en/latest/advanced/extensions/getting_started.html
 
 id = "kkbp"
-version = "7.2.0"
+version = "7.2.1"
 name = "KKBP (Koikatsu Blender Porter)"
 tagline = "Imports Koikatsu models into Blender"
 maintainer = "FlailingFog"
 type = "add-on"
 website = "https://github.com/FlailingFog/KK-Blender-Porter-Pack"
 tags = ["Import-Export"]
-blender_version_min = "4.2.0"
+blender_version_min = "3.6.0"
 license = ["SPDX:MIT"]
 platforms = ["windows-x64", "macos-arm64", "linux-x64"]
 

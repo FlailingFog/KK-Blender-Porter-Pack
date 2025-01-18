@@ -1,9 +1,20 @@
 ### Changes for V7.2.0
-* Add back Blender 3.6 support (for importing only, export and other features not supported)
+* Fixed crashes when creating a material atlas!
+    * This feature will now use atlas generation scripts borrowed from the [material-combiner-addon](https://github.com/Grim-es/material-combiner-addon)
+    * You will have to install pillow by clicking on the button in the KKBP panel (this uses pip, so it requires an internet connection)
+* More headmods will now import thanks to **VickyFrenzy**!
+    * The plugin expected all body materials to be present, but some headmods either remove or rename these materials, causing errors. Now it will skip some materials if they don't exist, allowing the headmod to at least import so you can fix it manually
+* Chinese translation fixes and updates by **AnalogKnight**!
+* Backported the plugin to work in Blender 3.6
+    * Only the import features work, so no exporting from 3.6
+* Added a button to revert all of your finalized materials back to the -ORG / "heavyweight" version of the material
+* Foot IKs will finally work correctly on taller characters
+* The "prep for target application" button will now allow you to simplify the KK and PMX armatures
+* Add back linux / mac support (again)
 
 ### Changes for V7.1.0
 * New image saturation method
-* Add back linux / mac support
+* ~~Add back linux / mac support~~
 
 ### Changes for V7.0.0
 * Blender 4.2 LTS support!

@@ -31,7 +31,7 @@ This project does not accept donations.
 ## Similar Projects
 
 * [KKBP Exporter (fork)](https://github.com/FlailingFog/KKBP_Exporter)
-* [SKLX-creator](https://www.patreon.com/sklx)
+* [SKLX-creator](https://www.patreon.com/posts/sklx-creator-kk-95761278)
 * [KKPMX](https://github.com/CazzoPMX/KKPMX)
 * [Koikatsu Pmx Exporter (Reverse Engineered & updated)](https://github.com/Snittern/KoikatsuPmxExporterReverseEngineered)
 * [Grey's mesh exporter for Koikatsu](https://github.com/FlailingFog/KK-Blender-Porter-Pack/tree/9fcef4127ba56b4e8e8718fb546945fc00eaaad9/GME)

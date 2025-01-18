@@ -1791,8 +1791,8 @@ def fix_bone_orientations(armature):
 
 def update_material_list(self=None, context=None):
     try:
-        if hasattr(bpy.context.scene, 'smc_ob_data') and bpy.context.scene.smc_ob_data:
-            bpy.ops.smc.refresh_ob_data()
+        if hasattr(bpy.context.scene, 'kkbp_ob_data') and bpy.context.scene.kkbp_ob_data:
+            bpy.ops.kkbp.refresh_ob_data()
     except AttributeError:
         print('Material Combiner not found')
 

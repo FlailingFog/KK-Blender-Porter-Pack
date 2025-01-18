@@ -673,6 +673,8 @@ class modify_armature(bpy.types.Operator):
             if direction == 'leg':
                 self.armature.data.edit_bones[bone1].tail.z = self.armature.data.edit_bones[bone2].head.z
                 self.armature.data.edit_bones[bone1].roll = 0
+                #move the bone forward a bit or the ik bones might not bend correctly
+                self.armature.data.edit_bones[bone1].head.y += -0.01
             elif direction == 'arm':
                 self.armature.data.edit_bones[bone1].tail.x = self.armature.data.edit_bones[bone2].head.x
                 self.armature.data.edit_bones[bone1].tail.z = self.armature.data.edit_bones[bone2].head.z
@@ -1187,12 +1189,12 @@ class modify_armature(bpy.types.Operator):
             bone = self.armature.data.edit_bones[footIK]
             bone.parent = center_bone
 
-            #set rotation constraints
-            self.retreive_stored_tags()
-            bone = self.armature.pose.bones[legbone]
-            bone.constraints.new("LIMIT_ROTATION")
-            bone.constraints[1].use_limit_x = True
-            bone.constraints[1].max_x = 6.26573
+            # #set rotation constraints
+            # self.retreive_stored_tags()
+            # bone = self.armature.pose.bones[legbone]
+            # bone.constraints.new("LIMIT_ROTATION")
+            # bone.constraints[1].use_limit_x = True
+            # bone.constraints[1].max_x = 6.26573
 
         #Run for each side
         legIK('cf_j_leg01_R', 'cf_pv_foot_R', 'cf_pv_knee_R', math.pi/2, 'cf_pv_foot_R', 'cf_j_leg01_R', 'cf_j_toes_R', 'cf_j_foot_R')
@@ -1462,11 +1464,11 @@ class modify_armature(bpy.types.Operator):
             bone.constraints[0].target=self.armature
             bone.constraints[0].subtarget=self.armature.data.bones[handcontroller].name
 
-            #set arm limit constraint
-            bone = self.armature.pose.bones[elbowbone]
-            bone.constraints.new("LIMIT_ROTATION")
-            bone.constraints[1].use_limit_z = True
-            bone.constraints[1].max_z = 6.26573
+            # #set arm limit constraint
+            # bone = self.armature.pose.bones[elbowbone]
+            # bone.constraints.new("LIMIT_ROTATION")
+            # bone.constraints[1].use_limit_z = True
+            # bone.constraints[1].max_z = 6.26573
 
         #Run for each side
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)

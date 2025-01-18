@@ -12,12 +12,16 @@ BAKE MATERIAL TO TEXTURE SCRIPT
 Notes:
 - This script deletes all camera objects in the scene
 - fillerplane driver + shader code taken from https://blenderartists.org/t/scripts-create-camera-image-plane/580839
+- material combiner code taken from https://github.com/Grim-es/material-combiner-addon/
 '''
 
-import bpy, os, traceback, time, pathlib, numpy, mathutils, bmesh
+import bpy, os, traceback, time, pathlib, subprocess
 from .. import common as c
-
 from ..interface.dictionary_en import t
+
+def print_memory_usage(stri):
+    run = subprocess.run('wmic OS get FreePhysicalMemory', capture_output=True)
+    c.kklog((stri, '\n   mem usage ', 16000 - int(run.stdout.split(b'\r')[2].split(b'\n')[1])/1000))
 
 def showError(self, context):
     self.layout.label(text="No object selected (make sure the body object is selected)")
@@ -178,19 +182,23 @@ def bake_pass(resolutionMultiplier, folderpath, bake_type):
         #print(currentmaterial)
         #Don't bake this material if it doesn't have the 'baked_group' slot
         if not currentmaterial.node_tree.nodes.get('baked_group'):
+            c.kklog(f'Skipping {currentmaterial.name} because it does not have a baked_group slot')
             continue
 
         #Don't bake this material if it's an outline material or atlas material
         if 'Outline ' in currentmaterial.name or 'KK Outline' in currentmaterial.name or 'KK Body Outline' in currentmaterial.name or ' Atlas' in currentmaterial.name:
+            c.kklog(f'Skipping {currentmaterial.name} because it is an atlas or outline material')
             continue
 
         #Don't bake this material if it is a simplified material
         if bpy.data.materials.get(currentmaterial.name + '-ORG'):
+            c.kklog(f'Skipping {currentmaterial.name} because it is a simplified material')
             continue
 
         #Don't bake this material if the material already has the atlas nodes loaded in and the mix shader is set to 1 and the image already exists (user is re-baking a mat)
         if currentmaterial.node_tree.nodes.get('baked_group'):
             if currentmaterial.node_tree.nodes['baked_group'].inputs[3].default_value > 0.5 and pathlib.Path(folderpath + sanitizeMaterialName(currentmaterial.name) + ' ' + bake_type + '.png') in files:
+                c.kklog(f'Skipping {currentmaterial.name} {bake_type} because it already exists')
                 continue
             else:
                 currentmaterial.node_tree.nodes['baked_group'].inputs[3].default_value = 0
@@ -571,411 +579,76 @@ def create_material_atlas(folderpath):
     assert(col is not scene.collection)
     copy(scene.collection, col)
 
-    def update_uvs(object_name, material_name, x, y, type = '+'):
-        object = bpy.data.objects[object_name]
-        c.switch(object, 'EDIT')
-        object.active_material_index = object.data.materials.find(material_name)
-        bpy.ops.object.material_slot_select()
-        me = object.data
-        bm = bmesh.from_edit_mesh(me)
-        uv_layer = bm.loops.layers.uv.verify()
-        # adjust uv coordinates
-        for face in bm.faces:
-            for loop in face.loops:
-                if loop.vert.select:
-                    loop_uv = loop[uv_layer]
-                    if type == '+':
-                        loop_uv.uv[0] += x
-                        loop_uv.uv[1] += y
-                    elif type == '*':
-                        loop_uv.uv[0] *= x
-                        loop_uv.uv[1] *= y
-                    elif type == '/':
-                        loop_uv.uv[0] /= x
-                        loop_uv.uv[1] /= y
-                    elif type == '-':
-                        loop_uv.uv[0] -= x
-                        loop_uv.uv[1] -= y
-        bmesh.update_edit_mesh(me)
-        c.switch(object, 'OBJECT')
-    
-    def get_max_min_uvs(object_name, material_name):
-        object = bpy.data.objects[object_name]
-        c.switch(object, 'EDIT')
-        bpy.context.object.active_material_index = object.data.materials.find(material_name)
-        bpy.ops.object.material_slot_select()
-        bm = bmesh.from_edit_mesh(object.data)
-        uv_layer = bm.loops.layers.uv.verify()
-        x_max_uv = 0
-        y_max_uv = 0
-        x_min_uv = 0
-        y_min_uv = 0
-        for face in bm.faces:
-            for loop in face.loops:
-                if loop.vert.select:
-                    loop_uv = loop[uv_layer]
-                    x_max_uv = loop_uv.uv[0] if x_max_uv < loop_uv.uv[0] else x_max_uv
-                    y_max_uv = loop_uv.uv[1] if y_max_uv < loop_uv.uv[1] else y_max_uv
-                    x_min_uv = loop_uv.uv[0] if x_min_uv > loop_uv.uv[0] else x_min_uv
-                    y_min_uv = loop_uv.uv[1] if y_min_uv > loop_uv.uv[1] else y_min_uv
-        c.switch(object, 'OBJECT')
-        return  x_max_uv, y_max_uv, x_min_uv, y_min_uv
+    #setup materials for the combiner script
+    for obj in [o for o in bpy.data.collections['Collection.001'].all_objects if not o.hide_get() and o.type == 'MESH']:
+        for mat in [mat_slot.material for mat_slot in obj.material_slots if 'KK ' in mat_slot.material.name and 'Outline ' not in mat_slot.material.name and ' Outline' not in mat_slot.material.name and ' Atlas' not in mat_slot.material.name]:
+            if bpy.data.materials.get(mat.name + '-ORG'):
+                print('adding emission to {}'.format(mat))
+                #this is a simple material
+                nodes = mat.node_tree.nodes
+                links = mat.node_tree.links
+                emissive_node = nodes.new('ShaderNodeEmission')
+                emissive_node.name = 'Emission'
+                image_node = nodes.new('ShaderNodeTexImage')
+                image_node.name = 'Image Texture'
+                links.new(emissive_node.inputs[0], image_node.outputs[0])
+                image_node.image = nodes['Gentex'].node_tree.nodes['light'].image
+        context.view_layer.objects.active = obj
+        bpy.ops.object.material_slot_remove_unused()
 
-    #first correct the tongue uv locations because easily fixable for every model
-    update_uvs('Body.001', 'KK Tongue', 0, 1, '+')
+    #call the material combiner script
+    bpy.ops.kkbp.combiner()
 
-    for object in [o for o in bpy.data.objects if (bpy.data.collections['Collection.001'] in o.users_collection and o.type == 'MESH')]:
-        #correct the modifier
-        if object.modifiers.get('mmd_bone_order_override') or object.modifiers.get('Armature'):
-            try:
-                object.modifiers[0].object = bpy.data.objects['RIG-Armature.001']
-            except:
-                object.modifiers[0].object = bpy.data.objects['Armature.001']
-
-        x_total_length = 0
-        y_max_length = 0
-        mat_slots = [m for m in object.material_slots if ('KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name)]
-        for index, mat_slot in enumerate(mat_slots):
-            material = mat_slot.material
-            
-            print('')
-            print(material,' (', index+1, '/', len(mat_slots), ')')
-            for bake_type in ['light', 'dark', 'normal']:
-                try:
-                    image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
-                    if image:
+    #replace all images with the atlas in a new atlas material
+    bake_types = []
+    if scene.kkbp.bake_light_bool:
+        bake_types.append('light')
+    if scene.kkbp.bake_dark_bool:
+        bake_types.append('dark')
+    if scene.kkbp.bake_norm_bool:
+        bake_types.append('normal')
+    for index, obj in enumerate([o for o in bpy.data.collections['Collection.001'].all_objects if not o.hide_get() and o.type == 'MESH']):
+        #disable the outline on the atlased object because I don't feel like fixing it
+        if obj.modifiers.get('Outline Modifier'):
+            obj.modifiers['Outline Modifier'].show_render = False
+            obj.modifiers['Outline Modifier'].show_viewport = False
+        #fix the armature modifier
+        if obj.modifiers[0].type == 'ARMATURE':
+            obj.modifiers[0].object = bpy.data.objects["Armature.001"]
+        for bake_type in bake_types:
+            #check for atlas dupes
+            if bpy.data.images.get(f'{index}_{bake_type}.png'):
+                bpy.data.images.remove(bpy.data.images.get(f'{index}_{bake_type}.png'))
+            atlas_image = bpy.data.images.load(os.path.join(context.scene.kkbp.import_dir, 'atlas_files', f'{index}_{bake_type}.png'))
+            for material in [mat_slot.material for mat_slot in obj.material_slots if 'KK ' in mat_slot.name and 'Outline ' not in mat_slot.name and ' Outline' not in mat_slot.name and ' Atlas' not in mat_slot.name]:
+                if bpy.data.materials.get(material.name + '-ORG'):
+                    image = None
+                    try:
+                        image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
                         if image.name == 'Template: Pattern Placeholder':
                             image = None
-                        else:
-                            break
-                except:
-                    # print('no baked1')
-                    image = None
-            if not image:
-                print('no image found for {} skipping'.format(material.name))
-                continue
-            else:
-                print('found image for {}'.format(material.name))
-            
-            #pad each image with 2 pixels bottom and left. Some UVs will overlap if this isn't done
-            print('Padding image for {}'.format(material.name))
-            uv_shift_flag_a = True
-            for bake_type in ['light', 'dark', 'normal']:
-                image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
-                if not image:
-                    print('no image for {} {}'.format(material.name, bake_type))
-                    continue
-                elif image.name == 'Template: Pattern Placeholder':
-                    image = None
-                    print('no image for {} {}'.format(material.name, bake_type))
-                    continue
-                #pad left and bottom
-                x_new_length = int(image.size[0] + 1)
-                y_new_length = int(image.size[1] + 1)
-                #also scale the uvs to the new length
-                if uv_shift_flag_a:
-                    update_uvs(object.name, material.name, image.size[0]/x_new_length, image.size[1]/y_new_length, '*')
-                #get the pixels of the current image, then create the padding needed
-                new_image_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
-                x_current_dimension = image.size[0]
-                y_current_dimension = image.size[1]
-                vertical_padding = list(numpy.zeros((y_new_length - y_current_dimension) * x_current_dimension * 4))
-                vertical_padding = numpy.reshape(vertical_padding, (-1, x_current_dimension * 4))
-                new_image_pixels = numpy.vstack((vertical_padding, new_image_pixels)) #put padding before image to appear on the bottom
-                #create the horizontal padding needed
-                x_current_dimension = image.size[0]
-                y_current_dimension = y_new_length
-                horizontal_padding = list(numpy.zeros((y_current_dimension) * (x_new_length - x_current_dimension) * 4))
-                horizontal_padding = numpy.reshape(horizontal_padding, (y_current_dimension, -1))
-                new_image_pixels = numpy.hstack((horizontal_padding, new_image_pixels)) #put padding before image to appear on the left
-                x_current_dimension = x_new_length
-                new_image = bpy.data.images.new(image.name.replace('.png', 'd.png'), x_current_dimension, y_current_dimension)
-                new_image.pixels = new_image_pixels.flatten()
-                material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image = new_image
-                uv_shift_flag_a = False
-
-            #pad each image with 2 pixels top and right. Some UVs will overlap if this isn't done
-            uv_shift_flag_a = True
-            for bake_type in ['light', 'dark', 'normal']:
-                image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
-                if not image:
-                    print('no image for {} {}'.format(material.name, bake_type))
-                    continue
-                elif image.name == 'Template: Pattern Placeholder':
-                    image = None
-                    print('no image for {} {}'.format(material.name, bake_type))
-                    continue
-                #get the pixels of the current image, then create the padding needed
-                new_image_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
-                x_new_length = int(image.size[0] + 1)
-                y_new_length = int(image.size[1] + 1)
-                x_current_dimension = image.size[0]
-                y_current_dimension = image.size[1]
-                #create the vertical padding needed
-                vertical_padding = list(numpy.zeros((y_new_length - y_current_dimension) * x_current_dimension * 4))
-                vertical_padding = numpy.reshape(vertical_padding, (-1, x_current_dimension * 4))
-                new_image_pixels = numpy.vstack((new_image_pixels, vertical_padding))
-                #create the horizontal padding needed
-                x_current_dimension = image.size[0]
-                y_current_dimension = y_new_length
-                if x_new_length > x_current_dimension:
-                    horizontal_padding = list(numpy.zeros((y_current_dimension) * (x_new_length - x_current_dimension) * 4))
-                    horizontal_padding = numpy.reshape(horizontal_padding, (-1, (x_new_length - x_current_dimension) * 4))
-                    new_image_pixels = numpy.hstack((new_image_pixels, horizontal_padding))
-                    x_current_dimension = x_new_length
-                new_image = bpy.data.images.new(image.name.replace('.png', 'd.png'), x_current_dimension, y_current_dimension)
-                new_image.pixels = new_image_pixels.flatten()
-                material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image = new_image
-                uv_shift_flag_a = False
-
-            #some uvs are absolutely fucked. The baked image will need to grow to expand to whatever the UV limits go to if they are higher than 1.
-            x_max_uv, y_max_uv, x_min_uv, y_min_uv = get_max_min_uvs(object.name, material.name)
-            #if any uvs are less than 0, shift everything to at least 0, 0
-            if x_min_uv < 0 or y_min_uv < 0:
-                print('fixing negative uv irregularities {}'.format(bake_type))
-                #do this for all three images
-                uv_shift_flag = True
-                for bake_type in ['light', 'dark', 'normal']:
-                    image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
+                    except:
+                        image = None
                     if not image:
-                        print('no image for {} {}'.format(material.name, bake_type))
                         continue
-                    elif image.name == 'Template: Pattern Placeholder':
-                        image = None
-                        print('no image for {} {}'.format(material.name, bake_type))
-                        continue
-                    if uv_shift_flag:
-                        print('shifting uvs for {} {}'.format(material.name, bake_type))
-                        update_uvs(object.name, material.name, x_min_uv, y_min_uv, '-')
                     else:
-                        print('NOT shifting uvs for {} {}'.format(material.name, bake_type))
-                    #pad left and bottom
-                    x_new_length = int(image.size[0] - x_min_uv * image.size[0])
-                    y_new_length = int(image.size[1] - y_min_uv * image.size[1])
-                    #make sure dimensions are divisble by 2
-                    if x_new_length % 2:
-                        x_new_length +=1
-                    if y_new_length % 2:
-                        y_new_length +=1
-                    #also scale the uvs to the new length
-                    if uv_shift_flag:
-                        print('shifting uvs for {} {}'.format(material.name, bake_type))
-                        update_uvs(object.name, material.name, image.size[0]/x_new_length, image.size[1]/y_new_length, '*')
-                    else:
-                        print('NOT shifting uvs for {} {}'.format(material.name, bake_type))
-                    #get the pixels of the current image, then create the padding needed
-                    new_image_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
-                    x_current_dimension = image.size[0]
-                    y_current_dimension = image.size[1]
-                    vertical_padding = list(numpy.zeros((y_new_length - y_current_dimension) * x_current_dimension * 4))
-                    vertical_padding = numpy.reshape(vertical_padding, (-1, x_current_dimension * 4))
-                    new_image_pixels = numpy.vstack((vertical_padding, new_image_pixels)) #put padding before image to appear on the bottom
-                    #create the horizontal padding needed
-                    x_current_dimension = image.size[0]
-                    y_current_dimension = y_new_length
-                    horizontal_padding = list(numpy.zeros((y_current_dimension) * (x_new_length - x_current_dimension) * 4))
-                    horizontal_padding = numpy.reshape(horizontal_padding, (y_current_dimension, -1))
-                    new_image_pixels = numpy.hstack((horizontal_padding, new_image_pixels)) #put padding before image to appear on the left
-                    x_current_dimension = x_new_length
-                    new_image = bpy.data.images.new(image.name.replace('.png', 'n.png'), x_current_dimension, y_current_dimension)
-                    new_image.pixels = new_image_pixels.flatten()
-                    material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image = new_image
-                    uv_shift_flag = False
-            #try looking at the positive uvs now
-            if x_max_uv > 1 or y_max_uv > 1:
-                #do this for all three images
-                uv_shift_flag = True
-                for bake_type in ['light', 'dark', 'normal']:
-                    print('fixing positive uv irregularities {}'.format(bake_type))
-                    image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
-                    if not image:
-                        print('no image for {} {}'.format(material.name, bake_type))
-                        continue
-                    elif image.name == 'Template: Pattern Placeholder':
-                        image = None
-                        print('no image for {} {}'.format(material.name, bake_type))
-                        continue
-                    if uv_shift_flag:
-                        print('shifting uvs for {} {}'.format(material.name, bake_type))
-                        update_uvs(object.name, material.name, x_max_uv if x_max_uv > 1 else 1, y_max_uv if y_max_uv > 1 else 1, '/')
-                    else:
-                        print('NOT shifting uvs for {} {}'.format(material.name, bake_type))
-                    #get the pixels of the current image, then create the padding needed
-                    new_image_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
-                    x_new_length = int(image.size[0] * (x_max_uv if x_max_uv > 1 else 1))
-                    y_new_length = int(image.size[1] * (y_max_uv if y_max_uv > 1 else 1))
-                    #make sure dimensions are divisble by 2
-                    if x_new_length % 2:
-                        x_new_length +=1
-                    if y_new_length % 2:
-                        y_new_length +=1
-                    x_current_dimension = image.size[0]
-                    y_current_dimension = image.size[1]
-                    #create the vertical padding needed
-                    vertical_padding = list(numpy.zeros((y_new_length - y_current_dimension) * x_current_dimension * 4))
-                    vertical_padding = numpy.reshape(vertical_padding, (-1, x_current_dimension * 4))
-                    new_image_pixels = numpy.vstack((new_image_pixels, vertical_padding))
-                    #create the horizontal padding needed
-                    x_current_dimension = image.size[0]
-                    y_current_dimension = y_new_length
-                    if x_new_length > x_current_dimension:
-                        horizontal_padding = list(numpy.zeros((y_current_dimension) * (x_new_length - x_current_dimension) * 4))
-                        horizontal_padding = numpy.reshape(horizontal_padding, (-1, (x_new_length - x_current_dimension) * 4))
-                        new_image_pixels = numpy.hstack((new_image_pixels, horizontal_padding))
-                        x_current_dimension = x_new_length
-                    new_image = bpy.data.images.new(image.name.replace('.png', 'p.png'), x_current_dimension, y_current_dimension)
-                    new_image.pixels = new_image_pixels.flatten()
-                    material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image = new_image
-                    uv_shift_flag = False
-            
-            for bake_type in ['light', 'dark', 'normal']:
-                try:
-                    image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
-                    if image:
-                        if image.name == 'Template: Pattern Placeholder':
-                            image = None
+                        if not bpy.data.materials.get('{} Atlas'.format(material.name)):
+                            #remove the emission nodes from earlier
+                            if material.node_tree.nodes.get('Emission'):
+                                material.node_tree.nodes.remove(material.node_tree.nodes['Image Texture'])
+                                material.node_tree.nodes.remove(material.node_tree.nodes['Emission'])
+                            atlas_material = material.copy()
+                            atlas_material.name = '{} Atlas'.format(material.name)
+                            new_group = atlas_material.node_tree.nodes['Gentex'].node_tree.copy()
+                            new_group.name = '{} Atlas'.format(material.name)
                         else:
-                            break
-                except:
-                    # print('no baked1')
-                    image = None
-            #get the image length
-            x_length = image.size[0]
-            x_total_length += x_length
-            y_length = image.size[1]
-            y_max_length = y_length if y_length > y_max_length else y_max_length
+                            atlas_material =  bpy.data.materials.get('{} Atlas'.format(material.name))
+                            new_group = bpy.data.node_groups.get('{} Atlas'.format(material.name))
+                        atlas_material.node_tree.nodes['Gentex'].node_tree = new_group
+                        new_group.nodes[bake_type].image = atlas_image
 
-        #skip if this object had no images to atlas
-        if y_max_length == 0:
-            print('no max length for {}'.format(object.name))
-            continue
-
-        #give each image an index before stacking them
-        uv_shift_flag = True
-        for bake_type in ['light', 'dark', 'normal']:
-            indexed_images = {}
-            for mat_slot in [m for m in object.material_slots if ('KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name)]:
-                material = mat_slot.material
-                # print(material)
-                try:
-                    image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
-                    if image.name == 'Template: Pattern Placeholder':
-                        image = None
-                except:
-                    # print('no baked2')
-                    image = None
-                if not image:
-                    continue
-                indexed_images[image.name] = [object.name, material.name]
-
-            #use rectangle-packer to find the best locations for each image, then store it into the indexed dict
-            print('{}, {}'.format(bake_type, indexed_images))
-            if not indexed_images:
-                print('No images found for ' + bake_type)
-                continue
-            sizes = []
-            for image_name in indexed_images:
-                image = bpy.data.images[image_name]
-                sizes.append((image.size[0] * 4, image.size[1]))
-
-            # Built-in
-            from typing import Iterable, Tuple, List
-
-            # Extension modules
-            from ..rpack._core import (
-                pack as _pack,
-                bbox_size,
-            )
-
-            enclosing_size = bbox_size
-
-            def pack(sizes: Iterable[Tuple[int, int]],
-                     max_width=None, max_height=None) -> List[Tuple[int, int]]:
-                if max_width is not None and not isinstance(max_width, int):
-                    raise TypeError("max_width must be an integer")
-                if max_height is not None and not isinstance(max_height, int):
-                    raise TypeError("max_height must be an integer")
-                if not isinstance(sizes, list):
-                    sizes = list(sizes)
-                return _pack(sizes, max_width or -1, max_height or -1)
-
-            positions = pack(sizes)
-            for index, image_name in enumerate(indexed_images):
-                # print(image_name)
-                indexed_images[image_name].append(positions[index])
-
-            #create a new numpy array the size of the bounding box
-            bounding_box = bbox_size(sizes, positions)
-            atlas_array = numpy.zeros(bounding_box[0] * bounding_box[1])
-            atlas_array = numpy.reshape(atlas_array, (-1, bounding_box[0]))
-
-            #insert each individual image into the final image at the correct coordinates
-            for index, image_name in enumerate(indexed_images):
-                image = bpy.data.images[image_name]
-                reshaped_pixels = numpy.reshape(image.pixels, (-1, image.size[0] * 4))
-                # print(image)
-                a1,a0=indexed_images[image_name][2]
-                atlas_array[a0:a0+reshaped_pixels.shape[0],a1:a1+reshaped_pixels.shape[1]] = reshaped_pixels
-
-            atlas = bpy.data.images.new('{} Atlas {}'.format(object.name, bake_type), int(atlas_array.shape[1]/4), atlas_array.shape[0])
-            atlas.pixels = atlas_array.flatten()
-            path = os.path.join(folderpath.replace('baked_files', 'atlas_files'), atlas.name.replace('.001', '') + '.png')
-            atlas.save_render(path)
-            atlas.filepath_raw = path
-            atlas.file_format = 'PNG'
-            atlas.save()
-            atlas.pack()
-            #if there was an older version of this image, get rid of it
-            if atlas.name[-4:] == '.001':
-                if bpy.data.images.get(atlas.name[:-4]):
-                    bpy.data.images.remove(bpy.data.images[atlas.name[:-4]])
-                    atlas.name = atlas.name[:-4]
-
-            #replace all images with the atlas in a new atlas material
-            for mat_slot in [m for m in object.material_slots if ('KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name)]:
-                material = mat_slot.material
-                # print(material)
-                try:
-                    image = material.node_tree.nodes['Gentex'].node_tree.nodes[bake_type].image
-                    if image.name == 'Template: Pattern Placeholder':
-                        image = None
-                except:
-                    # print('no baked3')
-                    image = None
-                if not image:
-                    continue
-                else:
-                    if not bpy.data.materials.get('{} Atlas'.format(material.name)):
-                        atlas_material = material.copy()
-                        atlas_material.name = '{} Atlas'.format(material.name)
-                        new_group = atlas_material.node_tree.nodes['Gentex'].node_tree.copy()
-                        new_group.name = '{} Atlas'.format(material.name)
-                    else:
-                        atlas_material =  bpy.data.materials.get('{} Atlas'.format(material.name))
-                        new_group = bpy.data.node_groups.get('{} Atlas'.format(material.name))
-                    atlas_material.node_tree.nodes['Gentex'].node_tree = new_group
-                    new_group.nodes[bake_type].image = bpy.data.images['{} Atlas {}'.format(object.name, bake_type)]
-
-            #scale and translate all of the uvs based on the image's index and dimensions
-            if uv_shift_flag:
-                for index, image_name in enumerate(indexed_images):
-                    object_name = indexed_images[image_name][0]
-                    material_name = indexed_images[image_name][1]
-                    image = bpy.data.images[image_name]
-                    #scale the uvs to bring them to the atlas scale
-                    x_length = image.size[0]
-                    y_length = image.size[1]
-                    x_scale = x_length / atlas.size[0]
-                    y_scale = y_length / atlas.size[1]
-                    update_uvs(object_name, material_name, x_scale, y_scale, '*')
-                    #now that the uvs are in atlas scale, move them around if they need to
-                    x_location = (indexed_images[image_name][2][0] / 4) / atlas.size[0]
-                    y_location = indexed_images[image_name][2][1] / atlas.size[1]
-                    update_uvs(object_name, material_name, x_location, y_location, '+')
-            uv_shift_flag = False
-        
         #replace all images with the atlas in a new atlas material
-        for mat_slot in [m for m in object.material_slots if ('KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name)]:
+        for mat_slot in [m for m in obj.material_slots if ('KK ' in m.name and 'Outline ' not in m.name and ' Outline' not in m.name)]:
             material = mat_slot.material
             if bpy.data.materials.get(material.name + '-ORG'):
                 atlas_material = bpy.data.materials.get('{} Atlas'.format(material.name))
@@ -1018,6 +691,7 @@ class bake_materials(bpy.types.Operator):
             folderpath = os.path.join(context.scene.kkbp.import_dir, 'baked_files', '')
             last_step = time.time()
             c.toggle_console()
+            c.reset_timer()
             c.kklog('Switching to EEVEE for material baking...')
             bpy.context.scene.render.engine = 'BLENDER_EEVEE_NEXT' if bpy.app.version[0] > 3 else 'BLENDER_EEVEE'
             try:

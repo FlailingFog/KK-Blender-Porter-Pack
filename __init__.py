@@ -4,14 +4,14 @@ bl_info = {
     "author" : "a blendlet and some blenderchads",
     "location" : "View 3D > Tool Shelf > KKBP and Image Editor > Tool Shelf > KKBP",
     "description" : "Scripts to automate cleanup of a Koikatsu export",
-    "version": (7, 2, 0),
+    "version": (7, 2, 1),
     "blender" : (3, 6, 0),
     "category" : "3D View",
     "tracker_url" : "https://github.com/FlailingFog/KK-Blender-Porter-Pack/",
     "doc_url": "https://github.com/FlailingFog/KK-Blender-Porter-Pack/blob/master/wiki/Wiki%20top.md",
 }
 
-
+from .exporting.material_combiner.extend_types import register_smc_types, unregister_smc_types
 from bpy.utils import register_class, unregister_class
 from bpy.types import Scene
 from bpy.props import PointerProperty
@@ -31,6 +31,10 @@ def reg_unreg(register_bool):
 
     from .exporting.bakematerials import bake_materials
     from .exporting.exportprep import export_prep
+    from .exporting.material_combiner.combiner import Combiner
+    from .exporting.material_combiner.combine_list import RefreshObData, CombineSwitch
+    from .exporting.material_combiner.extend_types import CombineList
+    from .exporting.material_combiner.get_pillow import InstallPIL
 
     from .extras.importstudio import import_studio
     from .extras.animationlibrary.createmapassetlibrary import map_asset_lib
@@ -48,6 +52,8 @@ def reg_unreg(register_bool):
     from .extras.catsscripts.armature_manual import MergeWeights
     from .extras.importanimation import anim_import
     from .extras.splitobjects import split_objects
+    from .extras.matcombsetup import mat_comb_setup
+    from .extras.resetmaterials import reset_materials
 
     from . KKPanel import PlaceholderProperties
     from . KKPanel import (
@@ -77,6 +83,13 @@ def reg_unreg(register_bool):
         MergeWeights,
         anim_import,
         split_objects,
+        Combiner,
+        RefreshObData,
+        CombineSwitch,
+        CombineList,
+        mat_comb_setup,
+        InstallPIL,
+        reset_materials,
 
         kkbp_import,
         modify_mesh,
@@ -100,9 +113,11 @@ def reg_unreg(register_bool):
 
 def register():
     reg_unreg(True)
+    register_smc_types()
 
 def unregister():
     reg_unreg(False)
+    unregister_smc_types()
 
 if __name__ == "__main__":
     register()
