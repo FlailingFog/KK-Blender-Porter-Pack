@@ -80,7 +80,7 @@ translation_dictionary = {
     'shader_A'       : 'Eeveeにする',
     'shader_B'       : "Cyclesにする",
     'shader_C'       : "Eevee modにする",
-    'shader_C_tt'     : "別のEeveeシェーダー設定にする", 
+    'shader_C_tt'    : "別のEeveeシェーダー設定にする", 
 
     'import_export' : 'インポート ・ エクスポート',
     'extras'        : '追加機能',
@@ -88,10 +88,14 @@ translation_dictionary = {
     'prep'          : 'ターゲットアプリのために準備する',
 
     'studio_object'             : 'スタジオオブジェクトをインポート',
+    'studio_object_tt'          : 'SB3Utilityでエクスポートされた.fbxファイルのフォルダを読み取る',
+    'convert_texture'           : 'テクスチャを和度する?',
+    'convert_texture_tt'        : '''このオプションにしたら、コイカツのLUTでテクスチャの色を和度される''',
     'single_animation'          : '一つのアニメーションファイルをインポート',
     'single_animation_tt'       : 'Rigifyアーマチュアが必要です。SB3UtilityでエクスポートしたFBXのアニメーションファイルをチャラのアーマチュアにインポートする。MixamoのFBXアニメーションファイルもインポートできる（下のトグルをクリックして）',
     'animation_koi'             : 'コイカツアニメーションをインポート',
     'animation_mix'             : 'Mixamoアニメーションをインポート',
+    'animation_type_tt'         : 'コイカツの.fbxアニメーションをインポートする場合はこの設定を無効にして。Mixamoの.fbxアニメーションをインポートする場合はこの設定を有効にして。',
     'animation_library'         : 'Rigifyアーマチュアが必要です。アニメーションライブラリをジェネレートする',
     'animation_library_tt'      : "現行ファイルとキャラクタでアニメーションライブラリをジェネレートする。SB3UtilityでエクスポートしたFBXファイルのフォルダを選択して",
     'animation_library_scale'   : '腕をスケール',
@@ -99,19 +103,18 @@ translation_dictionary = {
     'map_library'               : 'マップアセットライブラリをジェネレートする',
     'map_library_tt'            : "現行ファイルでマップアセットライブラリをジェネレートする。SB3UtilityでエクスポートしたFBXファイルのフォルダを選択して。マップ一つにつき500秒まで掛かれる",
 
-    'rigify_convert': "Rigifyアーマチュアに変えて",
-    'sep_eye'       : "EyesやEyebrowsやBodyのオブジェクトから別々になって",
+    'rigify_convert'            : "Rigifyアーマチュアに変えて",
+    'rigify_convert_tt'         : "このボタンをクリックしたら、KKBPアーマチュアをRigifyアーマチュアに変えて",
+    'sep_eye'                   : "EyesやEyebrowsやBodyのオブジェクトから別々になって",
+    # 'sep_eye_tt'                : "Separates the Eyes and Eyebrows from the Body object and links the shapekeys to the Body object. Useful for when you want to make eyes or eyebrows appear through the hair using the Cryptomatte features in the compositor",
+    'bone_visibility'           : "現在の服のボーンを表示して",
+    'bone_visibility_tt'        : "このボタンをクリックしたら、不要なアクセサリボーンをビューポートで隠くされる。たとえば、Outfit 00 と Outfit 01 ビューポートで隠されない場合は、すべてのアクセサリボーンが表示される。Outfit 00 をビューポートで隠してこのボタンをクリックすると、Outfit 01 のアクセサリボーンのみが表示されます。",
+    # 'export_sep_meshes'         : "Export Seperate Meshes",
+    # 'export_sep_meshes_tt'      : "Only available for the \"Separate by SMR data\" option. Choose where to export meshes",
 
-    'kkbp_import_tt'   : "コイカツモデル(.PMXフォーマット)をインポートして改造して",
-    'export_prep_tt'    : "KKBPアーマチュアが必要です。メニューの情報をチェックして",
-    'bake_mats_tt'      : "マテリアルテンプレートをPNGファイルにする。PNGファイルはPMXフォルダーに保存される",
-
-    'install_dependency': "必要なソフトをインストールする",
-    'install_dependency_tt': """このボタンをクリックしたら、Blender 2.90が自動的にダウンロードされる。このBlenderバージョンは、KKBPモデルをインポートするために必要です。
-このインストールは、https://download.blender.org/release/ から193MBをダウンロードされる。
-インストールの後は504MBがかかる。データはKKBPアドオンフォルダーに保存される。KKBPアドオンをアンインストールしたら504MBのデータが削除される。
-代わりにBlender 3.6を使用したい場合は、下の3.6ボタンをクリックして。このバージョンはBlender 2.90よりも大きいだけど、ハードウェアの互換性が優れている可能性がある。
-BlenderをKKBPにダウンロードさせたくない場合は、独自のBlender 2.90 exeを提供できる。KKBPアドオンの設定ウィンドウを開き、そこに.exeのファイルパスを入力して。Blender 2.90 から Blender 3.6 までのどのバージョンでも互換性があるかも""",
+    'kkbp_import_tt'            : "コイカツモデル(.PMXフォーマット)をインポートして改造して",
+    'export_prep_tt'            : "KKBPアーマチュアが必要です。メニューの情報をチェックして",
+    'bake_mats_tt'              : "マテリアルテンプレートをPNGファイルにする。PNGファイルはPMXフォルダーに保存される",
 
     'delete_cache' : 'キャッシュを削除する',
     'delete_cache_tt' : """このオプションにしたらキャッシュファイルを削除される。
@@ -119,14 +122,16 @@ BlenderをKKBPにダウンロードさせたくない場合は、独自のBlende
 キャッシュファイルはＰＭＸフォルダーに「atlas_files」、「baked_files」、「dark_files」、「saturated_files」フォルダーに保存される。 
 このオプションにしたら、それらのフォルダーのすべてのファイルを削除される""",
 
-    'split_objects' : 'オブジェクトを分割して',
-    'split_objects_tt' : """このボタンをクリックしたら、現在の選択されているオブジェクトを半分に分割する。
-モデルはマテリアルがたくさんある場合は「マテリアルテンプレートをファイナライズ」のボタンをクリックしたらBlenderがクラッシュするか。
-このボタンはオブジェクトとマテリアルを2つに分割するので、低スペックのコンピュータでクラッシュする可能性が低くなる""",
-
     'use_atlas' : 'アトラスを生成する',
     'use_atlas_tt': '時間を節約したい場合は、アトラスの生成をしないことができる',
     'dont_use_atlas' : 'アトラスを生成しない',
+
+    'mat_comb_tt' : 'KKBPは Shotariya の Material Combiner アドオンの一部を使用して、マテリアルをアトラスに自動的に結合します。KKBPにマテリアルを結合させるのではなく、手動でマテリアルを結合したい場合は、このボタンをクリックして (Material Combiner アドオンをダウンロードする必要があります。そして、KKBP パネルの [マテリアルテンプレートをファイナライズ] ボタンを既にクリックしていることを確認してください。クリックしていないと機能しません)',
+    'matcomb' : 'Material Combinerの手動準備',
+    'pillow' : 'アトラス機能を使用するにはPILをインストール',
+    'pillow_tt':'Pillow をインストールするにはクリックして。インストールはしばらく時間がかかる。',
+    'reset_mats' : 'ファイナライズしたマテリアルをリセット',
+    'reset_mats_tt' : 'このボタンをクリックしたら、すべてのファイナライズしたマテリアルが -ORG バージョンにリセットされます。すべてを再ファイナライズしたい場合に便利です。',
 
     }
 
