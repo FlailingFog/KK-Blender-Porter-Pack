@@ -116,6 +116,8 @@ translation_dictionary = {
     'bone_visibility_tt'        : "This will update visibility for all accessory bones. For example, if you have an Outfit 00 and an Outfit 01, both of them are visible then all accessory bones will be shown. If you hide Outfit 00 and click this button, only Outfit 01's accessory bones will be shown",
     'export_sep_meshes'         : "Export Seperate Meshes",
     'export_sep_meshes_tt'      : "Only available for the \"Separate by SMR data\" option. Choose where to export meshes",
+    'link_hair'                 : 'Update hair materials',
+    'link_hair_tt'              : 'Click to copy the current colors, detail intensity, etc to the other hair materials on this object',
 
     'kkbp_import_tt'    : "Imports a Koikatsu model (.pmx format) and applies fixes to it",
     'export_prep_tt'    : "Not available for the Rigify Armature. Check the dropdown for more info",

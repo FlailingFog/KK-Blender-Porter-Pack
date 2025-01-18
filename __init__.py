@@ -54,6 +54,7 @@ def reg_unreg(register_bool):
     from .extras.splitobjects import split_objects
     from .extras.matcombsetup import mat_comb_setup
     from .extras.resetmaterials import reset_materials
+    from .extras.linkhair import link_hair
 
     from . KKPanel import PlaceholderProperties
     from . KKPanel import (
@@ -61,6 +62,7 @@ def reg_unreg(register_bool):
         IMPORTING_PT_panel,
         EXPORTING_PT_panel,
         EXTRAS_PT_panel,
+        HAIR_PT_panel,
     )
 
     classes = (
@@ -90,6 +92,7 @@ def reg_unreg(register_bool):
         mat_comb_setup,
         InstallPIL,
         reset_materials,
+        link_hair,
 
         kkbp_import,
         modify_mesh,
@@ -102,6 +105,7 @@ def reg_unreg(register_bool):
         IMPORTING_PT_panel,
         EXPORTING_PT_panel,
         EXTRAS_PT_panel,
+        HAIR_PT_panel,
         kkbp_debug)
 
     for cls in classes:

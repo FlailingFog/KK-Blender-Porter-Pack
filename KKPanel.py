@@ -403,16 +403,32 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         #     split.label(text=icon)
         #     split.operator('kkbp.linkshapekeys', icon = icon)
 
+#Add a button to the materials tab that lets you update all hair material settings at once
+class HAIR_PT_panel(bpy.types.Panel):
+    #bl_parent_id = "EEVEE_MATERIAL_PT_surface"
+    bl_label = "kkbp_hair"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "material"
+    bl_options = {'HIDE_HEADER'}
+    COMPAT_ENGINES = {'BLENDER_EEVEE', 'BLENDER_EEVEE_NEXT'}
+
+    def draw(self, context):
+        layout = self.layout
+        mat = context.material
+        if mat.get('hair'):
+            layout.operator('kkbp.linkhair', text = t('link_hair'), icon='NODETREE')
+
 def register():
     bpy.utils.register_class(PlaceholderProperties)
     bpy.utils.register_class(IMPORTINGHEADER_PT_panel)
     bpy.utils.register_class(IMPORTING_PT_panel)
     bpy.utils.register_class(EXPORTING_PT_panel)
     bpy.utils.register_class(EXTRAS_PT_panel)
-    # bpy.utils.register_class(EDITOR_PT_panel)
+    bpy.utils.register_class(HAIR_PT_panel)
 
 def unregister():
-    # bpy.utils.unregister_class(EDITOR_PT_panel)
+    bpy.utils.unregister_class(HAIR_PT_panel)
     bpy.utils.unregister_class(EXTRAS_PT_panel)
     bpy.utils.unregister_class(EXPORTING_PT_panel)
     bpy.utils.unregister_class(IMPORTING_PT_panel)
