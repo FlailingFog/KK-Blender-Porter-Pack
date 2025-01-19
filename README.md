@@ -12,7 +12,7 @@ The ```KKBP exporter for Koikatsu``` exports the character's mesh, armature and 
 
 ## Download
 Stable versions of KKBP are [on the release page.](https://github.com/FlailingFog/KK-Blender-Porter-Pack/releases)  
-The absolute latest version of KKBP can be downloaded [here](https://github.com/FlailingFog/KK-Blender-Porter-Pack/archive/refs/heads/master.zip) (this is a live snapshot of the repo that might not work!)
+The absolute latest version of KKBP can be downloaded [here](https://github.com/FlailingFog/KK-Blender-Porter-Pack/archive/refs/heads/master.zip) (this is a live snapshot of the repo that might not work!) 
 
 ## Video walkthrough of the plugins
 
