@@ -320,7 +320,7 @@ def replace_all_baked_materials(folderpath: str, bake_object: bpy.types.Object):
                             blend_method = mat.material.surface_render_method
                             mat.material = simple
                             mat.material.surface_render_method = blend_method
-                            mat.material.use_transparency_overlap = True if ('KK Eyewhites ' + c.get_name() in mat.name) else False
+                            mat.material.use_transparency_overlap = True if ('KK Eyewhites (sirome) ' + c.get_name() in mat.name) else False
                         else:
                             blend_method = mat.material.blend_method
                             mat.material = simple
