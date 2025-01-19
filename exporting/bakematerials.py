@@ -143,7 +143,7 @@ def bake_pass(folderpath: str, bake_type: str):
     for matslot in object_to_bake.material_slots:
         original_material_order.append(matslot.name)
 
-    #if this is a light or dark pass, make sure the RawShade group is a constant light or dark
+    #if this is a light or dark pass, make sure the color output is a constant light or dark
     combine = bpy.data.node_groups['.Combine colors']
     combine.links.remove(combine.nodes['mix'].inputs[0].links[0])
     combine.nodes['mix'].inputs[0].default_value = 1 if bake_type == 'light' else 0
@@ -160,9 +160,10 @@ def bake_pass(folderpath: str, bake_type: str):
         
         #Turn off the normals for the toon_shading shading node group input if this isn't a normal pass
         if nodes.get('textures') and bake_type != 'normal':
-            toon_shading = nodes.get('textures').node_tree.nodes['shade']
-            original_normal_state = toon_shading.inputs[1].default_value
-            toon_shading.inputs[1].default_value = 0
+            toon_shading = nodes.get('textures').node_tree.nodes.get('shade')
+            if toon_shading:
+                original_normal_state = toon_shading.inputs[1].default_value
+                toon_shading.inputs[1].default_value = 0
 
         #if this is a normal pass, attach the normal passthrough to the output
         elif nodes.get('textures') and bake_type == 'normal':
@@ -213,8 +214,9 @@ def bake_pass(folderpath: str, bake_type: str):
             
         #Restore the value in the toon_shading shading node group for the normals
         if nodes.get('textures') and bake_type != 'normal':
-            toon_shading = nodes.get('textures').node_tree.nodes['shade']
-            toon_shading.inputs[1].default_value = original_normal_state
+            toon_shading = nodes.get('textures').node_tree.nodes.get('shade')
+            if toon_shading:
+                toon_shading.inputs[1].default_value = original_normal_state
         
         #Restore the links if they were edited for the normal pass
         elif nodes.get('textures') and bake_type == 'normal':
@@ -225,7 +227,7 @@ def bake_pass(folderpath: str, bake_type: str):
         for material_index in range(len(original_material_order)):
             object_to_bake.material_slots[material_index].material = bpy.data.materials[original_material_order[material_index]]
     
-    #reset the toon_shading group link
+    #reset the color output group link
     combine = bpy.data.node_groups['.Combine colors']
     combine.links.new(combine.nodes['input'].outputs[2], combine.nodes['mix'].inputs[0])
 
@@ -277,8 +279,23 @@ def replace_all_baked_materials(folderpath: str, bake_object: bpy.types.Object):
         for mat in bake_object.material_slots:
             image = bpy.data.images.get(mat.material.name.replace('-ORG', '') + f' {bake_type}.png', '')
             if image:
+                #the simplified material already exists and is loaded into the material slot, so just load in the image
+                if mat.material.get('simple'):
+                    simple = mat.material
+                    textures_group = simple.node_tree.nodes['textures'].node_tree
+                    textures_group.nodes[bake_type].image = image
+
+                #the simplified material already exists, but the user swapped it back to the -ORG version to rebake it, 
+                # so load the material back into the material slot and load in the image
+                elif mat.material.get('bake') and '-ORG' in mat.material.name and bpy.data.materials.get(mat.material.name.replace('-ORG','')):
+                    simple = bpy.data.materials[mat.material.name.replace('-ORG','')]
+                    mat.material = simple
+                    textures_group = simple.node_tree.nodes['textures'].node_tree
+                    print(mat.material.name)
+                    textures_group.nodes[bake_type].image = image
+
                 #check if a simplified version of this material exists yet. If it doesn't, create it
-                if mat.material.get('bake') and not bpy.data.materials.get(mat.material.name.replace('-ORG','')):
+                elif mat.material.get('bake'):
                     #rename the original material to "material_name-ORG" and create the simplified material
                     mat.material.name += '-ORG'
                     try:
@@ -323,13 +340,8 @@ def replace_all_baked_materials(folderpath: str, bake_object: bpy.types.Object):
                         mat.material.use_fake_user = True
                         replace_mat()
 
-                #the simplified material already exists, so just load in the image
-                else:
-                    simple = bpy.data.materials[mat.material.name.replace('-ORG','')]
-                    mat.material = simple
-                    textures_group = simple.node_tree.nodes['textures'].node_tree
-                    textures_group.nodes[bake_type].image = image
-                        
+                
+
 def create_material_atlas(folderpath: str):
     '''Merges all the finalized material png files into a single atlas file, copies the current model and applies the atlas to the copy'''
     # https://blender.stackexchange.com/questions/127403/change-active-collection
@@ -432,6 +444,10 @@ def create_material_atlas(folderpath: str):
     if scene.kkbp.bake_norm_bool:
         bake_types.append('normal')
     for index, obj in enumerate([o for o in bpy.data.collections[c.get_name() + ' atlas'].all_objects if not o.hide_get() and o.type == 'MESH']):
+        #check if this object had any atlas-able materials to begin with. If not, skip
+        if not [mat_slot.material for mat_slot in obj.material_slots if mat_slot.material.get('simple')]:
+            continue
+
         #disable the outline on the atlased object because I don't feel like fixing it
         if obj.modifiers.get('Outline Modifier'):
             obj.modifiers['Outline Modifier'].show_render = False
@@ -440,6 +456,7 @@ def create_material_atlas(folderpath: str):
         if obj.modifiers:
             if obj.modifiers[0].type == 'ARMATURE':
                 obj.modifiers[0].object = bpy.data.objects["Armature.001"]
+
         for bake_type in bake_types:
             #check for atlas dupes
             if bpy.data.images.get(f'{index}_{bake_type}.png'):
@@ -531,7 +548,7 @@ class bake_materials(bpy.types.Operator):
             bpy.context.scene.render.film_transparent = True
             bpy.context.scene.render.filter_size = 0.50
 
-            for bake_object in c.get_all_objects():
+            for bake_object in c.get_all_bakeable_objects():
                 #do a quick check to make sure this object has any materials that can be baked
                 worth_baking = [m for m in bake_object.material_slots if m.material.get('bake')]
                 if not worth_baking:
@@ -564,7 +581,7 @@ class bake_materials(bpy.types.Operator):
             #disable transparency
             bpy.context.scene.render.film_transparent = False
             bpy.context.scene.render.filter_size = 1.5
-            for bake_object in c.get_all_objects():
+            for bake_object in c.get_all_bakeable_objects():
                 replace_all_baked_materials(folderpath, bake_object)
             
             #show all objects again

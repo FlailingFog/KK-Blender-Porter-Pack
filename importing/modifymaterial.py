@@ -299,6 +299,7 @@ class modify_material(bpy.types.Operator):
             template = bpy.data.materials['KK General'].copy()
             template.name = 'KK Tongue ' + c.get_name()
             template['tongue'] = True
+            template['bake'] = True
             template['id'] = c.get_material_names('o_tang')[0]
             body.material_slots['KK General ' + c.get_name()].material = template
             template_group = template.node_tree.nodes['textures'].node_tree.copy()
@@ -1052,7 +1053,7 @@ class modify_material(bpy.types.Operator):
             shader_inputs['Maintex Saturation'].default_value = 0.6
             shader_inputs['Detail intensity (green)'].default_value = 0.01
             shader_inputs['Color mask (base)'].default_value = [1, 1, 1, 1]
-            mat_name = c.get_material_names('o_tang')[0]
+            mat_name = c.get_tongue().material_slots[0].name
             shader_inputs['Color mask (red)'].default_value =   self.saturate_color(c.get_color(mat_name, "_Color "),  light_pass, shadow_color = c.get_shadow_color(mat_name))
             shader_inputs['Color mask (green)'].default_value = self.saturate_color(c.get_color(mat_name, "_Color2 "), light_pass, shadow_color = c.get_shadow_color(mat_name))
             shader_inputs['Color mask (blue)'].default_value =  self.saturate_color(c.get_color(mat_name, "_Color3 "), light_pass, shadow_color = c.get_shadow_color(mat_name))

@@ -120,7 +120,7 @@ translation_dictionary = {
     'link_hair_tt'              : 'Click to copy the current colors, detail intensity, etc to the other hair materials on this object',
 
     'kkbp_import_tt'    : "Imports a Koikatsu model (.pmx format) and applies fixes to it",
-    'export_prep_tt'    : "Use the Koikatsu Armature for the best results. Check the dropdown for more info",
+    'export_prep_tt'    : "Use the KKBP Armature for the best results. Check the dropdown for more info",
     'bake_mats_tt'      : "Finalize materials as .png files. These will be stored in the original .pmx folder",
 
     'delete_cache' : 'Delete cache',

@@ -106,6 +106,14 @@ def get_all_objects() -> list[bpy.types.Object]:
     everything.append(get_tongue())
     return everything
 
+def get_all_bakeable_objects() -> list[bpy.types.Object]:
+    '''Returns all objects associated with this import that can be baked'''
+    everything = get_outfits()
+    everything.extend(get_alts())
+    everything.append(get_body())
+    everything.extend(get_hairs())
+    return everything
+
 def get_name() -> str:
     '''Returns the character name'''
     return bpy.context.scene.kkbp.character_name

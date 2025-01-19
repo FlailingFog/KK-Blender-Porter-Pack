@@ -420,8 +420,9 @@ class HAIR_PT_panel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         mat = context.material
-        if mat.get('hair'):
-            layout.operator('kkbp.linkhair', text = t('link_hair'), icon='NODETREE')
+        if mat:
+            if mat.get('hair'):
+                layout.operator('kkbp.linkhair', text = t('link_hair'), icon='NODETREE')
 
 def register():
     bpy.utils.register_class(PlaceholderProperties)

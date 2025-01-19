@@ -15,6 +15,10 @@ class Combiner(bpy.types.Operator):
         scn = context.scene
         bpy.ops.kkbp.refresh_ob_data()
         for index, object in enumerate([o for o in bpy.data.collections[c.get_name() + ' atlas'].all_objects if o.type == 'MESH' and not o.hide_get()]):
+            #check if this object is worth doing anything with 
+            if not [mat_slot.material for mat_slot in object.material_slots if mat_slot.material.get('simple')]:
+                continue
+            
             set_ob_mode(context.view_layer, scn.kkbp_ob_data)
             self.data = get_data(scn.kkbp_ob_data, object)
             self.mats_uv = get_mats_uv(scn, self.data)
