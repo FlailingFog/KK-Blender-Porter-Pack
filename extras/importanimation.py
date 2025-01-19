@@ -5,9 +5,8 @@ def main(file):
 
     kkbp_character = False
     #delete the armature before starting to reduce console spam
-    if bpy.data.objects.get('Body') and bpy.data.objects.get('RIG-Armature'):
-        if bpy.data.objects['Body'].get('SMR materials'):
-            kkbp_character = True
+    if c.get_body() and c.get_rig():
+        kkbp_character = True
     c.toggle_console() #open console for some kind of progression
     start = time.time()
     rigify_armature = bpy.data.objects['RIG-Armature']
@@ -45,20 +44,19 @@ def main(file):
     #setup all remapping stuff if this is the first imported animation
     script_dir=pathlib.Path(__file__).parent
     if bpy.context.scene.kkbp.animation_import_type:
-        remap_file = (script_dir / "animationlibrary" / "Rokoko retargeting list (mixamo to KKBP Rigify).json").resolve()
+        remap_file = os.path.join(script_dir, "animationlibrary", "Rokoko retargeting list (mixamo to KKBP Rigify).json")
     else:
-        remap_file = (script_dir / "animationlibrary" / "ARP retargeting list (koikatsu fbx to KKBP Rigify).json").resolve()
+        remap_file = os.path.join(script_dir, "animationlibrary", "Rokoko retargeting list (koikatsu fbx to KKBP Rigify).json")
 
     if kkbp_character:
         script_dir=pathlib.Path(__file__).parent
-        jfile = remap_file
-        json_file = open(jfile)
+        json_file = open(remap_file)
         data = json.load(json_file)
         for row in bpy.context.scene.rsl_retargeting_bone_list:
             row.bone_name_target = "" #clear all bones
         for bone in data['bones']:
             for row in bpy.context.scene.rsl_retargeting_bone_list:
-                if row.bone_name_source == data['bones'][bone][0]:
+                if row.bone_name_source.lower() == data['bones'][bone][0].lower():
                     row.bone_name_target = data['bones'][bone][1]
     bpy.ops.rsl.retarget_animation()
 

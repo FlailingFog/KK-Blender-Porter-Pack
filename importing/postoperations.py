@@ -376,6 +376,7 @@ class post_operations(bpy.types.Operator):
         #make sure the new bones on the generated rig retain the KKBP outfit id entry
         rig = bpy.context.active_object
         rig['rig'] = True
+        rig['name'] = c.get_name()
         for bone in rig.data.bones:
             if bpy.app.version[0] == 3:
                 if bone.layers[0] == True or bone.layers[2] == True:
