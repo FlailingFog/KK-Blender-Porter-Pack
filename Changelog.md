@@ -1,3 +1,9 @@
+### Changes for V7.2.2
+* New Unreal Engine export option by **AnalogKnight**!
+
+### Changes for V7.2.1
+* Armature fix after new atlas creation
+
 ### Changes for V7.2.0
 * Fixed crashes when creating a material atlas!
     * This feature will now use atlas generation scripts borrowed from the [material-combiner-addon](https://github.com/Grim-es/material-combiner-addon)
