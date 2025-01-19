@@ -1,3 +1,6 @@
+### Changes for V7.2.2
+* New Unreal Engine export option by **AnalogKnight**!
+
 ### Changes for V7.2.1
 * fixed an issue with the armature not being reparented after baking
 

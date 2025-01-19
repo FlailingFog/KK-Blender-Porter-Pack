@@ -76,6 +76,7 @@ class PlaceholderProperties(PropertyGroup):
             #("C", "MikuMikuDance - PMX compatible", " "),
             ("D", t('prep_drop_D'), t('prep_drop_D_tt')),
             ("B", t('prep_drop_B'), t('prep_drop_B_tt')),
+            ("E", t('prep_drop_E'), t('prep_drop_E_tt')),
         ), name="", default=bpy.context.preferences.addons[__package__].preferences.prep_dropdown, description=t('prep_drop'))
 
     simp_dropdown : EnumProperty(
