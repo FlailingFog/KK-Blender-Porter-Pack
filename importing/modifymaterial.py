@@ -410,7 +410,8 @@ class modify_material(bpy.types.Operator):
                     alpha_mask = image
                     break
         #if there was an alpha mask detected, load it in
-        self.image_load('Body', image_override = alpha_mask.name, node_override='_AM.png')
+        if alpha_mask:
+            self.image_load('Body', image_override = alpha_mask.name, node_override='_AM.png')
 
         #load in face textures
         if c.get_material_names('cf_O_face'):
