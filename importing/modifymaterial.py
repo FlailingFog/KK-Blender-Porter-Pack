@@ -574,7 +574,7 @@ class modify_material(bpy.types.Operator):
         self.image_load('Tongue', '_CM.png')
         self.image_load('Tongue', '_DM.png')
         self.image_load('Tongue', '_NMP.png')
-        self.image_load('Tongue', '_NMP_CNV.png') #load regular map by default
+        self.image_load('Tongue', '_NMP_CNV.png', node_override = '_NMPD_CNV.png') #load regular map by default
         self.image_load('Tongue', '_NMPD_CNV.png') #then the detail map if it's there
 
         #load all gag eye textures if it exists
