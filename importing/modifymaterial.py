@@ -172,6 +172,7 @@ class modify_material(bpy.types.Operator):
         'KK Nose',
         'KK Teeth (tooth)',
         'KK Simple',
+        'KK Glasses',
         'Outline General',
         'Outline Body',
         ]
@@ -393,8 +394,8 @@ class modify_material(bpy.types.Operator):
         self.image_load('Body', '_ot2.png', group_override='texturesnsfw') #pubic hair
         self.image_load('Body', '_ot1.png', group_override='texturesnsfw') #cfm female
         self.image_load('Body', '_ot1.png', group_override='texturesnsfw', node_override='_ot1.pngleft')
-        # self.image_load('Body', '_T3.png') #body overlays
-        # self.image_load('Body', '_T4.png')
+        self.image_load('Body', '_T3.png') #body overlays
+        self.image_load('Body', '_T6.png')
         self.set_uv_type('Body', 'nippleuv', 'uv_nipple_and_shine', group= 'texturesnsfw')
         self.set_uv_type('Body', 'underuv', 'uv_underhair', group= 'texturesnsfw')
         #find the appropriate alpha mask
@@ -429,9 +430,8 @@ class modify_material(bpy.types.Operator):
             self.image_load('Face', '_T5.png') #lower lip mask
             self.image_load('Face', '_ot1.png') #lipstick
             self.image_load('Face', '_ot2.png') #flush
-            # self.image_load('Face', '_T6.png')
-            # self.image_load('Face', '_T7.png')
-            # self.image_load('Face', '_T8.png')
+            self.image_load('Face', '_T3.png')
+            self.image_load('Face', '_T7.png')
             self.image_load('Face', '_ot3.png') #eyeshadow
             self.set_uv_type('Face', 'eyeshadowuv', 'uv_eyeshadow')
         
@@ -545,14 +545,20 @@ class modify_material(bpy.types.Operator):
                     else:
                         genMat.material.surface_render_method = 'BLENDED'
 
-                #If the shader of this material is set to "glasses", remove the alpha socket from the texture group
+                #If the shader of this material is set to "glasses", replace the entire shader with
                 shaders = ['Shader Forge/toon_glasses_lod0', 'Koikano/main_clothes_item_glasses',]
                 #find this material in the MaterialDataComplete.json and see if it's a glasses shader
                 if shader_name in shaders:
-                    c.kklog('Detected glasses shader. Removing alpha node in texture group: {}'.format(genMat.material['id']))
-                    nodes = genMat.material.node_tree.nodes['textures'].node_tree.nodes
-                    links = genMat.material.node_tree.nodes['textures'].node_tree.links
-                    links.remove(nodes['_AM.png'].outputs[1].links[0])
+                    c.kklog('Detected glasses shader. Replacing material with KK Glasses: {}'.format(genMat.material['id']))
+                    
+                    original_textures_group = genMat.material.node_tree.nodes['textures'].node_tree
+                    template = bpy.data.materials['KK Glasses'].copy()
+                    template.node_tree.nodes['textures'].node_tree = original_textures_group
+                    bpy.data.materials.remove(genMat.material)
+                    template['bake'] = True
+                    template['glasses'] = True
+                    template.name = 'KK ' + genType + ' ' + c.get_name()
+                    genMat.material = template
 
                 #special exception to clip the emblem image because I am tired of seeing it repeat at the edges
                 if 'KK cf_m_emblem ' in genMat.material.name:
@@ -820,6 +826,12 @@ class modify_material(bpy.types.Operator):
                     OutlineMat.name = mat.replace('KK ', 'Outline ')
                     OutlineMat.node_tree.nodes['textures'].node_tree = bpy.data.materials[mat].node_tree.nodes['textures'].node_tree
                     ob.material_slots[index + outlineStart[ob.name]].material = OutlineMat
+
+                    #if the outline material is for a glasses material, disable it
+                    if bpy.data.materials[mat].get('glasses'):
+                        nodes = OutlineMat.node_tree.nodes
+                        links = OutlineMat.node_tree.links
+                        links.remove(nodes['combine'].inputs['Main texture (alpha)'].links[0])
                 #update polygon material indexes
                 for mat in mats_to_gons:
                     for gon in mats_to_gons[mat]:
@@ -1064,11 +1076,8 @@ class modify_material(bpy.types.Operator):
         for hair_material in hair_materials:
             shader_inputs = hair_material.node_tree.nodes[light_pass].inputs
             shader_inputs['Hair color'].default_value         = self.saturate_color(c.get_color(hair_material.name, "_Color " ),  light_pass, shadow_color = c.get_shadow_color(hair_material.name))
-            shader_inputs['Color mask (dark)'].default_value  = self.saturate_color(c.get_color(hair_material.name, "_Color2 "),  light_pass, shadow_color = c.get_shadow_color(hair_material.name))
-            shader_inputs['Color mask (light)'].default_value = self.saturate_color(c.get_color(hair_material.name, "_Color3 "),  light_pass, shadow_color = c.get_shadow_color(hair_material.name))
-            #if there's a maintex, activate the slider
-            if hair_material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].image.name != 'Template: Placeholder':
-                shader_inputs['Use main texture?'].default_value = 1
+            shader_inputs['Color mask (root)'].default_value  = self.saturate_color(c.get_color(hair_material.name, "_Color2 "),  light_pass, shadow_color = c.get_shadow_color(hair_material.name))
+            shader_inputs['Color mask (tip)'].default_value = self.saturate_color(c.get_color(hair_material.name, "_Color3 "),  light_pass, shadow_color = c.get_shadow_color(hair_material.name))
 
         #set body colors
         if c.get_body():
