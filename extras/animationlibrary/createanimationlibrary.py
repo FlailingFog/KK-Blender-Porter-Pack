@@ -39,11 +39,14 @@ from ... import common as c
 from...interface.dictionary_en import t
 def main(folder):
 
+    #stop if the file was not saved
+    if not bpy.data.filepath:
+        raise('File must be saved first!')
+
     kkbp_character = False
     #delete the armature before starting to reduce console spam
-    if bpy.data.objects.get('Body'):
-        if bpy.data.objects['Body'].get('SMR materials'):
-            kkbp_character = True
+    if c.get_body() and c.get_rig():
+        kkbp_character = True
     if bpy.data.objects.get('Armature') and kkbp_character:
         n = bpy.data.objects['Armature'].data.name
         bpy.data.objects.remove(bpy.data.objects['Armature'])
@@ -84,8 +87,8 @@ def main(folder):
     original_file_name = bpy.data.filepath
 
     for file in fbx_files:
-        original_file_number = file[0].replace(folder, '')[1:file[0].replace(folder, '')[1:].find('\\') + 1]
-        category = file[0].replace(folder, '')[file[0].replace(folder, '')[1:].find('\\') + 2:]
+        category = os.path.basename(file[0])
+        original_file_number = os.path.basename(os.path.dirname(file[0]))
         filename = file[1]
 
         #skip this file if the animation is for larger characters, or is a partial animation
@@ -176,14 +179,14 @@ bpy.ops.wm.quit_blender()
         if first_import and kkbp_character:
             first_import = False
             script_dir=pathlib.Path(__file__).parent
-            file = (script_dir / "Rokoko retargeting list (koikatsu fbx to KKBP Rigify).json").resolve()
-            json_file = open(file)
+            remap_file = os.path.join(script_dir, "Rokoko retargeting list (koikatsu fbx to KKBP Rigify).json")
+            json_file = open(remap_file)
             data = json.load(json_file)
             for row in bpy.context.scene.rsl_retargeting_bone_list:
                 row.bone_name_target = "" #clear all bones
             for bone in data['bones']:
                 for row in bpy.context.scene.rsl_retargeting_bone_list:
-                    if row.bone_name_source == data['bones'][bone][0]:
+                    if row.bone_name_source.lower() == data['bones'][bone][0].lower():
                         row.bone_name_target = data['bones'][bone][1]
         bpy.ops.rsl.retarget_animation()
 
@@ -391,7 +394,7 @@ bpy.ops.wm.quit_blender()
         rigify_armature.asset_mark()
         action.use_fake_user = True
         #render the first frame of the animation and set it as the preview
-        bpy.context.scene.render.filepath = folder + r"\preview.png"
+        bpy.context.scene.render.filepath = os.path.join(folder,  "preview.png")
         #print(file[2])
         my_areas = bpy.context.workspace.screens[0].areas
         for area in my_areas:
@@ -400,7 +403,7 @@ bpy.ops.wm.quit_blender()
                         space.show_object_viewport_armature = False 
         bpy.ops.render.opengl(write_still = True)
         with bpy.context.temp_override(id=action):
-            bpy.ops.ed.lib_id_load_custom_preview(filepath=folder + r"\preview.png")
+            bpy.ops.ed.lib_id_load_custom_preview(filepath=os.path.join(folder, "preview.png"))
         my_areas = bpy.context.workspace.screens[0].areas
         for area in my_areas:
                 for space in area.spaces:
