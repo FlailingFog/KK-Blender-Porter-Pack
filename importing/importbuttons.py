@@ -66,6 +66,11 @@ class kkbp_import(bpy.types.Operator):
                 
         #get the character name and use it for some things later on
         bpy.context.scene.kkbp.character_name = c.get_import_path().replace(os.path.dirname(os.path.dirname(c.get_import_path())), '').split('_', maxsplit = 1)[1][:-1]
+        #but if the name is longer than 64 characters, blender will cut off the name, leading to some issues later on. 
+        #The longest material template name is "KK Eyewhites (sirome) " and the longest suffix is " light" at 28 total characters
+        #so I'll cut off the name at 30 characters to be safe. The .encode() is used to handle multibyte characters like japanese / korean names
+        if len(bpy.context.scene.kkbp.character_name.encode()) >= 30:
+            bpy.context.scene.kkbp.character_name = bpy.context.scene.kkbp.character_name.encode()[:30].decode()
 
         #force pmx armature selection if exportCurrentPose in the Exporter Config json is true
         force_current_pose = c.get_json_file('KK_KKBPExporterConfig.json')['exportCurrentPose']
