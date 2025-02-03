@@ -1,14 +1,6 @@
 from bpy.app.translations import locale
-from bpy.app import version_string
 from .dictionary_jp import translation_dictionary as jp_translation
 from .dictionary_zh import translation_dictionary as zh_translation
-
-#Blender 4 changed the language code for Simplified Chinese from 'zh_CN' to 'zh_HANS', this broke Chinese translation.
-if version_string[:1] == '4':
-#Determine whether to use 'zh_CN' or 'zh_HANS' by Blender version.
-    chinese_code = 'zh_HANS'
-else:
-    chinese_code = 'zh_CN'
 
 translation_dictionary = {
 
@@ -95,7 +87,8 @@ translation_dictionary = {
     'shape_C_tt'    : "Use the stock Koikatsu shapekeys. This will not change the shapekeys in any way",
 
     'shader_A'       : 'Use Eevee',
-    'shader_B'       : "Use Cycles",
+    'shader_B'       : "Use Cycles (toon)",
+    'shader_D'       : "Use Cycles (classic)",
     'shader_C'       : "Use Eevee mod",
     'shader_C_tt'    : "Uses a modified shader setup for Eevee",
 
@@ -128,9 +121,11 @@ translation_dictionary = {
     'bone_visibility_tt'        : "This will update visibility for all accessory bones. For example, if you have an Outfit 00 and an Outfit 01, both of them are visible then all accessory bones will be shown. If you hide Outfit 00 and click this button, only Outfit 01's accessory bones will be shown",
     'export_sep_meshes'         : "Export Seperate Meshes",
     'export_sep_meshes_tt'      : "Only available for the \"Separate by SMR data\" option. Choose where to export meshes",
+    'link_hair'                 : 'Update hair materials',
+    'link_hair_tt'              : 'Click to copy the current colors, detail intensity, etc to the other hair materials on this object',
 
     'kkbp_import_tt'    : "Imports a Koikatsu model (.pmx format) and applies fixes to it",
-    'export_prep_tt'    : "Not available for the Rigify Armature. Check the dropdown for more info",
+    'export_prep_tt'    : "Use the KKBP Armature for the best results. Check the dropdown for more info",
     'bake_mats_tt'      : "Finalize materials as .png files. These will be stored in the original .pmx folder",
 
     'delete_cache' : 'Delete cache',
@@ -142,6 +137,9 @@ translation_dictionary = {
 
     'mat_comb_tt' : 'KKBP uses parts of Shotariya\'s Material Combiner addon to automatically merge your materials into an atlas. Click this if you want to manually combine your materials instead of letting KKBP do it for you (requires you to download the Material Combiner addon. Also, make sure you have already clicked the Finalize Materials button in the KKBP panel or it will not work) ',
     'matcomb' : 'Setup materials for Material Combiner',
+    'mat_comb_switch' : 'Toggle light / dark for Material Combiner',
+    'mat_comb_switch_tt' : 'Click this to toggle texture state to get both a light and dark atlas from Material Combiner',
+
     'pillow' : 'Install PIL to use atlas feature',
     'pillow_tt':'Click to install Pillow. This could take a while and might require you to run Blender as Admin',
     'reset_mats' : 'Reset finalized materials',
@@ -153,7 +151,8 @@ def t(text_entry):
     try:
         if locale == 'ja_JP':
             return jp_translation[text_entry]
-        elif locale == chinese_code:
+        #Blender 4 changed the language code for Simplified Chinese from 'zh_CN' to 'zh_HANS'
+        elif locale in ['zh_HANS', 'zh_CN']:
             return zh_translation[text_entry]
         else:
             return translation_dictionary[text_entry]

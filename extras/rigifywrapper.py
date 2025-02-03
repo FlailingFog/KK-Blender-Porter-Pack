@@ -24,9 +24,4 @@ class rigify_convert(bpy.types.Operator):
             self.report({'ERROR'}, traceback.format_exc())
             return {"CANCELLED"}
 
-if __name__ == "__main__":
-    bpy.utils.register_class(rigify_convert)
-
-    # test call
-    print((bpy.ops.kkbp.rigifyconvert('INVOKE_DEFAULT')))
 

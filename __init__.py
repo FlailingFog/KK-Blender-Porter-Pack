@@ -4,7 +4,7 @@ bl_info = {
     "author" : "a blendlet and some blenderchads",
     "location" : "View 3D > Tool Shelf > KKBP and Image Editor > Tool Shelf > KKBP",
     "description" : "Scripts to automate cleanup of a Koikatsu export",
-    "version": (7, 2, 1),
+    "version": (8, 0, 0),
     "blender" : (3, 6, 0),
     "category" : "3D View",
     "tracker_url" : "https://github.com/FlailingFog/KK-Blender-Porter-Pack/",
@@ -23,7 +23,7 @@ def reg_unreg(register_bool):
     else:
         unregister_class(KKBPPreferences)
 
-    from .importing.importbuttons import kkbp_import
+    from .importing.importbuttons import kkbp_import, kkbp_debug
     from .importing.modifymesh import modify_mesh
     from .importing.modifyarmature import modify_armature
     from .importing.modifymaterial import modify_material
@@ -53,7 +53,9 @@ def reg_unreg(register_bool):
     from .extras.importanimation import anim_import
     from .extras.splitobjects import split_objects
     from .extras.matcombsetup import mat_comb_setup
+    from .extras.matcombswitch import mat_comb_switch
     from .extras.resetmaterials import reset_materials
+    from .extras.linkhair import link_hair
 
     from . KKPanel import PlaceholderProperties
     from . KKPanel import (
@@ -61,6 +63,7 @@ def reg_unreg(register_bool):
         IMPORTING_PT_panel,
         EXPORTING_PT_panel,
         EXTRAS_PT_panel,
+        HAIR_PT_panel,
     )
 
     classes = (
@@ -88,8 +91,10 @@ def reg_unreg(register_bool):
         CombineSwitch,
         CombineList,
         mat_comb_setup,
+        mat_comb_switch,
         InstallPIL,
         reset_materials,
+        link_hair,
 
         kkbp_import,
         modify_mesh,
@@ -101,7 +106,9 @@ def reg_unreg(register_bool):
         IMPORTINGHEADER_PT_panel,
         IMPORTING_PT_panel,
         EXPORTING_PT_panel,
-        EXTRAS_PT_panel)
+        EXTRAS_PT_panel,
+        HAIR_PT_panel,
+        kkbp_debug)
 
     for cls in classes:
         register_class(cls) if register_bool else unregister_class(cls)

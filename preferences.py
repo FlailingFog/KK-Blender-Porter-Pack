@@ -18,7 +18,7 @@ class KKBPPreferences(bpy.types.AddonPreferences):
 
     fix_seams : BoolProperty(
     description=t('seams_tt'),
-    default = False)
+    default = True)
     
     use_single_outline : BoolProperty(
     description= t('outline_tt'),
@@ -110,6 +110,7 @@ class KKBPPreferences(bpy.types.AddonPreferences):
         items=(
             ("A", t('shader_A'), ''),
             ("B", t('shader_B'), ''),
+            ("D", t('shader_D'), ''),
             ("C", t('shader_C'), t('shader_C_tt')),
         ), name="", default="A", description="Shader")
     

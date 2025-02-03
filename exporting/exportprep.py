@@ -7,7 +7,7 @@ from ..interface.dictionary_en import t
 def main(prep_type, simp_type):
     try:
         #always try to use the atlased model first
-        body = bpy.data.objects['Body.001']
+        body = bpy.data.objects['Body ' + c.get_name() + '.001']
         bpy.context.view_layer.objects.active=body
         body_name = body.name
         armature_name = 'Armature.001'
@@ -17,7 +17,7 @@ def main(prep_type, simp_type):
             return False
     except:
         #fallback to the non-atlased model if the atlased model collection is not visible
-        body = bpy.data.objects['Body']
+        body = bpy.data.objects['Body ' + c.get_name()]
         bpy.context.view_layer.objects.active=body
         body_name = body.name
         armature_name = 'Armature'
@@ -30,10 +30,9 @@ def main(prep_type, simp_type):
 
     #Assume hidden items are unused and move them to their own collection
     c.kklog('Moving unused objects to their own collection...')
-    no_move_objects = ['Bonelyfans', 'Shadowcast', 'Hitboxes', body_name, armature_name]
+    no_move_objects = ['Hitboxes ' + c.get_name(), body_name, armature_name]
     for object in bpy.context.scene.objects:
         try:
-            #print(object.name)
             move_this_one = object.name not in no_move_objects and 'Widget' not in object.name and object.hide_get()
             if move_this_one:
                 object.hide_set(False)
@@ -70,14 +69,6 @@ def main(prep_type, simp_type):
     body = bpy.data.objects[body_name]
     bpy.context.view_layer.objects.active=body
     body.select_set(True)
-
-    c.kklog('disabling uv warp modifiers on the eyes...')
-    for ob in bpy.data.objects:
-        if ob.modifiers.get('Left Eye UV warp'):
-            ob.modifiers['Left Eye UV warp'].show_render = False
-            ob.modifiers['Left Eye UV warp'].show_viewport = False
-            ob.modifiers['Right Eye UV warp'].show_render = False
-            ob.modifiers['Right Eye UV warp'].show_viewport = False
 
     #Select the armature and make it active
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -345,9 +336,3 @@ class export_prep(bpy.types.Operator):
             self.report({'ERROR'}, traceback.format_exc())
             return {"CANCELLED"}
     
-
-if __name__ == "__main__":
-    bpy.utils.register_class(export_prep)
-
-    # test call
-    print((bpy.ops.kkbp.exportprep('INVOKE_DEFAULT')))

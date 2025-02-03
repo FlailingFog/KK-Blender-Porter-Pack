@@ -2,7 +2,7 @@
 * New Unreal Engine export option by **AnalogKnight**!
 
 ### Changes for V7.2.1
-* Armature fix after new atlas creation
+* fixed an issue with the armature not being reparented after baking
 
 ### Changes for V7.2.0
 * Fixed crashes when creating a material atlas!

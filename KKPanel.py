@@ -18,8 +18,8 @@ class PlaceholderProperties(PropertyGroup):
     #this will let the plugin know where the user is in the import / export process
     plugin_state:StringProperty(default='')
 
-    #This lets the plugin know if the model was exported with KKBP exporter V4.21 instead of V4.30
-    V421_export: BoolProperty(default=False)
+    #This will let the plugin track what objects belong to what character
+    character_name: StringProperty(default='')
 
     #this lets the plugin time various actions
     total_timer : FloatProperty(default=0)
@@ -75,8 +75,8 @@ class PlaceholderProperties(PropertyGroup):
             ("A", t('prep_drop_A'), t('prep_drop_A_tt')),
             #("C", "MikuMikuDance - PMX compatible", " "),
             ("D", t('prep_drop_D'), t('prep_drop_D_tt')),
-            ("B", t('prep_drop_B'), t('prep_drop_B_tt')),
             ("E", t('prep_drop_E'), t('prep_drop_E_tt')),
+            ("B", t('prep_drop_B'), t('prep_drop_B_tt')),
         ), name="", default=bpy.context.preferences.addons[__package__].preferences.prep_dropdown, description=t('prep_drop'))
 
     simp_dropdown : EnumProperty(
@@ -121,6 +121,7 @@ class PlaceholderProperties(PropertyGroup):
         items=(
             ("A", t('shader_A'), ''),
             ("B", t('shader_B'), ''),
+            ("D", t('shader_D'), ''),
             ("C", t('shader_C'), t('shader_C_tt')),
         ), name="", default=bpy.context.preferences.addons[__package__].preferences.shader_dropdown, description="Shader")
     
@@ -202,6 +203,9 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         box = layout.box()
         col = box.column(align=True)
         
+        # row = col.row(align=True)
+        # row.operator('kkbp.debug', text = 'Debug', icon='FILE_FOLDER')
+
         row = col.row(align=True)
         row.operator('kkbp.kkbpimport', text = t('import_model'), icon='FILE_FOLDER')
         row.enabled = scene.plugin_state not in ['imported', 'prepped']
@@ -381,7 +385,11 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         split = row.split(align=True, factor=splitfac)
         split.label(text=t('matcomb'))
         split.operator('kkbp.matcombsetup', text = '', icon='COLLAPSEMENU')
-        
+        row = col.row(align=True)
+        split = row.split(align=True, factor=splitfac)
+        split.label(text=t('mat_comb_switch'))
+        split.operator('kkbp.matcombswitch', text = '', icon='FILE_REFRESH')
+
         box = layout.box()
         col = box.column(align=True)
         row = col.row(align=True)
@@ -400,16 +408,33 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         #     split.label(text=icon)
         #     split.operator('kkbp.linkshapekeys', icon = icon)
 
+#Add a button to the materials tab that lets you update all hair material settings at once
+class HAIR_PT_panel(bpy.types.Panel):
+    #bl_parent_id = "EEVEE_MATERIAL_PT_surface"
+    bl_label = "kkbp_hair"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "material"
+    bl_options = {'HIDE_HEADER'}
+    COMPAT_ENGINES = {'BLENDER_EEVEE', 'BLENDER_EEVEE_NEXT'}
+
+    def draw(self, context):
+        layout = self.layout
+        mat = context.material
+        if mat:
+            if mat.get('hair'):
+                layout.operator('kkbp.linkhair', text = t('link_hair'), icon='NODETREE')
+
 def register():
     bpy.utils.register_class(PlaceholderProperties)
     bpy.utils.register_class(IMPORTINGHEADER_PT_panel)
     bpy.utils.register_class(IMPORTING_PT_panel)
     bpy.utils.register_class(EXPORTING_PT_panel)
     bpy.utils.register_class(EXTRAS_PT_panel)
-    # bpy.utils.register_class(EDITOR_PT_panel)
+    bpy.utils.register_class(HAIR_PT_panel)
 
 def unregister():
-    # bpy.utils.unregister_class(EDITOR_PT_panel)
+    bpy.utils.unregister_class(HAIR_PT_panel)
     bpy.utils.unregister_class(EXTRAS_PT_panel)
     bpy.utils.unregister_class(EXPORTING_PT_panel)
     bpy.utils.unregister_class(IMPORTING_PT_panel)

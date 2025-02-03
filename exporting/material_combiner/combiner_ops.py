@@ -18,6 +18,7 @@ from typing import cast
 import bpy
 import numpy as np
 
+from ... import common as c
 from . import globs
 from .type_annotations import CombMats
 from .type_annotations import Diffuse
@@ -71,14 +72,14 @@ atlas_material_prefix = 'material_atlas_'
 
 
 def set_ob_mode(scn: Scene, data: SMCObData) -> None:
-    scn.objects.active = bpy.data.objects['Body.001']
+    scn.objects.active = bpy.data.objects['Body ' + c.get_name() + '.001']
     bpy.ops.object.mode_set(mode='OBJECT')
 
 
 def get_data(data: Sequence[bpy.types.PropertyGroup], object) -> SMCObData:
     mats = defaultdict(dict)
     if object.type == 'MESH':
-        for mat in [m for m in object.data.materials if 'Outline ' not in m.name and ' Outline' not in m.name]:
+        for mat in [m for m in object.data.materials if 'Outline ' not in m.name]:
             mats[object.name][mat] = 1 #layer, just set to always 1
     return mats
 
@@ -435,6 +436,7 @@ def _create_material(texture: bpy.types.Texture, unique_id: str, idx: int) -> bp
 
 
 def _configure_material(mat: bpy.types.Material, texture: bpy.types.Texture) -> None:
+    mat['atlas'] = True
     mat.blend_method = 'CLIP'
     mat.use_backface_culling = True
     mat.use_nodes = True
@@ -467,7 +469,6 @@ def _assign_mats_to_polys(item: SMCObDataItem, comb_mats: CombMats, ob: bpy.type
     for idx, polys in get_polys(ob).items():
         if ob_materials[idx] not in item:
             continue
-        print( f'{idx}\n\n{ob_materials[idx]}\n\n{comb_mats}')
         mat_name = comb_mats[item[ob_materials[idx]]].name
         mat_idx = ob_materials.find(mat_name)
         for poly in polys:

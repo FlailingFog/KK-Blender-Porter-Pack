@@ -95,8 +95,3 @@ class link_shapekeys(bpy.types.Operator):
         
         return {'FINISHED'}
 
-if __name__ == "__main__":
-    bpy.utils.register_class(link_shapekeys)
-
-    # test call
-    print((bpy.ops.kkbp.linkshapekeys('INVOKE_DEFAULT')))
