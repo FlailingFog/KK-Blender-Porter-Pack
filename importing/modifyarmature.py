@@ -44,7 +44,7 @@ Majority of the joint driver corrections were taken from a blend file by johnbbo
 
 '''
 
-import bpy, math
+import by, math
 from .. import common as c
 from mathutils import Vector
 
