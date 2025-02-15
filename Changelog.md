@@ -1,3 +1,37 @@
+### Changes for V8.0.0
+* Fixed a longstanding issue related to white clothes / overlays. Everything loads correctly out of the box now
+    * KKBP now has an 80% success rate out of the box! [Check this page for more details.](https://flailingfog.github.io/material_breakdown)
+* You can change the colors straight from the materials tab now, so you don't have to touch the material nodes if you don't want to
+* Hair materials are no longer linked. Click on a hair material, modify it and then click the "Update hair materials" button in the material tab to update the rest of the hair materials with the same settings
+* Almost every material node setup was recreated from scratch, so it is now very easy to follow what the material nodes are doing
+    * including automatic generation of detail colors, so those will be different too
+* A lot of the material related code in the addon was rewritten from scratch, so it is now much easier to follow what the python script is loading in to each material slot
+* Glasses materials are now transparent instead of being completely white (only the glass part, not the frame)
+* Character name is used in collection now
+* Character name is used in all objects now to ensure they are unique
+* Character name is used in all materials now to ensure they are unique
+* Character name is used in all node groups now to ensure they are unique
+* Outfits, hair and alts get their own collections now
+* Materials that are supposed to be semi transparent are now automatically set to blended to prevent a grainy look
+* Added a new cycles shading option (now you can choose between cycles toon or cycles principled BSDF)
+* Remove the exporter plugin from the importer zip
+* Removed raw shading light linking
+* Removed raw shading hue passthrough
+* Combined raw shading normal map parsing into one group
+* Removed all rims
+* Shadowcast and bonelyfans are now deleted instead of hidden
+* Removed KK Fangs template
+* Added a switch to use eyeline main textures with color
+* Added a switch to use eyebrow main textures with color
+* Removed the shader to rgb nodes on KK General's color inputs
+* Merged Eyewhite materials L and R into one
+* Removed unused LUT images
+* Removed baked image slot on all materials. Baked materials are now tracked through custom attributes
+* Some very specific colors are now hard coded because the ones being loaded in were not great. 
+    * You can still change them, but they won't react to any changes you make in game.
+* Dark main textures now keep their alpha channel when generated
+* Node groups related to the KKBP shaders will no longer show up in the material node search (they have a "." in front of them now)
+
 ### Changes for V7.2.2
 * New Unreal Engine export option by **AnalogKnight**!
 
