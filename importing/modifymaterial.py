@@ -77,6 +77,14 @@ class modify_material(bpy.types.Operator):
             try:
                 c.switch(object, 'object')
                 bpy.ops.object.material_slot_remove_unused()
+
+                #If this is an outfit, and there's only one material slot, check if it's a duplicate material.
+                #If it's a duplicate the object actually had no materials to begin with, but the material_slot_remove_unused function left a slot behind
+                #This can happen if the outfit does not contain any clothes
+                if len(object.material_slots) == 1 and object.get('outfit') and bpy.data.objects.get(object.name.replace('Outfit', 'Hair Outfit')):
+                    if object.material_slots[0].material.get('id') == bpy.data.objects.get(object.name.replace('Ouftit', 'Hair Outfit')).material_slots[0].material.get('id'):
+                        c.kklog(f'No materials detected in outfit "{object.name}". Deleting...', 'warn')
+                        bpy.data.objects.remove(object)
             except:
                 pass
         c.print_timer('remove_unused_material_slots')

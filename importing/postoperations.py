@@ -59,7 +59,7 @@ class post_operations(bpy.types.Operator):
         #hide all outfits except the first one
         clothes_and_hair = c.get_outfits()
         clothes_and_hair.extend(c.get_hairs())
-        outfit_ids = (int(c['id']) for c in c.get_outfits() if c.get('id'))
+        outfit_ids = (int(c['id']) for c in clothes_and_hair if c.get('id'))
         outfit_ids = list(set(outfit_ids))
         for id in outfit_ids:
             clothes_in_this_id = [c for c in clothes_and_hair if c.get('id') == str(id).zfill(2)]
