@@ -81,7 +81,7 @@ class modify_material(bpy.types.Operator):
                 #If this is an outfit, and there's only one material slot, check if it's a duplicate material.
                 #If it's a duplicate the object actually had no materials to begin with, but the material_slot_remove_unused function left a slot behind
                 #This can happen if the outfit does not contain any clothes
-                if len(object.material_slots) == 1 and object.get('outfit') and bpy.data.objects.get(object.name.replace('Outfit', 'Hair Outfit')):
+                if len(object.material_slots) == 1 and object.get('outfit') and bpy.data.objects.get('Hair ' + object.name):
                     if object.material_slots[0].material.get('id') == bpy.data.objects.get(object.name.replace('Ouftit', 'Hair Outfit')).material_slots[0].material.get('id'):
                         c.kklog(f'No materials detected in outfit "{object.name}". Deleting...', 'warn')
                         bpy.data.objects.remove(object)
@@ -485,7 +485,7 @@ class modify_material(bpy.types.Operator):
         '''Load all hair textures into their texture slots'''
         for current_obj  in c.get_hairs():
             for hairMat in current_obj.material_slots:
-                hairType = hairMat.name.replace('KK ','').replace(' ' + c.get_name(), '')
+                hairType = hairMat.material['id']
                             
                 self.image_load( hairType,  '_ST_CT.png')
                 self.image_load( hairType,  '_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available
@@ -503,7 +503,7 @@ class modify_material(bpy.types.Operator):
         outfits.extend(c.get_alts())
         for outfit in outfits:
             for genMat in outfit.material_slots:
-                genType = genMat.name.replace('KK ','').replace(' ' + c.get_name(), '')
+                genType = genMat.material['id']
                 
                 #load these textures if they are present
                 self.image_load(genType, '_ST.png')

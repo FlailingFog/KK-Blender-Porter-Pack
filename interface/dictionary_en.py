@@ -5,7 +5,7 @@ from .dictionary_zh import translation_dictionary as zh_translation
 translation_dictionary = {
 
     'seams'     : "Fix body seams",
-    'seams_tt'  : 'This performs a "remove doubles" operation on the body materials. Removing doubles screws with the weights around certain areas and will mess with atlas creation. Disabling this will preserve the weights and allow you to create an atlas, but may cause seams to appear around the neck and down the chest when the outline modifier is on',
+    'seams_tt'  : 'This performs a "remove doubles" operation on the body materials. Removing doubles screws with the weights around certain areas. Disabling this will preserve the weights, but may cause seams to appear around the neck and down the chest when the outline modifier is on',
     
     'outline'     : 'Use single outline',
     'outline_tt'  : "Enable to use one generic outline material as opposed to using several unique ones. Checking this may cause outline transparency issues",
