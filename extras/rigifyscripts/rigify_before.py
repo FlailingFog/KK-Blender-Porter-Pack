@@ -2,13 +2,10 @@
 #Switch to Object Mode and select Metarig
 
 import bpy
-from typing import NamedTuple
 import math
 from math import radians
 import statistics
 from mathutils import Matrix, Vector, Euler
-import traceback
-import sys
 from . import commons as koikatsuCommons	
     
 def main():
@@ -2072,10 +2069,7 @@ def main():
     if bpy.app.version[0] != 3:
         #clean up missing rigify layers because I edited the script
         def get_rigify_index(collection_name):
-            if 'None' == collection_name:
-                return metarig.data.collections_all.get(str(collection_name)).index
-            else:
-                return metarig.data.collections_all.get(str(collection_name)).index
+            return metarig.data.collections_all.get(str(collection_name)).index
 
         bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(1), row=2) #move hair detail to same layer
         bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(2), row=2) #move hair mch to same layer
@@ -2095,7 +2089,7 @@ def main():
         bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(8), row=7) #move torso tweak
         metarig.data.collections_all['8'].rigify_ui_title_name = 'Torso (Tweak)'
         bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(9), row=8) #move arm L IK
-        bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(12), row=8) #move arm L IK
+        bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(12), row=8) #move arm R IK
         bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(10), row=9) #arm L fk
         bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(13), row=9) #arm R FK
         metarig.data.collections_all['13'].rigify_ui_title_name = 'Arm.R FK'
@@ -2120,6 +2114,17 @@ def main():
         bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(24), row=17) #move skirt detail
         metarig.data.collections_all['24'].rigify_ui_title_name = 'Skirt (Detail)'
         metarig.data.collections_all['27'].rigify_ui_title_name = 'Junk'
+
+        #there is some kind of issue with the L/R positions of some groups. 
+        #this can be fixed by changing the order of the bone collections
+        #move the arm L IK up ten times
+        metarig.data.collections.active_index = get_rigify_index(9)
+        for i in range(10):
+            bpy.ops.armature.collection_move(direction='UP')
+        #move the leg R tweak down ten times
+        metarig.data.collections.active_index = get_rigify_index(22)
+        for i in range(10):
+            bpy.ops.armature.collection_move(direction='DOWN')
 
         #set new checkbox for the toe lock
         # metarig.pose.bones['Left leg'].rigify_parameters.extra_toe_roll  = True
