@@ -485,7 +485,8 @@ class modify_material(bpy.types.Operator):
         '''Load all hair textures into their texture slots'''
         for current_obj  in c.get_hairs():
             for hairMat in current_obj.material_slots:
-                hairType = hairMat.material['id']
+                #use the material name instead of hairMat.material['id'] to catch any instances of 00 01 02 materials
+                hairType = hairMat.name.replace('KK ','').replace(' ' + c.get_name(), '')
                             
                 self.image_load( hairType,  '_ST_CT.png')
                 self.image_load( hairType,  '_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available
@@ -503,7 +504,8 @@ class modify_material(bpy.types.Operator):
         outfits.extend(c.get_alts())
         for outfit in outfits:
             for genMat in outfit.material_slots:
-                genType = genMat.material['id']
+                #use the material name instead of genMat.material['id'] to catch any instances of 00 01 02 materials
+                genType = genMat.name.replace('KK ','').replace(' ' + c.get_name(), '')
                 
                 #load these textures if they are present
                 self.image_load(genType, '_ST.png')

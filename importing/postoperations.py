@@ -419,7 +419,7 @@ class post_operations(bpy.types.Operator):
         c.kklog('Applying mesh adjustments...')
         #mark nsfw parts of mesh as freestyle faces so they don't show up in the outline
         body = c.get_body()
-        c.switch(body, mode = 'OBJECT')
+        c.switch(body, mode = 'EDIT')
         def mark_group_as_freestyle(group_list):
             for group in group_list:
                 group_found = body.vertex_groups.find(group)      
@@ -437,6 +437,7 @@ class post_operations(bpy.types.Operator):
 
         #delete nsfw parts of the mesh
         def delete_group_and_bone(ob, group_list):
+            c.switch(ob, 'EDIT')
             bpy.ops.mesh.select_all(action = 'DESELECT')
             for group in group_list:
                 group_found = ob.vertex_groups.find(group)      
@@ -447,7 +448,6 @@ class post_operations(bpy.types.Operator):
                     c.kklog('Group wasn\'t found when deleting vertex groups: ' + group, 'warn')
             bpy.ops.mesh.delete(type='VERT')
             bpy.ops.mesh.select_all(action = 'DESELECT')
-            bpy.ops.object.mode_set(mode = 'OBJECT')
 
         delete_list = ['cf_s_bnip025_L', 'cf_s_bnip025_R', 'cf_s_bnip02_L', 'cf_s_bnip02_R',
         'cf_j_kokan', 'cf_j_ana', 'cf_d_ana', 'cf_d_kokan', 'cf_s_ana',
@@ -458,12 +458,11 @@ class post_operations(bpy.types.Operator):
         #also do this on the clothes because the bra can show up
         delete_list = ['cf_s_bnip02_L', 'cf_s_bnip02_R', 'cf_s_bnip025_L', 'cf_s_bnip025_R', ]
         for ob in [o for o in bpy.data.objects if o.get('KKBP tag') == 'outfit']:
-            c.switch(ob, 'EDIT')
             delete_group_and_bone(ob, delete_list)
 
         #force the sfw alpha mask on the body
         for mat_prefix in ['KK Body', 'Outline Body']:
-            body_mat = body.material_slots[mat_prefix + ' ' + c.get_name()]
+            body_mat = body.material_slots[mat_prefix + ' ' + c.get_name()].material
             body_mat.node_tree.nodes["combine"].inputs['Force custom mask'].default_value = 1
             new_group = body_mat.node_tree.nodes['combine'].node_tree.copy()
             body_mat.node_tree.nodes['combine'].node_tree = new_group
@@ -473,15 +472,14 @@ class post_operations(bpy.types.Operator):
                 new_group.interface.items_tree['Force custom mask'].hide_value = True
 
         #get rid of the nsfw groups on the body
-        body_mat = body.material_slots['KK Body ' + c.get_name()]
-        body_mat.node_tree.nodes.remove(body_mat.node_tree.nodes['NSFWTextures'])
-        body_mat.node_tree.nodes.remove(body_mat.node_tree.nodes['NSFWpos'])
+        body_mat = body.material_slots['KK Body ' + c.get_name()].material
+        body_mat.node_tree.nodes.remove(body_mat.node_tree.nodes['texturesnsfw'])
 
         for nono in [
-            'Nipple mask',
-            'Nipple alpha',
-            'Genital mask',
-            'Underhair mask',
+            'Nipple',
+            'Nipple (alpha)',
+            'Genital',
+            'Underhair',
             'Genital intensity',
             'Genital saturation', 
             'Genital hue', 
@@ -490,20 +488,18 @@ class post_operations(bpy.types.Operator):
             'Nipple base', 
             'Nipple base 2', 
             'Nipple shine', 
-            'Nipple rim', 
-            'Nipple alpha', 
-            'Nipple texture', 
-            'Genital mask', 
-            'Underhair mask']:
+            'Nipple rim']:
             if bpy.app.version[0] == 3:
                 body_mat.node_tree.nodes['light'].node_tree.inputs.remove(body_mat.node_tree.nodes['light'].node_tree.inputs[nono])
-                body_mat.node_tree.nodes['dark' ].node_tree.inputs.remove(body_mat.node_tree.nodes['dark' ].node_tree.inputs[nono])
             else:
                 body_mat.node_tree.nodes['light'].node_tree.interface.remove(body_mat.node_tree.nodes['light'].node_tree.interface.items_tree[nono])
-                body_mat.node_tree.nodes['dark' ].node_tree.interface.remove(body_mat.node_tree.nodes['dark' ].node_tree.interface.items_tree[nono])
 
-        bpy.data.materials['KK Body Outline'].node_tree.nodes['customToggle'].inputs[0].default_value = 1
-        bpy.data.materials['KK Body Outline'].node_tree.nodes['customToggle'].inputs[0].hide = True
+        outline_group = body.material_slots['Outline Body ' + c.get_name()].material.node_tree.nodes['combine']
+        outline_group.inputs['Force custom mask'].default_value = 1
+        if bpy.app.version[0] == 3:
+            outline_group.node_tree.inputs['Force custom mask'].hide_value = True
+        else:
+            outline_group.node_tree.interface.items_tree['Force custom mask'].hide_value = True
 
         #delete nsfw bones if sfw mode enebled
         rig = c.get_rig()
