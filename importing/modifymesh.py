@@ -62,21 +62,20 @@ class modify_mesh(bpy.types.Operator):
         If the rigged tongue entry is found and contains material information, it separates the tongue
         material from the body mesh and marks it as a rigged tongue.
         """
-        if bpy.context.scene.kkbp.categorize_dropdown != 'D':
-            material_data = c.get_json_file('KK_MaterialDataComplete.json')
-            rigged_tongue_entry = [i for i in material_data if i['SMRPath'] in ['/chaF_001/BodyTop/p_cf_body_00/cf_o_root/n_tang/o_tang', "/chaM_001/BodyTop/p_cm_body_00/cf_o_root/n_tang/o_tang"]]
-            if rigged_tongue_entry:
-                rigged_tongue_entry = rigged_tongue_entry[0]
-                if len(rigged_tongue_entry['MaterialInformation']):
-                    if rigged_tongue_entry['MaterialInformation'][0].get('MaterialName'):
-                        tongue_material_name = rigged_tongue_entry['MaterialInformation'][0]['MaterialName']
-                        #There should also be a second tongue.001 material. Use that one to separate the rigged tongue.
-                        tongue = self.separate_materials(c.get_body(), [tongue_material_name + '.001'], 'Tongue (rigged) ' + c.get_name())
-                        tongue['tongue'] = True
-                        #Now remap the .001 tongue material with the original to allow the rigged tongue and the tongue on the body to share the same material
-                        if bpy.data.materials.get(tongue_material_name + '.001'):
-                            bpy.data.materials[tongue_material_name + '.001'].user_remap(bpy.data.materials[tongue_material_name])
-                            bpy.data.materials.remove(bpy.data.materials[tongue_material_name + '.001'])
+        material_data = c.get_json_file('KK_MaterialDataComplete.json')
+        rigged_tongue_entry = [i for i in material_data if i['SMRPath'] in ['/chaF_001/BodyTop/p_cf_body_00/cf_o_root/n_tang/o_tang', "/chaM_001/BodyTop/p_cm_body_00/cf_o_root/n_tang/o_tang"]]
+        if rigged_tongue_entry:
+            rigged_tongue_entry = rigged_tongue_entry[0]
+            if len(rigged_tongue_entry['MaterialInformation']):
+                if rigged_tongue_entry['MaterialInformation'][0].get('MaterialName'):
+                    tongue_material_name = rigged_tongue_entry['MaterialInformation'][0]['MaterialName']
+                    #There should also be a second tongue.001 material. Use that one to separate the rigged tongue.
+                    tongue = self.separate_materials(c.get_body(), [tongue_material_name + '.001'], 'Tongue (rigged) ' + c.get_name())
+                    tongue['tongue'] = True
+                    #Now remap the .001 tongue material with the original to allow the rigged tongue and the tongue on the body to share the same material
+                    if bpy.data.materials.get(tongue_material_name + '.001'):
+                        bpy.data.materials[tongue_material_name + '.001'].user_remap(bpy.data.materials[tongue_material_name])
+                        bpy.data.materials.remove(bpy.data.materials[tongue_material_name + '.001'])
         c.print_timer('separate_rigged_tongue')
 
     def separate_hair(self):
@@ -103,8 +102,6 @@ class modify_mesh(bpy.types.Operator):
 
     def separate_alternate_clothing(self):
         '''Separates the alternate clothing pieces then hides them'''
-        if not bpy.context.scene.kkbp.categorize_dropdown in ['A', 'B']:
-            return
         
         #These are the enum indexes that need to be separated
         clothes_labels = {
@@ -183,16 +180,15 @@ class modify_mesh(bpy.types.Operator):
 
     def delete_mask_quad(self):
         '''delete the mask material if not in smr mode'''
-        if bpy.context.scene.kkbp.categorize_dropdown != 'D':
-            material_data = c.get_json_file('KK_MaterialDataComplete.json')
-            material_infos = [m['MaterialInformation'] for m in material_data if m.get('MaterialInformation')]
-            material_names = []
-            for material_info in material_infos:
-                material_names.extend([m['MaterialName'] for m in material_info if ('m_Mask ' in m.get('MaterialName') and m.get('ShaderName') == "Shader Forge/AlphaMaskMultiply")])
-            for outfit in c.get_outfits():
-                for mat in outfit.material_slots:
-                    if mat.name in material_names:
-                        self.delete_materials(outfit, [mat])
+        material_data = c.get_json_file('KK_MaterialDataComplete.json')
+        material_infos = [m['MaterialInformation'] for m in material_data if m.get('MaterialInformation')]
+        material_names = []
+        for material_info in material_infos:
+            material_names.extend([m['MaterialName'] for m in material_info if ('m_Mask ' in m.get('MaterialName') and m.get('ShaderName') == "Shader Forge/AlphaMaskMultiply")])
+        for outfit in c.get_outfits():
+            for mat in outfit.material_slots:
+                if mat.name in material_names:
+                    self.delete_materials(outfit, [mat])
         c.print_timer('delete_mask_quad')
 
     def remove_unused_shapekeys(self):

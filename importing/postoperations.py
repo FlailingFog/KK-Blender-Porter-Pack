@@ -30,6 +30,7 @@ class post_operations(bpy.types.Operator):
             self.apply_eeveemod()
             self.apply_rigify()
             self.apply_sfw()
+            self.separate_meshes()
             
             c.clean_orphaned_data()
             c.set_viewport_shading('SOLID')
@@ -46,24 +47,21 @@ class post_operations(bpy.types.Operator):
 
         This method performs the following operations:
         1. Ensures the armature is not hidden.
-        2. If the 'categorize_dropdown' property in the scene is not set to 'A', it exits early.
         3. Hides all outfits except the one with the lowest ID.
         4. Moves eyegags and tears into their own collection.
         5. Always hides the rigged tongue if present.
         6. Always hides the Bone Widgets collection.
         """
         c.get_armature().hide_set(False)
-        #don't hide any outfits if not automatically categorizing
-        if not bpy.context.scene.kkbp.categorize_dropdown in ['A']:
-            return
         #hide all outfits except the first one
+        #but don't hide the collection if separate by material is enabled
         clothes_and_hair = c.get_outfits()
         clothes_and_hair.extend(c.get_hairs())
         outfit_ids = (int(c['id']) for c in clothes_and_hair if c.get('id'))
         outfit_ids = list(set(outfit_ids))
         for id in outfit_ids:
             clothes_in_this_id = [c for c in clothes_and_hair if c.get('id') == str(id).zfill(2)]
-            c.move_and_hide_collection(clothes_in_this_id, 'Outfit ' + str(id).zfill(2) + ' ' + c.get_name(), hide = (id != min(outfit_ids)))
+            c.move_and_hide_collection(clothes_in_this_id, 'Outfit ' + str(id).zfill(2) + ' ' + c.get_name(), hide = (id != min(outfit_ids) and bpy.context.scene.kkbp.categorize_dropdown != 'B'))
 
         #put any clothes variations into their own collection
         outfit_ids = (int(c['id']) for c in c.get_alts() if c.get('id'))
@@ -544,3 +542,23 @@ class post_operations(bpy.types.Operator):
             delete_bone(delete_list)
             if bpy.app.version[0] != 3:
                 rig.data.collections_all['29'].is_visible = False
+
+    def separate_meshes(self):
+        if bpy.context.scene.kkbp.categorize_dropdown == 'B':
+            #separate each outfit by material
+            for obj in c.get_outfits():
+                if obj.modifiers.get('Outline Modifier'):
+                    obj.modifiers['Outline Modifier'].show_render = False
+                    obj.modifiers['Outline Modifier'].show_viewport = False
+                c.switch(obj, 'OBJECT')
+                bpy.ops.object.material_slot_remove_unused()
+                c.switch(obj, 'EDIT')
+                bpy.ops.mesh.separate(type='MATERIAL')
+
+            #once they are all separated, rename them to their material name
+            for obj in c.get_outfits():
+                try:
+                    obj.name = obj.material_slots[0].name
+                except:
+                    #oh well
+                    pass

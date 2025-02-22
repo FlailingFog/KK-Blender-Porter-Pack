@@ -129,7 +129,7 @@ class modify_armature(bpy.types.Operator):
             alt.modifiers[0].name = 'Armature modifier'
 
         for hair in c.get_hairs():
-            hair.parent = armature if bpy.context.scene.kkbp.categorize_dropdown not in ['D'] else hair.parent #don't reparent hair if Categorize by SMR
+            hair.parent = armature
             hair.modifiers[0].object = armature
             hair.modifiers[0].show_in_editmode = True
             hair.modifiers[0].show_on_cage = True

@@ -23,7 +23,7 @@ def reg_unreg(register_bool):
     else:
         unregister_class(KKBPPreferences)
 
-    from .importing.importbuttons import kkbp_import, kkbp_debug
+    from .importing.importbuttons import kkbp_import
     from .importing.modifymesh import modify_mesh
     from .importing.modifyarmature import modify_armature
     from .importing.modifymaterial import modify_material
@@ -37,12 +37,9 @@ def reg_unreg(register_bool):
     from .exporting.material_combiner.get_pillow import InstallPIL
 
     from .extras.importstudio import import_studio
-    from .extras.animationlibrary.createmapassetlibrary import map_asset_lib
-    from .extras.animationlibrary.createanimationlibrary import anim_asset_lib
+    from .extras.createmapassetlibrary import map_asset_lib
+    from .extras.createanimationlibrary import anim_asset_lib
     from .extras.linkshapekeys import link_shapekeys
-    from .extras.separatemeshes import separate_meshes
-    from .extras.separatemeshes import export_separate_meshes
-    from .extras.toggleik import toggle_ik
     from .extras.updatebones import update_bones
     from .extras.imageconvert import image_convert
     from .extras.imageconvert import image_dark_convert
@@ -51,7 +48,6 @@ def reg_unreg(register_bool):
     from .extras.rigifyscripts.rigify_after import rigify_after
     from .extras.catsscripts.armature_manual import MergeWeights
     from .extras.importanimation import anim_import
-    from .extras.splitobjects import split_objects
     from .extras.matcombsetup import mat_comb_setup
     from .extras.matcombswitch import mat_comb_switch
     from .extras.resetmaterials import reset_materials
@@ -76,16 +72,12 @@ def reg_unreg(register_bool):
         map_asset_lib,
         anim_asset_lib,
         link_shapekeys,
-        separate_meshes,
-        export_separate_meshes,
-        toggle_ik,
         update_bones,
         rigify_convert,
         rigify_before,
         rigify_after,
         MergeWeights,
         anim_import,
-        split_objects,
         Combiner,
         RefreshObData,
         CombineSwitch,
@@ -108,7 +100,7 @@ def reg_unreg(register_bool):
         EXPORTING_PT_panel,
         EXTRAS_PT_panel,
         HAIR_PT_panel,
-        kkbp_debug)
+        )
 
     for cls in classes:
         register_class(cls) if register_bool else unregister_class(cls)

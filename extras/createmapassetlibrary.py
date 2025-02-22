@@ -13,10 +13,10 @@
 
 import bpy, os, time, pathlib
 from bpy.props import StringProperty
-from ..importstudio import import_studio_objects
-from ... import common as c
-from ...importing.modifymaterial import modify_material
-from ...interface.dictionary_en import t
+from .importstudio import import_studio_objects
+from .. import common as c
+from ..importing.modifymaterial import modify_material
+from ..interface.dictionary_en import t
 
 def better_fbx_map_import(directory):
     already_loaded_images = [image.name for image in bpy.data.images]

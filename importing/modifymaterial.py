@@ -114,10 +114,8 @@ class modify_material(bpy.types.Operator):
                 mat_name_list.extend(c.get_material_names('cf_O_namida_M'))
                 mat_name_list.extend(c.get_material_names('cf_O_namida_S'))
                 mat_name_list.extend(c.get_material_names('o_tang'))
-                #don't merge the above materials if categorize by SMR is chosen.
-                can_merge = mat.name not in mat_name_list if bpy.context.scene.kkbp.categorize_dropdown == 'D' else True
                 
-                if '.' in mat.name[-4:] and can_merge:
+                if '.' in mat.name[-4:]:
                     try:
                         #the material name is normal
                         base_name, dupe_number = mat.name.split('.',2)

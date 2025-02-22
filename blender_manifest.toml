@@ -15,3 +15,4 @@ platforms = ["windows-x64", "macos-arm64", "linux-x64"]
 
 [permissions]
 files = "Imports Koikatsu .pmx models, exports .fbx and texture files"
+network = "Installs pillow package from pypi"

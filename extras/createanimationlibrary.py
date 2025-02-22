@@ -35,8 +35,8 @@
 
 import bpy, os, time, mathutils, json, pathlib
 from bpy.props import StringProperty
-from ... import common as c
-from...interface.dictionary_en import t
+from .. import common as c
+from ..interface.dictionary_en import t
 def main(folder):
 
     #stop if the file was not saved
