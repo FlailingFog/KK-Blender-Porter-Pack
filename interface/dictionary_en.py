@@ -29,10 +29,8 @@ translation_dictionary = {
     'cat_drop'      : 'Run type',
     'cat_drop_A'    : "Single clothes object",
     'cat_drop_A_tt' : "Import everything and get a single object containing all your model's clothes. Hides any alternate clothes by default",
-    'cat_drop_C'    : "Separate every object",
-    'cat_drop_C_tt' : "Import everything and automatically separate every single piece of clothing into several objects",
-    'cat_drop_D'    : "Separate by SMR Data",
-    'cat_drop_D_tt' : "Import everyting and automatically separate every object by it's Skinned Mesh Renderer. Note: This option is only for exporting meshes so it will not apply any material templates or colors",
+    'cat_drop_B'    : "Separate every object",
+    'cat_drop_B_tt' : "Import everything and automatically separate every single piece of clothing into several objects",
 
     'dark'      : "Dark colors",
     'dark_C'    : "Do not use dark colors",
@@ -53,7 +51,6 @@ translation_dictionary = {
     removes duplicate Eyewhite material slot if present,
     removes the "Upper Chest" bone,
     edits bone hierarchy to allow Unity to automatically detect the right bones""",
-
     'prep_drop_E'       : "Unreal Engine",
     'prep_drop_E_tt'    : """Removes the outline and...
     removes duplicate Eyewhite material slot if present,
@@ -119,8 +116,6 @@ translation_dictionary = {
     'sep_eye_tt'                : "Separates the Eyes and Eyebrows from the Body object and links the shapekeys to the Body object. Useful for when you want to make eyes or eyebrows appear through the hair using the Cryptomatte features in the compositor",
     'bone_visibility'           : "Show bones for current outfit",
     'bone_visibility_tt'        : "This will update visibility for all accessory bones. For example, if you have an Outfit 00 and an Outfit 01, both of them are visible then all accessory bones will be shown. If you hide Outfit 00 and click this button, only Outfit 01's accessory bones will be shown",
-    'export_sep_meshes'         : "Export Seperate Meshes",
-    'export_sep_meshes_tt'      : "Only available for the \"Separate by SMR data\" option. Choose where to export meshes",
     'link_hair'                 : 'Update hair materials',
     'link_hair_tt'              : 'Click to copy the current colors, detail intensity, etc to the other hair materials on this object',
 
