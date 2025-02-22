@@ -179,7 +179,7 @@ bpy.ops.wm.quit_blender()
         if first_import and kkbp_character:
             first_import = False
             script_dir=pathlib.Path(__file__).parent
-            remap_file = os.path.join(script_dir, "Rokoko retargeting list (koikatsu fbx to KKBP Rigify).json")
+            remap_file = os.path.join(script_dir, "animationlibrary", "Rokoko retargeting list (koikatsu fbx to KKBP Rigify).json")
             json_file = open(remap_file)
             data = json.load(json_file)
             for row in bpy.context.scene.rsl_retargeting_bone_list:
