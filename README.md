@@ -14,7 +14,7 @@ The ```KKBP exporter for Koikatsu``` exports the character's mesh, armature and 
 ## Video walkthrough of the plugins
 
 [(Click for playlist!)  
-![ ](https://raw.githubusercontent.com/FlailingFog/flailingfog.github.io/master/assets/images/readmeyt.png)](https://www.youtube.com/watch?v=QvXl4jRppP4&list=PLhiuav2SCuveMgQUA2YqqbSE7BtOrkZ-Q)
+![ ](https://raw.githubusercontent.com/kkbpwiki/kkbpwiki.github.io/master/assets/images/readmeyt.png)](https://www.youtube.com/watch?v=QvXl4jRppP4&list=PLhiuav2SCuveMgQUA2YqqbSE7BtOrkZ-Q)
 
 ## Help
 [Check the wiki for FAQ and basic info.](https://kkbpwiki.github.io/)  
