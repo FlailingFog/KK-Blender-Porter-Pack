@@ -494,13 +494,6 @@ class post_operations(bpy.types.Operator):
             else:
                 body_mat.node_tree.nodes['light'].node_tree.interface.remove(body_mat.node_tree.nodes['light'].node_tree.interface.items_tree[nono])
 
-        outline_group = body.material_slots['Outline Body ' + c.get_name()].material.node_tree.nodes['combine']
-        outline_group.inputs['Force custom mask'].default_value = 1
-        if bpy.app.version[0] == 3:
-            outline_group.node_tree.inputs['Force custom mask'].hide_value = True
-        else:
-            outline_group.node_tree.interface.items_tree['Force custom mask'].hide_value = True
-
         #delete nsfw bones if sfw mode enebled
         rig = c.get_rig()
         if bpy.context.scene.kkbp.sfw_mode and bpy.context.scene.kkbp.armature_dropdown == 'B':
