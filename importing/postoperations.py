@@ -1,18 +1,17 @@
-'''
-This file performs the following operations
 
-·	Hide all alternate clothing pieces and indoor shoes and other outfits
-    (show only the first outfit if it's present, if not, count up until the
-    first outfit collection is found and use that one)
+# This file performs the following operations
 
-.   (Rigify) Applies Rigify conversion script
-.   (Cycles) Applies Cycles conversion script
-.   (LBS) Applies LBS conversion script
-.   (SFW) Runs SFW cleanup script
+# 	Hide all clothes except the first outfit (alts are always hidden)
 
-·	Clean orphaned data as long as users = 0 and fake user = False
-.   Sets viewport shading to material
-'''
+#   (Cycles) Applies Cycles conversion script
+#   (Eevee Mod) Applies Eevee Mod conversion script
+#   (Rigify) Applies Rigify conversion script
+#   (SFW) Runs SFW cleanup script
+
+# 	Clean orphaned data as long as users = 0 and fake user = False
+
+# Parts of cycles replacement was taken from https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/234
+
 
 import bpy, traceback
 from .. import common as c
@@ -25,13 +24,13 @@ class post_operations(bpy.types.Operator):
     
     def execute(self, context):
         try:
-            self.retreive_stored_tags()
             self.hide_unused_objects()
 
             self.apply_cycles()
-            self.apply_lbs()
+            self.apply_eeveemod()
             self.apply_rigify()
             self.apply_sfw()
+            self.separate_meshes()
             
             c.clean_orphaned_data()
             c.set_viewport_shading('SOLID')
@@ -41,70 +40,84 @@ class post_operations(bpy.types.Operator):
             c.handle_error(self, error)
             return {"CANCELLED"}
 
-    # %% Main functions
-    @classmethod
-    def retreive_stored_tags(cls):
-        '''Gets the tag from each object to repopulate the class variables below'''
-        self = cls
-        self.hairs = []
-        self.outfits = []
-        self.outfit_alternates = []
-        self.hitboxes = []
-        for object in [o for o in bpy.data.objects if o.type == 'MESH']:
-            if object.get('KKBP tag'):
-                if object['KKBP tag'] == 'body':
-                    self.body = object
-                elif object['KKBP tag'] == 'outfit':
-                    self.outfits.append(object)
-                elif object['KKBP tag'] == 'alt':
-                    self.outfit_alternates.append(object)
-                elif object['KKBP tag'] == 'hair':
-                    self.hairs.append(object)
-                elif object['KKBP tag'] == 'hitbox':
-                    self.hitboxes.append(object)
-        for object in [o for o in bpy.data.objects if o.type == 'ARMATURE']:
-            if object.get('KKBP tag'):
-                if object['KKBP tag'] == 'armature':
-                    self.armature = object
-    
+    # %% Main functions    
     def hide_unused_objects(self):
-        bpy.data.objects['Armature'].hide_set(False)
-        #don't hide any outfits if not automatically categorizing
-        if not bpy.context.scene.kkbp.categorize_dropdown in ['A']:
-            return
-        #hide all outfits except the first found
-        outfit = None
-        if bpy.data.objects.get('Outfit 00'):
-            outfit = bpy.data.objects.get('Outfit 00')
-        else:
-            #check the other outfit numbers and return the first one found
-            for ob in bpy.data.objects:
-                if ob.get('KKBP outfit ID') and ob in self.outfits:
-                    outfit = ob
+        """
+        Hides unused objects in the Blender scene based on certain conditions.
+
+        This method performs the following operations:
+        1. Ensures the armature is not hidden.
+        3. Hides all outfits except the one with the lowest ID.
+        4. Moves eyegags and tears into their own collection.
+        5. Always hides the rigged tongue if present.
+        6. Always hides the Bone Widgets collection.
+        """
+        c.get_armature().hide_set(False)
+        #hide all outfits except the first one
+        #but don't hide the collection if separate by material is enabled
+        clothes_and_hair = c.get_outfits()
+        clothes_and_hair.extend(c.get_hairs())
+        outfit_ids = (int(c['id']) for c in clothes_and_hair if c.get('id'))
+        outfit_ids = list(set(outfit_ids))
+        for id in outfit_ids:
+            clothes_in_this_id = [c for c in clothes_and_hair if c.get('id') == str(id).zfill(2)]
+            c.move_and_hide_collection(clothes_in_this_id, 'Outfit ' + str(id).zfill(2) + ' ' + c.get_name(), hide = (id != min(outfit_ids) and bpy.context.scene.kkbp.categorize_dropdown != 'B'))
+
+        #put any clothes variations into their own collection
+        outfit_ids = (int(c['id']) for c in c.get_alts() if c.get('id'))
+        outfit_ids = list(set(outfit_ids))
+        for index, id in enumerate(outfit_ids):
+            clothes_in_this_id = [c for c in c.get_alts() if c.get('id') == str(id).zfill(2)]
+            c.switch(clothes_in_this_id[0], 'OBJECT')
+            #find the character index
+            character_collection_index = len(bpy.context.view_layer.layer_collection.children)-1
+            #find the index of the outfit collection
+            for i, child in enumerate(bpy.context.view_layer.layer_collection.children[character_collection_index].children):
+                if child.name == 'Outfit ' + str(id).zfill(2) + ' ' + c.get_name():
                     break
-        if outfit:
-            outfit.hide_set(False)
-            for child in outfit.children:
-                child.hide_set(False)
-        for type in [self.outfits, self.outfit_alternates]:
-            for clothes_object in type:
-                if clothes_object != outfit:
-                    clothes_object.hide_set(True)
-                    for child in clothes_object.children:
-                        child.hide_set(True)
-        #hide rigged tongue and all clothes alts
-        if bpy.data.objects.get('Tongue (Rigged)'):
-            bpy.data.objects['Tongue (Rigged)'].hide_set(True)
-        for object in self.outfit_alternates:
-            object.hide_set(True)
+            for ob in clothes_in_this_id:
+                ob.select_set(True)
+                bpy.context.view_layer.objects.active=ob
+            new_collection_name = 'Alts ' + str(id).zfill(2) + ' ' + c.get_name()
+            #extremely confusing move to under the clothes collection. Index is the outfit index + outfit collection index (starts at 1) + Scene collection (1) +  + character collection index (usually 0) + 1
+            bpy.ops.object.move_to_collection(collection_index = (index+i) + 1 + (character_collection_index + 1), is_new = True, new_collection_name = new_collection_name)
+            #then hide the alts
+            child.children[0].exclude = True
+
+        #put the eyegags and tears into their own collection
+        face_objects = []
+        if c.get_gags():
+            face_objects.append(c.get_gags())
+        if c.get_tears():
+            face_objects.append(c.get_tears())
+        if face_objects:
+            c.move_and_hide_collection(face_objects, 'Tears and gag eyes ' + c.get_name(), hide = False)
+
+        #always hide the rigged tongue if present
+        if c.get_tongue():
+            c.move_and_hide_collection([c.get_tongue()], 'Rigged tongue ' + c.get_name(), hide = True)
+        
+        #always hide the hitboxes collection
+        if bpy.data.collections.get('Hitboxes ' + c.get_name()):
+            c.switch(c.get_armature(), 'OBJECT')
+            for child in bpy.context.view_layer.layer_collection.children[0].children:
+                if ('Hitboxes ' + c.get_name()) in child.name:
+                    child.exclude = True
+
+        #always hide the bone widgets collection
+        if bpy.data.collections.get('Bone Widgets'):
+            c.switch(c.get_armature(), 'OBJECT')
+            for child in bpy.context.view_layer.layer_collection.children[0].children:
+                if child.name == 'Bone Widgets':
+                    child.exclude = True
 
     def apply_cycles(self):
-        if not bpy.context.scene.kkbp.shader_dropdown == 'B':
+        if not bpy.context.scene.kkbp.shader_dropdown in ['B', 'D']:
             return
         c.kklog('Applying Cycles adjustments...')
-        c.import_from_library_file('NodeTree', ['Raw Shading (face)', 'Cycles', 'Cycles no shadows', 'LBS', 'LBS face normals'], bpy.context.scene.kkbp.use_material_fake_user)
+        c.import_from_library_file('NodeTree', ['.Cycles', '.Cycles no shadows', '.Cycles Classic'], bpy.context.scene.kkbp.use_material_fake_user)
+        c.import_from_library_file('Image', ['Template: Black'], bpy.context.scene.kkbp.use_material_fake_user)
 
-        #taken from https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/234
         #remove outline modifier
         for o in bpy.context.view_layer.objects:
             for m in o.modifiers:
@@ -114,7 +127,7 @@ class post_operations(bpy.types.Operator):
                     
         ####fix the eyelash mesh overlap
         # deselect everything and make body active object
-        body = bpy.data.objects['Body']
+        body = c.get_body()
         bpy.ops.object.select_all(action='DESELECT')
         body.select_set(True)
         bpy.context.view_layer.objects.active=body
@@ -135,64 +148,127 @@ class post_operations(bpy.types.Operator):
         object.active_material_index = 5
         obj.material_slot_select()
         mesh.delete(type='ONLY_FACE')
-        #delete nose if no texture loaded in
-        if not bpy.data.node_groups['Nose'].nodes[1].image:
-            object.active_material_index = 2
-            obj.material_slot_select()
-            mesh.delete(type='VERT')
         mesh.select_all(action='DESELECT')
 
-        #add cycles node group
-        for tree in [mat.node_tree for mat in bpy.data.materials if 'KK ' in mat.name]:
-            nodes = tree.nodes
-            links = tree.links
-            if nodes.get('Rim') and nodes.get('Shader'):
-                nodes['Rim'].node_tree = bpy.data.node_groups['Cycles']
-                links.new(nodes['Shader'].outputs['Color out light'], nodes['Rim'].inputs[0])
-                links.new(nodes['Shader'].outputs['Color out dark'], nodes['Rim'].inputs[1])
-                links.new(nodes['Shader'].outputs[3], nodes['Rim'].inputs[2])
-            #disable detail shine color too
-            if nodes.get('Shader'):
-                if nodes['Shader'].node_tree.nodes.get('colorsLight'):
-                    if nodes['Shader'].node_tree.nodes['colorsLight'].inputs.get('Detail intensity (shine)'):
-                        nodes['Shader'].node_tree.nodes['colorsLight'].inputs['Detail intensity (shine)'].default_value = 0
-                        nodes['Shader'].node_tree.nodes['colorsDark']. inputs['Detail intensity (shine)'].default_value = 0
-        #remove linemask and blush on face material
-        for type in ['colorsLight', 'colorsDark']:
-            bpy.data.node_groups['Face Shader'].nodes[type].inputs['Linemask intensity'].default_value = 0
-            bpy.data.node_groups['Face Shader'].nodes[type].inputs['Blush intensity'].default_value = 0
-        #set eyeline up and eyebrows as shadowless
-        for mat in [bpy.data.materials['KK Eyebrows (mayuge)'], bpy.data.materials['KK Eyeline up']]:
-            mat.node_tree.nodes['Rim'].node_tree = bpy.data.node_groups['Cycles no shadows']
-        
-        #put face's color out in a mix shader with the cycles face mask
-        #mute shader to rgb nodes for clothing items
-        for node in [n for n in bpy.data.node_groups['General overlays'].nodes if 'Shader to RGB' in n.name]:
-            node.mute = True
+        ignore_list = [
+            'KK Eyebrows (mayuge) ' + c.get_name(),
+            'KK EyeL (hitomi) ' + c.get_name(),
+            'KK EyeR (hitomi) ' + c.get_name(),
+            'KK Eyeline up ' + c.get_name(),
+            'KK Eyewhites (sirome) ' + c.get_name()]
+        everything = [c.get_body()]
+        everything.extend(c.get_hairs())
+        everything.extend(c.get_alts())
+        everything.extend(c.get_outfits())
 
+        #add cycles node group
+        for object in everything:
+            for node_tree in [mat_slot.material.node_tree for mat_slot in object.material_slots if mat_slot.material.get('bake') and mat_slot.material.name not in ignore_list]:
+                nodes = node_tree.nodes
+                links = node_tree.links
+                if nodes.get('combine'):
+                    nodes['combine'].node_tree = bpy.data.node_groups['.Cycles' if bpy.context.scene.kkbp.shader_dropdown == 'B' else '.Cycles Classic']
+                    #setup the node links again because they break when you replace the node group
+                    def relink(outnode, outport, innode, inport):
+                        try:
+                            links.new(nodes[outnode].outputs[outport], nodes[innode].inputs[inport])
+                        except:
+                            c.kklog(f'Could not link these nodes on tree: {node_tree.name} | {outnode}:{outport} to {innode}:{inport}')
+                    relink('combine',   0,                      'out',     0)
+                    relink('light',     0,                      'combine', 'Light colors')
+                    relink('dark',      0,                      'combine', 'Dark colors')
+                    relink('textures', 'Main texture (alpha)',  'combine', 'Main texture (alpha)')
+                    relink('textures', 'Alpha mask',            'combine', 'Alpha mask')
+                    relink('textures', 'Alpha mask (alpha)',    'combine', 'Alpha mask (alpha)')
+                    relink('textures', 'Alpha mask (custom)',   'combine', 'Alpha mask (custom)')
+
+                    #Cycles makes missing images PINK (?!) instead of black for some reason and this screws with the shaders
+                    #If an image is missing, fill it in with Template: Black
+                    if nodes.get('textures'):
+                        for image_node in [n for n in nodes['textures'].node_tree.nodes if n.type == 'TEX_IMAGE']:
+                            if not image_node.image:
+                                image_node.image = bpy.data.images['Template: Black']
+
+                    #disable detail shine color too
+                    if nodes.get('light'):
+                        if nodes['light'].inputs.get('Detail intensity (shine)'):
+                            nodes['light'].inputs['Detail intensity (shine)'].default_value = 0
+
+                    if nodes.get('dark'):
+                        if nodes['dark'].inputs.get('Detail intensity (shine)'):
+                            nodes['dark'].inputs['Detail intensity (shine)'].default_value = 0
+        
+        #remove linemask and blush on face material
+        if c.get_body():
+            face_material = [m.material for m in c.get_body().material_slots if 'KK Face' in m.material.name]
+            if face_material:
+                face_material[0].node_tree.nodes['light'].inputs['Linemask intensity'].default_value = 0
+                face_material[0].node_tree.nodes['dark'].inputs['Linemask intensity'].default_value = 0
+                face_material[0].node_tree.nodes['light'].inputs['Blush intensity'].default_value = 0
+                face_material[0].node_tree.nodes['dark'].inputs['Blush intensity'].default_value = 0
+
+        #set eyeline up and eyebrows as shadowless
+        shadowless_mats =      [m.material for m in c.get_body().material_slots if 'KK Eyeline up'          in m.material.name]
+        shadowless_mats.extend([m.material for m in c.get_body().material_slots if 'KK Eyebrows (mayuge)'   in m.material.name])
+        for mat in shadowless_mats:
+            mat.node_tree.nodes['combine'].node_tree = bpy.data.node_groups['.Cycles no shadows']
+            nodes = mat.node_tree.nodes
+            links = mat.node_tree.links
+            def relink(outnode, outport, innode, inport):
+                try:
+                    links.new(nodes[outnode].outputs[outport], nodes[innode].inputs[inport])
+                except:
+                    c.kklog(f'Could not link these nodes on tree: {node_tree.name} | {outnode}:{outport} to {innode}:{inport}')
+            relink('combine',   0,                      'out',     0)
+            relink('light',     0,                      'combine', 'Light colors')
+            relink('dark',      0,                      'combine', 'Dark colors')
+            relink('textures', 'Main texture (alpha)',  'combine', 'Main texture (alpha)')
+            relink('textures', 'Alpha mask',            'combine', 'Alpha mask')
+            relink('textures', 'Alpha mask (alpha)',    'combine', 'Alpha mask (alpha)')
+            relink('textures', 'Alpha mask (custom)',   'combine', 'Alpha mask (custom)')
+        
         bpy.context.scene.render.engine = 'CYCLES'
         bpy.context.scene.cycles.preview_samples = 10
         mesh.select_all(action='DESELECT')
         obj.mode_set(mode='OBJECT')
 
-    def apply_lbs(self):
+    def apply_eeveemod(self):
         if not bpy.context.scene.kkbp.shader_dropdown == 'C':
             return
-        c.import_from_library_file('NodeTree', ['Raw Shading (face)', 'Cycles', 'Cycles no shadows', 'LBS', 'LBS (face)'], bpy.context.scene.kkbp.use_material_fake_user)
+        c.import_from_library_file('NodeTree', ['.Eevee Mod', '.Eevee Mod (face)'], bpy.context.scene.kkbp.use_material_fake_user)
 
         c.kklog('Applying Eevee Shader adjustments...')
-        #Import lbs node group and replace rim group with the lbs group
-        keep_list = ['KK Eyebrows (mayuge)', 'KK EyeL (hitomi)', 'KK EyeR (hitomi)', 'KK Eyeline up']
-        for tree in [mat.node_tree for mat in bpy.data.materials if ('KK ' in mat.name and mat.name not in keep_list)]:
-            nodes = tree.nodes
-            links = tree.links
-            if nodes.get('Rim') and nodes.get('Shader'):
-                nodes['Rim'].node_tree = bpy.data.node_groups['LBS']
-                links.new(nodes['Shader'].outputs['Color out light'], nodes['Rim'].inputs['Color light'])
-                links.new(nodes['Shader'].outputs['Color out dark'], nodes['Rim'].inputs['Color dark'])
-                links.new(nodes['Shader'].outputs[3], nodes['Rim'].inputs[2])
-                #if nodes['Shader'].node_tree.name != 'Body Shader':
-                #    links.new(nodes['RawShade'].outputs['Normal passthrough'], nodes['Rim'].inputs[3])
+        #Import eevee mod node group and replace the combine colors group with the eevee mod group
+        ignore_list = [
+            'KK Eyebrows (mayuge) ' + c.get_name(),
+            'KK EyeL (hitomi) ' + c.get_name(),
+            'KK EyeR (hitomi) ' + c.get_name(),
+            'KK Eyeline up ' + c.get_name(),
+            'KK Eyewhites (sirome) ' + c.get_name()]
+        everything = [c.get_body()]
+        everything.extend(c.get_hairs())
+        everything.extend(c.get_alts())
+        everything.extend(c.get_outfits())
+        
+        for object in everything:
+            for node_tree in [mat_slot.material.node_tree for mat_slot in object.material_slots if mat_slot.material.get('bake') and mat_slot.material.name not in ignore_list]:
+                nodes = node_tree.nodes
+                links = node_tree.links
+                if nodes.get('combine'):
+                    nodes['combine'].node_tree = bpy.data.node_groups['.Eevee Mod']
+                    #setup the node links again because they break when you replace the node group
+                    def relink(outnode, outport, innode, inport):
+                        try:
+                            links.new(nodes[outnode].outputs[outport], nodes[innode].inputs[inport])
+                        except:
+                            c.kklog(f'Could not link these nodes on tree: {node_tree.name} | {outnode}:{outport} to {innode}:{inport}')
+                    relink('combine',   0,                      'out',     0)
+                    relink('light',     0,                      'combine', 'Light colors')
+                    relink('dark',      0,                      'combine', 'Dark colors')
+                    relink('textures', 'Main texture (alpha)',  'combine', 'Main texture (alpha)')
+                    relink('textures', 'Alpha mask',            'combine', 'Alpha mask')
+                    relink('textures', 'Alpha mask (alpha)',    'combine', 'Alpha mask (alpha)')
+                    relink('textures', 'Alpha mask (custom)',   'combine', 'Alpha mask (custom)')
 
         if bpy.app.version[0] == 3:
             #turn on ambient occlusion and bloom in render settings
@@ -201,13 +277,13 @@ class post_operations(bpy.types.Operator):
             #turn on bloom in render settings
             bpy.context.scene.eevee.use_bloom = True
 
-            #face has special normal setup to work with gfn. make a copy and add the normals inside of the copy
+            #face has special normal setup. make a copy and add the normals inside of the copy
             #this group prevents Amb Occ issues around nose, and mouth interior
-            face_nodes = bpy.data.node_groups['LBS (face)']
+            face_nodes = bpy.data.node_groups['.Eevee Mod (face)']
             face_nodes.use_fake_user = True
 
-        #select entire face and body and reset vectors to prevent Amb Occ seam around the neck 
-        body = bpy.data.objects['Body']
+        #select entire face and body, then reset vectors to prevent Amb Occ seam around the neck 
+        body = c.get_body()
         bpy.ops.object.select_all(action='DESELECT')
         body.select_set(True)
         bpy.context.view_layer.objects.active=body
@@ -243,50 +319,49 @@ class post_operations(bpy.types.Operator):
             'FootPin.R',
             'ToePin.R',
         ]
+        armature = c.get_armature()
         def set_armature_layer(bone_name, show_layer, hidden = False):
             '''Assigns a bone to a bone collection.'''
-            bone = self.armature.data.bones.get(bone_name)
+            bone = armature.data.bones.get(bone_name)
             if bone:
                 if bpy.app.version[0] == 3:
-                    self.armature.data.bones[bone_name].layers = (
+                    armature.data.bones[bone_name].layers = (
                         True, False, False, False, False, False, False, False,
                         False, False, False, False, False, False, False, False, 
                         False, False, False, False, False, False, False, False, 
                         False, False, False, False, False, False, False, False
                     )
                     #have to show the bone on both layer 1 and chosen layer before setting it to just chosen layer
-                    self.armature.data.bones[bone_name].layers[show_layer] = True 
-                    self.armature.data.bones[bone_name].layers[0] = False
-                    self.armature.data.bones[bone_name].hide = hidden
+                    armature.data.bones[bone_name].layers[show_layer] = True 
+                    armature.data.bones[bone_name].layers[0] = False
+                    armature.data.bones[bone_name].hide = hidden
                 else:
                     show_layer = str(show_layer)
                     bone.collections.clear()
-                    if self.armature.data.bones.get(bone_name):
-                        if self.armature.data.collections.get(show_layer):
-                            self.armature.data.collections[show_layer].assign(self.armature.data.bones.get(bone_name))
+                    if armature.data.bones.get(bone_name):
+                        if armature.data.collections.get(show_layer):
+                            armature.data.collections[show_layer].assign(armature.data.bones.get(bone_name))
                         else:
-                            self.armature.data.collections.new(show_layer)
-                            self.armature.data.collections[show_layer].assign(self.armature.data.bones.get(bone_name))
-                        self.armature.data.bones[bone_name].hide = hidden
+                            armature.data.collections.new(show_layer)
+                            armature.data.collections[show_layer].assign(armature.data.bones.get(bone_name))
+                        armature.data.bones[bone_name].hide = hidden
         
-        original_mode = bpy.context.object.mode
-        bpy.ops.object.mode_set(mode = 'OBJECT')
+        c.switch(armature, 'OBJECT')
         for bone in layer0_bones:
             set_armature_layer(bone, 0)
         for bone in layer1_bones:
             set_armature_layer(bone, 1)
-        bpy.ops.object.mode_set(mode = original_mode)
         
         if not bpy.context.scene.kkbp.armature_dropdown == 'B':
             return
         c.kklog('Running Rigify conversion scripts...')
-        c.switch(self.armature, 'object')
+        c.switch(armature, 'object')
         try:
             bpy.ops.kkbp.rigbefore('INVOKE_DEFAULT')
             #remove the left ankle and right ankle's super copy prop
             if bpy.app.version[0] != 3:
-                self.armature.pose.bones['Left ankle'].rigify_type = ""
-                self.armature.pose.bones['Right ankle'].rigify_type = ""
+                armature.pose.bones['Left ankle'].rigify_type = ""
+                armature.pose.bones['Right ankle'].rigify_type = ""
         except:
             if 'Calling operator "bpy.ops.pose.rigify_layer_init" error, could not be found' in traceback.format_exc():
                 c.kklog("There was an issue preparing the rigify metarig. \nMake sure the Rigify addon is installed and enabled. Skipping operation...", 'error')
@@ -298,6 +373,8 @@ class post_operations(bpy.types.Operator):
         bpy.ops.kkbp.rigafter('INVOKE_DEFAULT')
         #make sure the new bones on the generated rig retain the KKBP outfit id entry
         rig = bpy.context.active_object
+        rig['rig'] = True
+        rig['name'] = c.get_name()
         for bone in rig.data.bones:
             if bpy.app.version[0] == 3:
                 if bone.layers[0] == True or bone.layers[2] == True:
@@ -306,7 +383,6 @@ class post_operations(bpy.types.Operator):
                             bone['KKBP outfit ID'] = rig.data.bones['ORG-' + bone.name]['KKBP outfit ID']
                             if rig.data.bones.get('DEF-' + bone.name):
                                 rig.data.bones['DEF-' + bone.name]['KKBP outfit ID'] = rig.data.bones['ORG-' + bone.name]['KKBP outfit ID']
-
             else:
                 if bone.collections.get('0') or bone.collections.get('2') == True:
                     if rig.data.bones.get('ORG-' + bone.name):
@@ -315,11 +391,11 @@ class post_operations(bpy.types.Operator):
                             if rig.data.bones.get('DEF-' + bone.name):
                                 rig.data.bones['DEF-' + bone.name]['KKBP outfit ID'] = rig.data.bones['ORG-' + bone.name]['KKBP outfit ID']
 
-        self.armature.hide_set(True)
+        armature.hide_set(True)
         bpy.ops.object.select_all(action='DESELECT')
 
         #make sure everything is deselected in edit mode for the body
-        body = bpy.data.objects['Body']
+        body = c.get_body()
         bpy.ops.object.select_all(action='DESELECT')
         body.select_set(True)
         bpy.context.view_layer.objects.active=body
@@ -333,19 +409,15 @@ class post_operations(bpy.types.Operator):
         rig.show_in_front = True
         bpy.context.scene.tool_settings.transform_pivot_point = 'INDIVIDUAL_ORIGINS'
         bpy.context.tool_settings.mesh_select_mode = (False, False, True) #enable face select in edit mode
-        self.rig = rig
         return {'FINISHED'}
 
     def apply_sfw(self):
         if not bpy.context.scene.kkbp.sfw_mode:
             return
         c.kklog('Applying mesh adjustments...')
-        #delete nsfw parts of the mesh
-        body = bpy.data.objects['Body']
-        bpy.ops.object.select_all(action='DESELECT')
-        body.select_set(True)
-        bpy.context.view_layer.objects.active=body
-        bpy.ops.object.mode_set(mode = 'EDIT')
+        #mark nsfw parts of mesh as freestyle faces so they don't show up in the outline
+        body = c.get_body()
+        c.switch(body, mode = 'EDIT')
         def mark_group_as_freestyle(group_list):
             for group in group_list:
                 group_found = body.vertex_groups.find(group)      
@@ -361,8 +433,9 @@ class post_operations(bpy.types.Operator):
         mark_group_as_freestyle(freestyle_list)
         bpy.ops.mesh.select_all(action = 'DESELECT')
 
+        #delete nsfw parts of the mesh
         def delete_group_and_bone(ob, group_list):
-            #delete vertex groups
+            c.switch(ob, 'EDIT')
             bpy.ops.mesh.select_all(action = 'DESELECT')
             for group in group_list:
                 group_found = ob.vertex_groups.find(group)      
@@ -373,7 +446,6 @@ class post_operations(bpy.types.Operator):
                     c.kklog('Group wasn\'t found when deleting vertex groups: ' + group, 'warn')
             bpy.ops.mesh.delete(type='VERT')
             bpy.ops.mesh.select_all(action = 'DESELECT')
-            bpy.ops.object.mode_set(mode = 'OBJECT')
 
         delete_list = ['cf_s_bnip025_L', 'cf_s_bnip025_R', 'cf_s_bnip02_L', 'cf_s_bnip02_R',
         'cf_j_kokan', 'cf_j_ana', 'cf_d_ana', 'cf_d_kokan', 'cf_s_ana',
@@ -381,59 +453,61 @@ class post_operations(bpy.types.Operator):
         'Vagina_003_L', 'Vagina_004_L', 'Vagina_005_L',  'Vagina_001_R', 'Vagina_002_R',
         'Vagina_003_R', 'Vagina_004_R', 'Vagina_005_R']
         delete_group_and_bone(body, delete_list)
-        #also do this on the clothes because the bra sticks out
+        #also do this on the clothes because the bra can show up
         delete_list = ['cf_s_bnip02_L', 'cf_s_bnip02_R', 'cf_s_bnip025_L', 'cf_s_bnip025_R', ]
         for ob in [o for o in bpy.data.objects if o.get('KKBP tag') == 'outfit']:
-            c.switch(ob, 'EDIT')
             delete_group_and_bone(ob, delete_list)
 
-        #reload the sfw alpha mask
-        body_material = bpy.data.objects['Body'].material_slots['KK Body'].material
-        body_material.node_tree.nodes['Gentex'].node_tree.nodes['Bodyalphacustom'].image = bpy.data.images['Template: SFW alpha mask.png']
-        bpy.data.node_groups["Body Shader"].nodes["BodyTransp"].inputs[0].default_value = 1 #why do i have to do it this way
-        bpy.data.node_groups["Body Shader"].nodes["BodyTransp"].inputs[1].default_value = 1
-        if bpy.app.version[0] == 3:
-            body_material.node_tree.nodes['Shader'].node_tree.nodes['BodyTransp'].node_tree.inputs[0].hide_value = True
-            body_material.node_tree.nodes['Shader'].node_tree.nodes['BodyTransp'].node_tree.inputs[1].hide_value = True
-        else:
-            bpy.data.node_groups['Body Transparency input'].interface.items_tree[1].hide_value
-            bpy.data.node_groups['Body Transparency input'].interface.items_tree[2].hide_value
+        #force the sfw alpha mask on the body
+        for mat_prefix in ['KK Body', 'Outline Body']:
+            body_mat = body.material_slots[mat_prefix + ' ' + c.get_name()].material
+            body_mat.node_tree.nodes["combine"].inputs['Force custom mask'].default_value = 1
+            new_group = body_mat.node_tree.nodes['combine'].node_tree.copy()
+            body_mat.node_tree.nodes['combine'].node_tree = new_group
+            if bpy.app.version[0] == 3:
+                new_group.inputs['Force custom mask'].hide_value = True
+            else:
+                new_group.interface.items_tree['Force custom mask'].hide_value = True
 
         #get rid of the nsfw groups on the body
-        body_material.node_tree.nodes.remove(body_material.node_tree.nodes['NSFWTextures'])
-        body_material.node_tree.nodes.remove(body_material.node_tree.nodes['NSFWpos'])
+        body_mat = body.material_slots['KK Body ' + c.get_name()].material
+        body_mat.node_tree.nodes.remove(body_mat.node_tree.nodes['texturesnsfw'])
 
-        for nono in ['Nipple mask', 'Nipple alpha', 'Genital mask', 'Underhair mask']:
+        for nono in [
+            'Nipple',
+            'Nipple (alpha)',
+            'Genital',
+            'Underhair',
+            'Genital intensity',
+            'Genital saturation', 
+            'Genital hue', 
+            'Underhair color', 
+            'Underhair intensity', 
+            'Nipple base', 
+            'Nipple base 2', 
+            'Nipple shine', 
+            'Nipple rim']:
             if bpy.app.version[0] == 3:
-                body_material.node_tree.nodes['Shader'].node_tree.inputs.remove(body_material.node_tree.nodes['Shader'].node_tree.inputs[nono])
+                body_mat.node_tree.nodes['light'].node_tree.inputs.remove(body_mat.node_tree.nodes['light'].node_tree.inputs[nono])
             else:
-                bpy.data.node_groups['Body Shader'].interface.remove(bpy.data.node_groups['Body Shader'].interface.items_tree[nono])
-
-        for nonono in ['Genital intensity', 'Genital saturation', 'Genital hue', 'Underhair color', 'Underhair intensity', 'Nipple base', 'Nipple base 2', 'Nipple shine', 'Nipple rim', 'Nipple alpha', 'Nipple texture', 'Genital mask', 'Underhair mask']:
-            if bpy.app.version[0] == 3:
-                body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs.remove(body_material.node_tree.nodes['Shader'].node_tree.nodes['colorsLight'].node_tree.inputs[nonono])
-            else:
-                bpy.data.node_groups['Body overlays'].interface.remove(bpy.data.node_groups['Body overlays'].interface.items_tree[nonono])
-
-        bpy.data.materials['KK Body'].node_tree.nodes['Gentex'].node_tree.nodes['Bodyalphacustom'].image = bpy.data.images['Template: SFW alpha mask.png']
-        bpy.data.materials['KK Body Outline'].node_tree.nodes['customToggle'].inputs[0].default_value = 1
-        bpy.data.materials['KK Body Outline'].node_tree.nodes['customToggle'].inputs[0].hide = True
+                body_mat.node_tree.nodes['light'].node_tree.interface.remove(body_mat.node_tree.nodes['light'].node_tree.interface.items_tree[nono])
 
         #delete nsfw bones if sfw mode enebled
+        rig = c.get_rig()
         if bpy.context.scene.kkbp.sfw_mode and bpy.context.scene.kkbp.armature_dropdown == 'B':
             if bpy.app.version[0] != 3:
-                self.rig.data.collections_all['29'].is_visible = True
+                rig.data.collections_all['29'].is_visible = True
             def delete_bone(group_list):
                 #delete bones too
                 bpy.ops.object.mode_set(mode = 'OBJECT')
                 bpy.ops.object.select_all(action='DESELECT')
-                self.rig.select_set(True)
-                bpy.context.view_layer.objects.active = self.rig
+                rig.select_set(True)
+                bpy.context.view_layer.objects.active = rig
                 bpy.ops.object.mode_set(mode = 'EDIT')
                 bpy.ops.armature.select_all(action='DESELECT')
                 for bone in group_list:
-                    if self.rig.data.bones.get(bone):
-                        self.rig.data.edit_bones[bone].select = True
+                    if rig.data.bones.get(bone):
+                        rig.data.edit_bones[bone].select = True
                         bpy.ops.kkbp.cats_merge_weights()
                     else:
                         c.kklog('Bone wasn\'t found when deleting bones: ' + bone, 'warn')
@@ -467,12 +541,24 @@ class post_operations(bpy.types.Operator):
             'cf_s_bust02_R',]
             delete_bone(delete_list)
             if bpy.app.version[0] != 3:
-                self.rig.data.collections_all['29'].is_visible = False
+                rig.data.collections_all['29'].is_visible = False
 
-    # %% Supporting functions
+    def separate_meshes(self):
+        if bpy.context.scene.kkbp.categorize_dropdown == 'B':
+            #separate each outfit by material
+            for obj in c.get_outfits():
+                if obj.modifiers.get('Outline Modifier'):
+                    obj.modifiers['Outline Modifier'].show_render = False
+                    obj.modifiers['Outline Modifier'].show_viewport = False
+                c.switch(obj, 'OBJECT')
+                bpy.ops.object.material_slot_remove_unused()
+                c.switch(obj, 'EDIT')
+                bpy.ops.mesh.separate(type='MATERIAL')
 
-if __name__ == "__main__":
-    bpy.utils.register_class(post_operations)
-
-    # test call
-    print((bpy.ops.kkbp.postoperations('INVOKE_DEFAULT')))
+            #once they are all separated, rename them to their material name
+            for obj in c.get_outfits():
+                try:
+                    obj.name = obj.material_slots[0].name
+                except:
+                    #oh well
+                    pass

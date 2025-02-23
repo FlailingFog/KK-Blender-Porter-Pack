@@ -25,10 +25,8 @@ translation_dictionary = {
     'cat_drop'      : '操作タイプ',
     'cat_drop_A'    : "別々にしない",
     'cat_drop_A_tt' : "すべてをインポートして一つの服オブジェクトにする。別の服はひとりでに隠される",
-    'cat_drop_C'    : "すべてを別々にする",
-    'cat_drop_C_tt' : "すべてをインポートして個々の服オブジェクトにする",
-    'cat_drop_D'    : "SMRデータでカテゴライズ",
-    'cat_drop_D_tt' : "すべてをインポートしてSMR(Skinned Mesh Renderer)データで服を別々にする。この設定にはマテリアルテンプレートや色データや使われないからモデルはテクスチャーなしで見える",
+    'cat_drop_B'    : "すべてを別々にする",
+    'cat_drop_B_tt' : "すべてをインポートして個々の服オブジェクトにする",
 
     'dark'      : "ダークな色",
     'dark_C'    : "ダークな色は変更しない",
@@ -49,6 +47,10 @@ translation_dictionary = {
     Eyewhiteの複写を削除して,
     Upper Chestの骨を削除して、
     Unityがボーンをひとりでに見つけられるためにアーマチュアを改造して""",
+    'prep_drop_E'       : "Unreal Engineコンパチ",
+    'prep_drop_E_tt'    : """アウトラインを削除して...
+    Eyewhiteの複写を削除して,
+    Unreal アニメーションのマネキンのボーンに合わせてボーンを改造して""",
 
     'simp_drop'     : 'アーマチュアの簡略化',
     'simp_drop_A'   : '超シンプル (遅い)',
@@ -78,7 +80,8 @@ translation_dictionary = {
     'shape_C_tt'    : "コイカツのシェイプキーにする。シェイプキーが変更されない",
 
     'shader_A'       : 'Eeveeにする',
-    'shader_B'       : "Cyclesにする",
+    'shader_B'       : "Cycles（トゥーンレンダリング）にする",
+    'shader_D'       : "Cyclesにする",
     'shader_C'       : "Eevee modにする",
     'shader_C_tt'    : "別のEeveeシェーダー設定にする", 
 
@@ -106,11 +109,11 @@ translation_dictionary = {
     'rigify_convert'            : "Rigifyアーマチュアに変えて",
     'rigify_convert_tt'         : "このボタンをクリックしたら、KKBPアーマチュアをRigifyアーマチュアに変えて",
     'sep_eye'                   : "EyesやEyebrowsやBodyのオブジェクトから別々になって",
-    # 'sep_eye_tt'                : "Separates the Eyes and Eyebrows from the Body object and links the shapekeys to the Body object. Useful for when you want to make eyes or eyebrows appear through the hair using the Cryptomatte features in the compositor",
+    'sep_eye_tt'                : "BodyのオブジェクトからEyesやEyebrowsマテリアルを別のオブジェクトを別々にして、シェイプ キーをBodyオブジェクトにリンクされる",
     'bone_visibility'           : "現在の服のボーンを表示して",
     'bone_visibility_tt'        : "このボタンをクリックしたら、不要なアクセサリボーンをビューポートで隠くされる。たとえば、Outfit 00 と Outfit 01 ビューポートで隠されない場合は、すべてのアクセサリボーンが表示される。Outfit 00 をビューポートで隠してこのボタンをクリックすると、Outfit 01 のアクセサリボーンのみが表示されます。",
-    # 'export_sep_meshes'         : "Export Seperate Meshes",
-    # 'export_sep_meshes_tt'      : "Only available for the \"Separate by SMR data\" option. Choose where to export meshes",
+    'link_hair'                 : '他の髪マテリアルをアップデート',
+    'link_hair_tt'              : 'クリックすると、このマテリアルの色やDetail Intensityなどがこのオブジェクトの他の髪マテリアルにコピーされる',
 
     'kkbp_import_tt'            : "コイカツモデル(.PMXフォーマット)をインポートして改造して",
     'export_prep_tt'            : "KKBPアーマチュアが必要です。メニューの情報をチェックして",
@@ -128,6 +131,9 @@ translation_dictionary = {
 
     'mat_comb_tt' : 'KKBPは Shotariya の Material Combiner アドオンの一部を使用して、マテリアルをアトラスに自動的に結合します。KKBPにマテリアルを結合させるのではなく、手動でマテリアルを結合したい場合は、このボタンをクリックして (Material Combiner アドオンをダウンロードする必要があります。そして、KKBP パネルの [マテリアルテンプレートをファイナライズ] ボタンを既にクリックしていることを確認してください。クリックしていないと機能しません)',
     'matcomb' : 'Material Combinerの手動準備',
+    'mat_comb_switch' : 'ライトとダークのテクスチャを切り替える', 
+    'mat_comb_switch_tt' : 'クリックすると、ライトとダークのテクスチャを切り替え、Material Combinerからライトとダークのアトラスを手に入れる',
+
     'pillow' : 'アトラス機能を使用するにはPILをインストール',
     'pillow_tt':'Pillow をインストールするにはクリックして。インストールはしばらく時間がかかる。',
     'reset_mats' : 'ファイナライズしたマテリアルをリセット',

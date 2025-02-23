@@ -10,6 +10,7 @@ import bmesh
 from rna_prop_ui import rna_idprop_ui_create
 import random
 import string
+from ... import common as c
 
 def generateRandomAlphanumericString():
     randomString = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
@@ -34,8 +35,10 @@ def leftNameToRightName(leftName):
         leftName = leftName[:len(leftName) - len(leftNameSuffix2)] + rightNameSuffix2
     return leftName
 
-bodyName = "Body"
-riggedTongueName = "Tongue (rigged)"
+def bodyName():
+    return 'Body ' + c.get_name()
+def riggedTongueName():
+    return "Tongue (rigged) " + c.get_name()
 
 eyelidsShapeKeyName = "KK Eyes_default_cl"
 eyelidsShapeKeyCopyName = eyelidsShapeKeyName + copyNameSuffix

@@ -172,7 +172,7 @@ def main():
                         if target.subtarget.endswith(koikatsuCommons.placeholderBoneSuffix):
                             target.subtarget = target.subtarget[:-len(koikatsuCommons.placeholderBoneSuffix)]
     
-    for driver in bpy.data.objects[koikatsuCommons.bodyName].data.shape_keys.animation_data.drivers:
+    for driver in bpy.data.objects[koikatsuCommons.bodyName()].data.shape_keys.animation_data.drivers:
         if driver.data_path.startswith("key_blocks"):
             ownerName = driver.data_path.split('"')[1]
             if ownerName == koikatsuCommons.eyelidsShapeKeyCopyName:
@@ -182,8 +182,6 @@ def main():
                             target.id = generatedRig 
     
     for driver in generatedRig.animation_data.drivers:    
-        #print(driver.data_path)
-        #print(driver.driver.variables[0].targets[0].bone_target)
         if driver.data_path.startswith("pose.bones"):
             driverOwnerName = driver.data_path.split('"')[1]
             driverProperty = driver.data_path.rsplit('.', 1)[1]
@@ -312,8 +310,3 @@ class rigify_after(bpy.types.Operator):
         main()
         return {'FINISHED'}
 
-if __name__ == "__main__":
-    bpy.utils.register_class(rigify_after)
-
-    # test call
-    print((bpy.ops.kkbp.rigafter('INVOKE_DEFAULT')))   

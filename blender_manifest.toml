@@ -2,7 +2,7 @@ schema_version = "1.0.0"
 # https://docs.blender.org/manual/en/latest/advanced/extensions/getting_started.html
 
 id = "kkbp"
-version = "7.2.2"
+version = "8.0.0"
 name = "KKBP (Koikatsu Blender Porter)"
 tagline = "Imports Koikatsu models into Blender"
 maintainer = "FlailingFog"
@@ -15,3 +15,4 @@ platforms = ["windows-x64", "macos-arm64", "linux-x64"]
 
 [permissions]
 files = "Imports Koikatsu .pmx models, exports .fbx and texture files"
+network = "Installs pillow package from pypi"

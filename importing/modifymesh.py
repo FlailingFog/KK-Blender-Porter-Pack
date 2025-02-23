@@ -1,11 +1,9 @@
 '''
 This file performs the following operations
 
-·	Save all body materials to the body object under body['SMR materials']
-          to allow mesh separations and material swaps to work
 .   Separates the rigged tongue, hair, shift/hang state clothing,
-          shadowcast, bonelyfans, hitboxes and puts them into their own collections
-·	Delete mask material if present
+        hitboxes, and puts them into their own collections
+·	Delete mask material, shadowcast mesh, and bonelyfans mesh if present
 
 ·	Remove shapekeys on all objects except body / tears / gag eyes
 ·	Rename UV maps on body object and outfit objects
@@ -14,7 +12,6 @@ This file performs the following operations
 ·	Creates tear shapekeys
 ·	Creates gag eye shapekeys and drivers for shapekeys
 
-·	Add a data transfer modifier to the body to use the shadowcast as a shading proxy
 .   Removes doubles on body object to prevent seams (if selected)
 
 ·	Mark certain body materials as freestyle faces for freestyle exclusion
@@ -32,26 +29,22 @@ class modify_mesh(bpy.types.Operator):
     
     def execute(self, context):
         try:
-            self.get_body_material_names()
+            self.rename_uv_maps()
             self.separate_rigged_tongue()
             self.separate_hair()
             self.separate_alternate_clothing()
-            self.separate_shad_bone()
+            self.delete_shad_bone()
             self.separate_hitboxes()
             self.delete_mask_quad()
-            
+
             self.remove_unused_shapekeys()
-            self.rename_uv_maps()
             self.translate_shapekeys()
             self.combine_shapekeys()
             self.create_tear_shapekeys()
             self.create_gag_eye_shapekeys()
 
-            self.add_body_datatransfer()
             self.remove_body_seams()
-            
             self.mark_body_freestyle_faces()
-            self.tag_all_objects_for_next_operation()
             c.clean_orphaned_data()
 
             return {'FINISHED'}
@@ -59,280 +52,171 @@ class modify_mesh(bpy.types.Operator):
             c.handle_error(self, error)
             return {"CANCELLED"}
 
-    # %% Main functions
-    def get_body_material_names(self):
-        '''Correlates the smr object name to the material slot name on the body'''
-        self.body = bpy.data.objects['Model_mesh']
-        c.switch(self.body, 'object')
-        self.body.name = 'Body'
-
-        #save the smr data to the body object as body['SMR materials']
-        body_materials = [
-            'cf_O_face',
-            'cf_O_mayuge',
-            'cf_O_noseline',
-            'cf_O_tooth',
-            'cf_O_eyeline',
-            'cf_O_eyeline_low',
-            'cf_O_namida_L',
-            'cf_O_namida_M',
-            'cf_O_namida_S',
-            'cf_Ohitomi_L', #eyewhites
-            'cf_Ohitomi_R',
-            'cf_Ohitomi_L02', #pupils
-            'cf_Ohitomi_R02',
-            'cf_O_gag_eye_00',
-            'cf_O_gag_eye_01',
-            'cf_O_gag_eye_02',
-            'o_tang',
-            'o_body_a',
-            'o_tang_rigged'
-            ]
-        self.body['SMR materials'] = {mat:{} for mat in body_materials}
-        #get a list of the body materials from the smr json file then use it to fill the material dictionary on the body object
-        smr_data = c.get_json_file('KK_SMRData.json')
-        smr_body_materials = [index for index in smr_data if (index['CoordinateType'] == -1 and 'Bonelyfan' not in index['SMRMaterialNames'][0])]
-        for body_material in smr_body_materials:
-            #if this is the rigged tongue, put it in the right category
-            if body_material['SMRPath'] in ['/chaF_001/BodyTop/p_cf_body_00/cf_o_root/n_tang/o_tang', "/chaM_001/BodyTop/p_cm_body_00/cf_o_root/n_tang/o_tang"]:
-                self.body['SMR materials']['o_tang_rigged'] = [tang_mat + '.001' for tang_mat in body_material['SMRMaterialNames']]
-            else:
-                self.body['SMR materials'][body_material['SMRName']] = body_material['SMRMaterialNames']
-            #rename some materials if in smr mode
-            smr_postfix_map = {
-                    'cf_Ohitomi_R'  : '.001',
-                    'cf_O_namida_M' : '.001',
-                    'cf_O_namida_S' : '.002',
-                    }
-            if (body_material['SMRName'] in smr_postfix_map and 
-               (bpy.context.scene.kkbp.categorize_dropdown == 'D' or 'cf_Ohitomi_R' not in body_material['SMRName'])):
-                mat_name = body_material['SMRMaterialNames'][0] + smr_postfix_map[body_material['SMRName']]  
-                self.body['SMR materials'][body_material['SMRName']] = [mat_name]
-            if body_material['SMRName'] in ['cf_Ohitomi_L02']:
-                self.body['SMR materials'][body_material['SMRName']] = [body_material['SMRMaterialNames'][0] + ('_cf_Ohitomi_L02' if bpy.context.scene.kkbp.V421_export else '')]
-            if body_material['SMRName'] in ['cf_Ohitomi_R02']:
-                self.body['SMR materials'][body_material['SMRName']] = [body_material['SMRMaterialNames'][0] + ('_cf_Ohitomi_R02' if bpy.context.scene.kkbp.V421_export else '')]
-        c.print_timer('get_body_material_names')
-        
+    # %% Main functions        
     def separate_rigged_tongue(self):
-        '''Separates the rigged tongue object'''
-        if bpy.context.scene.kkbp.categorize_dropdown != 'D':
-            if self.body['SMR materials']['o_tang_rigged']:
-                tongue_mats = [mat for mat in self.body['SMR materials']['o_tang_rigged'] if bpy.data.materials.get(mat)]
-                self.separate_materials(self.body, tongue_mats)
-                if bpy.data.objects.get('Body.001'):
-                    tongue = bpy.data.objects['Body.001']
-                    tongue.name = 'Tongue (rigged)'
+        """
+        Separates the rigged tongue object from the main body mesh.
+
+        This method checks if the categorize dropdown in the scene is not set to 'D'.
+        If not, it retrieves material data from a JSON file and searches for the rigged tongue entry.
+        If the rigged tongue entry is found and contains material information, it separates the tongue
+        material from the body mesh and marks it as a rigged tongue.
+        """
+        material_data = c.get_json_file('KK_MaterialDataComplete.json')
+        rigged_tongue_entry = [i for i in material_data if i['SMRPath'] in ['/chaF_001/BodyTop/p_cf_body_00/cf_o_root/n_tang/o_tang', "/chaM_001/BodyTop/p_cm_body_00/cf_o_root/n_tang/o_tang"]]
+        if rigged_tongue_entry:
+            rigged_tongue_entry = rigged_tongue_entry[0]
+            if len(rigged_tongue_entry['MaterialInformation']):
+                if rigged_tongue_entry['MaterialInformation'][0].get('MaterialName'):
+                    tongue_material_name = rigged_tongue_entry['MaterialInformation'][0]['MaterialName']
+                    #There should also be a second tongue.001 material. Use that one to separate the rigged tongue.
+                    tongue = self.separate_materials(c.get_body(), [tongue_material_name + '.001'], 'Tongue (rigged) ' + c.get_name())
+                    tongue['tongue'] = True
+                    #Now remap the .001 tongue material with the original to allow the rigged tongue and the tongue on the body to share the same material
+                    if bpy.data.materials.get(tongue_material_name + '.001'):
+                        bpy.data.materials[tongue_material_name + '.001'].user_remap(bpy.data.materials[tongue_material_name])
+                        bpy.data.materials.remove(bpy.data.materials[tongue_material_name + '.001'])
         c.print_timer('separate_rigged_tongue')
 
     def separate_hair(self):
         '''Separates the hair from the clothes object'''
-        self.outfits = [o for o in bpy.data.objects if '_mesh' in o.name]
-        self.hairs = []
+        outfits = c.get_outfits()
         
-        #Select all materials that are hair and separate for each outfit
-        material_data = c.get_json_file('KK_MaterialData.json')
-        if bpy.context.scene.kkbp.V421_export:
-            texture_data = c.get_json_file('KK_TextureData.json')
-            texture_files = []
-            for file in texture_data:
-                texture_files.append(file['textureName'])
-        for outfit in self.outfits:
-            outfit_materials = [mat_slot.material.name for mat_slot in outfit.material_slots]
+        #Separate the hair from each outfit
+        material_data = c.get_json_file('KK_MaterialDataComplete.json')
+        for outfit in outfits:
+            #find all of the hair mats for this outfit
             hair_mat_list = []
-            for line in material_data:
-                if bpy.context.scene.kkbp.V421_export:
-                    #use this older method for V421 exports
-                    if line['ShaderName'] in ["Shader Forge/main_hair_front", "Shader Forge/main_hair", 'Koikano/hair_main_sun_front', 'Koikano/hair_main_sun', 'xukmi/HairPlus', 'xukmi/HairFrontPlus']:
-                        if (line['MaterialName'] + '_HGLS.png') in texture_files or ((line['MaterialName'] + '_NMP.png') not in texture_files and (line['MaterialName'] + '_MT_CT.png') not in texture_files and (line['MaterialName'] + '_MT.png') not in texture_files):
-                            hair_mat_list.append(line['MaterialName'])
-                else:
-                    #only hair shaders have the HairGloss parameter, this should be able to replace commented out method shown above
-                    material_name = line['MaterialName']
-                    gloss_present = [name for name in line['ShaderPropNames'] if '_HairGloss ' in name]
-                    if gloss_present and material_name in outfit_materials:
-                        hair_mat_list.append(material_name)
-
+            outfit_materials = [mat_slot.material.name for mat_slot in outfit.material_slots]
+            json_materials = [m['MaterialInformation'] for m in material_data if m.get('MaterialInformation')]
+            for material_array in json_materials:
+                for material in material_array:
+                    #some hair materials are repeated. The order goes 'hair_material', 'hair_material 00', 'hair_material 01', etc. Check for those too.
+                    hair_mat_list.extend([m for m in outfit_materials if material['isHair'] == True and material.get('MaterialName') in m])
+            #separate hair and tag it
             if hair_mat_list:
-                self.separate_materials(outfit, hair_mat_list)
-                hair = bpy.data.objects[outfit.name + '.001']
-                hair.name = 'Hair ' + outfit.name
-                self.hairs.append(hair)
+                hair_object = self.separate_materials(outfit, hair_mat_list, 'Hair ' + outfit.name)
+                hair_object['hair'] = True
+                hair_object['outfit'] = False
         c.print_timer('separate_hair')
 
     def separate_alternate_clothing(self):
-        '''Separates any clothes pieces that are normally supposed to be hidden'''
-        self.outfit_alternates = []
-        if not bpy.context.scene.kkbp.categorize_dropdown in ['A', 'B']:
-            return
-        #the KK_ReferenceInfoData json lists the clothes variations' object paths in the ENUM order in the modifymesh markdown file
-        try:
-            ref_data = c.get_json_file('KK_ReferenceInfoData.json')
-        except:
-            #this file did not have any contents for some reason
-            return
-        #the smr json contains the link between the object path and the clothing material. The material is used for separation
-        smr_data = c.get_json_file('KK_SMRData.json')
-        #the clothesdata json can identify what objects are the indoor shoes
-        clothes_data = c.get_json_file('KK_ClothesData.json')
+        '''Separates the alternate clothing pieces then hides them'''
         
+        #These are the enum indexes that need to be separated
         clothes_labels = {
-            'Top shift':       [93, 97, 112, 114, 116],
-            'Bottom shift':    [95, 99],
-            'Bra shift':       [101, 118],
-            'Underwear shift': [107],
-            'Underwear hang':  [108],
-            'Pantyhose shift': [110],}
-        #get the maximum enum number from referenceinfodata. This is usually 174 but the length can vary
-        max_enum = 0
-        temp_outfit_tracker = ref_data[0]['CoordinateType']
-        for line in ref_data:
-            if line['CoordinateType'] == temp_outfit_tracker:
-                max_enum = line['ChaReference_RefObjKey']
-            else:
-                break
-        #If there's multiple pieces to any clothing type, separate them into their own object using the smr data
-        for outfit in self.outfits:
-            outfit_coordinate_index = (int(outfit.name[-7:-5])-1) if (len(self.outfits) > 1) else 0 #change index to 0 for single outfit exports
-            for clothes_piece in clothes_labels:
+            999:              'Indoor shoes',
+            93:             'Top shift',
+            97:             'Top shift',
+            112:            'Top shift',
+            114:            'Top shift',
+            116:            'Top shift',
+            120:            'Top shift',
+            95:             'Bottom shift',
+            99:             'Bottom shift',
+            101:            'Bra shift',
+            118:            'Bra shift',
+            107:            'Underwear shift',
+            108:            'Underwear hang',
+            110:            'Pantyhose shift',
+        }
+
+        material_data = c.get_json_file('KK_MaterialDataComplete.json')
+        smr_items = [m for m in material_data if m.get('MaterialInformation')]
+        for outfit in c.get_outfits():
+            for label in clothes_labels:
                 materials_to_separate = []
-                #go through each nuge piece in this label category
-                for enum_index in clothes_labels[clothes_piece]:
-                    enum_index += (max_enum + 1) * outfit_coordinate_index #shift based on outfit number
-                    #if this is the right outfit, then find the material this piece uses
-                    if ref_data[enum_index]['CoordinateType'] == outfit_coordinate_index:
-                        game_path = ref_data[enum_index]['GameObjectPath']
-                        for smr_index in smr_data:
-                            if (game_path in smr_index['SMRPath']) and game_path != '':
-                                if len(smr_index['SMRMaterialNames']) > 1:
-                                    for mat in smr_index['SMRMaterialNames']:
-                                        materials_to_separate.append(mat)
-                                else:
-                                    materials_to_separate.append(smr_index['SMRMaterialNames'][0])
-                #separate all found pieces
+                for smr_item in smr_items:
+                    if label == smr_item['EnumIndex']:
+                        materials_to_separate.extend(c.get_material_names(smr_item['SMRName']))
                 if materials_to_separate:
-                    try:
-                        print(materials_to_separate)
-                        self.separate_materials(outfit, materials_to_separate)
-                        alt_piece = bpy.data.objects[outfit.name + '.001']
-                        alt_piece.name = clothes_piece + ' Outfit ' + str(outfit_coordinate_index)
-                        alt_piece['KKBP type'] = clothes_piece
-                        self.outfit_alternates.append(alt_piece)
-                        c.kklog('Separated {} alternate clothing pieces automatically'.format(materials_to_separate))
-                    except:
-                        bpy.ops.object.mode_set(mode = 'OBJECT')
-                        c.kklog('Couldn\'t separate {} automatically'.format(materials_to_separate), 'warn')
-            
-            #always separate indoor shoes if present using the clothes data
-            materials_to_separate = []
-            for index, clothes_index in enumerate(clothes_data):
-                if clothes_index['CoordinateType'] == outfit_coordinate_index:
-                    if ((index - 12 * outfit_coordinate_index) % 7 == 0) and (index >=1):
-                        objects = clothes_index['RendNormal01']
-                        for ob in objects:
-                            for smr_index in smr_data:
-                                if (smr_index['SMRName'] == ob):
-                                    for mat in smr_index['SMRMaterialNames']:
-                                        materials_to_separate.append(mat)
-            self.separate_materials(outfit, materials_to_separate)
-            if bpy.data.objects.get(outfit.name + '.001'):
-                indoor_shoes = bpy.data.objects[outfit.name + '.001']
-                indoor_shoes.name = 'Indoor shoes Outfit ' + str(outfit_coordinate_index)
-                indoor_shoes['KKBP type'] = clothes_piece
-                self.outfit_alternates.append(indoor_shoes)
-                c.kklog('Separated {} indoor shoes automatically'.format(materials_to_separate))
+                    alt_clothes = self.separate_materials(outfit, materials_to_separate, clothes_labels[label] + ' ' + outfit['id'] + ' ' + c.get_name())
+                    if alt_clothes:
+                        alt_clothes['alt'] = True
+                        alt_clothes['outfit'] = False
+                        c.kklog('Separated {} alternate clothing {} automatically'.format(materials_to_separate, clothes_labels[label]))
+
         c.print_timer('separate_alternate_clothing')
 
-    def separate_shad_bone(self):
-        '''Separate the shadowcast and bonelyfans meshes, if present'''
-        try:
-            shad_mat_list = ['c_m_shadowcast', 'Standard']
-            self.separate_materials(self.body, shad_mat_list, 'fuzzy')
-            bpy.data.objects[self.body.name + '.001'].name = 'Shadowcast'
-        except:
-            pass
-        #Separate the bonelyfans mesh if any
-        try:
-            bone_mat_list = ['Bonelyfans', 'Bonelyfans.001']
-            self.separate_materials(self.body, bone_mat_list)
-            bpy.data.objects[self.body.name + '.001'].name = 'Bonelyfans'
-        except:
-            pass
-        shadbone = [o for o in [bpy.data.objects.get('Shadowcast'), bpy.data.objects.get('Bonelyfans')] if o]
-        self.move_and_hide_collection(shadbone, "Shadowcast Collection")
-        c.print_timer('separate_shad_bone')
-            
+    def delete_shad_bone(self):
+        '''Delete the shadowcast and bonelyfans meshes, if present'''
+        mat_list = ['c_m_shadowcast', 'Standard']
+        shadowcast = self.separate_materials(c.get_body(), mat_list, 'shadowcast', search_type = 'fuzzy')
+        if shadowcast:
+            bpy.data.objects.remove(shadowcast)
+        
+        #Delete the bonelyfans mesh if any
+        mat_list = ['Bonelyfans', 'Bonelyfans.001']
+        bonely = self.separate_materials(c.get_body(), mat_list, 'bonelyfans')
+        if bonely:
+            bpy.data.objects.remove(bonely)
+        c.print_timer('delete_shad_bone')
+    
     def separate_hitboxes(self):
         '''Separate the hitbox mesh, if present'''
-        self.hitboxes = []
-        hitbox_list = []
-        material_data = c.get_json_file('KK_MaterialData.json')
-        for mat in material_data:
-            if mat['MaterialName'][0:6] == 'o_hit_' or mat['MaterialName'] == 'cf_O_face_atari_M':
-                hitbox_list.append(mat['MaterialName'])
-        #attempt to separate hitbox list from body and all clothes objects
-        if len(hitbox_list):
-            self.separate_materials(self.body, hitbox_list)
-            if bpy.data.objects.get(self.body.name + '.001'):
-                hitbox = bpy.data.objects[self.body.name + '.001']
-                hitbox.name = 'Hitboxes'
-                self.hitboxes.append(hitbox)
-            for outfit in self.outfits:
-                hitbox_list = [mat_name + '.001' for mat_name in hitbox_list]
-                self.separate_materials(outfit, hitbox_list)
-                if bpy.data.objects.get(outfit.name + '.001'):
-                    hitbox = bpy.data.objects[outfit.name + '.001']
-                    hitbox.name = 'Hitboxes' + outfit.name
-                    self.hitboxes.append(hitbox)
-        self.move_and_hide_collection(self.hitboxes, "Hitbox Collection")
+        material_data = c.get_json_file('KK_MaterialDataComplete.json')
+        material_infos = [m['MaterialInformation'] for m in material_data if m.get('MaterialInformation')]
+        material_names = []
+        for material_info in material_infos:
+            material_names.extend([m['MaterialName'] for m in material_info if m.get('MaterialName')])
+        hitbox_names = [m for m in material_names if m[0:6] == 'o_hit_' or 'cf_O_face_atari_M' in m] 
+        if hitbox_names:
+            #first remap all of the duplicate hitbox materials to share the same material name, or some separations will be missed
+            for hitbox_name in hitbox_names:
+                if bpy.data.materials.get(hitbox_name + '.001'):
+                    bpy.data.materials[hitbox_name + '.001'].user_remap(bpy.data.materials[hitbox_name])
+                    bpy.data.materials.remove(bpy.data.materials[hitbox_name + '.001'])
+            hitbox = self.separate_materials(c.get_body(), hitbox_names, 'Hitboxes Body ' + c.get_name())
+            if hitbox:
+                hitbox['hitbox'] = True
+                hitbox['body'] = False
+            for outfit in c.get_outfits():
+                hitbox = self.separate_materials(outfit, hitbox_names, 'Hitboxes ' + outfit['id'] + ' ' + c.get_name())
+                if hitbox:
+                    hitbox['hitbox'] = True
+                    hitbox['outfit'] = False
+        c.move_and_hide_collection(c.get_hitboxes(), "Hitboxes " + c.get_name())
         c.print_timer('separate_hitboxes')
 
     def delete_mask_quad(self):
         '''delete the mask material if not in smr mode'''
-        if bpy.context.scene.kkbp.categorize_dropdown != 'D':
-            for outfit in self.outfits:
-                for mat in outfit.material_slots:
-                    if 'm_Mask ' in mat.material.name:
-                        if mat.material.name[7:].isnumeric():
-                            self.delete_material(outfit, [mat])
+        material_data = c.get_json_file('KK_MaterialDataComplete.json')
+        material_infos = [m['MaterialInformation'] for m in material_data if m.get('MaterialInformation')]
+        material_names = []
+        for material_info in material_infos:
+            material_names.extend([m['MaterialName'] for m in material_info if ('m_Mask ' in m.get('MaterialName') and m.get('ShaderName') == "Shader Forge/AlphaMaskMultiply")])
+        for outfit in c.get_outfits():
+            for mat in outfit.material_slots:
+                if mat.name in material_names:
+                    self.delete_materials(outfit, [mat])
         c.print_timer('delete_mask_quad')
 
     def remove_unused_shapekeys(self):
-        '''remove shapekeys on all objects except the body because that needs them'''
+        '''remove shapekeys on all hair and clothes objects'''
         if bpy.context.scene.kkbp.shapekeys_dropdown not in ['A', 'B']:
             return
-        for obj in bpy.data.objects:
-            if obj.name != self.body.name and obj.type == 'MESH':
-                if not obj.data.shape_keys:
-                    continue
-                for key in obj.data.shape_keys.key_blocks.keys():
-                    obj.shape_key_remove(obj.data.shape_keys.key_blocks[key])
+        object_list = c.get_outfits()
+        object_list.extend(c.get_alts())
+        object_list.extend(c.get_hairs())
+        object_list.extend(c.get_hitboxes())
+        object_list = [o for o in object_list if o.data.shape_keys]
+        for obj in object_list:
+            for key in obj.data.shape_keys.key_blocks.keys():
+                obj.shape_key_remove(obj.data.shape_keys.key_blocks[key])
         c.print_timer('remove_unused_shapekeys')
 
     def rename_uv_maps(self):
         #Make UV map names clearer
-        self.body.data.uv_layers[0].name = 'uv_main'
-        self.body.data.uv_layers[1].name = 'uv_nipple_and_shine'
-        self.body.data.uv_layers[2].name = 'uv_underhair'
-        self.body.data.uv_layers[3].name = 'uv_eyeshadow'
+        c.get_body().data.uv_layers[0].name = 'uv_main'
+        c.get_body().data.uv_layers[1].name = 'uv_nipple_and_shine'
+        c.get_body().data.uv_layers[2].name = 'uv_underhair'
+        c.get_body().data.uv_layers[3].name = 'uv_eyeshadow'
 
-        for outfit in self.outfits:
+        for outfit in c.get_outfits():
             outfit.data.uv_layers[0].name = 'uv_main'
             outfit.data.uv_layers[1].name = 'uv_nipple_and_shine'
             outfit.data.uv_layers[2].name = 'uv_underhair'
             outfit.data.uv_layers[3].name = 'uv_eyeshadow'
-        
-        for hair in self.hairs:
-            hair.data.uv_layers[0].name = 'uv_main'
-            hair.data.uv_layers[1].name = 'uv_nipple_and_shine'
-            hair.data.uv_layers[2].name = 'uv_underhair'
-            hair.data.uv_layers[3].name = 'uv_eyeshadow'
-        
-        for alt in self.outfit_alternates:
-            alt.data.uv_layers[0].name = 'uv_main'
-            alt.data.uv_layers[1].name = 'uv_nipple_and_shine'
-            alt.data.uv_layers[2].name = 'uv_underhair'
-            alt.data.uv_layers[3].name = 'uv_eyeshadow'
         c.print_timer('rename_uv_maps')
 
     def translate_shapekeys(self):
@@ -436,7 +320,7 @@ class modify_mesh(bpy.types.Operator):
             'T_Default':            '_default_op',
         }
 
-        self.body.active_shape_key_index = 0
+        c.get_body().active_shape_key_index = 0
         
         originalExists = False
         for shapekey in bpy.data.shape_keys:
@@ -455,8 +339,8 @@ class modify_mesh(bpy.types.Operator):
                 try:
                     #delete the KK shapekeys if the original shapekeys still exist
                     if originalExists and 'KK ' in keyblock.name and 'KK Eyebrows' not in keyblock.name:
-                        self.body.active_shape_key_index = self.body.data.shape_keys.key_blocks.keys().index(keyblock.name)
-                        bpy.ops.object.shape_key_remove() #no non-ops way to do this?
+                        c.get_body().active_shape_key_index = c.get_body().data.shape_keys.key_blocks.keys().index(keyblock.name)
+                        bpy.ops.object.shape_key_remove() #only way to do this is with ops?
                 except:
                     #or not
                     c.kklog("Couldn't delete shapekey: " + keyblock.name, 'error')
@@ -464,12 +348,13 @@ class modify_mesh(bpy.types.Operator):
         c.print_timer('translate_shapekeys')
 
     def combine_shapekeys(self):
-        '''Creates new, full shapekeys using the existing partial shapekeys, and Deletes the partial shapekeys if user didn't elect to keep them in the panel'''
+        '''Creates new, full shapekeys using the existing partial shapekeys, and deletes the partial shapekeys if user didn't elect to keep them in the panel'''
         if not bpy.context.scene.kkbp.shapekeys_dropdown in ['A', 'B']:
             return
         
         #make the basis shapekey active
-        self.body.active_shape_key_index = 0
+        c.switch(c.get_body(), 'object')
+        c.get_body().active_shape_key_index = 0
 
         def whatCat(keyName):
             #Eyelashes1 is used because I couldn't see a difference between the other one and they overlap if both are used
@@ -498,7 +383,7 @@ class modify_mesh(bpy.types.Operator):
         inUse = []
         #These mouth shapekeys require the default teeth and tongue shapekeys to be active
         correctionList = ['_u_small_op', '_u_big_op', '_e_big_op', '_o_small_op', '_o_big_op', '_neko_op', '_triangle_op']
-        shapekey_block = bpy.data.shape_keys[self.body.data.shape_keys.name].key_blocks
+        shapekey_block = bpy.data.shape_keys[c.get_body().data.shape_keys.name].key_blocks
         
         ACTIVE = 0.9
         def activate_shapekey(key_act):
@@ -510,7 +395,6 @@ class modify_mesh(bpy.types.Operator):
             counter = len(shapekey_block)
             for current_keyblock in shapekey_block:
                 counter = counter - 1
-                #print(counter)
                 if (counter == 0):
                     break
                 #categorize the shapekey (eye or mouth)
@@ -560,7 +444,7 @@ class modify_mesh(bpy.types.Operator):
                         activate_shapekey('Fangs_default_op')
                         activate_shapekey('Lips_i_small_op')
                     if (current_keyblock.name not in used):
-                        self.body.shape_key_add(name=('KK ' + cat + emotion))
+                        c.get_body().shape_key_add(name=('KK ' + cat + emotion))
                     #make sure this shapekey set isn't used again
                     used.extend(inUse)
                     inUse =[]
@@ -570,7 +454,7 @@ class modify_mesh(bpy.types.Operator):
                 #lazy crash prevention
                 if counter % 20 == 0:
                     bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-
+        
         #Delete all shapekeys that don't have a "KK" in their name
         #Don't delete the Basis shapekey though
         #If no KK shapekeys were generated, something went wrong so don't delete any shapekeys
@@ -580,14 +464,14 @@ class modify_mesh(bpy.types.Operator):
             for remove_shapekey in shapekey_block:
                 try:
                     if ('KK ' not in remove_shapekey.name and remove_shapekey.name != shapekey_block[0].name):
-                        self.body.shape_key_remove(remove_shapekey)
+                        c.get_body().shape_key_remove(remove_shapekey)
                 except:
                     c.kklog('Couldn\'t remove shapekey ' + remove_shapekey.name, 'error')
                     pass
         else:
             c.kklog('Original shapekeys were not deleted', 'warn')
         #make the basis shapekey active
-        self.body.active_shape_key_index = 0
+        c.get_body().active_shape_key_index = 0
         #and reset the pivot point to median
         bpy.context.scene.tool_settings.transform_pivot_point = 'MEDIAN_POINT'
         c.print_timer('combine_shapekeys')
@@ -596,22 +480,29 @@ class modify_mesh(bpy.types.Operator):
         '''Separate tears from body and create tear shapekeys'''
         if bpy.context.scene.kkbp.shapekeys_dropdown not in ['A', 'B']:
             return
+        #check if the tear material even exists
+        try:
+            tear_material_name = c.get_material_names('cf_O_namida_L')[0]
+        except:
+            c.kklog('Tear material did not exist.', 'warn')
+            return
         #Create a reverse shapekey for each tear material
-        armature = bpy.data.objects['Model_arm']
-        c.switch(self.body, 'edit')
+        c.switch(c.get_body(), 'edit')
         #Move tears and gag backwards on the basis shapekey
         #use head mesh as reference location
-        bpy.context.object.active_material_index = self.body.data.materials.find(self.body['SMR materials']['cf_O_face'][0])
+        face_material = c.get_material_names('cf_O_face')
+        if face_material:
+            bpy.context.object.active_material_index = c.get_body().data.materials.find(face_material[0])
         bpy.ops.object.material_slot_select()
         #refresh selection, then get head location
         bpy.ops.object.mode_set(mode = 'OBJECT')
         bpy.ops.object.mode_set(mode = 'EDIT')
-        selected_verts = [v.co.y for v in self.body.data.vertices if v.select]
+        selected_verts = [v.co.y for v in c.get_body().data.vertices if v.select]
         loc = 0
         for y in selected_verts:
             loc+=y
         middle_of_head = loc / len(selected_verts)
-        c.switch(self.body, 'edit')
+        c.switch(c.get_body(), 'edit')
         tear_mats = {
             'cf_O_namida_L'     :     "Tears big",
             'cf_O_namida_M'     :     "Tears med",
@@ -621,97 +512,103 @@ class modify_mesh(bpy.types.Operator):
             'cf_O_gag_eye_02'   :     "Gag eye 02",
         }
         for cat in tear_mats:
-            mats = self.body['SMR materials'][cat]
+            mats = c.get_material_names(cat)
+            if 'cf_O_namida_M' in cat or 'cf_O_namida_S' in cat:
+                mats = [m + ('.001' if 'cf_O_namida_M' in cat else '.002') for m in mats] #tears share a material name, so add a .001
             for mat in mats:
-                bpy.context.object.active_material_index = self.body.data.materials.find(mat)
+                bpy.context.object.active_material_index = c.get_body().data.materials.find(mat)
                 bpy.ops.object.material_slot_select()
         #refresh selection, then move tears a random amount backwards
         bpy.ops.object.mode_set(mode = 'OBJECT')
         bpy.ops.object.mode_set(mode = 'EDIT')
-        selected_verts = [v for v in self.body.data.vertices if v.select]
+        selected_verts = [v for v in c.get_body().data.vertices if v.select]
         amount_to_move_tears_back = 2 * (selected_verts[0].co.y - middle_of_head)
         bpy.ops.transform.translate(value=(0, abs(amount_to_move_tears_back), 0))
 
-        #move the tears forwards again the same amount in individual shapekeys
+        #move the tears forwards again the same amount in individual new shapekeys
         for cat in tear_mats:
-            mats = self.body['SMR materials'][cat]
+            mats = c.get_material_names(cat)
+            if 'cf_O_namida_M' in cat or 'cf_O_namida_S' in cat:
+                mats = [m + ('.001' if 'cf_O_namida_M' in cat else '.002') for m in mats] #tears share a material name, so add a .001
             for mat in mats:
-                c.switch(self.body, 'object')
-                bpy.ops.object.shape_key_add(from_mix=False)
-                last_shapekey = len(self.body.data.shape_keys.key_blocks)-1
-                self.body.data.shape_keys.key_blocks[-1].name = tear_mats[cat]
+                c.switch(c.get_body(), 'object')
+                bpy.ops.object.shape_key_add(from_mix = False)
+                c.get_body().data.shape_keys.key_blocks[-1].name = tear_mats[cat]
+                last_shapekey = len(c.get_body().data.shape_keys.key_blocks)-1
                 bpy.context.object.active_shape_key_index = last_shapekey
-                c.switch(self.body, 'edit')
-                bpy.context.object.active_material_index = self.body.data.materials.find(mat)
-                if self.body.data.materials.find(mat) == -1:
+                c.switch(c.get_body(), 'edit')
+                bpy.context.object.active_material_index = c.get_body().data.materials.find(mat)
+                if c.get_body().data.materials.find(mat) == -1:
                     bpy.context.object.active_material_index += 1
                 else:
-                    bpy.context.object.active_material_index = self.body.data.materials.find(mat)
+                    bpy.context.object.active_material_index = c.get_body().data.materials.find(mat)
                 bpy.ops.object.material_slot_select()
                 #find a random vertex location of the tear and move it forwards
-                c.switch(self.body, 'object')
-                selected_verts = [v for v in self.body.data.vertices if v.select]
+                c.switch(c.get_body(), 'object')
+                selected_verts = [v for v in c.get_body().data.vertices if v.select]
                 bpy.ops.object.mode_set(mode = 'EDIT')
                 bpy.ops.transform.translate(value=(0, -1 * abs(amount_to_move_tears_back), 0))
-                c.switch(self.body, 'object')
-                bpy.ops.object.shape_key_move(type='TOP' if self.body['SMR materials']['cf_O_namida_L'][0] in mat else 'BOTTOM')
+                c.switch(c.get_body(), 'object')
+                bpy.ops.object.shape_key_move(type='TOP' if tear_material_name in mat else 'BOTTOM')
 
         #Move the Eye, eyewhite and eyeline materials back on the KK gageye shapekey
         bpy.context.object.active_shape_key_index = bpy.context.object.data.shape_keys.key_blocks.find('KK Eyes_gageye')
-        c.switch(self.body, 'edit')
+        c.switch(c.get_body(), 'edit')
         for cat in [
-            self.body['SMR materials']['cf_Ohitomi_L'],
-            self.body['SMR materials']['cf_Ohitomi_R'], 
-            self.body['SMR materials']['cf_Ohitomi_L02'],
-            self.body['SMR materials']['cf_Ohitomi_R02'],
-            self.body['SMR materials']['cf_O_eyeline'],
-            self.body['SMR materials']['cf_O_eyeline_low']]:
-            for mat in cat:
-                bpy.context.object.active_material_index = self.body.data.materials.find(mat)
+            'cf_Ohitomi_L',
+            'cf_Ohitomi_R', 
+            'cf_Ohitomi_L02',
+            'cf_Ohitomi_R02',
+            'cf_O_eyeline',
+            'cf_O_eyeline_low']:
+            mats = c.get_material_names(cat)
+            for mat in mats:
+                bpy.context.object.active_material_index = c.get_body().data.materials.find(mat)
                 bpy.ops.object.material_slot_select()
         #find a random vertex location of the eye and move it backwards
-        c.switch(self.body, 'object')
-        selected_verts = [v for v in self.body.data.vertices if v.select]
+        c.switch(c.get_body(), 'object')
+        selected_verts = [v for v in c.get_body().data.vertices if v.select]
         bpy.ops.object.mode_set(mode = 'EDIT')
         bpy.ops.transform.translate(value=(0, 2.5 * abs(amount_to_move_tears_back), 0))
-        c.switch(self.body, 'object')
+        c.switch(c.get_body(), 'object')
 
         #Merge the tear materials
-        c.switch(self.body, 'edit')
-        tear_mats = []
-        tear_mats.extend(self.body['SMR materials']['cf_O_namida_M'])
-        tear_mats.extend(self.body['SMR materials']['cf_O_namida_S'])
+        c.switch(c.get_body(), 'edit')
+        tear_mats = c.get_material_names('cf_O_namida_L')
+        tear_mats.extend([c.get_material_names('cf_O_namida_M')[0] + '.001']) #tears share a material name, so add a .001
+        tear_mats.extend([c.get_material_names('cf_O_namida_S')[0] + '.002']) #tears share a material name, so add a .002
         for mat in tear_mats:
-            bpy.context.object.active_material_index = self.body.data.materials.find(mat)
+            bpy.context.object.active_material_index = c.get_body().data.materials.find(mat)
             bpy.ops.object.material_slot_select()
-            bpy.context.object.active_material_index = self.body.data.materials.find(self.body['SMR materials']['cf_O_namida_L'][0])
+            bpy.context.object.active_material_index = c.get_body().data.materials.find(tear_material_name)
             bpy.ops.object.material_slot_assign()
             bpy.ops.mesh.select_all(action='DESELECT')
 
         #make a vertex group that does not contain the tears
         bpy.ops.object.vertex_group_add()
         bpy.ops.mesh.select_all(action='SELECT')
-        self.body.vertex_groups.active.name = "Body without Tears"
-        bpy.context.object.active_material_index = self.body.data.materials.find(self.body['SMR materials']['cf_O_namida_L'][0])
+        c.get_body().vertex_groups.active.name = "Body without Tears"
+        bpy.context.object.active_material_index = c.get_body().data.materials.find(tear_material_name)
+        bpy.ops.object.material_slot_deselect()
+        bpy.context.object.active_material_index = c.get_body().data.materials.find(tear_material_name + '.001')
+        bpy.ops.object.material_slot_deselect()
+        bpy.context.object.active_material_index = c.get_body().data.materials.find(tear_material_name + '.002')
         bpy.ops.object.material_slot_deselect()
         bpy.ops.object.vertex_group_assign()
 
         #Separate tears from body object
         #link shapekeys of tears to body
-        tear_mats = []
-        tear_mats.extend(self.body['SMR materials']['cf_O_namida_L'])
-        self.separate_materials(self.body, tear_mats)
-        tears = bpy.data.objects['Body.001']
-        tears.name = 'Tears'
+        tears = self.separate_materials(c.get_body(), tear_mats, 'Tears ' + c.get_name())
+        tears['tears'] = True
         bpy.ops.object.mode_set(mode = 'OBJECT')
-        link_keys(self.body, [tears])
+        link_keys(c.get_body(), [tears])
         c.print_timer('create_tear_shapekeys')
 
     def create_gag_eye_shapekeys(self):
         '''Separate gag eyes from body and create gag eye shapekeys'''
         if bpy.context.scene.kkbp.shapekeys_dropdown not in ['A', 'B']:
             return
-        bpy.context.view_layer.objects.active=self.body
+        bpy.context.view_layer.objects.active=c.get_body()
         gag_keys = [
             'Circle Eyes 1',
             'Circle Eyes 2',
@@ -727,188 +624,109 @@ class modify_mesh(bpy.types.Operator):
         for key in gag_keys:
             bpy.ops.object.mode_set(mode = 'OBJECT')
             bpy.ops.object.shape_key_add(from_mix=False)
-            last_shapekey = len(self.body.data.shape_keys.key_blocks)-1
-            self.body.data.shape_keys.key_blocks[-1].name = key
+            last_shapekey = len(c.get_body().data.shape_keys.key_blocks)-1
+            c.get_body().data.shape_keys.key_blocks[-1].name = key
             bpy.context.object.active_shape_key_index = last_shapekey
             bpy.ops.object.shape_key_move(type='TOP')
         
+        def create_gag_eye_driver(keyblock: str, condition: str):
+            '''creates a gag eye driver'''
+            skey_driver = bpy.data.shape_keys[0].key_blocks[keyblock].driver_add('value')
+            skey_driver.driver.type = 'SCRIPTED'
+            for key in gag_keys:
+                newVar = skey_driver.driver.variables.new()
+                newVar.name = key.replace(' ','')
+                newVar.type = 'SINGLE_PROP'
+                newVar.targets[0].id_type = 'KEY'
+                newVar.targets[0].id = c.get_body().data.shape_keys
+                newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
+            skey_driver.driver.expression = condition
+
         bpy.context.object.active_shape_key_index = 0
         #make most gag eye shapekeys activate the body's gag key if the KK gageeye shapekey was created
         if bpy.data.shape_keys[0].key_blocks.get('KK Eyes_gageye'):
-            skey_driver = bpy.data.shape_keys[0].key_blocks['KK Eyes_gageye'].driver_add('value')
-            skey_driver.driver.type = 'SCRIPTED'
-            for key in gag_keys:
-                newVar = skey_driver.driver.variables.new()
-                newVar.name = key.replace(' ','')
-                newVar.type = 'SINGLE_PROP'
-                newVar.targets[0].id_type = 'KEY'
-                newVar.targets[0].id = self.body.data.shape_keys
-                newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
             condition = [key.replace(' ', '') for key in gag_keys if 'Fiery' not in key]
-            skey_driver.driver.expression = '1 if ' + ' or '.join(condition) + ' else 0'
-
-            #make certain gag eye shapekeys activate the correct gag show key
-            skey_driver = bpy.data.shape_keys[0].key_blocks['Gag eye 00'].driver_add('value')
-            skey_driver.driver.type = 'SCRIPTED'
-            for key in gag_keys:
-                newVar = skey_driver.driver.variables.new()
-                newVar.name = key.replace(' ','')
-                newVar.type = 'SINGLE_PROP'
-                newVar.targets[0].id_type = 'KEY'
-                newVar.targets[0].id = self.body.data.shape_keys
-                newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
-            skey_driver.driver.expression = '1 if CircleEyes1 or CircleEyes2 or VerticalLine or CartoonyClosed or HorizontalLine else 0'
-
-            #make certain gag eye shapekeys activate the correct gag show key
-            skey_driver = bpy.data.shape_keys[0].key_blocks['Gag eye 01'].driver_add('value')
-            skey_driver.driver.type = 'SCRIPTED'
-            for key in gag_keys:
-                newVar = skey_driver.driver.variables.new()
-                newVar.name = key.replace(' ','')
-                newVar.type = 'SINGLE_PROP'
-                newVar.targets[0].id_type = 'KEY'
-                newVar.targets[0].id = self.body.data.shape_keys
-                newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
-            skey_driver.driver.expression = '1 if HeartEyes or SpiralEyes else 0'
-
-            #make certain gag eye shapekeys activate the correct gag show key
-            skey_driver = bpy.data.shape_keys[0].key_blocks['Gag eye 02'].driver_add('value')
-            skey_driver.driver.type = 'SCRIPTED'
-            for key in gag_keys:
-                newVar = skey_driver.driver.variables.new()
-                newVar.name = key.replace(' ','')
-                newVar.type = 'SINGLE_PROP'
-                newVar.targets[0].id_type = 'KEY'
-                newVar.targets[0].id = self.body.data.shape_keys
-                newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
-            skey_driver.driver.expression = '1 if FieryEyes or CartoonyWink or CartoonyCrying else 0'
+            create_gag_eye_driver('KK Eyes_gageye', '1 if ' + ' or '.join(condition) + ' else 0' )
+            create_gag_eye_driver('Gag eye 00', '1 if CircleEyes1 or CircleEyes2 or VerticalLine or CartoonyClosed or HorizontalLine else 0' )
+            create_gag_eye_driver('Gag eye 01', '1 if HeartEyes or SpiralEyes else 0' )
+            create_gag_eye_driver('Gag eye 02', '1 if FieryEyes or CartoonyWink or CartoonyCrying else 0' )
 
             #make a vertex group that does not contain the gag_eyes
             bpy.ops.object.vertex_group_add()
-            c.switch(self.body, 'edit')
+            c.switch(c.get_body(), 'edit')
             bpy.ops.mesh.select_all(action='SELECT')
-            self.body.vertex_groups.active.name = "Body without Gag eyes"
-            for gag_cat in [self.body['SMR materials']['cf_O_gag_eye_00'], self.body['SMR materials']['cf_O_gag_eye_01'], self.body['SMR materials']['cf_O_gag_eye_02']]:
-                for gag_mat in gag_cat:
-                    bpy.context.object.active_material_index = self.body.data.materials.find(gag_mat)
-                    bpy.ops.object.material_slot_deselect()
+            c.get_body().vertex_groups.active.name = "Body without Gag eyes"
+
+            mats = c.get_material_names('cf_O_gag_eye_00')
+            mats.extend(c.get_material_names('cf_O_gag_eye_01'))
+            mats.extend(c.get_material_names('cf_O_gag_eye_02'))
+            for gag_mat in mats:
+                bpy.context.object.active_material_index = c.get_body().data.materials.find(gag_mat)
+                bpy.ops.object.material_slot_deselect()
             bpy.ops.object.vertex_group_assign()
 
             #Separate gag from body object
             #link shapekeys of gag to body
-            gag_mat = []
-            gag_mat.extend(self.body['SMR materials']['cf_O_gag_eye_00'])
-            gag_mat.extend(self.body['SMR materials']['cf_O_gag_eye_01'])
-            gag_mat.extend(self.body['SMR materials']['cf_O_gag_eye_02'])
-            self.separate_materials(self.body, gag_mat)
-            gag = bpy.data.objects['Body.001']
-            gag.name = 'Gag Eyes'
-            c.switch(self.body, 'object')
-            link_keys(self.body, [gag])
+            gag = self.separate_materials(c.get_body(), mats, 'Gag Eyes ' + c.get_name())
+            gag['body'] = False
+            gag['gag'] = True
+            c.switch(c.get_body(), 'object')
+            link_keys(c.get_body(), [gag])
         c.print_timer('create_gag_eye_shapekeys')
-
-    def add_body_datatransfer(self):
-        '''Give the body an inactive data transfer modifier for a cheap shading proxy'''
-        mod = self.body.modifiers.new(type='DATA_TRANSFER', name = 'Shadowcast shading proxy')
-        mod.show_expanded = False
-        mod.show_viewport = False
-        mod.show_render = False
-        if bpy.data.objects.get('Shadowcast'):
-            mod.object = bpy.data.objects['Shadowcast']
-        mod.use_loop_data = True
-        mod.data_types_loops = {'CUSTOM_NORMAL'}
-        mod.loop_mapping = 'POLYINTERP_LNORPROJ'
-        c.print_timer('add_body_datatransfer')
 
     def remove_body_seams(self):
         '''merge certain materials for the body object to prevent odd shading issues later on'''
         if not bpy.context.scene.kkbp.fix_seams:
             return
-        c.switch(self.body, 'edit')
-        select_list = [
-            self.body['SMR materials']['cf_O_face'],
-            self.body['SMR materials']['o_body_a'],
-            ]
+        c.switch(c.get_body(), 'edit')
+        mats = c.get_material_names('cf_O_face')
+        mats.extend(c.get_material_names('o_body_a'))
+
         bpy.context.tool_settings.mesh_select_mode = (True, False, False) #enable vertex select in edit mode
-        for cat in select_list:
-            for mat in cat:
-                bpy.context.object.active_material_index = self.body.data.materials.find(mat)
-                bpy.ops.object.material_slot_select()
+        for mat in mats:
+            bpy.context.object.active_material_index = c.get_body().data.materials.find(mat)
+            bpy.ops.object.material_slot_select()
         bpy.ops.mesh.remove_doubles(threshold=0.00001)
 
-        #This still messes with the weights. Maybe it's possible to save the 3D positions, weights, and UV positions for each duplicate vertex
+        # This operation still messes with the weights.
+        # Maybe it's possible to save the 3D positions, weights, and UV positions for each duplicate vertex
         # then delete and make new vertices with saved info 
         # The vertices on the body object seem to be consistent across imports according to https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/82
         c.print_timer('remove_body_seams')
 
     def mark_body_freestyle_faces(self):
-        c.switch(self.body, 'edit')
+        c.switch(c.get_body(), 'edit')
         #mark certain materials as freestyle faces
-        def mark_as_freestyle(mat_list):
+        def mark_as_freestyle(mat_list: bpy.types.Material):
             for mat in mat_list:
-                if mat:
-                    mat_found = self.body.data.materials.find(mat)
-                    if mat_found > -1:
-                        bpy.context.object.active_material_index = mat_found
-                        bpy.ops.object.material_slot_select()
-                    else:
-                        c.kklog('Material wasn\'t found when freestyling body materials: ' + mat, 'warn')
+                mat_found = c.get_body().data.materials.find(mat)
+                if mat_found > -1:
+                    bpy.context.object.active_material_index = mat_found
+                    bpy.ops.object.material_slot_select()
+                else:
+                    c.kklog('Material wasn\'t found when freestyling body materials: ' + mat, 'warn')
             bpy.ops.mesh.mark_freestyle_face(clear=False)
-        freestyle_list = []
-        freestyle_list.extend(self.body['SMR materials']['cf_Ohitomi_L02'])
-        freestyle_list.extend(self.body['SMR materials']['cf_Ohitomi_R02'])
-        freestyle_list.extend(self.body['SMR materials']['cf_Ohitomi_L'])
-        freestyle_list.extend(self.body['SMR materials']['cf_Ohitomi_R'])
-        freestyle_list.extend(self.body['SMR materials']['cf_O_eyeline_low'])
-        freestyle_list.extend(self.body['SMR materials']['cf_O_eyeline'])
-        freestyle_list.extend(self.body['SMR materials']['cf_O_noseline'])
-        freestyle_list.extend(self.body['SMR materials']['cf_O_mayuge'])
-        mark_as_freestyle(freestyle_list)
+        freestyle_list = [
+        'cf_Ohitomi_L02',
+        'cf_Ohitomi_R02',
+        'cf_Ohitomi_L',
+        'cf_Ohitomi_R',
+        'cf_O_eyeline_low',
+        'cf_O_eyeline',
+        'cf_O_noseline',
+        'cf_O_mayuge',]
+        mats = []
+        for mat in freestyle_list:
+            mats.extend(c.get_material_names(mat))
+        mark_as_freestyle(mats)
         bpy.ops.mesh.select_all(action = 'DESELECT')
         bpy.ops.object.mode_set(mode = 'OBJECT')
         c.print_timer('mark_body_freestyle_faces')
 
-    def tag_all_objects_for_next_operation(self):
-        '''Gives each object a tag so they can be identified by other scripts'''
-        self.body['KKBP tag'] = 'body'
-        for outfit in self.outfits:
-            outfit['KKBP tag'] = 'outfit'
-        for alt in self.outfit_alternates:
-            alt['KKBP tag'] = 'alt'
-        for hair in self.hairs:
-            hair['KKBP tag'] = 'hair'
-        for hb in self.hitboxes:
-            hb['KKBP tag'] = 'hitbox'
-        c.print_timer('tag_all_objects_for_next_operation')
 
-
-    # %% Supporting functions
-    def move_and_hide_collection (self, objects, new_collection):
-        '''Move the objects into their own collection and hide them'''
-        if not objects:
-            return
-        
-        c.switch(objects[0], 'object')
-        for object in objects:
-            object.select_set(True)
-            bpy.context.view_layer.objects.active=object
-        #move
-        bpy.ops.object.move_to_collection(collection_index=0, is_new=True, new_collection_name=new_collection)
-        #then hide the new collection
-        try:
-            bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children[new_collection]
-            bpy.context.scene.view_layers[0].active_layer_collection.exclude = True
-        except:
-            try:
-                #maybe the collection is in the default Collection collection
-                bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children['Collection'].children[new_collection]
-                bpy.context.scene.view_layers[0].active_layer_collection.exclude = True
-            except:
-                #maybe the collection is already hidden, or doesn't exist
-                pass
-
-    def separate_materials(self, object, mat_list, search_type = 'exact'):
-        '''Separates the materials in the mat_list on object, and creates a new object'''
+    def separate_materials(self, object: bpy.types.Object, mat_list: list[bpy.types.Material], new_object_name: str, search_type = 'exact') -> bpy.types.Object:
+        '''Separates the materials in the mat_list on object, and renames the separated object to "new_object_name". 
+        Returns the separated object, or None if there was an error'''
         c.switch(object, 'edit')
         for mat in mat_list:
             mat_found = -1
@@ -930,11 +748,16 @@ class modify_mesh(bpy.types.Operator):
                 c.kklog('Material wasn\'t found when separating materials: ' + mat, 'warn')
         try:
             bpy.ops.mesh.separate(type='SELECTED')
+            new_object = bpy.context.selected_objects[1]
+            new_object.name = new_object_name                                                                               
+            return new_object
         except:
             c.kklog('Nothing was selected when separating materials from: ' + object.name, 'warn')
-        bpy.ops.object.mode_set(mode = 'OBJECT')
+            bpy.ops.object.mode_set(mode = 'OBJECT')
+            return None
 
-    def delete_material(self, object, mat_list):
+    def delete_materials(self, object: bpy.types.Object, mat_list: bpy.types.Material):
+        '''Deletes the materials in mat_list from object'''
         for mat in mat_list:
             if object.data.materials.find(mat.name) > -1:
                 c.switch(object, 'edit')
@@ -943,8 +766,3 @@ class modify_mesh(bpy.types.Operator):
                 bpy.ops.mesh.delete(type='VERT')
 
 
-if __name__ == "__main__":
-    bpy.utils.register_class(modify_mesh)
-
-    # test call
-    print((bpy.ops.kkbp.modifymesh('INVOKE_DEFAULT')))

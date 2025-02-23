@@ -4,7 +4,7 @@ bl_info = {
     "author" : "a blendlet and some blenderchads",
     "location" : "View 3D > Tool Shelf > KKBP and Image Editor > Tool Shelf > KKBP",
     "description" : "Scripts to automate cleanup of a Koikatsu export",
-    "version": (7, 2, 1),
+    "version": (8, 0, 0),
     "blender" : (3, 6, 0),
     "category" : "3D View",
     "tracker_url" : "https://github.com/FlailingFog/KK-Blender-Porter-Pack/",
@@ -37,12 +37,9 @@ def reg_unreg(register_bool):
     from .exporting.material_combiner.get_pillow import InstallPIL
 
     from .extras.importstudio import import_studio
-    from .extras.animationlibrary.createmapassetlibrary import map_asset_lib
-    from .extras.animationlibrary.createanimationlibrary import anim_asset_lib
+    from .extras.createmapassetlibrary import map_asset_lib
+    from .extras.createanimationlibrary import anim_asset_lib
     from .extras.linkshapekeys import link_shapekeys
-    from .extras.separatemeshes import separate_meshes
-    from .extras.separatemeshes import export_separate_meshes
-    from .extras.toggleik import toggle_ik
     from .extras.updatebones import update_bones
     from .extras.imageconvert import image_convert
     from .extras.imageconvert import image_dark_convert
@@ -51,9 +48,10 @@ def reg_unreg(register_bool):
     from .extras.rigifyscripts.rigify_after import rigify_after
     from .extras.catsscripts.armature_manual import MergeWeights
     from .extras.importanimation import anim_import
-    from .extras.splitobjects import split_objects
     from .extras.matcombsetup import mat_comb_setup
+    from .extras.matcombswitch import mat_comb_switch
     from .extras.resetmaterials import reset_materials
+    from .extras.linkhair import link_hair
 
     from . KKPanel import PlaceholderProperties
     from . KKPanel import (
@@ -61,6 +59,7 @@ def reg_unreg(register_bool):
         IMPORTING_PT_panel,
         EXPORTING_PT_panel,
         EXTRAS_PT_panel,
+        HAIR_PT_panel,
     )
 
     classes = (
@@ -73,23 +72,21 @@ def reg_unreg(register_bool):
         map_asset_lib,
         anim_asset_lib,
         link_shapekeys,
-        separate_meshes,
-        export_separate_meshes,
-        toggle_ik,
         update_bones,
         rigify_convert,
         rigify_before,
         rigify_after,
         MergeWeights,
         anim_import,
-        split_objects,
         Combiner,
         RefreshObData,
         CombineSwitch,
         CombineList,
         mat_comb_setup,
+        mat_comb_switch,
         InstallPIL,
         reset_materials,
+        link_hair,
 
         kkbp_import,
         modify_mesh,
@@ -101,7 +98,9 @@ def reg_unreg(register_bool):
         IMPORTINGHEADER_PT_panel,
         IMPORTING_PT_panel,
         EXPORTING_PT_panel,
-        EXTRAS_PT_panel)
+        EXTRAS_PT_panel,
+        HAIR_PT_panel,
+        )
 
     for cls in classes:
         register_class(cls) if register_bool else unregister_class(cls)

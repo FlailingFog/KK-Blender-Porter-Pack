@@ -25,10 +25,8 @@ translation_dictionary = {
     'cat_drop'      : '分类类型',
     'cat_drop_A'    : "单一服装",
     'cat_drop_A_tt' : "导入所有内容并获得包含所有衣服模型的单个对象。默认情况下隐藏任何备用衣服",
-    'cat_drop_C'    : "分开所有对象",
-    'cat_drop_C_tt' : "导入所有内容并自动将每件衣服分成多个对象",
-    'cat_drop_D'    : "按SMR数据分类",
-    'cat_drop_D_tt' : "导入所有内容并通过SMR（蒙皮网格渲染器）自动分离每个对象。注意：此选项仅用于导出网格，因此不会应用任何材质模板或颜色",
+    'cat_drop_B'    : "分开所有对象",
+    'cat_drop_B_tt' : "导入所有内容并自动将每件衣服分成多个对象",
 
     'dark'      : "暗色",
     'dark_C'    : "不使用暗色",
@@ -49,6 +47,8 @@ translation_dictionary = {
     移除重复的眼白材质槽（如果存在）
     移除“Upper Chest”骨骼，
     编辑骨骼层级以允许Unity自动检测正确骨骼""",
+    # 'prep_drop_E'       : 
+    # 'prep_drop_E_tt'    : 
 
     'simp_drop'     : '骨骼简化类型',
     'simp_drop_A'   : '非常简单（慢）',
@@ -114,27 +114,28 @@ translation_dictionary = {
     'sep_eye_tt'                : "将眼睛和眉毛从身体对象中分离出来，并将形态键链接到身体对象。当您想让眼睛或眉毛通过头发透视时，该功能非常有用",
     'bone_visibility'           : "更新骨骼可见性",
     'bone_visibility_tt'        : "根据隐藏的服装更新骨骼的可见性",
-    'export_sep_meshes'         : "导出分离的网格",
-    'export_sep_meshes_tt'      : "仅适用于 “按SMR数据分类”选项。选择导出网格的位置",
+    # 'link_hair'                 : 
+    # 'link_hair_tt'              : 
 
     'kkbp_import_tt'   : "导入恋活模型（.pmx格式），并对其应用修复",
     'export_prep_tt'    : "不适用于Rigify骨架，查看下拉列表以了解更多信息",
     'bake_mats_tt'      : "打开要将材质模板烘焙到的文件夹",
 
-    'install_dependency': "安装依赖",
-    'install_dependency_tt': """ 单击此按钮自动下载 Blender 2.90。导入 KKBP 模型需要该版本的 Blender。
-此过程将耗时几分钟，具体取决于您的网络速度，并将从 https://download.blender.org/release/ 下载 193MB 的数据。
-安装后，它将占用 504MB 的空间，并存储在 KKBP 附加组件目录中。您可以卸载 KKBP 附加组件来收回空间。
-如果您想使用 Blender 3.6，请点击下方的 3.6 按钮。该版本比 Blender 2.90 大很多，但硬件兼容性可能更好。
-如果您希望使用自己的Blender 2.90可执行文件而不是让插件为您下载，请打开 KKBP 插件首选项窗口并在其中输入可执行文件的绝对路径。2.90 和 3.6 之间的任何版本都可以使用""",
-
     'delete_cache' : '删除缓存',
     'delete_cache_tt' : '启用此选项可删除缓存文件。缓存文件在导入模型或最终确定材质时生成。这些文件被命名为 “atlas_files”、“baked_files”、“dark_files ”和 “saturated_files ”存储在pmx文件夹中。启用此选项将删除这些文件夹中的所有文件',
-
-    'split_objects' : '分离物体',
-    'split_objects_tt' : '单击此按钮可将当前选中的对象一分为二。使用 “最终确定材质 ”按钮时，插件会为模型生成图集，但如果对象的材质过多，Blender可能会因内存不足而崩溃。此按钮可将对象一分为二，从而将模型上的材质数量减半，这样在低端硬件上崩溃的可能性就会降低。',
 
     'use_atlas' : '创建材质图集',
     'use_atlas_tt': '禁用此功能可在最终确定材质时节省大量时间，但不会创建材质图集。',
     'dont_use_atlas' : '不创建材质图集',
+
+    # 'mat_comb_tt' : '
+    # 'matcomb' : 
+    # 'mat_comb_switch' : 
+    # 'mat_comb_switch_tt' : 
+
+    # 'pillow' : 
+    # 'pillow_tt':
+    # 'reset_mats' : 
+    # 'reset_mats_tt' : 
+
     }

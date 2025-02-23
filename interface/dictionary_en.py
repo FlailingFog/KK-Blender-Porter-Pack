@@ -1,19 +1,11 @@
 from bpy.app.translations import locale
-from bpy.app import version_string
 from .dictionary_jp import translation_dictionary as jp_translation
 from .dictionary_zh import translation_dictionary as zh_translation
-
-#Blender 4 changed the language code for Simplified Chinese from 'zh_CN' to 'zh_HANS', this broke Chinese translation.
-if version_string[:1] == '4':
-#Determine whether to use 'zh_CN' or 'zh_HANS' by Blender version.
-    chinese_code = 'zh_HANS'
-else:
-    chinese_code = 'zh_CN'
 
 translation_dictionary = {
 
     'seams'     : "Fix body seams",
-    'seams_tt'  : 'This performs a "remove doubles" operation on the body materials. Removing doubles screws with the weights around certain areas and will mess with atlas creation. Disabling this will preserve the weights and allow you to create an atlas, but may cause seams to appear around the neck and down the chest when the outline modifier is on',
+    'seams_tt'  : 'This performs a "remove doubles" operation on the body materials. Removing doubles screws with the weights around certain areas. Disabling this will preserve the weights, but may cause seams to appear around the neck and down the chest when the outline modifier is on',
     
     'outline'     : 'Use single outline',
     'outline_tt'  : "Enable to use one generic outline material as opposed to using several unique ones. Checking this may cause outline transparency issues",
@@ -37,10 +29,8 @@ translation_dictionary = {
     'cat_drop'      : 'Run type',
     'cat_drop_A'    : "Single clothes object",
     'cat_drop_A_tt' : "Import everything and get a single object containing all your model's clothes. Hides any alternate clothes by default",
-    'cat_drop_C'    : "Separate every object",
-    'cat_drop_C_tt' : "Import everything and automatically separate every single piece of clothing into several objects",
-    'cat_drop_D'    : "Separate by SMR Data",
-    'cat_drop_D_tt' : "Import everyting and automatically separate every object by it's Skinned Mesh Renderer. Note: This option is only for exporting meshes so it will not apply any material templates or colors",
+    'cat_drop_B'    : "Separate every object",
+    'cat_drop_B_tt' : "Import everything and automatically separate every single piece of clothing into several objects",
 
     'dark'      : "Dark colors",
     'dark_C'    : "Do not use dark colors",
@@ -61,7 +51,6 @@ translation_dictionary = {
     removes duplicate Eyewhite material slot if present,
     removes the "Upper Chest" bone,
     edits bone hierarchy to allow Unity to automatically detect the right bones""",
-
     'prep_drop_E'       : "Unreal Engine",
     'prep_drop_E_tt'    : """Removes the outline and...
     removes duplicate Eyewhite material slot if present,
@@ -95,7 +84,8 @@ translation_dictionary = {
     'shape_C_tt'    : "Use the stock Koikatsu shapekeys. This will not change the shapekeys in any way",
 
     'shader_A'       : 'Use Eevee',
-    'shader_B'       : "Use Cycles",
+    'shader_B'       : "Use Cycles (toon)",
+    'shader_D'       : "Use Cycles (classic)",
     'shader_C'       : "Use Eevee mod",
     'shader_C_tt'    : "Uses a modified shader setup for Eevee",
 
@@ -126,11 +116,11 @@ translation_dictionary = {
     'sep_eye_tt'                : "Separates the Eyes and Eyebrows from the Body object and links the shapekeys to the Body object. Useful for when you want to make eyes or eyebrows appear through the hair using the Cryptomatte features in the compositor",
     'bone_visibility'           : "Show bones for current outfit",
     'bone_visibility_tt'        : "This will update visibility for all accessory bones. For example, if you have an Outfit 00 and an Outfit 01, both of them are visible then all accessory bones will be shown. If you hide Outfit 00 and click this button, only Outfit 01's accessory bones will be shown",
-    'export_sep_meshes'         : "Export Seperate Meshes",
-    'export_sep_meshes_tt'      : "Only available for the \"Separate by SMR data\" option. Choose where to export meshes",
+    'link_hair'                 : 'Update hair materials',
+    'link_hair_tt'              : 'Click to copy the current colors, detail intensity, etc to the other hair materials on this object',
 
     'kkbp_import_tt'    : "Imports a Koikatsu model (.pmx format) and applies fixes to it",
-    'export_prep_tt'    : "Not available for the Rigify Armature. Check the dropdown for more info",
+    'export_prep_tt'    : "Use the KKBP Armature for the best results. Check the dropdown for more info",
     'bake_mats_tt'      : "Finalize materials as .png files. These will be stored in the original .pmx folder",
 
     'delete_cache' : 'Delete cache',
@@ -142,6 +132,9 @@ translation_dictionary = {
 
     'mat_comb_tt' : 'KKBP uses parts of Shotariya\'s Material Combiner addon to automatically merge your materials into an atlas. Click this if you want to manually combine your materials instead of letting KKBP do it for you (requires you to download the Material Combiner addon. Also, make sure you have already clicked the Finalize Materials button in the KKBP panel or it will not work) ',
     'matcomb' : 'Setup materials for Material Combiner',
+    'mat_comb_switch' : 'Toggle light / dark for Material Combiner',
+    'mat_comb_switch_tt' : 'Click this to toggle texture state to get both a light and dark atlas from Material Combiner',
+
     'pillow' : 'Install PIL to use atlas feature',
     'pillow_tt':'Click to install Pillow. This could take a while and might require you to run Blender as Admin',
     'reset_mats' : 'Reset finalized materials',
@@ -153,7 +146,8 @@ def t(text_entry):
     try:
         if locale == 'ja_JP':
             return jp_translation[text_entry]
-        elif locale == chinese_code:
+        #Blender 4 changed the language code for Simplified Chinese from 'zh_CN' to 'zh_HANS'
+        elif locale in ['zh_HANS', 'zh_CN']:
             return zh_translation[text_entry]
         else:
             return translation_dictionary[text_entry]
