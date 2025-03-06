@@ -39,7 +39,7 @@ class kkbp_import(bpy.types.Operator):
         bpy.data.scenes[0].view_settings.look = 'None'
 
         #save filepath for later
-        bpy.context.scene.kkbp.import_dir = str(self.filepath)[:-9]
+        bpy.context.scene.kkbp.import_dir = str(self.filepath)[:-9] if self.filepath else bpy.context.scene.kkbp.import_dir
 
         #delete the cached files if the option is enabled
         if bpy.context.scene.kkbp.delete_cache and c.get_import_path():
