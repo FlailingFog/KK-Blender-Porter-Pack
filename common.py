@@ -245,15 +245,14 @@ def move_and_hide_collection(objects: bpy.types.Object, new_collection: str, hid
     if not objects:
         return
     switch(objects[0], 'object')
-    for object in objects:
-        object.select_set(True)
-        bpy.context.view_layer.objects.active=object
     #move
-    character_collection_index = len(bpy.context.view_layer.layer_collection.children)
-    bpy.ops.object.move_to_collection(collection_index=character_collection_index, is_new=True, new_collection_name=new_collection)
+    object_collection = bpy.data.collections.new(new_collection)
+    for object in objects:
+        object_collection.objects.link(object)
+    bpy.context.scene.collection.children[get_name()].children.link(object_collection)
     #then hide the new collection
     try:
-        bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children[-1].children[new_collection]
+        bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children[get_name()].children[new_collection]
         bpy.context.scene.view_layers[0].active_layer_collection.exclude = hide
     except:
         kklog(f'Failed to move and hide collection: {new_collection}', type = 'error')
