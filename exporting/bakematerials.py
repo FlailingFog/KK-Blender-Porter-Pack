@@ -406,17 +406,19 @@ def create_material_atlas(folderpath: str):
             for c in collection.children:
                 _copy(cc, c, linked)
             parent.children.link(cc)
-        _copy(parent, collection, linked)
+            return cc
+        the_copy = _copy(parent, collection, linked)
         for o, dupe in tuple(dupe_lut.items()):
             parent = dupe_lut[o.parent]
             if parent:
                 dupe.parent = parent
+        return the_copy
     context = bpy.context
     scene = context.scene
     col = context.collection
     assert(col is not scene.collection)
-    copy(scene.collection, col)
-    bpy.data.collections[c.get_name() + '.001'].name = c.get_name() + ' atlas'
+    copied_collection = copy(scene.collection, col)
+    copied_collection.name = c.get_name() + ' atlas'
 
     #setup materials for the combiner script
     for obj in [o for o in bpy.data.collections[c.get_name() + ' atlas'].all_objects if not o.hide_get() and o.type == 'MESH']:
@@ -443,19 +445,21 @@ def create_material_atlas(folderpath: str):
         bake_types.append('dark')
     if scene.kkbp.bake_norm_bool:
         bake_types.append('normal')
-    for index, obj in enumerate([o for o in bpy.data.collections[c.get_name() + ' atlas'].all_objects if not o.hide_get() and o.type == 'MESH']):
+    for index, obj in enumerate([o for o in bpy.data.collections[c.get_name() + ' atlas'].all_objects if o.type == 'MESH']):
+        #fix modifiers for all objects in this collection
+        for mod in obj.modifiers:
+            if mod.type == 'ARMATURE':
+                #fix the armature modifier to use the copied aramture
+                copied_armature = [o for o in bpy.data.collections[c.get_name() + ' atlas'].all_objects if o.type == 'ARMATURE'][0]
+                mod.object = copied_armature
+            elif mod.type == 'SOLIDIFY':
+                #disable the outline on the atlased object because I don't feel like fixing it
+                obj.modifiers['Outline Modifier'].show_render = False
+                obj.modifiers['Outline Modifier'].show_viewport = False
+        
         #check if this object had any atlas-able materials to begin with. If not, skip
         if not [mat_slot.material for mat_slot in obj.material_slots if mat_slot.material.get('simple')]:
             continue
-
-        #disable the outline on the atlased object because I don't feel like fixing it
-        if obj.modifiers.get('Outline Modifier'):
-            obj.modifiers['Outline Modifier'].show_render = False
-            obj.modifiers['Outline Modifier'].show_viewport = False
-        #fix the armature modifier
-        if obj.modifiers:
-            if obj.modifiers[0].type == 'ARMATURE':
-                obj.modifiers[0].object = bpy.data.objects["Armature.001"]
 
         for bake_type in bake_types:
             #check for atlas dupes

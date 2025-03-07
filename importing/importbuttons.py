@@ -66,6 +66,8 @@ class kkbp_import(bpy.types.Operator):
                 
         #get the character name and use it for some things later on
         bpy.context.scene.kkbp.character_name = c.get_import_path().replace(os.path.dirname(os.path.dirname(c.get_import_path())), '').split('_', maxsplit = 1)[1][:-1]
+        #remove any dots from the character name or blender will get confused when creating an atlas
+        bpy.context.scene.kkbp.character_name = bpy.context.scene.kkbp.character_name.replace('.', '')
         #but if the name is longer than 64 characters, blender will cut off the name, leading to some issues later on. 
         #The longest material I've encountered is "KK acs_M_nose_tama_00 1290 " and the longest suffix will always be " light.png" at 37 total characters
         #so I'll arbitrarily cut off the name at 24 characters to be safe (needs to be an even number). The .encode() is used to handle multibyte characters like japanese / korean names
