@@ -32,6 +32,11 @@ class kkbp_import(bpy.types.Operator):
             for obj in ['Camera', 'Light', 'Cube']:
                 if bpy.data.objects.get(obj):
                     bpy.data.objects.remove(bpy.data.objects[obj])
+        #if the default scene was not present, make sure the default collection is at least there
+        if not bpy.data.collections.get('Collection'):
+            new_col = bpy.data.collections.new('Collection')
+            bpy.context.scene.collection.children.link(new_col)
+            bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children[new_col.name]
 
         #Set the view transform 
         bpy.data.scenes[0].display_settings.display_device = 'sRGB'
