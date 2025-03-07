@@ -167,8 +167,9 @@ def bake_pass(folderpath: str, bake_type: str):
 
         #if this is a normal pass, attach the normal passthrough to the output
         elif nodes.get('textures') and bake_type == 'normal':
-            links.remove(nodes['out'].inputs[0].links[0])
-            links.new(nodes['textures'].outputs[-1], nodes['out'].inputs[0])
+            if len(nodes['textures'].outputs):
+                links.remove(nodes['out'].inputs[0].links[0])
+                links.new(nodes['textures'].outputs[-1], nodes['out'].inputs[0])
         
         if nodes.get('textures'):
             #Go through each of the textures loaded into the textures group and get the highest resolution one
@@ -220,8 +221,9 @@ def bake_pass(folderpath: str, bake_type: str):
         
         #Restore the links if they were edited for the normal pass
         elif nodes.get('textures') and bake_type == 'normal':
-            links.remove(nodes['out'].inputs[0].links[0])
-            links.new(nodes['combine'].outputs[0], nodes['out'].inputs[0])
+            if len(nodes['textures'].outputs):
+                links.remove(nodes['out'].inputs[0].links[0])
+                links.new(nodes['combine'].outputs[0], nodes['out'].inputs[0])
 
         #reset material slots to their original order
         for material_index in range(len(original_material_order)):
