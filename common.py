@@ -257,7 +257,33 @@ def move_and_hide_collection(objects: bpy.types.Object, new_collection: str, hid
         bpy.context.scene.view_layers[0].active_layer_collection.exclude = hide
     except:
         kklog(f'Failed to move and hide collection: {new_collection}', type = 'error')
-    
+
+def get_layer_collection_from_name(base_collection: bpy.types.LayerCollection, search_term: str) -> bpy.types.LayerCollection:
+    '''Returns the view layer collection object by name'''
+    #check if this is it
+    if (base_collection.name == search_term):
+        return base_collection
+    #If not, recursively go through the collection's children for the search term
+    for child in base_collection.children:
+        if child.name == search_term:
+            return child
+        else:
+            recursive_result = get_layer_collection_from_name(child, search_term)
+            if recursive_result:
+                return recursive_result
+
+def get_layer_collection_state(collection_name: str) -> bool:
+    '''Gets the exclude state of a view layer collection'''
+    base_collection = bpy.context.view_layer.layer_collection
+    collection = get_layer_collection_from_name(base_collection, collection_name)
+    return collection.exclude
+
+def show_layer_collection(collection_name: str, state: bool):
+    '''Sets the exclude state of a view layer collection'''
+    base_collection = bpy.context.view_layer.layer_collection
+    collection = get_layer_collection_from_name(base_collection, collection_name)
+    collection.exclude = state
+
 def clean_orphaned_data():
     '''clean data that is no longer being used'''
     bpy.ops.object.mode_set(mode='OBJECT')

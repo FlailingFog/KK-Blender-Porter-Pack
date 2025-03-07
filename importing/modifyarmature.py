@@ -1805,18 +1805,7 @@ class modify_armature(bpy.types.Operator):
     def hide_widgets(self):
         '''automatically hide bone widgets collection if it's visible'''
         if bpy.context.scene.kkbp.armature_dropdown in ['A','B']:
-            for widget_col in ['Bone Widgets']:
-                try:
-                    bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children[widget_col]
-                    bpy.context.scene.view_layers[0].active_layer_collection.exclude = True
-                except:
-                    try:
-                        #maybe the collection is in the Collection collection
-                        bpy.context.scene.view_layers[0].active_layer_collection = bpy.context.view_layer.layer_collection.children['Collection'].children[widget_col]
-                        bpy.context.scene.view_layers[0].active_layer_collection.exclude = True
-                    except:
-                        #maybe the collection is already hidden
-                        pass
+            c.show_layer_collection('Bone Widgets', False)
 
     def only_show_core_armature_bones(self):
         #Make only core, skirt and accessory bones visible

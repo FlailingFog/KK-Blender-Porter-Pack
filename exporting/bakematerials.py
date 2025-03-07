@@ -206,7 +206,7 @@ def bake_pass(folderpath: str, bake_type: str):
             bpy.context.scene.render.image_settings.file_format='PNG'
             bpy.context.scene.render.image_settings.color_mode='RGBA'
             
-            c.kklog('Rendering {} / {}'.format(index+1, len(object_to_bake.data.materials)))
+            print('Rendering {} / {}'.format(index+1, len(object_to_bake.data.materials)))
             bpy.ops.render.render(write_still = True)
 
             #reset folderpath after render
@@ -379,10 +379,7 @@ def create_material_atlas(folderpath: str):
         del_collection(bpy.data.collections[c.get_name() + ' atlas'])
         remove_orphan_data()
         #show the original collection again
-        layer_collection = bpy.context.view_layer.layer_collection
-        layerColl = recurLayerCollection(layer_collection, 'Scene Collection')
-        bpy.context.view_layer.active_layer_collection = layerColl
-        bpy.context.scene.view_layers[0].active_layer_collection.children[0].exclude = False
+        c.show_layer_collection(c.get_name(), False)
 
     #Change the Active LayerCollection to the character collection
     layer_collection = bpy.context.view_layer.layer_collection
@@ -421,7 +418,7 @@ def create_material_atlas(folderpath: str):
     copied_collection.name = c.get_name() + ' atlas'
 
     #setup materials for the combiner script
-    for obj in [o for o in bpy.data.collections[c.get_name() + ' atlas'].all_objects if not o.hide_get() and o.type == 'MESH']:
+    for obj in [o for o in bpy.data.collections[c.get_name() + ' atlas'].all_objects if o.type == 'MESH']:
         for mat in [mat_slot.material for mat_slot in obj.material_slots if mat_slot.material.get('simple')]:
             nodes = mat.node_tree.nodes
             links = mat.node_tree.links
@@ -519,14 +516,11 @@ def create_material_atlas(folderpath: str):
         bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.filepath = os.path.join(folderpath.replace('baked_files', 'atlas_files'), f'{sanitizeMaterialName(c.get_name())} exported model atlas.fbx')
 
     #hide the new collection
-    layerColl = recurLayerCollection(layer_collection, 'Scene Collection')
-    bpy.context.view_layer.active_layer_collection = layerColl
-    bpy.context.scene.view_layers[0].active_layer_collection.children[0].exclude = False
-    bpy.context.scene.view_layers[0].active_layer_collection.children[0].children[0].exclude =  True #hide the bone widgets again...
-    bpy.context.scene.view_layers[0].active_layer_collection.children[-1].children[0].exclude = True #hide the bone widgets again...
-    bpy.context.scene.view_layers[0].active_layer_collection.children[0].children[3].exclude =  True #hide the rigged tongue again...
-    bpy.context.scene.view_layers[0].active_layer_collection.children[-1].children[3].exclude = True #hide the rigged tongue again...
-    bpy.context.scene.view_layers[0].active_layer_collection.children[-1].exclude = True
+    c.show_layer_collection('Bone Widgets', True)
+    c.show_layer_collection('Rigged tongue ' + c.get_name(), True)
+    c.show_layer_collection('Rigged tongue ' + c.get_name() + '.001', True)
+    c.show_layer_collection('Bone Widgets.001', True)
+    c.show_layer_collection(c.get_name() + ' atlas', True)
     remove_orphan_data()
 
 class bake_materials(bpy.types.Operator):
@@ -559,6 +553,11 @@ class bake_materials(bpy.types.Operator):
                     c.kklog(f'Not finalizing object because there were no materials worth baking: {bake_object.name}')
                     continue
 
+                #make sure the collection for this object is enabled in the outliner if it is a clothing item
+                if bake_object != c.get_body():
+                    original_collection_state = c.get_layer_collection_state(bake_object.users_collection[0].name)
+                    c.show_layer_collection(bake_object.users_collection[0].name, False)
+
                 #hide all objects except this one
                 for obj in [o for o in bpy.context.view_layer.objects if o]:
                     obj.hide_render = True
@@ -581,6 +580,10 @@ class bake_materials(bpy.types.Operator):
                 for bake_type in bake_types:
                     bake_pass(folderpath, bake_type)
                 cleanup()
+
+                #restore the original collection state 
+                if bake_object != c.get_body():
+                    c.show_layer_collection(bake_object.users_collection[0].name, original_collection_state)
             
             #disable transparency
             bpy.context.scene.render.film_transparent = False
