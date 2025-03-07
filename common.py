@@ -245,9 +245,10 @@ def move_and_hide_collection(objects: bpy.types.Object, new_collection: str, hid
     if not objects:
         return
     switch(objects[0], 'object')
-    #move
+    #unlink from old collection, then move to new collection
     object_collection = bpy.data.collections.new(new_collection)
     for object in objects:
+        object.users_collection[0].objects.unlink(object)
         object_collection.objects.link(object)
     bpy.context.scene.collection.children[get_name()].children.link(object_collection)
     #then hide the new collection
