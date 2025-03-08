@@ -1,3 +1,9 @@
+### Changes for V8.0.1
+* Compatibility fix for "Send to Unreal" plugin by **AnalogKnight**
+* Fixed import when the default collection was missing
+* Fixed normal map baking
+* Fixed baking with multiple outfits
+
 ### Changes for V8.0.0
 * Fixed a longstanding issue related to white clothes / overlays. Everything loads correctly out of the box now
     * KKBP now has an 80% success rate out of the box! [Check this page for more details.](https://flailingfog.github.io/material_breakdown)

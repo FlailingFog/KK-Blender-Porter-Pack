@@ -8,6 +8,7 @@ Script 90% stolen from https://blender.stackexchange.com/questions/86757/python-
 '''
 import bpy
 from ..interface.dictionary_en import t
+from .. import common as c
 
 def link_keys(shapekey_holder_object, objects_to_link):
 
@@ -54,11 +55,8 @@ class link_shapekeys(bpy.types.Operator):
     
     def execute(self, context):
         #separate the eyes from the body object
-        body = bpy.data.objects['Body']
-        bpy.context.view_layer.objects.active = body
-        bpy.ops.object.mode_set(mode = 'EDIT')
-        bpy.ops.mesh.select_all(action = 'DESELECT')
-        ob_name = 'Body.002' if bpy.data.objects.get('Body.001') else 'Body.001'
+        body = c.get_body()
+        c.switch(body, 'EDIT')
 
         def separateMaterial(matList):
             for mat in matList:
@@ -73,18 +71,22 @@ class link_shapekeys(bpy.types.Operator):
                     print('material wasn\'t found: ' + mat)
             bpy.ops.mesh.separate(type='SELECTED')
 
-        eye_list = ['KK EyeR (hitomi)', 'KK EyeL (hitomi)',  'KK EyewhitesL (sirome)', 'KK EyewhitesR (sirome)',  'KK Eyeline up', 'KK Eyeline down']
+        eye_list = ['KK EyeR (hitomi) ' + c.get_name(),
+                    'KK EyeL (hitomi) ' + c.get_name(),
+                    'KK Eyewhites (sirome) ' + c.get_name(),
+                    'KK Eyeline up ' + c.get_name(), 
+                    'KK Eyeline down ' + c.get_name()]
         separateMaterial(eye_list)
 
-        eyes = bpy.data.objects[ob_name]
+        eyes = bpy.data.objects[body.name + '.001']
         eyes.name = 'Eyes'
         if eyes.modifiers.get('Outline Modifier'):
             eyes.modifiers['Outline Modifier'].show_viewport = False
             eyes.modifiers['Outline Modifier'].show_render = False
         
         #do the same for the eyebrows
-        separateMaterial(['KK Eyebrows (mayuge)'])
-        eyebrows = bpy.data.objects[ob_name]
+        separateMaterial(['KK Eyebrows (mayuge) ' + c.get_name()])
+        eyebrows = bpy.data.objects[body.name + '.001']
         eyebrows.name = 'Eyebrows'
         if eyebrows.modifiers.get('Outline Modifier'):
             eyebrows.modifiers['Outline Modifier'].show_viewport = False

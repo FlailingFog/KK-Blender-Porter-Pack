@@ -524,7 +524,7 @@ class modify_mesh(bpy.types.Operator):
         selected_verts = [v for v in c.get_body().data.vertices if v.select]
         amount_to_move_tears_back = 2 * (selected_verts[0].co.y - middle_of_head)
         bpy.ops.transform.translate(value=(0, abs(amount_to_move_tears_back), 0))
-
+        
         #move the tears forwards again the same amount in individual new shapekeys
         for cat in tear_mats:
             mats = c.get_material_names(cat)
@@ -562,6 +562,8 @@ class modify_mesh(bpy.types.Operator):
             'cf_O_eyeline',
             'cf_O_eyeline_low']:
             mats = c.get_material_names(cat)
+            #also append the duplicated eyewhite material
+            mats.append('cf_m_sirome_00.001')
             for mat in mats:
                 bpy.context.object.active_material_index = c.get_body().data.materials.find(mat)
                 bpy.ops.object.material_slot_select()
