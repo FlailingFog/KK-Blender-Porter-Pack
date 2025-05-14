@@ -342,8 +342,6 @@ def replace_all_baked_materials(folderpath: str, bake_object: bpy.types.Object):
                         mat.material.use_fake_user = True
                         replace_mat()
 
-                
-
 def create_material_atlas(folderpath: str):
     '''Merges all the finalized material png files into a single atlas file, copies the current model and applies the atlas to the copy'''
     # https://blender.stackexchange.com/questions/127403/change-active-collection
@@ -455,6 +453,11 @@ def create_material_atlas(folderpath: str):
                 #disable the outline on the atlased object because I don't feel like fixing it
                 obj.modifiers['Outline Modifier'].show_render = False
                 obj.modifiers['Outline Modifier'].show_viewport = False
+            elif mod.type == 'UV_WARP':
+                #fix the UV warp modifier to use the copied armature
+                copied_armature = [o for o in bpy.data.collections[c.get_name() + ' atlas'].all_objects if o.type == 'ARMATURE'][0]
+                mod.object_from = copied_armature
+                mod.object_to = copied_armature
         
         #check if this object had any atlas-able materials to begin with. If not, skip
         if not [mat_slot.material for mat_slot in obj.material_slots if mat_slot.material.get('simple')]:
