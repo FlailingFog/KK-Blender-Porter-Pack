@@ -68,9 +68,13 @@ class kkbp_import(bpy.types.Operator):
         if not outfit_subdirs:
             bpy.context.scene.kkbp.import_dir = os.path.dirname(os.path.dirname(c.get_import_path()))
             c.kklog('User chose wrong pmx file. Defaulting to pmx file located at ' + str(c.get_import_path()), 'warn')
-                
-        #get the character name and use it for some things later on
-        bpy.context.scene.kkbp.character_name = c.get_import_path().replace(os.path.dirname(os.path.dirname(c.get_import_path())), '').split('_', maxsplit = 1)[1][:-1]
+        
+        try:
+            #get the character name and use it for some things later on
+            bpy.context.scene.kkbp.character_name = c.get_import_path().replace(os.path.dirname(os.path.dirname(c.get_import_path())), '').split('_', maxsplit = 1)[1][:-1]
+        except:
+            #the user renamed the export folder, so there was no underscore. Just use the folder name instead (is the name not saved to the json files?)
+            bpy.context.scene.kkbp.character_name = c.get_import_path().replace(os.path.dirname(os.path.dirname(c.get_import_path())), '')[1:-1]
         #remove any dots from the character name or blender will get confused when creating an atlas
         bpy.context.scene.kkbp.character_name = bpy.context.scene.kkbp.character_name.replace('.', '')
         #but if the name is longer than 64 characters, blender will cut off the name, leading to some issues later on. 
