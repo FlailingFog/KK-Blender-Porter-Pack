@@ -64,6 +64,8 @@ class mat_comb_setup(bpy.types.Operator):
         def copy(parent, collection, linked=False):
             dupe_lut = defaultdict(lambda : None)
             def _copy(parent, collection, linked=False):
+                if collection.name == 'Bone Widgets':
+                    return
                 cc = bpy.data.collections.new(collection.name)
                 copy_objects(collection, cc, linked, dupe_lut)
                 for c in collection.children:
@@ -92,5 +94,21 @@ class mat_comb_setup(bpy.types.Operator):
                 image_node.image = nodes['textures'].node_tree.nodes['light'].image
             context.view_layer.objects.active = obj
             bpy.ops.object.material_slot_remove_unused()
+
+            #update the modifiers
+            for mod in obj.modifiers:
+                if mod.type == 'ARMATURE':
+                    #fix the armature modifier to use the copied aramture
+                    copied_armature = [o for o in bpy.data.collections[c.get_name() + '.001'].all_objects if o.type == 'ARMATURE'][0]
+                    mod.object = copied_armature
+                elif mod.type == 'SOLIDIFY':
+                    #disable the outline on the atlased object because I don't feel like fixing it
+                    obj.modifiers['Outline Modifier'].show_render = False
+                    obj.modifiers['Outline Modifier'].show_viewport = False
+                elif mod.type == 'UV_WARP':
+                    #fix the UV warp modifier to use the copied armature
+                    copied_armature = [o for o in bpy.data.collections[c.get_name() + '.001'].all_objects if o.type == 'ARMATURE'][0]
+                    mod.object_from = copied_armature
+                    mod.object_to = copied_armature
 
         return {'FINISHED'}
