@@ -465,9 +465,16 @@ def create_material_atlas(folderpath: str):
 
         for bake_type in bake_types:
             #check for atlas dupes
-            if bpy.data.images.get(f'{index}_{bake_type}.png'):
-                bpy.data.images.remove(bpy.data.images.get(f'{index}_{bake_type}.png'))
-            atlas_image = bpy.data.images.load(os.path.join(context.scene.kkbp.import_dir, 'atlas_files', f'{index}_{bake_type}.png'))
+            atlas_image_name = f'{sanitizeMaterialName(obj.name).replace("001","")}_{bake_type}.png'
+            if bpy.data.images.get(atlas_image_name):
+                bpy.data.images.remove(bpy.data.images.get(atlas_image_name))
+            #the atlas image is originally named after the index of the object. Rename it to the object name
+            original_image_path = os.path.join(context.scene.kkbp.import_dir, 'atlas_files', f'{index}_{bake_type}.png')
+            new_image_path = os.path.join(context.scene.kkbp.import_dir, 'atlas_files', atlas_image_name)
+            if os.path.exists(original_image_path):
+                os.rename(original_image_path, new_image_path)
+            #then load it into blender
+            atlas_image = bpy.data.images.load(new_image_path)
             for material in [mat_slot.material for mat_slot in obj.material_slots if mat_slot.material.get('simple')]:
                 image = material.node_tree.nodes['textures'].node_tree.nodes[bake_type].image
                 if image:
