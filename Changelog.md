@@ -1,3 +1,10 @@
+### Changes for V8.0.2
+* Allow folder names without underscores
+* Allow eye controller to work with atlased model
+* Fix baking normal map with glasses material
+* Fix armature linking when using the material combiner setup button
+* Add back object names to atlas texture filename
+
 ### Changes for V8.0.1
 * Compatibility fix for "Send to Unreal" plugin by **AnalogKnight**
 * Fixed import when the default collection was missing

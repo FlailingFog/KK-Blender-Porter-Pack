@@ -424,8 +424,8 @@ class post_operations(bpy.types.Operator):
                 if group_found > -1:
                     bpy.context.object.active_material_index = group_found
                     bpy.ops.object.vertex_group_select()
-                else:
-                    c.kklog('Group wasn\'t found when freestyling vertex groups: ' + group, 'warn')
+                # else:
+                #     c.kklog('Group wasn\'t found when freestyling vertex groups: ' + group, 'warn')
             bpy.ops.mesh.mark_freestyle_face(clear=False)
         freestyle_list = [
             'cf_j_bnip02_L', 'cf_j_bnip02_R',
@@ -442,8 +442,8 @@ class post_operations(bpy.types.Operator):
                 if group_found > -1:
                     bpy.context.object.vertex_groups.active_index = group_found
                     bpy.ops.object.vertex_group_select()
-                else:
-                    c.kklog('Group wasn\'t found when deleting vertex groups: ' + group, 'warn')
+                # else:
+                    # c.kklog('Group wasn\'t found when deleting vertex groups: ' + group, 'warn')
             bpy.ops.mesh.delete(type='VERT')
             bpy.ops.mesh.select_all(action = 'DESELECT')
 
@@ -509,8 +509,8 @@ class post_operations(bpy.types.Operator):
                     if rig.data.bones.get(bone):
                         rig.data.edit_bones[bone].select = True
                         bpy.ops.kkbp.cats_merge_weights()
-                    else:
-                        c.kklog('Bone wasn\'t found when deleting bones: ' + bone, 'warn')
+                    # else:
+                    #     c.kklog('Bone wasn\'t found when deleting bones: ' + bone, 'warn')
                 bpy.ops.armature.select_all(action='DESELECT')
                 bpy.ops.object.mode_set(mode = 'OBJECT')
 
