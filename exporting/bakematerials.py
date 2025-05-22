@@ -472,9 +472,15 @@ def create_material_atlas(folderpath: str):
             original_image_path = os.path.join(context.scene.kkbp.import_dir, 'atlas_files', f'{index}_{bake_type}.png')
             new_image_path = os.path.join(context.scene.kkbp.import_dir, 'atlas_files', atlas_image_name)
             if os.path.exists(original_image_path):
-                os.rename(original_image_path, new_image_path)
+                try:
+                    os.rename(original_image_path, new_image_path)
+                except:
+                    #rename failed because the file already exists. Delete the old one and try again
+                    os.remove(new_image_path)
+                    os.rename(original_image_path, new_image_path)
             #then load it into blender
             atlas_image = bpy.data.images.load(new_image_path)
+            bpy.data.images.remove(bpy.data.images.get(f'{index}_{bake_type}.png'))
             for material in [mat_slot.material for mat_slot in obj.material_slots if mat_slot.material.get('simple')]:
                 image = material.node_tree.nodes['textures'].node_tree.nodes[bake_type].image
                 if image:

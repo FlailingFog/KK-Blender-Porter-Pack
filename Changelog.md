@@ -1,3 +1,7 @@
+### Changes for V8.0.3
+* Fixed atlas save error issue because of new filename
+* fixed re-finalizing the atlas on windows
+
 ### Changes for V8.0.2
 * Allow folder names without underscores
 * Allow eye controller to work with atlased model
