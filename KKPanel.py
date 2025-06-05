@@ -177,6 +177,9 @@ class PlaceholderProperties(PropertyGroup):
             ("C", t('dark_B'), "Use Sunset LUT to saturate image")
         ), name="", default="A", description="LUT Choice")
 
+    ue_apply_scale : BoolProperty(name="Apply UE Scale (100x)", description="Scales the model by 100x for Unreal Engine compatibility. Make sure this is checked if exporting for UE.", default=True)
+    ue_triangulate_mesh : BoolProperty(name="Triangulate Mesh for UE", description="Converts all quads/n-gons to triangles before export for Unreal Engine.", default=False)
+
 #The main panel
 class IMPORTINGHEADER_PT_panel(bpy.types.Panel):
     bl_label = t('import_export')
@@ -296,6 +299,15 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         split.prop(context.scene.kkbp, "simp_dropdown")
         split.prop(context.scene.kkbp, "prep_dropdown")
         row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown in ['A', 'C', 'D']
+
+        row = col.row(align=True)
+        row.prop(context.scene.kkbp, "ue_apply_scale")
+        row.enabled = scene.prep_dropdown == 'E' and scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown in ['A', 'C', 'D']
+
+        row = col.row(align=True)
+        row.prop(context.scene.kkbp, "ue_triangulate_mesh")
+        # Ensure the same enable conditions apply, especially scene.prep_dropdown == 'E'
+        row.enabled = scene.prep_dropdown == 'E' and scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown in ['A', 'C', 'D']
 
 class EXTRAS_PT_panel(bpy.types.Panel):
     bl_label = t('extras')

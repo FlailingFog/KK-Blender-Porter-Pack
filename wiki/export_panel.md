@@ -43,3 +43,24 @@ This will export the hit mesh. An example of the hit mesh is shown below.
 Outfit pushups (shown below) are disabled during export. Enable this option to keep them on.
 
 ![ ](https://raw.githubusercontent.com/kkbpwiki/kkbpwiki.github.io/master/assets/images/exporter2.2.png)
+
+## Preparation for Target Applications
+
+The "Prep for target application" dropdown in the main plugin panel (Import/Export tab) allows you to apply specific modifications tailored for different game engines or software.
+
+### Preparing for Unreal Engine
+
+When you select **Unreal Engine** from the "Prep for target application" dropdown, the plugin performs several operations to optimize your model for import into Unreal Engine:
+
+*   **Bone Renaming:** Bones are automatically renamed to match the standard Unreal Engine mannequin skeleton (e.g., 'Hips' becomes 'pelvis', 'Left arm' becomes 'upperarm_l'). This greatly helps with animation retargeting inside Unreal Engine.
+*   **Root Bone Creation:** A new 'root' bone is created at the world origin (0,0,0), and the 'pelvis' bone is parented to it. This is a common best practice for Unreal Engine skeletons.
+*   **IK Adjustments:** Specific adjustments are made to leg and foot bone orientations to improve compatibility with Unreal Engine's IK systems. Inverse Kinematics (IK) constraints from Blender are cleared as they don't directly transfer.
+
+Additionally, you have the following options when "Unreal Engine" is selected:
+
+*   **Apply UE Scale (100x):**
+    *   Default: On
+    *   This option automatically scales your entire model (armature and meshes) by a factor of 100. This is crucial because Blender uses meters as its default unit, while Unreal Engine uses centimeters. Enabling this ensures your model imports at the correct size in Unreal.
+*   **Triangulate Mesh for UE:**
+    *   Default: Off
+    *   If enabled, this option will convert all mesh geometry (quads and n-gons) into triangles before export. While Unreal Engine can triangulate meshes on import, doing it in Blender first can give you more control over the final triangulation and help avoid potential issues.

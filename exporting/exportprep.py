@@ -4,7 +4,7 @@ import bpy, traceback, time
 from .. import common as c
 from ..interface.dictionary_en import t
 
-def main(prep_type, simp_type):
+def main(prep_type, simp_type, ue_apply_scale, ue_triangulate_mesh):
     try:
         #always try to use the atlased model first
         body = bpy.data.objects['Body ' + c.get_name() + '.001']
@@ -122,7 +122,33 @@ def main(prep_type, simp_type):
             if armature.data.bones.get(bone):
                 armature.data.bones[bone].name = ue_rename_dict[bone]
 
+        # Switch to Edit Mode
         bpy.ops.object.mode_set(mode='EDIT')
+
+        # Create a new bone named "root"
+        root_bone = armature.data.edit_bones.new('root')
+        # Set root bone at world origin
+        root_bone.head = (0, 0, 0)
+        root_bone.tail = (0, 0, 1) # Tail position can be arbitrary for a root, typically Z-up
+
+        # Ensure it has no parent
+        root_bone.parent = None
+
+        # Find the bone now named "pelvis"
+        pelvis_bone = armature.data.edit_bones.get('pelvis')
+
+        if pelvis_bone:
+            # Parent the "pelvis" bone to the new "root" bone
+            pelvis_bone.parent = root_bone
+            # Ensure the "pelvis" bone's head is at the same location as the new "root" bone's head
+            pelvis_bone.head = root_bone.head
+        else:
+            c.kklog("Could not find 'pelvis' bone to parent to 'root'.", type='warn')
+
+        # The script should already be in EDIT mode here due to the line above,
+        # but to be safe and adhere to instructions if the above line is removed/changed:
+        if bpy.context.object.mode != 'EDIT':
+            bpy.ops.object.mode_set(mode='EDIT')
 
         #Make all the bones on the legs face the same direction, otherwise IK won't work in Unreal
         armature.data.edit_bones["calf_l"].tail.z = armature.data.edit_bones["calf_l"].head.z + 0.1
@@ -136,6 +162,82 @@ def main(prep_type, simp_type):
         armature.data.edit_bones["ball_r"].tail.y = armature.data.edit_bones["ball_r"].head.y - 0.05
 
         bpy.ops.object.mode_set(mode='POSE')
+
+        if ue_apply_scale:
+            c.kklog('Applying 100x scale for Unreal Engine...')
+
+            # Ensure Object Mode for scaling
+            if bpy.context.object.mode != 'OBJECT':
+                bpy.ops.object.mode_set(mode='OBJECT')
+
+            bpy.ops.object.select_all(action='DESELECT')
+
+            # Select armature and its mesh children
+            armature.select_set(True)
+            for child in armature.children:
+                if child.type == 'MESH':
+                    child.select_set(True)
+
+            bpy.context.view_layer.objects.active = armature
+
+            # Apply scale
+            bpy.ops.transform.resize(value=(100, 100, 100))
+            # Apply transformations (scale) to selected objects
+            bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+
+            c.kklog('Unreal Engine scaling complete.')
+            # Switch back to Pose Mode as it was before this block,
+            # in case subsequent operations within this prep_type=='E' expect it.
+            # However, there are no further operations in this specific 'E' block after this.
+            bpy.ops.object.mode_set(mode='POSE')
+
+        if ue_triangulate_mesh:
+            c.kklog('Triangulating meshes for Unreal Engine...')
+            # Assumes armature is active and in POSE mode from the end of the scaling block or bone setup.
+
+            # Switch to OBJECT mode for modifier operations
+            if bpy.context.object.mode != 'OBJECT':
+                bpy.ops.object.mode_set(mode='OBJECT')
+
+            meshes_to_triangulate = []
+            for child_obj in armature.children:
+                if child_obj.type == 'MESH':
+                    meshes_to_triangulate.append(child_obj)
+
+            if meshes_to_triangulate:
+                original_active = bpy.context.view_layer.objects.active
+                bpy.ops.object.select_all(action='DESELECT')
+                for mesh_obj in meshes_to_triangulate:
+                    mesh_obj.select_set(True)
+                    bpy.context.view_layer.objects.active = mesh_obj
+
+                    c.kklog(f"Triangulating {mesh_obj.name}...")
+                    # Ensure it's in object mode, an individual object might be in edit/pose if previously selected.
+                    if bpy.context.object.mode != 'OBJECT':
+                        bpy.ops.object.mode_set(mode='OBJECT')
+
+                    bpy.ops.object.modifier_add(type='TRIANGULATE')
+                    try:
+                        # By default, new modifier is named "Triangulate". If localized, this might differ.
+                        # It's safer to get the modifier by its type if possible, or use its default name.
+                        # For this script, "Triangulate" is likely fine.
+                        bpy.ops.object.modifier_apply(modifier="Triangulate")
+                    except RuntimeError as e:
+                        c.kklog(f"Could not apply Triangulate modifier to {mesh_obj.name}. Error: {e}", type='warn')
+
+                # Restore original active object if it was among those processed or set armature active
+                if original_active in meshes_to_triangulate or original_active == armature : # Check if original active was a mesh or the armature
+                     bpy.context.view_layer.objects.active = original_active
+                else: # Fallback to armature
+                    bpy.context.view_layer.objects.active = armature
+
+            c.kklog('Mesh triangulation complete.')
+
+            # Restore armature to active and set POSE mode, consistent with previous block's end state
+            bpy.ops.object.select_all(action='DESELECT')
+            armature.select_set(True)
+            bpy.context.view_layer.objects.active = armature
+            bpy.ops.object.mode_set(mode='POSE')
 
     #If simplifying the bones...
     if simp_type in ['A', 'B']:
@@ -322,10 +424,12 @@ class export_prep(bpy.types.Operator):
         scene = context.scene.kkbp
         prep_type = scene.prep_dropdown
         simp_type = scene.simp_dropdown
+        ue_apply_scale = scene.ue_apply_scale
+        ue_triangulate_mesh = scene.ue_triangulate_mesh # Retrieve ue_triangulate_mesh
         last_step = time.time()
         try:
             c.toggle_console()
-            if main(prep_type, simp_type):
+            if main(prep_type, simp_type, ue_apply_scale, ue_triangulate_mesh): # Pass ue_triangulate_mesh to main
                 scene.plugin_state = 'prepped'
             c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             c.toggle_console()
