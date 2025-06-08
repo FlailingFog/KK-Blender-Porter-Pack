@@ -1110,7 +1110,8 @@ class modify_armature(bpy.types.Operator):
             bone = c.get_armature().pose.bones[legbone]
 
             #Make IK
-            bone.constraints.new("IK")
+            ik = bone.constraints.new("IK")
+            ik.name = "IK"
 
             #Set target and subtarget
             bone.constraints["IK"].target = c.get_armature()
@@ -1241,7 +1242,8 @@ class modify_armature(bpy.types.Operator):
             #pin the foot
             c.switch(c.get_armature(), 'pose')
             bone = c.get_armature().pose.bones[footbone]
-            bone.constraints.new("IK")
+            ik = bone.constraints.new("IK")
+            ik.name = "IK"
             bone = c.get_armature().pose.bones[footbone]
             bone.constraints["IK"].target = c.get_armature()
             bone = c.get_armature().pose.bones[footbone]
@@ -1251,7 +1253,8 @@ class modify_armature(bpy.types.Operator):
             
             #pin the toe
             bone = c.get_armature().pose.bones[toebone]
-            bone.constraints.new("IK")
+            ik = bone.constraints.new("IK")
+            ik.name = "IK"
             bone = c.get_armature().pose.bones[toebone]
             bone.constraints["IK"].target = c.get_armature()
             bone = c.get_armature().pose.bones[toebone]
