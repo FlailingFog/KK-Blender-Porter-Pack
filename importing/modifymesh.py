@@ -62,20 +62,98 @@ class modify_mesh(bpy.types.Operator):
         If the rigged tongue entry is found and contains material information, it separates the tongue
         material from the body mesh and marks it as a rigged tongue.
         """
-        material_data = c.get_json_file('KK_MaterialDataComplete.json')
-        rigged_tongue_entry = [i for i in material_data if i['SMRPath'] in ['/chaF_001/BodyTop/p_cf_body_00/cf_o_root/n_tang/o_tang', "/chaM_001/BodyTop/p_cm_body_00/cf_o_root/n_tang/o_tang"]]
-        if rigged_tongue_entry:
-            rigged_tongue_entry = rigged_tongue_entry[0]
-            if len(rigged_tongue_entry['MaterialInformation']):
+        material_data = c.json_file_manager.get_json_file('KK_MaterialDataComplete.json')
+        
+        rigged_tongue_entries = {i['SMRPath']: i for i in material_data if 'o_tang' in i['SMRPath']}
+        
+        if rigged_tongue_entries:
+            # 先根据原来逻辑，从那两个里面获得对象，确保不会让原先正常的出错,如果获取不到再走修复逻辑
+            if not (( rigged_tongue_entry := rigged_tongue_entries.get('/chaF_001/BodyTop/p_cf_body_00/cf_o_root/n_tang/o_tang')) or (rigged_tongue_entry := rigged_tongue_entries.get('/chaM_001/BodyTop/p_cm_body_00/cf_o_root/n_tang/o_tang'))):
+                rigged_tongue_entry = next(iter(rigged_tongue_entries.values()))
+            
+            if len(rigged_tongue_entry['MaterialInformation']) > 0:
+                
                 if rigged_tongue_entry['MaterialInformation'][0].get('MaterialName'):
                     tongue_material_name = rigged_tongue_entry['MaterialInformation'][0]['MaterialName']
-                    #There should also be a second tongue.001 material. Use that one to separate the rigged tongue.
-                    tongue = self.separate_materials(c.get_body(), [tongue_material_name + '.001'], 'Tongue (rigged) ' + c.get_name())
-                    tongue['tongue'] = True
+                    
+                    # 如果没有001
+                    if c.get_body().data.materials.find(tongue_material_name + '.001') == -1:
+
+                        ori_material = bpy.data.materials[tongue_material_name]
+                        
+                        # 对原先的material重命名为001,
+                        ori_material['name'] = tongue_material_name + '.001'
+                        ori_material['id'] = tongue_material_name + '.001'
+                        ori_material.name = tongue_material_name + '.001'
+                        
+                        new_material = ori_material.copy()
+                        
+                        new_material['name'] = tongue_material_name
+                        new_material['id'] = tongue_material_name
+                        new_material.name = tongue_material_name
+                        
+                        # c.get_body().data.materials.append(new_material)
+                    
+                        tongue = self.separate_materials(c.get_body(), [tongue_material_name + '.001'], 'Tongue (rigged) ' + c.get_name())
+                        
+                        # 将材质添加回body
+                        c.get_body().data.materials.append(new_material)
+                        
+                        # 将舌头复制一份添加回body
+                        bpy.ops.object.mode_set(mode='OBJECT')
+                        tongue_copy = tongue.copy()
+                        tongue_copy.data = tongue.data.copy()
+                        bpy.context.collection.objects.link(tongue_copy)
+                        bpy.ops.object.select_all(action='DESELECT')
+                        tongue_copy.select_set(True)
+                        c.get_body().select_set(True)
+                        bpy.context.view_layer.objects.active = c.get_body()
+                        bpy.ops.object.join()
+                        
+                        tongue['tongue'] = True
+                        
+                        tongue.modifiers.clear()
+                        for vg in list(tongue.vertex_groups):
+                            tongue.vertex_groups.remove(vg)
+
+                    else:
+                        tongue = self.separate_materials(c.get_body(), [tongue_material_name + '.001'], 'Tongue (rigged) ' + c.get_name())
+                        tongue['tongue'] = True
+                    
                     #Now remap the .001 tongue material with the original to allow the rigged tongue and the tongue on the body to share the same material
                     if bpy.data.materials.get(tongue_material_name + '.001'):
                         bpy.data.materials[tongue_material_name + '.001'].user_remap(bpy.data.materials[tongue_material_name])
                         bpy.data.materials.remove(bpy.data.materials[tongue_material_name + '.001'])
+            
+            
+        
+        
+        
+        # rigged_tongue_entry = [i for i in material_data if i['SMRPath'] in ['/chaF_001/BodyTop/p_cf_body_00/cf_o_root/n_tang/o_tang', "/chaM_001/BodyTop/p_cm_body_00/cf_o_root/n_tang/o_tang"]]
+        # rigged_tongue_entry = [i for i in material_data if 'o_tang' in i['SMRPath']]
+        # if rigged_tongue_entry:
+        #     rigged_tongue_entry = rigged_tongue_entry[0]
+        #     if len(rigged_tongue_entry['MaterialInformation']):
+        #         if rigged_tongue_entry['MaterialInformation'][0].get('MaterialName'):
+        #             tongue_material_name = rigged_tongue_entry['MaterialInformation'][0]['MaterialName']
+                    
+        #             if c.get_body().data.materials.find(tongue_material_name + '.001') == -1:
+        #                 new_material = bpy.data.materials[tongue_material_name].copy()
+        #                 new_material['name'] = tongue_material_name + '.001'
+        #                 new_material['id'] = new_material['name']
+        #                 new_material.name = new_material['name']
+        #                 c.get_body().material_slots[new_material['name']].material = new_material
+                        
+        #             #There should also be a second tongue.001 material. Use that one to separate the rigged tongue. 
+                    
+        #             tongue = self.separate_materials(c.get_body(), [tongue_material_name + '.001'], 'Tongue (rigged) ' + c.get_name())
+        #             tongue['tongue'] = True
+        #             #Now remap the .001 tongue material with the original to allow the rigged tongue and the tongue on the body to share the same material
+        #             if bpy.data.materials.get(tongue_material_name + '.001'):
+        #                 bpy.data.materials[tongue_material_name + '.001'].user_remap(bpy.data.materials[tongue_material_name])
+        #                 bpy.data.materials.remove(bpy.data.materials[tongue_material_name + '.001'])
+                    
+                    
         c.print_timer('separate_rigged_tongue')
 
     def separate_hair(self):
@@ -83,7 +161,7 @@ class modify_mesh(bpy.types.Operator):
         outfits = c.get_outfits()
         
         #Separate the hair from each outfit
-        material_data = c.get_json_file('KK_MaterialDataComplete.json')
+        material_data = c.json_file_manager.get_json_file('KK_MaterialDataComplete.json')
         for outfit in outfits:
             #find all of the hair mats for this outfit
             hair_mat_list = []
@@ -121,7 +199,7 @@ class modify_mesh(bpy.types.Operator):
             110:            'Pantyhose shift',
         }
 
-        material_data = c.get_json_file('KK_MaterialDataComplete.json')
+        material_data = c.json_file_manager.get_json_file('KK_MaterialDataComplete.json')
         smr_items = [m for m in material_data if m.get('MaterialInformation')]
         for outfit in c.get_outfits():
             for label in clothes_labels:
@@ -154,7 +232,7 @@ class modify_mesh(bpy.types.Operator):
     
     def separate_hitboxes(self):
         '''Separate the hitbox mesh, if present'''
-        material_data = c.get_json_file('KK_MaterialDataComplete.json')
+        material_data = c.json_file_manager.get_json_file('KK_MaterialDataComplete.json')
         material_infos = [m['MaterialInformation'] for m in material_data if m.get('MaterialInformation')]
         material_names = []
         for material_info in material_infos:
@@ -180,7 +258,7 @@ class modify_mesh(bpy.types.Operator):
 
     def delete_mask_quad(self):
         '''delete the mask material if not in smr mode'''
-        material_data = c.get_json_file('KK_MaterialDataComplete.json')
+        material_data = c.json_file_manager.get_json_file('KK_MaterialDataComplete.json')
         material_infos = [m['MaterialInformation'] for m in material_data if m.get('MaterialInformation')]
         material_names = []
         for material_info in material_infos:

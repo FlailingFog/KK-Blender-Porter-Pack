@@ -268,6 +268,7 @@ class modify_material(bpy.types.Operator):
                 template['bake'] = True
                 #Some outfit materials are repeated. The order goes 'outfit_material', 'outfit_material 00', 'outfit_material 01', etc. 
                 #If this happens use the name without numbers or the color information from the json will not be loaded correctly
+            
                 if original_name[-2:].isnumeric() and original_name[-3] == ' ':
                     template['id'] = original_name[:-3]
                 else:
@@ -473,7 +474,7 @@ class modify_material(bpy.types.Operator):
                 self.image_load(f'Eye{side} (hitomi)', image_override = eye_mat[:-15] + '_cf_t_expression_01_EXPR.png', node_override= '_cf_t_expression_01_EXPR.png')
         
         #correct the eye scaling using info from the KK_ChaFileCustomFace.json
-        face_data = c.get_json_file('KK_ChaFileCustomFace.json')
+        face_data = c.json_file_manager.get_json_file('KK_ChaFileCustomFace.json')
         bpy.data.node_groups['.Eye Textures positioning'].nodes['eye_scale'].inputs[1].default_value = 1/(float(face_data[18]['Value']) + 0.0001)
         bpy.data.node_groups['.Eye Textures positioning'].nodes['eye_scale'].inputs[2].default_value = 1/(float(face_data[19]['Value']) + 0.0001)
 
@@ -575,15 +576,16 @@ class modify_material(bpy.types.Operator):
         c.print_timer('link_textures_for_clothes')
 
     def link_textures_for_tongue_tear_gag(self):
-        tongue_mat = c.get_material_names('o_tang')
-        tongue_mat = tongue_mat if tongue_mat else ['cf_m_tang'] #check for bugged/missing SMR Tongue data
-        self.image_load('Tongue', '_CM.png', node_override='_ST_CT.png') #done on purpose
-        self.image_load('Tongue', '_CM.png', node_override='_ST_DT.png') #still done on purpose
-        self.image_load('Tongue', '_CM.png')
-        self.image_load('Tongue', '_DM.png')
-        self.image_load('Tongue', '_NMP.png')
-        self.image_load('Tongue', '_NMP_CNV.png', node_override = '_NMPD_CNV.png') #load regular map by default
-        self.image_load('Tongue', '_NMPD_CNV.png') #then the detail map if it's there
+        if c.get_tongue():
+            tongue_mat = c.get_material_names('o_tang')
+            tongue_mat = tongue_mat if tongue_mat else ['cf_m_tang'] #check for bugged/missing SMR Tongue data
+            self.image_load('Tongue', '_CM.png', node_override='_ST_CT.png') #done on purpose
+            self.image_load('Tongue', '_CM.png', node_override='_ST_DT.png') #still done on purpose
+            self.image_load('Tongue', '_CM.png')
+            self.image_load('Tongue', '_DM.png')
+            self.image_load('Tongue', '_NMP.png')
+            self.image_load('Tongue', '_NMP_CNV.png', node_override = '_NMPD_CNV.png') #load regular map by default
+            self.image_load('Tongue', '_NMPD_CNV.png') #then the detail map if it's there
 
         #load all gag eye textures if it exists
         if c.get_gags():
@@ -911,7 +913,7 @@ class modify_material(bpy.types.Operator):
     @staticmethod
     def apply_texture_data_to_image(mat: str, image: str, node:str, group = 'textures'):
         '''Sets offset and scale of an image node using the TextureData.json '''
-        json_tex_data = c.get_json_file('KK_TextureData.json')
+        json_tex_data = c.json_file_manager.get_json_file('KK_TextureData.json')
         texture_data = [t for t in json_tex_data if t["textureName"] == image]
         if texture_data and bpy.data.materials.get(mat):
             #Apply Offset and Scale
@@ -1069,12 +1071,15 @@ class modify_material(bpy.types.Operator):
     def update_shaders(self, light_pass: str):        
         '''Set the colors for everything. This is run once for the light colors and again for the dark colors'''                                
         #set the tongue colors if it exists
-        if c.get_material_names('o_tang'):
-            shader_inputs = c.get_tongue().material_slots[0].material.node_tree.nodes[light_pass].inputs
+        #if c.get_material_names('o_tang') and (tongue := c.get_tongue()):
+        if c.get_material_names('o_tang') and (tongue := c.get_tongue()):
+            # shader_inputs = c.get_tongue().material_slots[0].material.node_tree.nodes[light_pass].inputs
+            shader_inputs = tongue.material_slots[0].material.node_tree.nodes[light_pass].inputs
             shader_inputs['Maintex Saturation'].default_value = 0.6
             shader_inputs['Detail intensity (green)'].default_value = 0.01
             shader_inputs['Color mask (base)'].default_value = [1, 1, 1, 1]
-            mat_name = c.get_tongue().material_slots[0].name
+            # mat_name = c.get_tongue().material_slots[0].name
+            mat_name = tongue.material_slots[0].name
             shader_inputs['Color mask (red)'].default_value =   self.saturate_color(c.get_color(mat_name, "_Color "),  light_pass, shadow_color = c.get_shadow_color(mat_name))
             shader_inputs['Color mask (green)'].default_value = self.saturate_color(c.get_color(mat_name, "_Color2 "), light_pass, shadow_color = c.get_shadow_color(mat_name))
             shader_inputs['Color mask (blue)'].default_value =  self.saturate_color(c.get_color(mat_name, "_Color3 "), light_pass, shadow_color = c.get_shadow_color(mat_name))
