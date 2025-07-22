@@ -31,7 +31,6 @@ class modify_mesh(bpy.types.Operator):
         try:
             self.rename_uv_maps()
 
-            #  self.normalize_mesh()
             self.separate_rigged_tongue()
             self.separate_hair()
             self.separate_alternate_clothing()
