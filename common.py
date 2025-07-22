@@ -9,20 +9,48 @@ class JsonFileManager:
 
     def __init__(self):
         self.json_files = {}
+        self.materials_data = {}
+
+    def clear(self):
+        self.json_files.clear()
+        self.materials_data.clear()
 
     def init(self):
-        '''Recording existing json file but do not load them'''
-
+        '''
+        Recording existing json file but do not load them except MaterialComplete.json
+        For MaterialComplete.json, record material information
+        '''
+        self.clear()
         for file in Path(bpy.context.scene.kkbp.import_dir).glob('*.json'):
             self.json_files[file.name] = str(file)
 
-    def get_json_file(self, filename: str) -> json:
-        '''Returns the json file by filename. Include the .json in the filename argument'''
+        raw_data = self.get_json_file('KK_MaterialDataComplete.json')
 
+        for item in raw_data:
+            if material_info := item['MaterialInformation']:
+                if (smr_data := self.materials_data.get(item['SMRName'])) is None:
+                    smr_data = []
+                    self.materials_data[item['SMRName']] = smr_data
+                smr_data.append(item)
+
+    def get_json_file(self, filename: str) -> json:
+        '''
+        Returns the json file by filename. Include the .json in the filename argument
+        '''
         if json_data := self.json_files.get(filename):  # Auto skip the file that not present.It should crash the program for missing file
             if isinstance(json_data, str):
                 json_data = self.json_files[filename] = json.load(open(json_data))
             return json_data
+
+    def get_material_info_by_smr(self, smr_name: str) -> list[dict]:
+        '''
+        Material's name could change to everything at author's willing, but the bone should under the kk's control.
+        So bone's name should be fixed.According to this, we can get target material's name by its smr name
+        '''
+        return self.materials_data.get(smr_name)
+
+    def get_materials_info(self) -> dict[str, list[dict]]:
+        return self.materials_data
 
 
 def toggle_console():
@@ -56,16 +84,6 @@ def set_viewport_shading(type='MATERIAL'):
         for space in area.spaces:
             if space.type == 'VIEW_3D':
                 space.shading.type = type
-
-
-# def get_json_file(filename: str) -> json:
-#     '''Returns the json file by filename. Include the .json in the filename argument'''
-#     files = [file for file in Path(bpy.context.scene.kkbp.import_dir).glob('*.json') if filename in str(file)]
-#     if files:
-#         json_file_path = str(files[0])
-#         json_file = open(json_file_path)
-#         json_data = json.load(json_file)
-#         return json_data
 
 
 def get_hairs() -> list[bpy.types.Object]:
@@ -171,14 +189,19 @@ def get_import_path() -> str:
     return bpy.context.scene.kkbp.import_dir
 
 
-def get_material_names(smr_name: str) -> list[str]:
+def get_material_names(smr_name: str) -> list[str] | None:
     '''Returns a list of the material names this smr object is using'''
-    material_data = json_file_manager.get_json_file('KK_MaterialDataComplete.json')
-    material_infos = [m['MaterialInformation'] for m in material_data if
-                      m.get('MaterialInformation') and m.get('SMRName') == smr_name]
-    materials = []
-    for material_info in material_infos:
-        materials.extend([m['MaterialName'] for m in material_info if m.get('MaterialName')])
+    material_data = json_file_manager.get_material_info_by_smr(smr_name)
+    if material_data is None:
+        kklog(f'Could not find smr object: {smr_name}', 'warn')
+        return []
+    materials = [
+        sub_item['MaterialName']
+        for item in material_data
+        for sub_item in item['MaterialInformation']
+        if sub_item.get('MaterialName')
+    ]
+
     # remove dupes and sort
     materials = list(set(materials))
     return sorted(materials)

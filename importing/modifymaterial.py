@@ -24,31 +24,40 @@ import bpy, os, numpy, math, time
 from pathlib import Path
 from .. import common as c
 
+
+
 class modify_material(bpy.types.Operator):
     bl_idname = "kkbp.modifymaterial"
     bl_label = bl_idname
     bl_description = bl_idname
     bl_options = {'REGISTER', 'UNDO'}
-    
+
+    #  Numpy's  default precision is float 64.
+    #  Blender limits script's memory usage strictly,
+    #  processing a large img like 4096 * 4096 will crash the program for memory shortage.
+    #  Also, float32 is precise enough
+    #  If someone crashed for processing larger img, set it to float16
+    np_number_precision = numpy.float32
+
     def execute(self, context):
         try:
 
             self.remove_unused_material_slots()
             self.remap_duplicate_material_slots()
-            
+
             self.replace_materials_for_body()
             self.replace_materials_for_hair()
             self.replace_materials_for_outfits()
             self.replace_materials_for_tears_tongue_gageye()
             self.remove_duplicate_node_groups()
-            
+
             self.load_images()
             self.link_textures_for_face_body()
             self.link_textures_for_hair()
             self.link_textures_for_clothes()
             self.link_textures_for_tongue_tear_gag()
             self.create_dark_textures()
-            
+
             self.import_and_setup_smooth_normals()
             self.setup_gag_eye_material_drivers()
 
@@ -90,11 +99,10 @@ class modify_material(bpy.types.Operator):
         c.print_timer('remove_unused_material_slots')
 
     def remap_duplicate_material_slots(self):
-        body = c.get_body()
-        c.switch(body, 'object')
+        c.switch(c.get_body(), 'object')
         objects = c.get_outfits()
         objects.extend(c.get_alts())
-        objects.append(body)
+        objects.append(c.get_body())
         objects.extend(c.get_hairs())
 
         for obj in objects:
@@ -102,7 +110,7 @@ class modify_material(bpy.types.Operator):
             c.switch(obj, 'object')
             bpy.ops.object.material_slot_remove_unused()
             c.switch(obj, 'edit')
-            
+
             #remap duplicate materials to the base one
             material_list = obj.data.materials
             for mat in material_list:
@@ -114,7 +122,7 @@ class modify_material(bpy.types.Operator):
                 mat_name_list.extend(c.get_material_names('cf_O_namida_M'))
                 mat_name_list.extend(c.get_material_names('cf_O_namida_S'))
                 mat_name_list.extend(c.get_material_names('o_tang'))
-                
+
                 if '.' in mat.name[-4:]:
                     try:
                         #the material name is normal
@@ -129,7 +137,7 @@ class modify_material(bpy.types.Operator):
                         bpy.data.materials.remove(mat)
                     else:
                         c.kklog("Somehow found a false duplicate material but didn't merge: " + mat.name, 'warn')
-            
+
             #then clean material slots by going through each slot and reassigning the slots that are repeated
             repeats = {}
             for index, mat in enumerate(material_list):
@@ -137,7 +145,7 @@ class modify_material(bpy.types.Operator):
                     repeats[mat.name] = [index]
                 else:
                     repeats[mat.name].append(index)
-            
+
             for material_name in list(repeats.keys()):
                 if len(repeats[material_name]) > 1:
                     for repeated_slot in repeats[material_name]:
@@ -155,10 +163,9 @@ class modify_material(bpy.types.Operator):
         c.print_timer('remap_duplicate_material_slots')
 
     def replace_materials_for_body(self):
-        body = c.get_body()
-        c.switch(body, 'object')
+        c.switch(c.get_body(), 'object')
         if bpy.app.version[0] != 3:
-            body.visible_shadow = False
+            c.get_body().visible_shadow = False
         templateList = [
         'KK Body',
         'KK Tears',
@@ -186,23 +193,25 @@ class modify_material(bpy.types.Operator):
 
         #Replace all materials on the body with templates
         def swap_body_material(original_materials: list[str], template_name: str):
+            c_name = c.get_name()
             #remove dupes
             original_materials = list(set(original_materials))
             for index, original_material in enumerate(original_materials):
                 try:
                     template = bpy.data.materials[template_name].copy()
                     template['body'] = True
-                    template['name'] = c.get_name()
+
+                    template['name'] = c_name
                     template['id'] = original_material
                     template['bake'] = True
-                    template.name = bpy.data.materials[template_name].name + ' ' + c.get_name()
-                    body.material_slots[original_material].material = template
+                    template.name = bpy.data.materials[template_name].name + ' ' + c_name
+                    c.get_body().material_slots[original_material].material = template
                     template_group = template.node_tree.nodes['textures'].node_tree.copy()
-                    template_group.name = 'Tex ' + original_material + ' ' + c.get_name()
+                    template_group.name = 'Tex ' + original_material + ' ' + c_name
                     template.node_tree.nodes['textures'].node_tree = template_group
                 except:
                     c.kklog(f'material or template wasn\'t found when replacing body materials: {str(original_material)} / {str(template_name)}', 'warn')
-        
+
         swap_body_material(c.get_material_names('cf_O_face'),'KK Face')
         swap_body_material(c.get_material_names('cf_O_mayuge'),'KK Eyebrows (mayuge)')
         swap_body_material(c.get_material_names('cf_O_noseline'),'KK Nose')
@@ -225,6 +234,7 @@ class modify_material(bpy.types.Operator):
 
     def replace_materials_for_hair(self):
         '''Replace all of the Hair materials with hair templates and name accordingly'''
+        c_name = c.get_name()
         for hair in c.get_hairs():
             if bpy.app.version[0] != 3:
                 hair.visible_shadow = False
@@ -232,24 +242,25 @@ class modify_material(bpy.types.Operator):
                 original_name = material_slot.material.name
                 template = bpy.data.materials['KK Hair'].copy()
                 template['hair'] = True
-                template['name'] = c.get_name()
+
+                template['name'] = c_name
                 template['bake'] = True
-                #Some hair materials are repeated. The order goes 'hair_material', 'hair_material 00', 'hair_material 01', etc. 
+                #Some hair materials are repeated. The order goes 'hair_material', 'hair_material 00', 'hair_material 01', etc.
                 #If this happens use the name without numbers or the color information from the json will not be loaded correctly
                 if original_name[-2:].isnumeric() and original_name[-3] == ' ':
                     template['id'] = original_name[:-3]
                 else:
                     template['id'] = original_name
-                template.name = 'KK ' + original_name + ' ' + c.get_name()
+                template.name = 'KK ' + original_name + ' ' + c_name
                 material_slot.material = bpy.data.materials[template.name]
-                
+
                 template_group = template.node_tree.nodes['textures'].node_tree.copy()
-                template_group.name = 'Tex ' + original_name + ' ' + c.get_name()
+                template_group.name = 'Tex ' + original_name + ' ' + c_name
                 template.node_tree.nodes['textures'].node_tree = template_group
-                
+
                 template_group_pos = template.node_tree.nodes['textures'].node_tree.nodes['pospattern'].node_tree.copy()
-                template_group_pos.name = 'Pos ' + original_name + ' ' + c.get_name()
-                template.node_tree.nodes['textures'].node_tree.nodes['pospattern'].node_tree = template_group_pos                
+                template_group_pos.name = 'Pos ' + original_name + ' ' + c_name
+                template.node_tree.nodes['textures'].node_tree.nodes['pospattern'].node_tree = template_group_pos
 
         c.print_timer('replace_materials_for_hair')
 
@@ -257,6 +268,7 @@ class modify_material(bpy.types.Operator):
         #Replace all other materials with the general template and name accordingly
         outfits = c.get_outfits()
         outfits.extend(c.get_alts())
+        c_name = c.get_name()
         for ob in outfits:
             if bpy.app.version[0] != 3:
                 ob.visible_shadow = False
@@ -264,59 +276,59 @@ class modify_material(bpy.types.Operator):
                 original_name = material_slot.material.name
                 template = bpy.data.materials['KK General'].copy()
                 template['outfit'] = True
-                template['name'] = c.get_name()
+
+                template['name'] = c_name
                 template['bake'] = True
-                #Some outfit materials are repeated. The order goes 'outfit_material', 'outfit_material 00', 'outfit_material 01', etc. 
+                #Some outfit materials are repeated. The order goes 'outfit_material', 'outfit_material 00', 'outfit_material 01', etc.
                 #If this happens use the name without numbers or the color information from the json will not be loaded correctly
-            
+
                 if original_name[-2:].isnumeric() and original_name[-3] == ' ':
                     template['id'] = original_name[:-3]
                 else:
                     template['id'] = original_name
-                template.name = 'KK ' + original_name + ' ' + c.get_name()
+                template.name = 'KK ' + original_name + ' ' + c_name
                 material_slot.material = bpy.data.materials[template.name]
-                
+
                 template_group = template.node_tree.nodes['textures'].node_tree.copy()
-                template_group.name = 'Tex ' + original_name + ' ' + c.get_name()
+                template_group.name = 'Tex ' + original_name + ' ' + c_name
                 template.node_tree.nodes['textures'].node_tree = template_group
-                
+
                 template_group_pos = template.node_tree.nodes['textures'].node_tree.nodes['pospattern'].node_tree.copy()
-                template_group_pos.name = 'Pos ' + original_name + ' ' + c.get_name()
-                template.node_tree.nodes['textures'].node_tree.nodes['pospattern'].node_tree = template_group_pos                
+                template_group_pos.name = 'Pos ' + original_name + ' ' + c_name
+                template.node_tree.nodes['textures'].node_tree.nodes['pospattern'].node_tree = template_group_pos
 
         c.print_timer('replace_materials_for_outfits')
 
     def replace_materials_for_tears_tongue_gageye(self):
-        body = c.get_body()
 
         #give the tears a material template
-        if c.get_tears():
-            tears = c.get_tears()
+        c_name = c.get_name()
+        if (tears := c.get_tears()):
             template = bpy.data.materials['KK Tears'].copy()
-            template.name = 'KK Tears ' + c.get_name() 
+            template.name = 'KK Tears ' + c_name
             template['tears'] = True
             template['id'] = c.get_material_names('cf_O_namida_L')[0]
             tears.material_slots[0].material = bpy.data.materials[template.name]
             template_group = template.node_tree.nodes['textures'].node_tree.copy()
             template.node_tree.nodes['textures'].node_tree = template_group
-            template_group.name += ' ' + c.get_name()        
+            template_group.name += ' ' + c_name
 
         #replace tongue material if it exists
-        if body.material_slots.get('KK General ' + c.get_name()):
+        if c.get_body().material_slots.get('KK General ' + c_name):
             #Make the tongue material unique so parts of the General Template aren't overwritten
             template = bpy.data.materials['KK General'].copy()
-            template.name = 'KK Tongue ' + c.get_name()
+            template.name = 'KK Tongue ' + c_name
             template['tongue'] = True
             template['bake'] = True
             template['id'] = c.get_material_names('o_tang')[0]
-            body.material_slots['KK General ' + c.get_name()].material = template
+            c.get_body().material_slots['KK General ' + c_name].material = template
             template_group = template.node_tree.nodes['textures'].node_tree.copy()
             template.node_tree.nodes['textures'].node_tree = template_group
-            template_group.name = 'Tex Tongue ' + c.get_name()
+            template_group.name = 'Tex Tongue ' + c_name
             template_group_pos = template.node_tree.nodes['textures'].node_tree.nodes['pospattern'].node_tree.copy()
             template.node_tree.nodes['textures'].node_tree.nodes['pospattern'].node_tree = template_group_pos
-            template_group_pos.name = 'Position Tongue ' + c.get_name()
-            
+            template_group_pos.name = 'Position Tongue ' + c_name
+
             #give the rigged tongue the existing material template
             if c.get_tongue():
                 c.get_tongue().material_slots[0].material = template
@@ -329,10 +341,10 @@ class modify_material(bpy.types.Operator):
                 template['gag'] = True
                 template['id'] = c.get_material_names('cf_O_gag_eye_'+num)[0]
                 gag.material_slots['cf_m_gageye_'+num].material = template
-                template.name = 'KK Gag' + num + ' ' + c.get_name()
+                template.name = 'KK Gag' + num + ' ' + c_name
                 template_group = template.node_tree.nodes['textures'].node_tree.copy()
                 template.node_tree.nodes['textures'].node_tree = template_group
-                template_group.name = 'Tex Gag' + num + ' ' + c.get_name()
+                template_group.name = 'Tex Gag' + num + ' ' + c_name
         c.print_timer('replace_materials_for_tears_tongue_gageye')
 
     def remove_duplicate_node_groups(self):
@@ -385,13 +397,12 @@ class modify_material(bpy.types.Operator):
 
     def link_textures_for_face_body(self):
         '''Load all body textures into their texture slots'''
-        body = c.get_body()
         self.image_load('Body', '_ST_CT.png')
         self.image_load('Body', '_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available later on
         #default to colors if there's no maintex
-        if body.material_slots['KK Body ' + c.get_name()].material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].image.name == 'Template: Placeholder':
-            body.material_slots['KK Body ' + c.get_name()].material.node_tree.nodes['dark' ].inputs['Use main texture instead?'].default_value = 0
-            body.material_slots['KK Body ' + c.get_name()].material.node_tree.nodes['light'].inputs['Use main texture instead?'].default_value = 0
+        if c.get_body().material_slots['KK Body ' + c.get_name()].material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].image.name == 'Template: Placeholder':
+            c.get_body().material_slots['KK Body ' + c.get_name()].material.node_tree.nodes['dark' ].inputs['Use main texture instead?'].default_value = 0
+            c.get_body().material_slots['KK Body ' + c.get_name()].material.node_tree.nodes['light'].inputs['Use main texture instead?'].default_value = 0
         self.image_load('Body', '_CM.png') #color mask
         self.image_load('Body', '_DM.png') #cfm female
         self.image_load('Body', '_LM.png') #line mask for lips
@@ -426,9 +437,9 @@ class modify_material(bpy.types.Operator):
             self.image_load('Face', '_ST_CT.png')
             self.image_load('Face', '_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available
             #default to colors if there's no maintex
-            if body.material_slots['KK Face ' + c.get_name()].material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].image.name == 'Template: Placeholder':
-                body.material_slots['KK Face ' + c.get_name()].material.node_tree.nodes['light'].inputs['Use main texture instead?'].default_value = 0
-                body.material_slots['KK Face ' + c.get_name()].material.node_tree.nodes['dark' ].inputs['Use main texture instead?'].default_value = 0
+            if c.get_body().material_slots['KK Face ' + c.get_name()].material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].image.name == 'Template: Placeholder':
+                c.get_body().material_slots['KK Face ' + c.get_name()].material.node_tree.nodes['light'].inputs['Use main texture instead?'].default_value = 0
+                c.get_body().material_slots['KK Face ' + c.get_name()].material.node_tree.nodes['dark' ].inputs['Use main texture instead?'].default_value = 0
             self.image_load('Face', '_CM.png')
             self.image_load('Face', '_DM.png')
             self.image_load('Face', '_T4.png') #blush
@@ -441,12 +452,12 @@ class modify_material(bpy.types.Operator):
             self.image_load('Face', '_T7.png')
             self.image_load('Face', '_ot3.png') #eyeshadow
             self.set_uv_type('Face', 'eyeshadowuv', 'uv_eyeshadow')
-        
+
         #load in the remaining face materials if they exist
         if c.get_material_names('cf_O_mayuge'):
             self.image_load('Eyebrows (mayuge)', '_ST_CT.png')
             self.image_load('Eyebrows (mayuge)', '_ST_CT.png')
-        
+
         if c.get_material_names('cf_O_noseline'):
             self.image_load('Nose', '_ST_CT.png')
         if c.get_material_names('cf_O_tooth'):
@@ -461,7 +472,7 @@ class modify_material(bpy.types.Operator):
             self.image_load('Eyeline up', image_override=c.get_material_names('cf_O_eyeline')[1] + '_ST_CT.png', node_override='_ST_CT.pngkage')
         if c.get_material_names('cf_O_eyeline_low'):
             self.image_load('Eyeline up', image_override=c.get_material_names('cf_O_eyeline_low')[0] + '_ST_CT.png', node_override='_ST_CT.pngdown')
-        
+
         #eyes
         for side in ['L', 'R']:
             if c.get_material_names(f'cf_Ohitomi_{side}02'):
@@ -472,7 +483,7 @@ class modify_material(bpy.types.Operator):
                 self.image_load(f'Eye{side} (hitomi)', '_ot2.png')
                 self.image_load(f'Eye{side} (hitomi)', image_override = eye_mat[:-15] + '_cf_t_expression_00_EXPR.png', node_override= '_cf_t_expression_00_EXPR.png')
                 self.image_load(f'Eye{side} (hitomi)', image_override = eye_mat[:-15] + '_cf_t_expression_01_EXPR.png', node_override= '_cf_t_expression_01_EXPR.png')
-        
+
         #correct the eye scaling using info from the KK_ChaFileCustomFace.json
         face_data = c.json_file_manager.get_json_file('KK_ChaFileCustomFace.json')
         bpy.data.node_groups['.Eye Textures positioning'].nodes['eye_scale'].inputs[1].default_value = 1/(float(face_data[18]['Value']) + 0.0001)
@@ -486,7 +497,7 @@ class modify_material(bpy.types.Operator):
             for hairMat in current_obj.material_slots:
                 #use the material name instead of hairMat.material['id'] to catch any instances of 00 01 02 materials
                 hairType = hairMat.name.replace('KK ','').replace(' ' + c.get_name(), '')
-                            
+
                 self.image_load( hairType,  '_ST_CT.png')
                 self.image_load( hairType,  '_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available
                 self.image_load( hairType,  '_DM.png')
@@ -494,7 +505,7 @@ class modify_material(bpy.types.Operator):
                 self.image_load( hairType,  '_HGLS.png')
                 self.image_load( hairType,  '_AM.png')
                 self.set_uv_type(hairType, 'hairuv', 'uv_nipple_and_shine')
-                
+
         c.print_timer('link_textures_for_hair')
 
     def link_textures_for_clothes(self):
@@ -505,7 +516,7 @@ class modify_material(bpy.types.Operator):
             for genMat in outfit.material_slots:
                 #use the material name instead of genMat.material['id'] to catch any instances of 00 01 02 materials
                 genType = genMat.name.replace('KK ','').replace(' ' + c.get_name(), '')
-                
+
                 #load these textures if they are present
                 self.image_load(genType, '_ST.png')
                 self.image_load(genType, '_ST_CT.png')
@@ -517,7 +528,7 @@ class modify_material(bpy.types.Operator):
                 self.image_load(genType, '_PM1.png')
                 self.image_load(genType, '_PM2.png')
                 self.image_load(genType, '_PM3.png')
-                
+
                 #If there's a plain maintex loaded, but no colored maintex loaded, make the shader use the plain maintex
                 plain_but_no_main = (
                     genMat.material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].image.name == 'Template: Placeholder' and
@@ -525,14 +536,14 @@ class modify_material(bpy.types.Operator):
                     )
                 if plain_but_no_main:
                     genMat.material.node_tree.nodes['combine'].inputs['Use plain main texture?'].default_value = 1
-                
+
                 #If there's an AnotherRamp (AR) texture present, the material is likely supposed to be metallic on the red parts of the detail mask
                 #I don't have a template for this, so the material will just look pure white. Turn off the shine intensity to avoid this
                 image_name = genMat.material['id'] + '_AR.png'
                 if bpy.data.images.get(image_name):
                     genMat.material.node_tree.nodes['light'].inputs['Detail intensity (shine)'].default_value = 0
                     genMat.material.node_tree.nodes['dark' ].inputs['Detail intensity (shine)'].default_value = 0
-                
+
                 shader_name = c.get_shader_name(genMat.material['id'])
 
                 #If the shader of this material is set to "main opaque" then there is NOT supposed to be a color mask, but the kkbp exporter exports one anyway
@@ -543,7 +554,7 @@ class modify_material(bpy.types.Operator):
                         c.kklog('Detected opaque shader. Moving color mask to color mask (plain) slot: {}'.format(genMat.material['id']))
                         genMat.material.node_tree.nodes['textures'].node_tree.nodes['_CM.pngopaque'].image = genMat.material.node_tree.nodes['textures'].node_tree.nodes['_CM.png'].image
                         genMat.material.node_tree.nodes['textures'].node_tree.nodes['_CM.png'].image = None
-                
+
                 #If the shader of this material is set to "main alpha", set the material to "blended" in blender
                 shaders = ['Shader Forge/main_alpha', 'Koikano/main_clothes_alpha', 'xukmi/MainAlphaPlus', 'xukmi/MainAlphaPlusTess', 'xukmi/MainItemAlphaPlus', 'IBL_Shader_alpha', ]
                 #find this material in the MaterialDataComplete.json and see if it's an alpha shader
@@ -559,7 +570,7 @@ class modify_material(bpy.types.Operator):
                 #find this material in the MaterialDataComplete.json and see if it's a glasses shader
                 if shader_name in shaders:
                     c.kklog('Detected glasses shader. Replacing material with KK Glasses: {}'.format(genMat.material['id']))
-                    
+
                     original_textures_group = genMat.material.node_tree.nodes['textures'].node_tree
                     template = bpy.data.materials['KK Glasses'].copy()
                     template.node_tree.nodes['textures'].node_tree = original_textures_group
@@ -572,7 +583,7 @@ class modify_material(bpy.types.Operator):
                 #special exception to clip the emblem image because I am tired of seeing it repeat at the edges
                 if 'KK cf_m_emblem ' in genMat.material.name:
                     genMat.material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].extension = 'CLIP'
-                                
+
         c.print_timer('link_textures_for_clothes')
 
     def link_textures_for_tongue_tear_gag(self):
@@ -603,9 +614,9 @@ class modify_material(bpy.types.Operator):
         #load the tears texture in
         if c.get_tears():
             self.image_load('Tears', '_ST_CT.png')
-        
+
         c.print_timer('link_textures_for_tongue_tear_gag')
-    
+
     def create_dark_textures(self):
         """
         Creates dark versions of textures for body, hair, and outfit materials.
@@ -671,9 +682,9 @@ class modify_material(bpy.types.Operator):
                 'Vertical Line',
                 'Cartoony Closed',
                 'Horizontal Line',
-                'Cartoony Crying' 
+                'Cartoony Crying'
             ]
-            
+
             def create_driver(material, expression1, expression2):
                 skey_driver = bpy.data.materials[material].node_tree.nodes['Parser'].inputs[0].driver_add('default_value')
                 skey_driver.driver.type = 'SCRIPTED'
@@ -683,7 +694,7 @@ class modify_material(bpy.types.Operator):
                     newVar.type = 'SINGLE_PROP'
                     newVar.targets[0].id_type = 'KEY'
                     newVar.targets[0].id = body.data.shape_keys
-                    newVar.targets[0].data_path = 'key_blocks["' + key + '"].value' 
+                    newVar.targets[0].data_path = 'key_blocks["' + key + '"].value'
                 skey_driver.driver.expression = expression1
                 skey_driver = bpy.data.materials[material].node_tree.nodes['hider'].inputs[0].driver_add('default_value')
                 skey_driver.driver.type = 'SCRIPTED'
@@ -697,20 +708,20 @@ class modify_material(bpy.types.Operator):
                 skey_driver.driver.expression = expression2
 
             create_driver (
-                'KK Gag00 ' + c.get_name(), 
-                '0 if CircleEyes1 else 1 if CircleEyes2 else 2 if CartoonyClosed else 3 if VerticalLine else 4', 
+                'KK Gag00 ' + c.get_name(),
+                '0 if CircleEyes1 else 1 if CircleEyes2 else 2 if CartoonyClosed else 3 if VerticalLine else 4',
                 'CircleEyes1 or CircleEyes2 or CartoonyClosed or VerticalLine or HorizontalLine'
                 )
 
             create_driver (
-                'KK Gag01 ' + c.get_name(), 
-                '0 if HeartEyes else 1', 
+                'KK Gag01 ' + c.get_name(),
+                '0 if HeartEyes else 1',
                 'HeartEyes or SpiralEyes'
                 )
-            
+
             create_driver (
-                'KK Gag02 ' + c.get_name(), 
-                '0 if CartoonyCrying else 1 if CartoonyWink else 2', 
+                'KK Gag02 ' + c.get_name(),
+                '0 if CartoonyCrying else 1 if CartoonyWink else 2',
                 'CartoonyCrying or CartoonyWink or FieryEyes'
                 )
         c.print_timer('setup_gag_eye_material_drivers')
@@ -847,7 +858,7 @@ class modify_material(bpy.types.Operator):
                     for gon in mats_to_gons[mat]:
                         gon.material_index = new_mat_list_order.index(mat)
 
-        for ob in outfits:    
+        for ob in outfits:
             #Add a general outline that covers the rest of the materials on the object that don't need transparency
             mod = ob.modifiers.new(
                 type='SOLIDIFY',
@@ -869,7 +880,7 @@ class modify_material(bpy.types.Operator):
         self = cls
         self.lut_selection = bpy.context.scene.kkbp.colors_dropdown
         self.lut_light = 'Lut_TimeDay.png'
-        
+
         self.lut_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.lut_light)
         day_lut = bpy.data.images.load(self.lut_path, check_existing=True)
         day_lut.use_fake_user = True
@@ -946,8 +957,8 @@ class modify_material(bpy.types.Operator):
     def saturate_color(self, color: float, light_pass = 'light', shadow_color = {'r':0.764, 'g':0.880, 'b':1}) -> dict[str, float]:
         '''The Secret Sauce. Accepts a 0-1 float rgba color dict, saturates it to match the in-game look 
         and returns it in the form of a 0-1 float rgba array'''
-        
-        #fix the color if it does not have an alpha 
+
+        #fix the color if it does not have an alpha
         color['a'] = color.get('a', 1)
 
         #make the color a dark color if the light_pass is set to dark
@@ -955,13 +966,13 @@ class modify_material(bpy.types.Operator):
         width, height = 1,1
 
         # Load image and LUT image pixels into array
-        image_pixels = numpy.array([color['r'], color['g'], color['b'], 1]).reshape(height, width, 4)
-        lut_pixels = numpy.array(bpy.data.images['Lut_TimeDay.png'].pixels[:]).reshape(bpy.data.images['Lut_TimeDay.png'].size[1], bpy.data.images['Lut_TimeDay.png'].size[0], 4)
-        
+        image_pixels = numpy.array([color['r'], color['g'], color['b'], 1],dtype=modify_material.np_number_precision).reshape(height, width, 4)
+        lut_pixels = numpy.array(bpy.data.images['Lut_TimeDay.png'].pixels[:],dtype=modify_material.np_number_precision).reshape(bpy.data.images['Lut_TimeDay.png'].size[1], bpy.data.images['Lut_TimeDay.png'].size[0], 4)
+
         #constants to ensure bot and top are within the 32 x 1024 dimensions of the lut
-        coord_scale = numpy.array([0.0302734375, 0.96875, 31.0])
-        coord_offset = numpy.array([0.5/1024, 0.5/32, 0.0])
-        texel_height_X0 = numpy.array([1/32, 0])
+        coord_scale = numpy.array([0.0302734375, 0.96875, 31.0],dtype=modify_material.np_number_precision)
+        coord_offset = numpy.array([0.5/1024, 0.5/32, 0.0],dtype=modify_material.np_number_precision)
+        texel_height_X0 = numpy.array([1/32, 0],dtype=modify_material.np_number_precision)
 
         # Find the XY coordinates of the LUT image needed to saturate each pixel
         coord = image_pixels[:, :, :3] * coord_scale + coord_offset
@@ -972,7 +983,7 @@ class modify_material(bpy.types.Operator):
         def bilinear_interpolation(lut_pixels, coords):
             h, w, _ = lut_pixels.shape
             x = coords[:, :, 0] * (w - 1)
-            #Fudge x coordinates based on x position. subtract -0.5 if at x position 0 and add 0.5 if at x position 1024 of the LUT. 
+            #Fudge x coordinates based on x position. subtract -0.5 if at x position 0 and add 0.5 if at x position 1024 of the LUT.
             #this helps with some kind of overflow / underflow issue where it reads from the next LUT square when it's not supposed to
             x = x + (x/1024  - 0.5)
             y = coords[:, :, 1] * (h - 1)
@@ -1018,12 +1029,12 @@ class modify_material(bpy.types.Operator):
         '''The Secret Sauce. Accepts a bpy image and saturates it to match the in-game look.'''
         width, height = image.size
         # Load image and LUT image pixels into array
-        image_pixels = numpy.array(image.pixels[:]).reshape(height, width, 4)
-        lut_pixels = numpy.array(bpy.data.images['Lut_TimeDay.png'].pixels[:]).reshape(bpy.data.images['Lut_TimeDay.png'].size[1], bpy.data.images['Lut_TimeDay.png'].size[0], 4)
+        image_pixels = numpy.array(image.pixels[:],dtype=modify_material.np_number_precision).reshape(height, width, 4)
+        lut_pixels = numpy.array(bpy.data.images['Lut_TimeDay.png'].pixels[:],dtype=modify_material.np_number_precision).reshape(bpy.data.images['Lut_TimeDay.png'].size[1], bpy.data.images['Lut_TimeDay.png'].size[0], 4)
         #constants to ensure bot and top are within the 32 x 1024 dimensions of the lut
-        coord_scale = numpy.array([0.0302734375, 0.96875, 31.0])
-        coord_offset = numpy.array([0.5/1024, 0.5/32, 0.0])
-        texel_height_X0 = numpy.array([1/32, 0])
+        coord_scale = numpy.array([0.0302734375, 0.96875, 31.0],dtype=modify_material.np_number_precision)
+        coord_offset = numpy.array([0.5/1024, 0.5/32, 0.0],dtype=modify_material.np_number_precision)
+        texel_height_X0 = numpy.array([1/32, 0],dtype=modify_material.np_number_precision)
         # Find the XY coordinates of the LUT image needed to saturate each pixel
         coord = image_pixels[:, :, :3] * coord_scale + coord_offset
         coord_frac, coord_floor = numpy.modf(coord)
@@ -1035,7 +1046,7 @@ class modify_material(bpy.types.Operator):
             h, w, _ = lut_pixels.shape
             x = coords[:, :, 0] * (w - 1)
             y = coords[:, :, 1] * (h - 1)
-            #Fudge x coordinates based on x position. subtract -0.5 if at x position 0 and add 0.5 if at x position 1024 of the LUT. 
+            #Fudge x coordinates based on x position. subtract -0.5 if at x position 0 and add 0.5 if at x position 1024 of the LUT.
             #this helps with some kind of overflow / underflow issue where it reads from the next LUT square when it's not supposed to
             x = x + (x/1024  - 0.5)
             # Get integer and fractional parts of each coordinate. 
@@ -1068,8 +1079,8 @@ class modify_material(bpy.types.Operator):
         image.pixels = image_pixels.flatten().tolist()
         return image
 
-    def update_shaders(self, light_pass: str):        
-        '''Set the colors for everything. This is run once for the light colors and again for the dark colors'''                                
+    def update_shaders(self, light_pass: str):
+        '''Set the colors for everything. This is run once for the light colors and again for the dark colors'''
         #set the tongue colors if it exists
         #if c.get_material_names('o_tang') and (tongue := c.get_tongue()):
         if c.get_material_names('o_tang') and (tongue := c.get_tongue()):
@@ -1084,7 +1095,7 @@ class modify_material(bpy.types.Operator):
             shader_inputs['Color mask (green)'].default_value = self.saturate_color(c.get_color(mat_name, "_Color2 "), light_pass, shadow_color = c.get_shadow_color(mat_name))
             shader_inputs['Color mask (blue)'].default_value =  self.saturate_color(c.get_color(mat_name, "_Color3 "), light_pass, shadow_color = c.get_shadow_color(mat_name))
 
-        #set all of the hair colors 
+        #set all of the hair colors
         hair_materials = [m for m in bpy.data.materials if m.get('hair') == True and m.get('name') == c.get_name()]
         for hair_material in hair_materials:
             shader_inputs = hair_material.node_tree.nodes[light_pass].inputs
@@ -1110,10 +1121,10 @@ class modify_material(bpy.types.Operator):
                     # shader_inputs['Nipple base 2'].default_value =          [0.9, 0.0, 0.1, 1.0]
                     # shader_inputs['Nipple shine'].default_value =           [1.0, 0.8, 0.8, 1.0]
                     # shader_inputs['Nipple rim'].default_value =             [1.0, 0.08, 0.09, 1.0]
-            
+
             #face
             if c.get_material_names('cf_O_face'):
-                #setup the face material 
+                #setup the face material
                 mat_name = 'KK Face ' + c.get_name()
                 shader_inputs = c.get_body().material_slots[mat_name].material.node_tree.nodes[light_pass].inputs
                 shader_inputs['Skin color'].default_value =             c.get_body().material_slots['KK Body ' + c.get_name()].material.node_tree.nodes[light_pass].inputs['Skin color'].default_value
@@ -1125,9 +1136,9 @@ class modify_material(bpy.types.Operator):
             if c.get_material_names('cf_O_mayuge'):
                 mat_name = 'KK Eyebrows (mayuge) ' + c.get_name()
                 shader_inputs = c.get_body().material_slots[mat_name].material.node_tree.nodes['light'].inputs
-                shader_inputs['Eyebrow color'].default_value =       self.saturate_color(c.get_color(mat_name, "_Color Color"))
-                shader_inputs['Eyebrow color dark'].default_value =  self.saturate_color(c.get_color(mat_name, "_Color Color"),  'dark' , shadow_color = c.get_shadow_color(mat_name))
-            
+                shader_inputs['Eyebrow color'].default_value =       self.saturate_color(c.get_color(mat_name, "_Color "))
+                shader_inputs['Eyebrow color dark'].default_value =  self.saturate_color(c.get_color(mat_name, "_Color "),  'dark' , shadow_color = c.get_shadow_color(mat_name))
+
             #eyeline
             if c.get_material_names('cf_O_eyeline'):
                 mat_name = 'KK Eyeline up ' + c.get_name()
@@ -1189,7 +1200,7 @@ class modify_material(bpy.types.Operator):
         tb30 = t0.y>=t0.z;
         t30 = 1 if tb30 else float(0.0);
         t1 = float4(t0.z, t0.y, t0.z, t0.w);
-        t2 = float4(t0.y - t1.x,  t0.z - t1.y); 
+        t2 = float4(t0.y - t1.x,  t0.z - t1.y);
         t1.z = float(-1.0);
         t1.w = float(0.666666687);
         t2.z = float(1.0);
@@ -1228,7 +1239,7 @@ class modify_material(bpy.types.Operator):
 
         diffuseShaded = shadingAdjustment * 0.899999976 - 0.5;
         diffuseShaded = -diffuseShaded * 2 + 1;
-        
+
         compTest = 0.555555582 < shadingAdjustment;
         shadingAdjustment *= 1.79999995;
         diffuseShaded = -diffuseShaded * 0.7225 + 1;
@@ -1239,7 +1250,7 @@ class modify_material(bpy.types.Operator):
         shadingAdjustment = (hlslcc_movcTemp).saturate(); #374 the lerp result (and shadowCol) is going to be this because shadowColor's alpha is always 1 making shadowCol 1
 
         finalDiffuse = diffuse * shadingAdjustment;
-        
+
         bodyShine = float4(1.0656, 1.0656, 1.0656, 1);
         finalDiffuse *= bodyShine;
         fudge_factor = float4(0.02, 0.05, 0, 0) #result is slightly off but it looks consistently off so add a fudge factor
@@ -1260,7 +1271,7 @@ class modify_material(bpy.types.Operator):
         t2 = float4(t2.x, t2.y, -1.0, 0.666666687); #70-71
         t3 = float4(t3.x, t3.y, 1.0, -1); #72-73
         t2 = (t30) * t3 + t2;
-        tb30 = t1.w >= t2.x; 
+        tb30 = t1.w >= t2.x;
         t30 = 1 if tb30 else float(0.0);
         t1 = float4(t2.x, t2.y, t2.w, t1.w) #77
         t2 = float4(t1.w, t1.y, t2.z, t1.x) #78
@@ -1294,7 +1305,7 @@ class modify_material(bpy.types.Operator):
         diffuse = float4(color['r'],color['g'],color['b'],1) #maintex color
         _ShadowColor = float4(shadow_color['r'],shadow_color['g'],shadow_color['b'],1) #the shadow color from material editor
         ##########################
-        
+
         #start at line 344 because the other one is for outlines
         shadingAdjustment = self.ShadeAdjustItem(diffuse, _ShadowColor)
 
@@ -1318,7 +1329,7 @@ class modify_material(bpy.types.Operator):
         # so ambientCol always results in lightCol after the max function
         ambientCol = float4(1.0656, 1.0656, 1.0656, 1);
         diffuseShadow = diffuseShadow * ambientCol;
-        
+
         return {'r':diffuseShadow.x, 'g':diffuseShadow.y, 'b':diffuseShadow.z, 'a':1}
 
     @staticmethod
@@ -1326,17 +1337,17 @@ class modify_material(bpy.types.Operator):
         '''#accepts a bpy image and creates a dark alternate using a modified version of the darkening code above. Returns a new bpy image'''
         if not os.path.isfile(bpy.context.scene.kkbp.import_dir + '/dark_files/' + maintex.name[:-6] + 'DT.png'):
             ok = time.time()
-            image_array = numpy.asarray(maintex.pixels)
+            image_array = numpy.asarray(maintex.pixels,dtype=modify_material.np_number_precision)
             image_length = len(image_array)
             image_row_length = int(image_length/4)
             image_array = image_array.reshape((image_row_length, 4))
 
             ################### variable setup
-            _ambientshadowG = numpy.asarray([0.15, 0.15, 0.15, 0.15]) #constant from experimentation
+            _ambientshadowG = numpy.asarray([0.15, 0.15, 0.15, 0.15],dtype=modify_material.np_number_precision) #constant from experimentation
             diffuse = image_array #maintex color
-            _ShadowColor = numpy.asarray([shadow_color['r'],shadow_color['g'],shadow_color['b'], 1]) #the shadow color from material editor
+            _ShadowColor = numpy.asarray([shadow_color['r'],shadow_color['g'],shadow_color['b'], 1],dtype=modify_material.np_number_precision) #the shadow color from material editor
             ##########################
-            
+
             #start at line 344 because the other one is for outlines
             #shadingAdjustment = ShadeAdjustItemNumpy(diffuse, _ShadowColor)
             #start at line 63
@@ -1347,8 +1358,8 @@ class modify_material(bpy.types.Operator):
             t3 = t0[:, [y,z]] * _ShadowColor[[y,z]] + (-t2)
             tb30 = t2[:, [y]] >= t1[:, [y]]
             t30 = tb30.astype(int)
-            t2 = numpy.hstack((t2[:, [x,y]], numpy.full((t2.shape[0], 1), -1, t2.dtype), numpy.full((t2.shape[0], 1), 0.666666687, t2.dtype))) 
-            t3 = numpy.hstack((t3[:, [x,y]], numpy.full((t3.shape[0], 1),  1, t3.dtype), numpy.full((t3.shape[0], 1), -1,          t3.dtype))) 
+            t2 = numpy.hstack((t2[:, [x,y]], numpy.full((t2.shape[0], 1), -1, t2.dtype), numpy.full((t2.shape[0], 1), 0.666666687, t2.dtype)))
+            t3 = numpy.hstack((t3[:, [x,y]], numpy.full((t3.shape[0], 1),  1, t3.dtype), numpy.full((t3.shape[0], 1), -1,          t3.dtype)))
             t2 = t30 * t3 + t2
             tb30 = t1[:, [w]] >= t1[:, [x]]
             t30 = tb30.astype(int)
@@ -1395,7 +1406,7 @@ class modify_material(bpy.types.Operator):
 
             # lightCol is constant [1.0656, 1.0656, 1.0656, 1] calculated from the custom ambient of [0.666, 0.666, 0.666, 1] and sun light color [0.666, 0.666, 0.666, 1],
             # so ambientCol always results in lightCol after the max function
-            ambientCol = numpy.asarray([1.0656, 1.0656, 1.0656, 1]);
+            ambientCol = numpy.asarray([1.0656, 1.0656, 1.0656, 1],dtype=modify_material.np_number_precision);
             diffuseShadow = diffuseShadow * ambientCol;
 
             #make a new image and place the dark pixels into it
