@@ -39,6 +39,11 @@ class modify_material(bpy.types.Operator):
     #  If someone crashed for processing larger img, set it to float16
     np_number_precision = numpy.float32
 
+    lut_pixels = None
+    coord_scale = None
+    coord_offset = None
+    texel_height_X0 = None
+
     def execute(self, context):
         try:
 
@@ -74,6 +79,13 @@ class modify_material(bpy.types.Operator):
         except Exception as error:
             c.handle_error(self, error)
             return {"CANCELLED"}
+
+    def init_prefab_data(self):
+        modify_material.lut_pixels = numpy.array(bpy.data.images['Lut_TimeDay.png'].pixels[:],dtype=modify_material.np_number_precision).reshape(bpy.data.images['Lut_TimeDay.png'].size[1], bpy.data.images['Lut_TimeDay.png'].size[0], 4)
+        modify_material.coord_scale = numpy.array([0.0302734375, 0.96875, 31.0],dtype=modify_material.np_number_precision)
+        modify_material.coord_offset = numpy.array([0.5 / 1024, 0.5 / 32, 0.0], dtype=modify_material.np_number_precision)
+        modify_material.texel_height_X0 = numpy.array([1 / 32, 0], dtype=modify_material.np_number_precision)
+        pass
 
     # %% Main functions            
     def remove_unused_material_slots(self):
@@ -635,7 +647,7 @@ class modify_material(bpy.types.Operator):
                     maintex = material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].image
                     #if this isn't a placeholder image, create a dark version of it
                     if maintex.name != 'Template: Placeholder' and maintex.name != 'cf_m_tang_CM.png':
-                        shadow_color = c.get_shadow_color(material.name)
+                        shadow_color = c.json_file_manager.get_shadow_color(material.name)
                         darktex = self.create_darktex(maintex, shadow_color)
                         material.node_tree.nodes['textures'].node_tree.nodes['_ST_DT.png'].image = darktex
         c.print_timer('create_dark_textures')
@@ -891,6 +903,7 @@ class modify_material(bpy.types.Operator):
         file_dir = os.path.dirname(__file__)
         lut_image = os.path.join(file_dir, 'Lut_TimeDay.png')
         lut_image = bpy.data.images.load(str(lut_image))
+        self.init_prefab_data()
 
         #collect all images in this folder and all subfolders into an array
         fileList = Path(bpy.context.scene.kkbp.import_dir).rglob('*.png')
@@ -954,6 +967,36 @@ class modify_material(bpy.types.Operator):
     def set_uv_type(mat: str, uvnode: str, uv_name: str, group = 'textures'):
         bpy.data.materials['KK ' + mat + ' ' + c.get_name()].node_tree.nodes[group].node_tree.nodes['pos'].node_tree.nodes[uvnode].uv_map = uv_name
 
+    @staticmethod
+    def __bilinear_interpolation__(lut_pixels, coords):
+        h, w, _ = lut_pixels.shape
+        x = coords[:, :, 0] * (w - 1)
+        # Fudge x coordinates based on x position. subtract -0.5 if at x position 0 and add 0.5 if at x position 1024 of the LUT.
+        # this helps with some kind of overflow / underflow issue where it reads from the next LUT square when it's not supposed to
+        x = x + (x / 1024 - 0.5)
+        y = coords[:, :, 1] * (h - 1)
+        # Get integer and fractional parts of each coordinate.
+        # Also make sure each coordinate is clipped to the LUT image bounds
+        x0 = numpy.clip(numpy.floor(x).astype(int), 0, w - 1)
+        x1 = numpy.clip(x0 + 1, 0, w - 1)
+        y0 = numpy.clip(numpy.floor(y).astype(int), 0, h - 1)
+        y1 = numpy.clip(y0 + 1, 0, h - 1)
+        x_frac = x - x0
+        y_frac = y - y0
+        # Get the pixel values at four corners of this coordinate
+        f00 = lut_pixels[y0, x0]
+        f01 = lut_pixels[y1, x0]
+        f10 = lut_pixels[y0, x1]
+        f11 = lut_pixels[y1, x1]
+        # Perform the bilinear interpolation using the fractional part of each coordinate
+        # This will ensure the LUT can provide the correct color every single time, even if that color isn't found in the LUT itself
+        # If this isn't performed, the resulting image will look very blocky because it will snap to colors only found in the LUT.
+        lut_col_bot = f00 * (1 - y_frac)[:, :, numpy.newaxis] + f01 * y_frac[:, :, numpy.newaxis]
+        lut_col_top = f10 * (1 - y_frac)[:, :, numpy.newaxis] + f11 * y_frac[:, :, numpy.newaxis]
+        interpolated_colors = lut_col_bot * (1 - x_frac)[:, :, numpy.newaxis] + lut_col_top * x_frac[:, :,
+                                                                                              numpy.newaxis]
+        return interpolated_colors
+
     def saturate_color(self, color: float, light_pass = 'light', shadow_color = {'r':0.764, 'g':0.880, 'b':1}) -> dict[str, float]:
         '''The Secret Sauce. Accepts a 0-1 float rgba color dict, saturates it to match the in-game look 
         and returns it in the form of a 0-1 float rgba array'''
@@ -967,49 +1010,21 @@ class modify_material(bpy.types.Operator):
 
         # Load image and LUT image pixels into array
         image_pixels = numpy.array([color['r'], color['g'], color['b'], 1],dtype=modify_material.np_number_precision).reshape(height, width, 4)
-        lut_pixels = numpy.array(bpy.data.images['Lut_TimeDay.png'].pixels[:],dtype=modify_material.np_number_precision).reshape(bpy.data.images['Lut_TimeDay.png'].size[1], bpy.data.images['Lut_TimeDay.png'].size[0], 4)
+        # lut_pixels = numpy.array(bpy.data.images['Lut_TimeDay.png'].pixels[:],dtype=modify_material.np_number_precision).reshape(bpy.data.images['Lut_TimeDay.png'].size[1], bpy.data.images['Lut_TimeDay.png'].size[0], 4)
 
         #constants to ensure bot and top are within the 32 x 1024 dimensions of the lut
-        coord_scale = numpy.array([0.0302734375, 0.96875, 31.0],dtype=modify_material.np_number_precision)
-        coord_offset = numpy.array([0.5/1024, 0.5/32, 0.0],dtype=modify_material.np_number_precision)
-        texel_height_X0 = numpy.array([1/32, 0],dtype=modify_material.np_number_precision)
+        # coord_scale = numpy.array([0.0302734375, 0.96875, 31.0],dtype=modify_material.np_number_precision)
+        # coord_offset = numpy.array([0.5/1024, 0.5/32, 0.0],dtype=modify_material.np_number_precision)
+        # texel_height_X0 = numpy.array([1/32, 0],dtype=modify_material.np_number_precision)
 
         # Find the XY coordinates of the LUT image needed to saturate each pixel
-        coord = image_pixels[:, :, :3] * coord_scale + coord_offset
+        coord = image_pixels[:, :, :3] * self.coord_scale + self.coord_offset
         coord_frac, coord_floor = numpy.modf(coord)
-        coord_bot = coord[:, :, :2] + numpy.tile(coord_floor[:, :, 2].reshape(height, width, 1), (1, 1, 2)) * texel_height_X0
-        coord_top = numpy.clip(coord_bot + texel_height_X0, 0, 1)
+        coord_bot = coord[:, :, :2] + numpy.tile(coord_floor[:, :, 2].reshape(height, width, 1), (1, 1, 2)) * self.texel_height_X0
+        coord_top = numpy.clip(coord_bot + self.texel_height_X0, 0, 1)
 
-        def bilinear_interpolation(lut_pixels, coords):
-            h, w, _ = lut_pixels.shape
-            x = coords[:, :, 0] * (w - 1)
-            #Fudge x coordinates based on x position. subtract -0.5 if at x position 0 and add 0.5 if at x position 1024 of the LUT.
-            #this helps with some kind of overflow / underflow issue where it reads from the next LUT square when it's not supposed to
-            x = x + (x/1024  - 0.5)
-            y = coords[:, :, 1] * (h - 1)
-            # Get integer and fractional parts of each coordinate. 
-            # Also make sure each coordinate is clipped to the LUT image bounds
-            x0 = numpy.clip(numpy.floor(x).astype(int), 0, w-1)
-            x1 = numpy.clip(x0 + 1, 0, w - 1)
-            y0 = numpy.clip(numpy.floor(y).astype(int), 0, h-1)
-            y1 = numpy.clip(y0 + 1, 0, h - 1)
-            x_frac = x - x0
-            y_frac = y - y0
-            # Get the pixel values at four corners of this coordinate
-            f00 = lut_pixels[y0, x0]
-            f01 = lut_pixels[y1, x0]
-            f10 = lut_pixels[y0, x1]
-            f11 = lut_pixels[y1, x1]
-            # Perform the bilinear interpolation using the fractional part of each coordinate
-            # This will ensure the LUT can provide the correct color every single time, even if that color isn't found in the LUT itself
-            # If this isn't performed, the resulting image will look very blocky because it will snap to colors only found in the LUT.
-            lut_col_bot = f00 * (1 - y_frac)[:, :, numpy.newaxis] + f01 * y_frac[:, :, numpy.newaxis]
-            lut_col_top = f10 * (1 - y_frac)[:, :, numpy.newaxis] + f11 * y_frac[:, :, numpy.newaxis]
-            interpolated_colors = lut_col_bot * (1 - x_frac)[:, :, numpy.newaxis] + lut_col_top * x_frac[:, :, numpy.newaxis]
-            return interpolated_colors
-
-        lutcol_bot = bilinear_interpolation(lut_pixels, coord_bot)
-        lutcol_top = bilinear_interpolation(lut_pixels, coord_top)
+        lutcol_bot = self.__bilinear_interpolation__(self.lut_pixels, coord_bot)
+        lutcol_top = self.__bilinear_interpolation__(self.lut_pixels, coord_top)
         #After the older gpu code uses the texture lookup the colorspace is converted from srgb to linear,
         # so replicate that behavior here.
         def srgb_to_linear(srgb):
@@ -1030,53 +1045,28 @@ class modify_material(bpy.types.Operator):
         width, height = image.size
         # Load image and LUT image pixels into array
         image_pixels = numpy.array(image.pixels[:],dtype=modify_material.np_number_precision).reshape(height, width, 4)
-        lut_pixels = numpy.array(bpy.data.images['Lut_TimeDay.png'].pixels[:],dtype=modify_material.np_number_precision).reshape(bpy.data.images['Lut_TimeDay.png'].size[1], bpy.data.images['Lut_TimeDay.png'].size[0], 4)
+        #  lut_pixels = numpy.array(bpy.data.images['Lut_TimeDay.png'].pixels[:],dtype=modify_material.np_number_precision).reshape(bpy.data.images['Lut_TimeDay.png'].size[1], bpy.data.images['Lut_TimeDay.png'].size[0], 4)
         #constants to ensure bot and top are within the 32 x 1024 dimensions of the lut
-        coord_scale = numpy.array([0.0302734375, 0.96875, 31.0],dtype=modify_material.np_number_precision)
-        coord_offset = numpy.array([0.5/1024, 0.5/32, 0.0],dtype=modify_material.np_number_precision)
-        texel_height_X0 = numpy.array([1/32, 0],dtype=modify_material.np_number_precision)
+        # coord_scale = numpy.array([0.0302734375, 0.96875, 31.0],dtype=modify_material.np_number_precision)
+        # coord_offset = numpy.array([0.5/1024, 0.5/32, 0.0],dtype=modify_material.np_number_precision)
+        # texel_height_X0 = numpy.array([1/32, 0],dtype=modify_material.np_number_precision)
         # Find the XY coordinates of the LUT image needed to saturate each pixel
-        coord = image_pixels[:, :, :3] * coord_scale + coord_offset
+        coord = image_pixels[:, :, :3] * self.coord_scale + self.coord_offset
         coord_frac, coord_floor = numpy.modf(coord)
-        coord_bot = coord[:, :, :2] + numpy.tile(coord_floor[:, :, 2].reshape(height, width, 1), (1, 1, 2)) * texel_height_X0
-        coord_top = numpy.clip(coord_bot + texel_height_X0, 0, 1)
-
-        def bilinear_interpolation(lut_pixels, coords):
-            #stretch coordinates to be between 0 and 1024, the width of the LUT image
-            h, w, _ = lut_pixels.shape
-            x = coords[:, :, 0] * (w - 1)
-            y = coords[:, :, 1] * (h - 1)
-            #Fudge x coordinates based on x position. subtract -0.5 if at x position 0 and add 0.5 if at x position 1024 of the LUT.
-            #this helps with some kind of overflow / underflow issue where it reads from the next LUT square when it's not supposed to
-            x = x + (x/1024  - 0.5)
-            # Get integer and fractional parts of each coordinate. 
-            # Also make sure each coordinate is clipped to the LUT image bounds
-            x0 = numpy.clip(numpy.floor(x).astype(int), 0, w-1)
-            x1 = numpy.clip(x0 + 1, 0, w - 1)
-            y0 = numpy.clip(numpy.floor(y).astype(int), 0, h-1)
-            y1 = numpy.clip(y0 + 1, 0, h - 1)
-            x_frac = x - x0
-            y_frac = y - y0
-            # Get the pixel values at four corners of this coordinate
-            f00 = lut_pixels[y0, x0]
-            f01 = lut_pixels[y1, x0]
-            f10 = lut_pixels[y0, x1]
-            f11 = lut_pixels[y1, x1]
-            # Perform the bilinear interpolation using the fractional part of each coordinate
-            # This will ensure the LUT can provide the correct color every single time, even if that color isn't found in the LUT itself
-            # If this isn't performed, the resulting image will look very blocky because it will snap to colors only found in the LUT.
-            lut_col_bot = f00 * (1 - y_frac)[:, :, numpy.newaxis] + f01 * y_frac[:, :, numpy.newaxis]
-            lut_col_top = f10 * (1 - y_frac)[:, :, numpy.newaxis] + f11 * y_frac[:, :, numpy.newaxis]
-            interpolated_colors = lut_col_bot * (1 - x_frac)[:, :, numpy.newaxis] + lut_col_top * x_frac[:, :, numpy.newaxis]
-            return interpolated_colors
+        coord_z_floor = coord_floor[:, :, 2:3]
+        coord_bot = coord[:, :, :2] + coord_floor[:, :, 2:3] * self.texel_height_X0
+        # coord_bot = coord[:, :, :2] + numpy.tile(coord_floor[:, :, 2].reshape(height, width, 1), (1, 1, 2)) * self.texel_height_X0
+        coord_top = numpy.clip(coord_bot + self.texel_height_X0, 0, 1)
 
         #use those XY coordinates to find the saturated version of the color from the LUT image
-        lutcol_bot = bilinear_interpolation(lut_pixels, coord_bot)
-        lutcol_top = bilinear_interpolation(lut_pixels, coord_top)
-        lut_colors = lutcol_bot * (1 - coord_frac[:, :, 2].reshape(height, width, 1)) + lutcol_top * coord_frac[:, :, 2].reshape(height, width, 1)
+        coord_frac_z = coord_frac[:, :, 2:3]
+        lutcol_bot = self.__bilinear_interpolation__(self.lut_pixels, coord_bot)
+        lutcol_top = self.__bilinear_interpolation__(self.lut_pixels, coord_top)
+        lut_colors = lutcol_bot * (1 - coord_frac_z) + lutcol_top * coord_frac_z
         image_pixels[:, :, :3] = lut_colors[:,:,:3]
         # Update image pixels
-        image.pixels = image_pixels.flatten().tolist()
+        # image.pixels = image_pixels.flatten().tolist()
+        image.pixels.foreach_set(image_pixels.ravel())
         return image
 
     def update_shaders(self, light_pass: str):
@@ -1091,17 +1081,17 @@ class modify_material(bpy.types.Operator):
             shader_inputs['Color mask (base)'].default_value = [1, 1, 1, 1]
             # mat_name = c.get_tongue().material_slots[0].name
             mat_name = tongue.material_slots[0].name
-            shader_inputs['Color mask (red)'].default_value =   self.saturate_color(c.get_color(mat_name, "_Color "),  light_pass, shadow_color = c.get_shadow_color(mat_name))
-            shader_inputs['Color mask (green)'].default_value = self.saturate_color(c.get_color(mat_name, "_Color2 "), light_pass, shadow_color = c.get_shadow_color(mat_name))
-            shader_inputs['Color mask (blue)'].default_value =  self.saturate_color(c.get_color(mat_name, "_Color3 "), light_pass, shadow_color = c.get_shadow_color(mat_name))
+            shader_inputs['Color mask (red)'].default_value =   self.saturate_color(c.json_file_manager.get_color(mat_name, "_Color "),  light_pass, shadow_color = c.json_file_manager.get_shadow_color(mat_name))
+            shader_inputs['Color mask (green)'].default_value = self.saturate_color(c.json_file_manager.get_color(mat_name, "_Color2 "), light_pass, shadow_color = c.json_file_manager.get_shadow_color(mat_name))
+            shader_inputs['Color mask (blue)'].default_value =  self.saturate_color(c.json_file_manager.get_color(mat_name, "_Color3 "), light_pass, shadow_color = c.json_file_manager.get_shadow_color(mat_name))
 
         #set all of the hair colors
         hair_materials = [m for m in bpy.data.materials if m.get('hair') == True and m.get('name') == c.get_name()]
         for hair_material in hair_materials:
             shader_inputs = hair_material.node_tree.nodes[light_pass].inputs
-            shader_inputs['Hair color'].default_value         = self.saturate_color(c.get_color(hair_material.name, "_Color " ),  light_pass, shadow_color = c.get_shadow_color(hair_material.name))
-            shader_inputs['Color mask (root)'].default_value  = self.saturate_color(c.get_color(hair_material.name, "_Color2 "),  light_pass, shadow_color = c.get_shadow_color(hair_material.name))
-            shader_inputs['Color mask (tip)'].default_value = self.saturate_color(c.get_color(hair_material.name, "_Color3 "),  light_pass, shadow_color = c.get_shadow_color(hair_material.name))
+            shader_inputs['Hair color'].default_value         = self.saturate_color(c.json_file_manager.get_color(hair_material.name, "_Color " ),  light_pass, shadow_color = c.json_file_manager.get_shadow_color(hair_material.name))
+            shader_inputs['Color mask (root)'].default_value  = self.saturate_color(c.json_file_manager.get_color(hair_material.name, "_Color2 "),  light_pass, shadow_color = c.json_file_manager.get_shadow_color(hair_material.name))
+            shader_inputs['Color mask (tip)'].default_value = self.saturate_color(c.json_file_manager.get_color(hair_material.name, "_Color3 "),  light_pass, shadow_color = c.json_file_manager.get_shadow_color(hair_material.name))
 
         #set body colors
         if c.get_body():
@@ -1109,12 +1099,12 @@ class modify_material(bpy.types.Operator):
                 shader_inputs = c.get_body().material_slots['KK Body ' + c.get_name()].material.node_tree.nodes[light_pass].inputs
                 mat_name = 'KK Body ' + c.get_name()
                 if light_pass == 'light':
-                    shader_inputs['Skin color'].default_value = self.saturate_color(c.get_color(mat_name, "_Color "), light_pass = 'light')
+                    shader_inputs['Skin color'].default_value = self.saturate_color(c.json_file_manager.get_color(mat_name, "_Color "), light_pass = 'light')
                 else:
-                    shader_inputs['Skin color'].default_value = self.saturate_color(self.skin_dark_color(c.get_color(mat_name, "_Color ")), light_pass = 'light')
-                shader_inputs['Detail color'].default_value =               self.saturate_color(c.get_color(mat_name, "_Color2 " ),  light_pass, shadow_color = c.get_shadow_color(mat_name))
-                shader_inputs['Line mask color'].default_value =            self.saturate_color(c.get_color(mat_name, "_Color2 " ),  light_pass, shadow_color = c.get_shadow_color(mat_name)) #use same color for both detail and line
-                shader_inputs['Nail color (multiplied)'].default_value =    self.saturate_color(c.get_color(mat_name, "_Color5 " ),  light_pass, shadow_color = c.get_shadow_color(mat_name))
+                    shader_inputs['Skin color'].default_value = self.saturate_color(self.skin_dark_color(c.json_file_manager.get_color(mat_name, "_Color ")), light_pass = 'light')
+                shader_inputs['Detail color'].default_value =               self.saturate_color(c.json_file_manager.get_color(mat_name, "_Color2 " ),  light_pass, shadow_color = c.json_file_manager.get_shadow_color(mat_name))
+                shader_inputs['Line mask color'].default_value =            self.saturate_color(c.json_file_manager.get_color(mat_name, "_Color2 " ),  light_pass, shadow_color = c.json_file_manager.get_shadow_color(mat_name)) #use same color for both detail and line
+                shader_inputs['Nail color (multiplied)'].default_value =    self.saturate_color(c.json_file_manager.get_color(mat_name, "_Color5 " ),  light_pass, shadow_color = c.json_file_manager.get_shadow_color(mat_name))
                 if not bpy.context.scene.kkbp.sfw_mode:
                     shader_inputs['Underhair color'].default_value =        [0, 0, 0, 1]
                     # shader_inputs['Nipple base'].default_value =            [1.0, 0.48, 0.48, 1.0] #these don't seem to be the correct colors. Just use hardcoded colors in .blend file
@@ -1128,39 +1118,39 @@ class modify_material(bpy.types.Operator):
                 mat_name = 'KK Face ' + c.get_name()
                 shader_inputs = c.get_body().material_slots[mat_name].material.node_tree.nodes[light_pass].inputs
                 shader_inputs['Skin color'].default_value =             c.get_body().material_slots['KK Body ' + c.get_name()].material.node_tree.nodes[light_pass].inputs['Skin color'].default_value
-                shader_inputs['Detail color'].default_value =      self.saturate_color(c.get_color('KK Body ' + c.get_name(), "_Color2 " ),         light_pass, shadow_color = c.get_shadow_color('KK Body ' + c.get_name()))
-                shader_inputs['Light blush color'].default_value =      self.saturate_color(c.get_color(mat_name, "_overcolor2 "  ),                light_pass, shadow_color = c.get_shadow_color(mat_name))
-                shader_inputs['Lipstick multiplier'].default_value =    self.saturate_color(c.get_color(mat_name, "_overcolor1 "  ),                light_pass, shadow_color = c.get_shadow_color(mat_name))
+                shader_inputs['Detail color'].default_value =      self.saturate_color(c.json_file_manager.get_color('KK Body ' + c.get_name(), "_Color2 " ),         light_pass, shadow_color = c.json_file_manager.get_shadow_color('KK Body ' + c.get_name()))
+                shader_inputs['Light blush color'].default_value =      self.saturate_color(c.json_file_manager.get_color(mat_name, "_overcolor2 "  ),                light_pass, shadow_color = c.json_file_manager.get_shadow_color(mat_name))
+                shader_inputs['Lipstick multiplier'].default_value =    self.saturate_color(c.json_file_manager.get_color(mat_name, "_overcolor1 "  ),                light_pass, shadow_color = c.json_file_manager.get_shadow_color(mat_name))
 
             #eyebrows
             if c.get_material_names('cf_O_mayuge'):
                 mat_name = 'KK Eyebrows (mayuge) ' + c.get_name()
                 shader_inputs = c.get_body().material_slots[mat_name].material.node_tree.nodes['light'].inputs
-                shader_inputs['Eyebrow color'].default_value =       self.saturate_color(c.get_color(mat_name, "_Color "))
-                shader_inputs['Eyebrow color dark'].default_value =  self.saturate_color(c.get_color(mat_name, "_Color "),  'dark' , shadow_color = c.get_shadow_color(mat_name))
+                shader_inputs['Eyebrow color'].default_value =       self.saturate_color(c.json_file_manager.get_color(mat_name, "_Color "))
+                shader_inputs['Eyebrow color dark'].default_value =  self.saturate_color(c.json_file_manager.get_color(mat_name, "_Color "),  'dark' , shadow_color = c.json_file_manager.get_shadow_color(mat_name))
 
             #eyeline
             if c.get_material_names('cf_O_eyeline'):
                 mat_name = 'KK Eyeline up ' + c.get_name()
                 shader_inputs = c.get_body().material_slots[mat_name].material.node_tree.nodes['light'].inputs
-                shader_inputs['Eyeline fade color'].default_value = self.saturate_color(c.get_color(mat_name, "_Color "),  light_pass, shadow_color = c.get_shadow_color(mat_name))
+                shader_inputs['Eyeline fade color'].default_value = self.saturate_color(c.json_file_manager.get_color(mat_name, "_Color "),  light_pass, shadow_color = c.json_file_manager.get_shadow_color(mat_name))
                 #the below doesn't seem to be the correct color. Use the hardcoded one in the blend file for now
                 # if len(c.get_material_names('cf_O_eyeline')) > 1:
-                #     shader_inputs['Kage color'].default_value =  self.saturate_color(c.get_color('KK Eyeline kage ' + c.get_name(), "_Color "),  light_pass, shadow_color = c.get_shadow_color('KK Eyeline kage ' + c.get_name())) 
+                #     shader_inputs['Kage color'].default_value =  self.saturate_color(c.json_file_manager.get_color('KK Eyeline kage ' + c.get_name(), "_Color "),  light_pass, shadow_color = c.json_file_manager.get_shadow_color('KK Eyeline kage ' + c.get_name()))
                 if c.get_material_names('cf_O_eyeline_low'):
                     shader_inputs = c.get_body().material_slots[mat_name].material.node_tree.nodes['light'].inputs
-                    shader_inputs['Eyeline down fade color'].default_value = self.saturate_color(c.get_color('KK Eyeline down ' + c.get_name(), "_Color "),  light_pass, shadow_color = c.get_shadow_color('KK Eyeline down ' + c.get_name()))
+                    shader_inputs['Eyeline down fade color'].default_value = self.saturate_color(c.json_file_manager.get_color('KK Eyeline down ' + c.get_name(), "_Color "),  light_pass, shadow_color = c.json_file_manager.get_shadow_color('KK Eyeline down ' + c.get_name()))
 
         #set the clothes colors
         materials = [m for m in bpy.data.materials if m.get('outfit') == True and m.get('name') == c.get_name()]
         for material in materials:
             shader_inputs = material.node_tree.nodes[light_pass].inputs
-            shader_inputs['Color mask (red)'].default_value =       self.saturate_color(c.get_color(material.name, "_Color "),     light_pass, shadow_color = c.get_shadow_color(material.name))
-            shader_inputs['Color mask (green)'].default_value =     self.saturate_color(c.get_color(material.name, "_Color2 "),    light_pass, shadow_color = c.get_shadow_color(material.name))
-            shader_inputs['Color mask (blue)'].default_value =      self.saturate_color(c.get_color(material.name, "_Color3 "),    light_pass, shadow_color = c.get_shadow_color(material.name))
-            shader_inputs['Pattern color (red)'].default_value =    self.saturate_color(c.get_color(material.name, "_Color1_2 "),  light_pass, shadow_color = c.get_shadow_color(material.name))
-            shader_inputs['Pattern color (green)'].default_value =  self.saturate_color(c.get_color(material.name, "_Color2_2 "),  light_pass, shadow_color = c.get_shadow_color(material.name))
-            shader_inputs['Pattern color (blue)'].default_value =   self.saturate_color(c.get_color(material.name, "_Color3_2 "),  light_pass, shadow_color = c.get_shadow_color(material.name))
+            shader_inputs['Color mask (red)'].default_value =       self.saturate_color(c.json_file_manager.get_color(material.name, "_Color "),     light_pass, shadow_color = c.json_file_manager.get_shadow_color(material.name))
+            shader_inputs['Color mask (green)'].default_value =     self.saturate_color(c.json_file_manager.get_color(material.name, "_Color2 "),    light_pass, shadow_color = c.json_file_manager.get_shadow_color(material.name))
+            shader_inputs['Color mask (blue)'].default_value =      self.saturate_color(c.json_file_manager.get_color(material.name, "_Color3 "),    light_pass, shadow_color = c.json_file_manager.get_shadow_color(material.name))
+            shader_inputs['Pattern color (red)'].default_value =    self.saturate_color(c.json_file_manager.get_color(material.name, "_Color1_2 "),  light_pass, shadow_color = c.json_file_manager.get_shadow_color(material.name))
+            shader_inputs['Pattern color (green)'].default_value =  self.saturate_color(c.json_file_manager.get_color(material.name, "_Color2_2 "),  light_pass, shadow_color = c.json_file_manager.get_shadow_color(material.name))
+            shader_inputs['Pattern color (blue)'].default_value =   self.saturate_color(c.json_file_manager.get_color(material.name, "_Color3_2 "),  light_pass, shadow_color = c.json_file_manager.get_shadow_color(material.name))
 
     #something is wrong with this one, currently unused
     # def hair_dark_color(self, color, shadow_color):

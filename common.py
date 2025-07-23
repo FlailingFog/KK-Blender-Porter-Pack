@@ -9,11 +9,12 @@ class JsonFileManager:
 
     def __init__(self):
         self.json_files = {}
+        self.smr_materials_data = {}
         self.materials_data = {}
 
     def clear(self):
         self.json_files.clear()
-        self.materials_data.clear()
+        self.smr_materials_data.clear()
 
     def init(self):
         '''
@@ -27,11 +28,16 @@ class JsonFileManager:
         raw_data = self.get_json_file('KK_MaterialDataComplete.json')
 
         for item in raw_data:
-            if material_info := item['MaterialInformation']:
-                if (smr_data := self.materials_data.get(item['SMRName'])) is None:
+            if material_infos := item['MaterialInformation']:
+                if (smr_data := self.smr_materials_data.get(item['SMRName'])) is None:
                     smr_data = []
-                    self.materials_data[item['SMRName']] = smr_data
+                    self.smr_materials_data[item['SMRName']] = smr_data
                 smr_data.append(item)
+                for material_info in material_infos:
+                    if (materials := self.materials_data.get(material_info['MaterialName'])) is None:
+                        materials = []
+                        self.materials_data[material_info['MaterialName']] = materials
+                    materials.append(material_info)
 
     def get_json_file(self, filename: str) -> json:
         '''
@@ -47,10 +53,37 @@ class JsonFileManager:
         Material's name could change to everything at author's willing, but the bone should under the kk's control.
         So bone's name should be fixed.According to this, we can get target material's name by its smr name
         '''
-        return self.materials_data.get(smr_name)
+        return self.smr_materials_data.get(smr_name)
 
     def get_materials_info(self) -> dict[str, list[dict]]:
-        return self.materials_data
+        return self.smr_materials_data
+
+    def get_color(self, material_name: str, color: str) -> dict[str: float]:
+        '''Find the material material_name and return an RGBA dict list of the specified color ranging from 0-1. If material_name contains a space and the character name, it will be filtered out.'''
+        if material_name := bpy.data.materials[material_name].get('id'):
+            material_colors = self.materials_data.get(material_name)
+            for material_color in material_colors:
+                color_dict = zip(material_color['ShaderPropNames'], material_color['ShaderPropColorValues'])
+                for pair in color_dict:
+                    if color in pair[0]:
+                        return pair[1]
+        kklog(f"Couldn't find {color} for {material_name}", 'warn')
+        return {'r': 1, 'g': 1, 'b': 1, 'a': 1}
+
+    def get_shadow_color(self, material_name: str) -> dict[str, float]:
+        '''Find the material material_name and return an RGBA float list ranging from 0-1'''
+        # get original name
+        if material_name := bpy.data.materials[material_name].get('id'):
+            material_colors = self.materials_data.get(material_name)
+            for material_color in material_colors:
+                color_dict = zip(material_color['ShaderPropNames'], material_color['ShaderPropColorValues'])
+                for pair in color_dict:
+                    if '_shadowcolor' in pair[0].lower():
+                        return pair[1]
+        # return a default color if not found
+        kklog(f'Couldn\'t find shadow color for {material_name}', 'warn')
+        return {'r': 0.764, 'g': 0.880, 'b': 1}
+
 
 
 def toggle_console():
@@ -238,27 +271,27 @@ def get_color(material_name: str, color: str) -> dict[float]:
     return {'r': 1, 'g': 1, 'b': 1, 'a': 1}
 
 
-def get_shadow_color(material_name: str) -> dict[float]:
-    '''Find the material material_name and return an RGBA float list ranging from 0-1'''
-    # get original name
-    material_name = bpy.data.materials[material_name].get('id')
-    if material_name:
-        material_data = json_file_manager.get_json_file('KK_MaterialDataComplete.json')
-        material_infos = [m['MaterialInformation'] for m in material_data if m.get('MaterialInformation')]
-        # get all the shadow colors
-        material_colors = []
-        for material_info in material_infos:
-            material_colors.extend([m for m in material_info if m.get('MaterialName') == material_name])
-        for material_color in material_colors:
-            # then zip them and find the shadow color
-            color_dict = zip(material_color['ShaderPropNames'], material_color['ShaderPropColorValues'])
-            # key names are not consistent, so look through all of them
-            for pair in color_dict:
-                if '_shadowcolor' in pair[0].lower():
-                    return pair[1]
-    # return a default color if not found
-    kklog(f'Couldn\'t find shadow color for {material_name}', 'warn')
-    return {'r': 0.764, 'g': 0.880, 'b': 1}
+# def get_shadow_color(material_name: str) -> dict[float]:
+#     '''Find the material material_name and return an RGBA float list ranging from 0-1'''
+#     # get original name
+#     material_name = bpy.data.materials[material_name].get('id')
+#     if material_name:
+#         material_data = json_file_manager.get_json_file('KK_MaterialDataComplete.json')
+#         material_infos = [m['MaterialInformation'] for m in material_data if m.get('MaterialInformation')]
+#         # get all the shadow colors
+#         material_colors = []
+#         for material_info in material_infos:
+#             material_colors.extend([m for m in material_info if m.get('MaterialName') == material_name])
+#         for material_color in material_colors:
+#             # then zip them and find the shadow color
+#             color_dict = zip(material_color['ShaderPropNames'], material_color['ShaderPropColorValues'])
+#             # key names are not consistent, so look through all of them
+#             for pair in color_dict:
+#                 if '_shadowcolor' in pair[0].lower():
+#                     return pair[1]
+#     # return a default color if not found
+#     kklog(f'Couldn\'t find shadow color for {material_name}', 'warn')
+#     return {'r': 0.764, 'g': 0.880, 'b': 1}
 
 
 def get_body_materials() -> list[bpy.types.Material]:
