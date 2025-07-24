@@ -44,8 +44,9 @@ class modify_material(bpy.types.Operator):
     texel_height_X0 = None
     queue_lock = None
     data_queue = queue.Queue()
-    # thread num = 4 cost half of the time, but increase memory usage. This should be decided by user
-    max_thread_num = 3
+    #  same model, 4 sub threads costs 60s, but memory usage peak could be 16000MB.2 sub threads cost 76s, memory usage peak around 7700MB
+    #  no multi-threading costs 127s
+    max_thread_num = 2
 
     def execute(self, context):
         try:
@@ -128,32 +129,25 @@ class modify_material(bpy.types.Operator):
             bpy.ops.object.material_slot_remove_unused()
             c.switch(obj, 'edit')
 
-            #remap duplicate materials to the base one
-            material_list = obj.data.materials
-            for mat in material_list:
-                mat_name_list = c.get_material_names('cf_Ohitomi_L02')
-                mat_name_list.extend(c.get_material_names('cf_Ohitomi_R02'))
-                mat_name_list.extend(c.get_material_names('cf_Ohitomi_L'))
-                mat_name_list.extend(c.get_material_names('cf_Ohitomi_R'))
-                mat_name_list.extend(c.get_material_names('cf_O_namida_L'))
-                mat_name_list.extend(c.get_material_names('cf_O_namida_M'))
-                mat_name_list.extend(c.get_material_names('cf_O_namida_S'))
-                mat_name_list.extend(c.get_material_names('o_tang'))
+            mat_name_list = c.get_material_names('cf_Ohitomi_L02')
+            mat_name_list.extend(c.get_material_names('cf_Ohitomi_R02'))
+            mat_name_list.extend(c.get_material_names('cf_Ohitomi_L'))
+            mat_name_list.extend(c.get_material_names('cf_Ohitomi_R'))
+            mat_name_list.extend(c.get_material_names('cf_O_namida_L'))
+            mat_name_list.extend(c.get_material_names('cf_O_namida_M'))
+            mat_name_list.extend(c.get_material_names('cf_O_namida_S'))
+            mat_name_list.extend(c.get_material_names('o_tang'))
+            mat_name_list.extend(c.get_material_names('cf_O_face'))
 
-                if '.' in mat.name[-4:]:
-                    try:
-                        #the material name is normal
-                        base_name, dupe_number = mat.name.split('.',2)
-                    except:
-                        #someone (not naming names) left a .### in the material name
-                        base_name, rest_of_base_name, dupe_number = mat.name.split('.',2)
-                        base_name = base_name + rest_of_base_name
-                    #remap material if it's a dupe, but don't touch the eye dupe
-                    if material_list.get(base_name) and int(dupe_number):
-                        mat.user_remap(material_list[base_name])
-                        bpy.data.materials.remove(mat)
-                    else:
-                        c.kklog("Somehow found a false duplicate material but didn't merge: " + mat.name, 'warn')
+            for mat in mat_name_list:
+                index = 1
+                base_material = bpy.data.materials.get(mat)
+                while redundant_material := bpy.data.materials.get(f'{mat}.{index:03d}'):
+                    index += 1
+                    redundant_material.user_remap(base_material)
+                    bpy.data.materials.remove(redundant_material)
+
+            material_list = bpy.data.materials
 
             #then clean material slots by going through each slot and reassigning the slots that are repeated
             repeats = {}
@@ -163,7 +157,7 @@ class modify_material(bpy.types.Operator):
                 else:
                     repeats[mat.name].append(index)
 
-            for material_name in list(repeats.keys()):
+            for material_name in repeats.keys():
                 if len(repeats[material_name]) > 1:
                     for repeated_slot in repeats[material_name]:
                         #don't touch the first slot
@@ -213,7 +207,7 @@ class modify_material(bpy.types.Operator):
             c_name = c.get_name()
             #remove dupes
             original_materials = list(set(original_materials))
-            for index, original_material in enumerate(original_materials):
+            for original_material in original_materials:
                 try:
                     template = bpy.data.materials[template_name].copy()
                     template['body'] = True
@@ -402,6 +396,7 @@ class modify_material(bpy.types.Operator):
 
         fileList = Path(bpy.context.scene.kkbp.import_dir).rglob('*.png')
         files = [file for file in fileList if file.is_file() and "_MT" in file.name]
+        unprocessed = len(files)
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_thread_num) as executor:
             futures = []
@@ -409,6 +404,7 @@ class modify_material(bpy.types.Operator):
                 # skip this file if it has already been converted
                 if os.path.isfile(os.path.join(bpy.context.scene.kkbp.import_dir, 'saturated_files', str(image_file.name).replace('_MT','_ST'))):
                     c.kklog('File already saturated. Skipping {}'.format(image_file.name))
+                    unprocessed -= 1
                     continue
                 # Load image in main thread (serial)
                 start_time = time.time()
@@ -424,8 +420,6 @@ class modify_material(bpy.types.Operator):
                     start_time,
                 )
                 futures.append(future)
-
-            unprocessed = len(files)
 
             while unprocessed > 0:
                 with self.queue_lock:
@@ -476,16 +470,26 @@ class modify_material(bpy.types.Operator):
         # Find the XY coordinates of the LUT image needed to saturate each pixel
         coord = image_pixels[:, :, :3] * self.coord_scale + self.coord_offset
         coord_frac, coord_floor = numpy.modf(coord)
-        coord_z_floor = coord_floor[:, :, 2:3]
+        coord_frac_z = coord_frac[:, :, 2:3]
+        del coord_frac
+        # coord_z_floor = coord_floor[:, :, 2:3]
         coord_bot = coord[:, :, :2] + coord_floor[:, :, 2:3] * self.texel_height_X0
+        del coord
+        del coord_floor
         # coord_bot = coord[:, :, :2] + numpy.tile(coord_floor[:, :, 2].reshape(height, width, 1), (1, 1, 2)) * self.texel_height_X0
-        coord_top = numpy.clip(coord_bot + self.texel_height_X0, 0, 1)
+
 
         #use those XY coordinates to find the saturated version of the color from the LUT image
-        coord_frac_z = coord_frac[:, :, 2:3]
+
         lutcol_bot = self.__bilinear_interpolation__(self.lut_pixels, coord_bot)
+
+        lut_colors = lutcol_bot * (1 - coord_frac_z)
+        del lutcol_bot
+        coord_top = numpy.clip(coord_bot + self.texel_height_X0, 0, 1)
         lutcol_top = self.__bilinear_interpolation__(self.lut_pixels, coord_top)
-        lut_colors = lutcol_bot * (1 - coord_frac_z) + lutcol_top * coord_frac_z
+        lut_colors += lutcol_top * coord_frac_z
+        del lutcol_top
+        del coord_top
         image_pixels[:, :, :3] = lut_colors[:,:,:3]
         # Update image pixels
         # image.pixels = image_pixels.flatten().tolist()
@@ -984,32 +988,6 @@ class modify_material(bpy.types.Operator):
         day_lut = bpy.data.images.load(self.lut_path, check_existing=True)
         day_lut.use_fake_user = True
 
-    # def convert_main_textures(self):
-    #     '''import and saturate all of the pmx textures, then save them to the .pmx directory under a saturated_files folder'''
-    #
-    #     file_dir = os.path.dirname(__file__)
-    #     lut_image = os.path.join(file_dir, 'Lut_TimeDay.png')
-    #     lut_image = bpy.data.images.load(str(lut_image))
-    #     self.init_prefab_data()
-    #
-    #     #collect all images in this folder and all subfolders into an array
-    #     fileList = Path(bpy.context.scene.kkbp.import_dir).rglob('*.png')
-    #     files = [file for file in fileList if file.is_file() and "_MT" in file.name]
-    #     for image_file in files:
-    #         #skip this file if it has already been converted
-    #         if os.path.isfile(os.path.join(bpy.context.scene.kkbp.import_dir, 'saturated_files', str(image_file.name).replace('_MT','_ST'))):
-    #             c.kklog('File already saturated. Skipping {}'.format(image_file.name))
-    #         else:
-    #             start_time = time.time()
-    #             image = bpy.data.images.load(str(image_file))
-    #             #saturate the image, save and remove the file
-    #             self.saturate_texture(image)
-    #             image.save_render(str(os.path.join(bpy.context.scene.kkbp.import_dir, "saturated_files", image_file.name.replace('_MT', '_ST'))))
-    #             c.kklog('Saturated {} in {} sec'.format(image_file.name, round(time.time() - start_time, 1)))
-    #
-    #     bpy.data.use_autopack = True #enable autopack on file save
-
-
 
     def load_json_colors(self):
         self.update_shaders('light') # Set light colors
@@ -1077,6 +1055,10 @@ class modify_material(bpy.types.Operator):
         f01 = lut_pixels[y1, x0]
         f10 = lut_pixels[y0, x1]
         f11 = lut_pixels[y1, x1]
+        del x0
+        del x1
+        del y0
+        del y1
         # Perform the bilinear interpolation using the fractional part of each coordinate
         # This will ensure the LUT can provide the correct color every single time, even if that color isn't found in the LUT itself
         # If this isn't performed, the resulting image will look very blocky because it will snap to colors only found in the LUT.
@@ -1129,34 +1111,6 @@ class modify_material(bpy.types.Operator):
 
         return image_pixels.flatten().tolist()[0:4]
 
-    # def saturate_texture(self, image: bpy.types.Image) -> bpy.types.Image:
-    #     '''The Secret Sauce. Accepts a bpy image and saturates it to match the in-game look.'''
-    #     width, height = image.size
-    #     # Load image and LUT image pixels into array
-    #     image_pixels = numpy.array(image.pixels[:],dtype=modify_material.np_number_precision).reshape(height, width, 4)
-    #     #  lut_pixels = numpy.array(bpy.data.images['Lut_TimeDay.png'].pixels[:],dtype=modify_material.np_number_precision).reshape(bpy.data.images['Lut_TimeDay.png'].size[1], bpy.data.images['Lut_TimeDay.png'].size[0], 4)
-    #     #constants to ensure bot and top are within the 32 x 1024 dimensions of the lut
-    #     # coord_scale = numpy.array([0.0302734375, 0.96875, 31.0],dtype=modify_material.np_number_precision)
-    #     # coord_offset = numpy.array([0.5/1024, 0.5/32, 0.0],dtype=modify_material.np_number_precision)
-    #     # texel_height_X0 = numpy.array([1/32, 0],dtype=modify_material.np_number_precision)
-    #     # Find the XY coordinates of the LUT image needed to saturate each pixel
-    #     coord = image_pixels[:, :, :3] * self.coord_scale + self.coord_offset
-    #     coord_frac, coord_floor = numpy.modf(coord)
-    #     coord_z_floor = coord_floor[:, :, 2:3]
-    #     coord_bot = coord[:, :, :2] + coord_floor[:, :, 2:3] * self.texel_height_X0
-    #     # coord_bot = coord[:, :, :2] + numpy.tile(coord_floor[:, :, 2].reshape(height, width, 1), (1, 1, 2)) * self.texel_height_X0
-    #     coord_top = numpy.clip(coord_bot + self.texel_height_X0, 0, 1)
-    #
-    #     #use those XY coordinates to find the saturated version of the color from the LUT image
-    #     coord_frac_z = coord_frac[:, :, 2:3]
-    #     lutcol_bot = self.__bilinear_interpolation__(self.lut_pixels, coord_bot)
-    #     lutcol_top = self.__bilinear_interpolation__(self.lut_pixels, coord_top)
-    #     lut_colors = lutcol_bot * (1 - coord_frac_z) + lutcol_top * coord_frac_z
-    #     image_pixels[:, :, :3] = lut_colors[:,:,:3]
-    #     # Update image pixels
-    #     # image.pixels = image_pixels.flatten().tolist()
-    #     image.pixels.foreach_set(image_pixels.ravel())
-    #     return image
 
     def update_shaders(self, light_pass: str):
         '''Set the colors for everything. This is run once for the light colors and again for the dark colors'''
@@ -1203,6 +1157,9 @@ class modify_material(bpy.types.Operator):
 
             #face
             if c.get_material_names('cf_O_face'):
+                """
+                however, some model have multi materials on the face
+                """
                 #setup the face material
                 mat_name = 'KK Face ' + c.get_name()
                 shader_inputs = c.get_body().material_slots[mat_name].material.node_tree.nodes[light_pass].inputs

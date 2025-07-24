@@ -212,7 +212,18 @@ class modify_mesh(bpy.types.Operator):
             bpy.data.objects.remove(shadowcast)
 
         #Delete the bonelyfans mesh if any
-        mat_list = ['Bonelyfans', 'Bonelyfans.001']
+        # mat_list = ['Bonelyfans', 'Bonelyfans.001']
+        mat_list = c.get_material_names('Highlight_o_body_a_rend')
+        mat_list = c.get_material_names('Highlight_cf_O_face_rend')
+        mat_list = list(set(mat_list))
+        extended = []
+        for mat in mat_list:
+            index = 1
+            while bpy.data.materials.get((name := f'{mat}.{index:03d}')):
+                index += 1
+                extended.append(name)
+
+        mat_list.extend(extended)
         bonely = self.separate_materials(c.get_body(), mat_list, 'bonelyfans')
         if bonely:
             bpy.data.objects.remove(bonely)
