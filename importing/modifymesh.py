@@ -214,7 +214,7 @@ class modify_mesh(bpy.types.Operator):
         #Delete the bonelyfans mesh if any
         # mat_list = ['Bonelyfans', 'Bonelyfans.001']
         mat_list = c.get_material_names('Highlight_o_body_a_rend')
-        mat_list = c.get_material_names('Highlight_cf_O_face_rend')
+        mat_list.extend(c.get_material_names('Highlight_cf_O_face_rend'))
         mat_list = list(set(mat_list))
         extended = []
         for mat in mat_list:
