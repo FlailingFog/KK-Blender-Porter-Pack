@@ -80,12 +80,20 @@ class modify_mesh(bpy.types.Operator):
         if rigged_tongue_material == general_tongue_material:
             rigged_tongue_material += '.001'
 
-        #  if rigged tongue not exist, we should create a rigged tongue and copy tongue material to .001
+        #  if rigged tongue not exist,
         #  rename tongue material to .001, duplicate tongue material and rename to general name, separate mesh by .001,
         #  duplicate tongue mesh as general tongue and join back to body
-        if rigged_tongue_material is None:
+        if rigged_tongue_material is None or general_tongue_material is None:
+            if general_tongue_material:
+                base_name = general_tongue_material
+
+            else:
+                base_name = rigged_tongue_material
+                general_tongue_material = base_name
+            rigged_tongue_material = base_name + '.001'
+
             ori_material = bpy.data.materials[general_tongue_material]
-            rigged_tongue_material = general_tongue_material + '.001'
+
 
             # rename former material to .001, so we do not need to change the faces' s material to new one
             ori_material['name'] = rigged_tongue_material

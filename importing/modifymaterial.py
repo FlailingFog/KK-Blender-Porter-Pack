@@ -23,6 +23,9 @@
 import bpy, os, numpy, math, time
 from pathlib import Path
 from .. import common as c
+import concurrent.futures
+import threading
+import queue
 
 
 
@@ -32,17 +35,17 @@ class modify_material(bpy.types.Operator):
     bl_description = bl_idname
     bl_options = {'REGISTER', 'UNDO'}
 
-    #  Numpy's  default precision is float 64.
-    #  Blender limits script's memory usage strictly,
-    #  processing a large img like 4096 * 4096 will crash the program for memory shortage.
-    #  Also, float32 is precise enough
-    #  If someone crashed for processing larger img, set it to float16
+    #  numpy's precision
     np_number_precision = numpy.float32
 
     lut_pixels = None
     coord_scale = None
     coord_offset = None
     texel_height_X0 = None
+    queue_lock = None
+    data_queue = queue.Queue()
+    # thread num = 4 cost half of the time, but increase memory usage. This should be decided by user
+    max_thread_num = 3
 
     def execute(self, context):
         try:
@@ -85,6 +88,8 @@ class modify_material(bpy.types.Operator):
         modify_material.coord_scale = numpy.array([0.0302734375, 0.96875, 31.0],dtype=modify_material.np_number_precision)
         modify_material.coord_offset = numpy.array([0.5 / 1024, 0.5 / 32, 0.0], dtype=modify_material.np_number_precision)
         modify_material.texel_height_X0 = numpy.array([1 / 32, 0], dtype=modify_material.np_number_precision)
+        modify_material.queue_lock = threading.Lock()
+        modify_material.data_queue = queue.Queue()
         pass
 
     # %% Main functions            
@@ -388,24 +393,106 @@ class modify_material(bpy.types.Operator):
         c.print_timer('remove_duplicate_node_groups')
 
     def load_images(self):
-        '''Load all images from the pmx folder'''
         c.switch(c.get_body(), 'object')
 
-        #saturate all of the main textures
-        self.convert_main_textures()
+        file_dir = os.path.dirname(__file__)
+        lut_image = os.path.join(file_dir, 'Lut_TimeDay.png')
+        lut_image = bpy.data.images.load(str(lut_image))
+        self.init_prefab_data()
 
-        #get all images from the pmx directory
         fileList = Path(bpy.context.scene.kkbp.import_dir).rglob('*.png')
-        files = [file for file in fileList if file.is_file()]
+        files = [file for file in fileList if file.is_file() and "_MT" in file.name]
 
-        #open all images into blender
-        for image in files:
-            bpy.ops.image.open(filepath=str(image), use_udim_detecting=False)
-            try:
-                bpy.data.images[image.name].pack()
-            except:
-                c.kklog('This image was not automatically loaded in because its filename exceeds 64 characters: ' + image.name, type = 'error')
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_thread_num) as executor:
+            futures = []
+            for image_file in files:
+                # skip this file if it has already been converted
+                if os.path.isfile(os.path.join(bpy.context.scene.kkbp.import_dir, 'saturated_files', str(image_file.name).replace('_MT','_ST'))):
+                    c.kklog('File already saturated. Skipping {}'.format(image_file.name))
+                    continue
+                # Load image in main thread (serial)
+                start_time = time.time()
+                image = bpy.data.images.load(str(image_file))
+
+                # Submit task with all required context
+                width, height = image.size
+                future = executor.submit(
+                    self.saturate_texture,
+                    image,
+                    numpy.array(image.pixels[:], dtype=modify_material.np_number_precision).reshape(height, width, 4),
+                    image_file.name,
+                    start_time,
+                )
+                futures.append(future)
+
+            unprocessed = len(files)
+
+            while unprocessed > 0:
+                with self.queue_lock:
+                    try:
+                        result = self.data_queue.get(timeout=0.1)
+                        image = result[3]
+                        image_pixels = result[1]
+                        image.pixels.foreach_set(image_pixels.ravel())
+                        image.save_render(os.path.join(bpy.context.scene.kkbp.import_dir, "saturated_files", result[0].replace('_MT', '_ST')))
+                        del image_pixels
+                        unprocessed -= 1
+                        c.kklog(f'Saturating image {result[0]} takes {round(time.time() - result[2], 1)}s')
+                    except queue.Empty:
+                        continue
+                    time.sleep(0.5)
+
+            bpy.data.use_autopack = True  # enable autopack on file save
+
+            # Load all textures
+            fileList = Path(bpy.context.scene.kkbp.import_dir).rglob('*.png')
+            files = [file for file in fileList if file.is_file()]
+            for image_file in files:
+                bpy.ops.image.open(filepath=str(image_file), use_udim_detecting=False)
+                try:
+                    bpy.data.images[image_file.name].pack()
+                except:
+                    c.kklog('This image was not automatically loaded in because its filename exceeds 64 characters: ' + image_file.name, type = 'error')
+
+            # Monitor completion
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    future.result()
+                except Exception as e:
+                    c.kklog(f'Processing failed: {str(e)}')
+
         c.print_timer('load_images')
+
+    def saturate_texture(self, image, image_pixels, image_name, start_time) -> bpy.types.Image:
+        '''The Secret Sauce. Accepts a bpy image and saturates it to match the in-game look.'''
+        # width, height = size
+        # Load image and LUT image pixels into array
+        # image_pixels = numpy.array(image.pixels[:],dtype=modify_material.np_number_precision).reshape(height, width, 4)
+        #  lut_pixels = numpy.array(bpy.data.images['Lut_TimeDay.png'].pixels[:],dtype=modify_material.np_number_precision).reshape(bpy.data.images['Lut_TimeDay.png'].size[1], bpy.data.images['Lut_TimeDay.png'].size[0], 4)
+        #constants to ensure bot and top are within the 32 x 1024 dimensions of the lut
+        # coord_scale = numpy.array([0.0302734375, 0.96875, 31.0],dtype=modify_material.np_number_precision)
+        # coord_offset = numpy.array([0.5/1024, 0.5/32, 0.0],dtype=modify_material.np_number_precision)
+        # texel_height_X0 = numpy.array([1/32, 0],dtype=modify_material.np_number_precision)
+        # Find the XY coordinates of the LUT image needed to saturate each pixel
+        coord = image_pixels[:, :, :3] * self.coord_scale + self.coord_offset
+        coord_frac, coord_floor = numpy.modf(coord)
+        coord_z_floor = coord_floor[:, :, 2:3]
+        coord_bot = coord[:, :, :2] + coord_floor[:, :, 2:3] * self.texel_height_X0
+        # coord_bot = coord[:, :, :2] + numpy.tile(coord_floor[:, :, 2].reshape(height, width, 1), (1, 1, 2)) * self.texel_height_X0
+        coord_top = numpy.clip(coord_bot + self.texel_height_X0, 0, 1)
+
+        #use those XY coordinates to find the saturated version of the color from the LUT image
+        coord_frac_z = coord_frac[:, :, 2:3]
+        lutcol_bot = self.__bilinear_interpolation__(self.lut_pixels, coord_bot)
+        lutcol_top = self.__bilinear_interpolation__(self.lut_pixels, coord_top)
+        lut_colors = lutcol_bot * (1 - coord_frac_z) + lutcol_top * coord_frac_z
+        image_pixels[:, :, :3] = lut_colors[:,:,:3]
+        # Update image pixels
+        # image.pixels = image_pixels.flatten().tolist()
+
+        with self.queue_lock:
+            self.data_queue.put((image_name, image_pixels, start_time, image))
+
 
     def link_textures_for_face_body(self):
         '''Load all body textures into their texture slots'''
@@ -897,30 +984,32 @@ class modify_material(bpy.types.Operator):
         day_lut = bpy.data.images.load(self.lut_path, check_existing=True)
         day_lut.use_fake_user = True
 
-    def convert_main_textures(self):
-        '''import and saturate all of the pmx textures, then save them to the .pmx directory under a saturated_files folder'''
+    # def convert_main_textures(self):
+    #     '''import and saturate all of the pmx textures, then save them to the .pmx directory under a saturated_files folder'''
+    #
+    #     file_dir = os.path.dirname(__file__)
+    #     lut_image = os.path.join(file_dir, 'Lut_TimeDay.png')
+    #     lut_image = bpy.data.images.load(str(lut_image))
+    #     self.init_prefab_data()
+    #
+    #     #collect all images in this folder and all subfolders into an array
+    #     fileList = Path(bpy.context.scene.kkbp.import_dir).rglob('*.png')
+    #     files = [file for file in fileList if file.is_file() and "_MT" in file.name]
+    #     for image_file in files:
+    #         #skip this file if it has already been converted
+    #         if os.path.isfile(os.path.join(bpy.context.scene.kkbp.import_dir, 'saturated_files', str(image_file.name).replace('_MT','_ST'))):
+    #             c.kklog('File already saturated. Skipping {}'.format(image_file.name))
+    #         else:
+    #             start_time = time.time()
+    #             image = bpy.data.images.load(str(image_file))
+    #             #saturate the image, save and remove the file
+    #             self.saturate_texture(image)
+    #             image.save_render(str(os.path.join(bpy.context.scene.kkbp.import_dir, "saturated_files", image_file.name.replace('_MT', '_ST'))))
+    #             c.kklog('Saturated {} in {} sec'.format(image_file.name, round(time.time() - start_time, 1)))
+    #
+    #     bpy.data.use_autopack = True #enable autopack on file save
 
-        file_dir = os.path.dirname(__file__)
-        lut_image = os.path.join(file_dir, 'Lut_TimeDay.png')
-        lut_image = bpy.data.images.load(str(lut_image))
-        self.init_prefab_data()
 
-        #collect all images in this folder and all subfolders into an array
-        fileList = Path(bpy.context.scene.kkbp.import_dir).rglob('*.png')
-        files = [file for file in fileList if file.is_file() and "_MT" in file.name]
-        for image_file in files:
-            #skip this file if it has already been converted
-            if os.path.isfile(os.path.join(bpy.context.scene.kkbp.import_dir, 'saturated_files', str(image_file.name).replace('_MT','_ST'))):
-                c.kklog('File already saturated. Skipping {}'.format(image_file.name))
-            else:
-                start_time = time.time()
-                image = bpy.data.images.load(str(image_file))
-                #saturate the image, save and remove the file
-                self.saturate_texture(image)
-                image.save_render(str(os.path.join(bpy.context.scene.kkbp.import_dir, "saturated_files", image_file.name.replace('_MT', '_ST'))))
-                c.kklog('Saturated {} in {} sec'.format(image_file.name, round(time.time() - start_time, 1)))
-
-        bpy.data.use_autopack = True #enable autopack on file save
 
     def load_json_colors(self):
         self.update_shaders('light') # Set light colors
@@ -1040,34 +1129,34 @@ class modify_material(bpy.types.Operator):
 
         return image_pixels.flatten().tolist()[0:4]
 
-    def saturate_texture(self, image: bpy.types.Image) -> bpy.types.Image:
-        '''The Secret Sauce. Accepts a bpy image and saturates it to match the in-game look.'''
-        width, height = image.size
-        # Load image and LUT image pixels into array
-        image_pixels = numpy.array(image.pixels[:],dtype=modify_material.np_number_precision).reshape(height, width, 4)
-        #  lut_pixels = numpy.array(bpy.data.images['Lut_TimeDay.png'].pixels[:],dtype=modify_material.np_number_precision).reshape(bpy.data.images['Lut_TimeDay.png'].size[1], bpy.data.images['Lut_TimeDay.png'].size[0], 4)
-        #constants to ensure bot and top are within the 32 x 1024 dimensions of the lut
-        # coord_scale = numpy.array([0.0302734375, 0.96875, 31.0],dtype=modify_material.np_number_precision)
-        # coord_offset = numpy.array([0.5/1024, 0.5/32, 0.0],dtype=modify_material.np_number_precision)
-        # texel_height_X0 = numpy.array([1/32, 0],dtype=modify_material.np_number_precision)
-        # Find the XY coordinates of the LUT image needed to saturate each pixel
-        coord = image_pixels[:, :, :3] * self.coord_scale + self.coord_offset
-        coord_frac, coord_floor = numpy.modf(coord)
-        coord_z_floor = coord_floor[:, :, 2:3]
-        coord_bot = coord[:, :, :2] + coord_floor[:, :, 2:3] * self.texel_height_X0
-        # coord_bot = coord[:, :, :2] + numpy.tile(coord_floor[:, :, 2].reshape(height, width, 1), (1, 1, 2)) * self.texel_height_X0
-        coord_top = numpy.clip(coord_bot + self.texel_height_X0, 0, 1)
-
-        #use those XY coordinates to find the saturated version of the color from the LUT image
-        coord_frac_z = coord_frac[:, :, 2:3]
-        lutcol_bot = self.__bilinear_interpolation__(self.lut_pixels, coord_bot)
-        lutcol_top = self.__bilinear_interpolation__(self.lut_pixels, coord_top)
-        lut_colors = lutcol_bot * (1 - coord_frac_z) + lutcol_top * coord_frac_z
-        image_pixels[:, :, :3] = lut_colors[:,:,:3]
-        # Update image pixels
-        # image.pixels = image_pixels.flatten().tolist()
-        image.pixels.foreach_set(image_pixels.ravel())
-        return image
+    # def saturate_texture(self, image: bpy.types.Image) -> bpy.types.Image:
+    #     '''The Secret Sauce. Accepts a bpy image and saturates it to match the in-game look.'''
+    #     width, height = image.size
+    #     # Load image and LUT image pixels into array
+    #     image_pixels = numpy.array(image.pixels[:],dtype=modify_material.np_number_precision).reshape(height, width, 4)
+    #     #  lut_pixels = numpy.array(bpy.data.images['Lut_TimeDay.png'].pixels[:],dtype=modify_material.np_number_precision).reshape(bpy.data.images['Lut_TimeDay.png'].size[1], bpy.data.images['Lut_TimeDay.png'].size[0], 4)
+    #     #constants to ensure bot and top are within the 32 x 1024 dimensions of the lut
+    #     # coord_scale = numpy.array([0.0302734375, 0.96875, 31.0],dtype=modify_material.np_number_precision)
+    #     # coord_offset = numpy.array([0.5/1024, 0.5/32, 0.0],dtype=modify_material.np_number_precision)
+    #     # texel_height_X0 = numpy.array([1/32, 0],dtype=modify_material.np_number_precision)
+    #     # Find the XY coordinates of the LUT image needed to saturate each pixel
+    #     coord = image_pixels[:, :, :3] * self.coord_scale + self.coord_offset
+    #     coord_frac, coord_floor = numpy.modf(coord)
+    #     coord_z_floor = coord_floor[:, :, 2:3]
+    #     coord_bot = coord[:, :, :2] + coord_floor[:, :, 2:3] * self.texel_height_X0
+    #     # coord_bot = coord[:, :, :2] + numpy.tile(coord_floor[:, :, 2].reshape(height, width, 1), (1, 1, 2)) * self.texel_height_X0
+    #     coord_top = numpy.clip(coord_bot + self.texel_height_X0, 0, 1)
+    #
+    #     #use those XY coordinates to find the saturated version of the color from the LUT image
+    #     coord_frac_z = coord_frac[:, :, 2:3]
+    #     lutcol_bot = self.__bilinear_interpolation__(self.lut_pixels, coord_bot)
+    #     lutcol_top = self.__bilinear_interpolation__(self.lut_pixels, coord_top)
+    #     lut_colors = lutcol_bot * (1 - coord_frac_z) + lutcol_top * coord_frac_z
+    #     image_pixels[:, :, :3] = lut_colors[:,:,:3]
+    #     # Update image pixels
+    #     # image.pixels = image_pixels.flatten().tolist()
+    #     image.pixels.foreach_set(image_pixels.ravel())
+    #     return image
 
     def update_shaders(self, light_pass: str):
         '''Set the colors for everything. This is run once for the light colors and again for the dark colors'''
