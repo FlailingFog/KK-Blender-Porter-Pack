@@ -38,15 +38,17 @@ class modify_material(bpy.types.Operator):
     #  numpy's precision
     np_number_precision = numpy.float32
 
+    # this three parameters should be exposed to and decided by user
+    max_thread_num = 8  # is related to cpu cores and ability
+    max_image_num = 4  # is related to memory usage
+    batch_rows = 512  # is related to cpu and memory.
+
     lut_pixels = None
     coord_scale = None
     coord_offset = None
     texel_height_X0 = None
-    queue_lock = None
+    queue_lock = threading.Lock()
     data_queue = queue.Queue()
-    #  same model, 4 sub threads costs 60s, but memory usage peak could be 16000MB.2 sub threads cost 76s, memory usage peak around 7700MB
-    #  no multi-threading costs 127s
-    max_thread_num = 2
 
     def execute(self, context):
         try:
@@ -89,8 +91,6 @@ class modify_material(bpy.types.Operator):
         modify_material.coord_scale = numpy.array([0.0302734375, 0.96875, 31.0],dtype=modify_material.np_number_precision)
         modify_material.coord_offset = numpy.array([0.5 / 1024, 0.5 / 32, 0.0], dtype=modify_material.np_number_precision)
         modify_material.texel_height_X0 = numpy.array([1 / 32, 0], dtype=modify_material.np_number_precision)
-        modify_material.queue_lock = threading.Lock()
-        modify_material.data_queue = queue.Queue()
         pass
 
     # %% Main functions            
@@ -396,45 +396,68 @@ class modify_material(bpy.types.Operator):
 
         fileList = Path(bpy.context.scene.kkbp.import_dir).rglob('*.png')
         files = [file for file in fileList if file.is_file() and "_MT" in file.name]
-        unprocessed = len(files)
+        unloaded = unprocessed = len(files)
+        last_miss_time = time.time()
+        current_image_num = 0
+        futures = []
+        record = {}
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_thread_num) as executor:
-            futures = []
-            for image_file in files:
-                # skip this file if it has already been converted
-                if os.path.isfile(os.path.join(bpy.context.scene.kkbp.import_dir, 'saturated_files', str(image_file.name).replace('_MT','_ST'))):
-                    c.kklog('File already saturated. Skipping {}'.format(image_file.name))
-                    unprocessed -= 1
-                    continue
-                # Load image in main thread (serial)
-                start_time = time.time()
-                image = bpy.data.images.load(str(image_file))
 
-                # Submit task with all required context
-                width, height = image.size
-                future = executor.submit(
-                    self.saturate_texture,
-                    image,
-                    numpy.array(image.pixels[:], dtype=modify_material.np_number_precision).reshape(height, width, 4),
-                    image_file.name,
-                    start_time,
-                )
-                futures.append(future)
+            while unloaded > 0 or unprocessed > 0:
+                if (current_time := time.time()) - last_miss_time > 0.3:
+                    with self.queue_lock:
+                        try:
+                            while True:
+                                result = self.data_queue.get(timeout=0.1)
+                                (result := record[result])[0] -= 1
+                                # record[result][0] -= 1
+                                if result[0] == 0:
+                                    image = result[2]
+                                    image_pixels = result[3]
+                                    image.pixels.foreach_set(image_pixels.ravel())
+                                    image.save_render(os.path.join(bpy.context.scene.kkbp.import_dir, "saturated_files", result[1]))
 
-            while unprocessed > 0:
-                with self.queue_lock:
-                    try:
-                        result = self.data_queue.get(timeout=0.1)
-                        image = result[3]
-                        image_pixels = result[1]
-                        image.pixels.foreach_set(image_pixels.ravel())
-                        image.save_render(os.path.join(bpy.context.scene.kkbp.import_dir, "saturated_files", result[0].replace('_MT', '_ST')))
-                        del image_pixels
+                                    del image_pixels
+                                    unprocessed -= 1
+                                    current_image_num -= 1
+                                    c.kklog(f'Saturating image {result[1]} takes {round(time.time() - result[4], 1)}s')
+                        except queue.Empty:
+                            last_miss_time = current_time
+
+                if unloaded > 0 and current_image_num < self.max_image_num:
+                    unloaded -= 1
+                    current_image_num += 1
+                    # skip this file if it has already been converted
+                    if os.path.isfile(os.path.join(bpy.context.scene.kkbp.import_dir, 'saturated_files', (save_file_name := files[unloaded].name.replace('_MT', '_ST')))):
+                        c.kklog('File already saturated. Skipping {}'.format(files[unloaded].name))
                         unprocessed -= 1
-                        c.kklog(f'Saturating image {result[0]} takes {round(time.time() - result[2], 1)}s')
-                    except queue.Empty:
                         continue
-                    time.sleep(0.5)
+                    # Load image
+                    start_time = time.time()
+                    image = bpy.data.images.load(str(files[unloaded]))
+
+                    # Submit task
+                    width, height = image.size
+                    image_pixels = numpy.array(image.pixels[:], dtype=modify_material.np_number_precision).reshape(height, width, 4)
+
+                    start_row = 0
+                    while start_row < height:
+                        end_row = start_row + self.batch_rows
+                        if end_row > height:
+                            end_row = height
+
+                        future = executor.submit(
+                            self.saturate_texture,
+                            unloaded,
+                            image_pixels[start_row:end_row - 1]
+                        )
+                        start_row = end_row
+
+                        futures.append(future)
+
+                    record[unloaded] = [math.ceil(height / self.batch_rows), save_file_name, image, image_pixels, start_time]
+
 
             bpy.data.use_autopack = True  # enable autopack on file save
 
@@ -457,7 +480,7 @@ class modify_material(bpy.types.Operator):
 
         c.print_timer('load_images')
 
-    def saturate_texture(self, image, image_pixels, image_name, start_time) -> bpy.types.Image:
+    def saturate_texture(self, index, slice_image):
         '''The Secret Sauce. Accepts a bpy image and saturates it to match the in-game look.'''
         # width, height = size
         # Load image and LUT image pixels into array
@@ -468,7 +491,7 @@ class modify_material(bpy.types.Operator):
         # coord_offset = numpy.array([0.5/1024, 0.5/32, 0.0],dtype=modify_material.np_number_precision)
         # texel_height_X0 = numpy.array([1/32, 0],dtype=modify_material.np_number_precision)
         # Find the XY coordinates of the LUT image needed to saturate each pixel
-        coord = image_pixels[:, :, :3] * self.coord_scale + self.coord_offset
+        coord = slice_image[:, :, :3] * self.coord_scale + self.coord_offset
         coord_frac, coord_floor = numpy.modf(coord)
         coord_frac_z = coord_frac[:, :, 2:3]
         del coord_frac
@@ -490,12 +513,13 @@ class modify_material(bpy.types.Operator):
         lut_colors += lutcol_top * coord_frac_z
         del lutcol_top
         del coord_top
-        image_pixels[:, :, :3] = lut_colors[:,:,:3]
+        slice_image[:, :, :3] = lut_colors[:,:,:3]
+
         # Update image pixels
         # image.pixels = image_pixels.flatten().tolist()
 
         with self.queue_lock:
-            self.data_queue.put((image_name, image_pixels, start_time, image))
+            self.data_queue.put(index)
 
 
     def link_textures_for_face_body(self):
