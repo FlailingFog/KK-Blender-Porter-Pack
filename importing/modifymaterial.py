@@ -39,15 +39,28 @@ class modify_material(bpy.types.Operator):
     np_number_precision = numpy.float32
 
     # this three parameters should be exposed to and decided by user
-    max_thread_num = 8  # is related to cpu cores and ability
-    max_image_num = 4  # is related to memory usage
-    batch_rows = 512  # is related to cpu and memory.
 
-    lut_pixels = None
+    # is related to cpu cores and ability.
+    # Considering the average, set it to 8.Those who have a stronger CPU could set it higher.
+    max_thread_num = 8
+
+    # is related to memory usage.
+    # Actually it's not perfect because each image's size varies.
+    # If loading four 4096 * 4096, the memory usage peak could reach 16000MB.
+    # If someone have no more memory, the program will crash, and then they should realize it
+    # and set the value lower temporarily
+    max_image_num = 4
+
+    # is related to cpu and memory.Num of rows in a batch
+    # Simply separate images in rows, ignoring that the num of column usually increase as num of rows increasing
+    # For a 1024 * 1024, a batch is 512 * 1024.But for 2048 * 2048, a batch is 512 * 2048
+    batch_rows = 512
+
+    lut_pixels = None  # calculate once
     coord_scale = None
     coord_offset = None
     texel_height_X0 = None
-    queue_lock = threading.Lock()
+    queue_lock = threading.Lock()  # to protect the data_queue
     data_queue = queue.Queue()
 
     def execute(self, context):
@@ -223,7 +236,7 @@ class modify_material(bpy.types.Operator):
                 except:
                     c.kklog(f'material or template wasn\'t found when replacing body materials: {str(original_material)} / {str(template_name)}', 'warn')
 
-        swap_body_material(c.get_material_names('cf_O_face'),'KK Face')
+        swap_body_material(c.get_material_names('cf_O_face'),'KK Face')  # However, some model has multiple textures on face, like nose material. Simply converting all of them to KK Face gets a white face(could be fixed by removing those material slots manually).Meanwhile, face's material name could change, getting face's material by its general name(cf_m_face_00) may fail under some circumstances
         swap_body_material(c.get_material_names('cf_O_mayuge'),'KK Eyebrows (mayuge)')
         swap_body_material(c.get_material_names('cf_O_noseline'),'KK Nose')
         swap_body_material(c.get_material_names('cf_O_eyeline_low'),'KK Eyeline down')
@@ -396,21 +409,21 @@ class modify_material(bpy.types.Operator):
 
         fileList = Path(bpy.context.scene.kkbp.import_dir).rglob('*.png')
         files = [file for file in fileList if file.is_file() and "_MT" in file.name]
-        unloaded = unprocessed = len(files)
-        last_miss_time = time.time()
-        current_image_num = 0
+        unloaded = unprocessed = len(files) # unloaded: unloaded (to saturate) image nums, unprocessed: unfinished image nums
+        last_miss_time = time.time()  # last time of accessing queue
+        current_image_num = 0  # current num of concurrent processing images
         futures = []
-        record = {}
+        record = {}  # as each image is separated to several batches, this is to record each image's base info
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_thread_num) as executor:
-
+            # the to-output data occupy much memory, so we should save them timely before loading more images
             while unloaded > 0 or unprocessed > 0:
-                if (current_time := time.time()) - last_miss_time > 0.3:
+                if (current_time := time.time()) - last_miss_time > 0.3:  # accessing queue every 0.3s, because queue is empty most of the time, so is no need to access it every loop
                     with self.queue_lock:
                         try:
-                            while True:
+                            while True: # fetching all data from queue if not empty
                                 result = self.data_queue.get(timeout=0.1)
-                                (result := record[result])[0] -= 1
+                                (result := record[result])[0] -= 1  # data in tuple: (current_image's batch num, name that the image to be saved with, image, image_data in numpy array, start time to process this image)
                                 # record[result][0] -= 1
                                 if result[0] == 0:
                                     image = result[2]
@@ -424,15 +437,16 @@ class modify_material(bpy.types.Operator):
                                     c.kklog(f'Saturating image {result[1]} takes {round(time.time() - result[4], 1)}s')
                         except queue.Empty:
                             last_miss_time = current_time
-
+                # if there has unloaded images and current num of image in processing is smaller than the max value, then load a image and submit it.This prevent loading too many images, which pushes memory usage to a high level
                 if unloaded > 0 and current_image_num < self.max_image_num:
                     unloaded -= 1
-                    current_image_num += 1
                     # skip this file if it has already been converted
                     if os.path.isfile(os.path.join(bpy.context.scene.kkbp.import_dir, 'saturated_files', (save_file_name := files[unloaded].name.replace('_MT', '_ST')))):
                         c.kklog('File already saturated. Skipping {}'.format(files[unloaded].name))
                         unprocessed -= 1
                         continue
+
+                    current_image_num += 1
                     # Load image
                     start_time = time.time()
                     image = bpy.data.images.load(str(files[unloaded]))
@@ -441,6 +455,7 @@ class modify_material(bpy.types.Operator):
                     width, height = image.size
                     image_pixels = numpy.array(image.pixels[:], dtype=modify_material.np_number_precision).reshape(height, width, 4)
 
+                    # separating an image to several batches to make full use of CPU
                     start_row = 0
                     while start_row < height:
                         end_row = start_row + self.batch_rows
@@ -461,7 +476,7 @@ class modify_material(bpy.types.Operator):
 
             bpy.data.use_autopack = True  # enable autopack on file save
 
-            # Load all textures
+            # Load all textures.Actually this part could be put into the loop above
             fileList = Path(bpy.context.scene.kkbp.import_dir).rglob('*.png')
             files = [file for file in fileList if file.is_file()]
             for image_file in files:
@@ -484,6 +499,8 @@ class modify_material(bpy.types.Operator):
         '''The Secret Sauce. Accepts a bpy image and saturates it to match the in-game look.'''
         # width, height = size
         # Load image and LUT image pixels into array
+
+        # the unchangeable data should be calculated once and fetch them directly when needed
         # image_pixels = numpy.array(image.pixels[:],dtype=modify_material.np_number_precision).reshape(height, width, 4)
         #  lut_pixels = numpy.array(bpy.data.images['Lut_TimeDay.png'].pixels[:],dtype=modify_material.np_number_precision).reshape(bpy.data.images['Lut_TimeDay.png'].size[1], bpy.data.images['Lut_TimeDay.png'].size[0], 4)
         #constants to ensure bot and top are within the 32 x 1024 dimensions of the lut
@@ -494,7 +511,7 @@ class modify_material(bpy.types.Operator):
         coord = slice_image[:, :, :3] * self.coord_scale + self.coord_offset
         coord_frac, coord_floor = numpy.modf(coord)
         coord_frac_z = coord_frac[:, :, 2:3]
-        del coord_frac
+        del coord_frac  # free temporary variable upon they are useless rather than waiting the function return and python allocate them.Actually i don't know whether it works.But at least the
         # coord_z_floor = coord_floor[:, :, 2:3]
         coord_bot = coord[:, :, :2] + coord_floor[:, :, 2:3] * self.texel_height_X0
         del coord
@@ -1153,6 +1170,8 @@ class modify_material(bpy.types.Operator):
             shader_inputs['Color mask (blue)'].default_value =  self.saturate_color(c.json_file_manager.get_color(mat_name, "_Color3 "), light_pass, shadow_color = c.json_file_manager.get_shadow_color(mat_name))
 
         #set all of the hair colors
+        # Alpha mask was founded to be used in hair. Although current hair shader seems to use the alpha mask, but looks no effect.
+        # However, I prefer to delete those masked vertices manually rather than ignoring them by shader because the mesh is in a mess
         hair_materials = [m for m in bpy.data.materials if m.get('hair') == True and m.get('name') == c.get_name()]
         for hair_material in hair_materials:
             shader_inputs = hair_material.node_tree.nodes[light_pass].inputs

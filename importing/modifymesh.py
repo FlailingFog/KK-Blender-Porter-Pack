@@ -67,8 +67,6 @@ class modify_mesh(bpy.types.Operator):
         if tongue_datas is None:
             c.kklog('No tongue', 'warn')
             c.print_timer('Skipped')
-            # A way to fix is to prepare a tongue as prefab.The tongue is copied from other converted kk model, keeping original vertex weight info
-            # When missing tongue, add it to file.As each skeleton structure have little difference, it should work well
             return
 
         for item in tongue_datas:
@@ -83,7 +81,7 @@ class modify_mesh(bpy.types.Operator):
         #  if rigged tongue not exist,
         #  rename tongue material to .001, duplicate tongue material and rename to general name, separate mesh by .001,
         #  duplicate tongue mesh as general tongue and join back to body
-        if rigged_tongue_material is None or general_tongue_material is None:
+        if rigged_tongue_material is None or general_tongue_material is None: # Some model only have N_cf_haed/o_tang or n_tang/o_tang
             if general_tongue_material:
                 base_name = general_tongue_material
 
@@ -93,7 +91,6 @@ class modify_mesh(bpy.types.Operator):
             rigged_tongue_material = base_name + '.001'
 
             ori_material = bpy.data.materials[general_tongue_material]
-
 
             # rename former material to .001, so we do not need to change the faces' s material to new one
             ori_material['name'] = rigged_tongue_material
@@ -213,6 +210,7 @@ class modify_mesh(bpy.types.Operator):
 
         #Delete the bonelyfans mesh if any
         # mat_list = ['Bonelyfans', 'Bonelyfans.001']
+        # some model have .002, even .003, .004
         mat_list = c.get_material_names('Highlight_o_body_a_rend')
         mat_list.extend(c.get_material_names('Highlight_cf_O_face_rend'))
         mat_list = list(set(mat_list))
