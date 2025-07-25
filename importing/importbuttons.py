@@ -83,8 +83,10 @@ class kkbp_import(bpy.types.Operator):
         if len(bpy.context.scene.kkbp.character_name.encode()) >= 24:
             bpy.context.scene.kkbp.character_name = bpy.context.scene.kkbp.character_name.encode()[:24].decode()
 
+        c.json_file_manager.init()
+
         #force pmx armature selection if exportCurrentPose in the Exporter Config json is true
-        force_current_pose = c.get_json_file('KK_KKBPExporterConfig.json')['exportCurrentPose']
+        force_current_pose = c.json_file_manager.get_json_file('KK_KKBPExporterConfig.json')['exportCurrentPose']
         if force_current_pose:
             bpy.context.scene.kkbp.armature_dropdown = 'C'
 
