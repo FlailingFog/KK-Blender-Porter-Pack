@@ -20,14 +20,9 @@
 # Dark color conversion code taken from Xukmi https://github.com/xukmi/KKShadersPlus/tree/main/Shaders
 
 
-import bpy, os, numpy, math, time
+import bpy, os, numpy, math, time, concurrent.futures, threading, queue
 from pathlib import Path
 from .. import common as c
-import concurrent.futures
-import threading
-import queue
-
-
 
 class modify_material(bpy.types.Operator):
     bl_idname = "kkbp.modifymaterial"
@@ -38,29 +33,32 @@ class modify_material(bpy.types.Operator):
     #  numpy's precision
     np_number_precision = numpy.float32
 
-    # this three parameters should be exposed to and decided by user
+    # these three parameters should be exposed in the gui and decided by user
 
-    # is related to cpu cores and ability.
-    # Considering the average, set it to 8.Those who have a stronger CPU could set it higher.
+    # This is how many cpu cores you want to use to saturate the images. 
+    # If you have a better CPU, you can set it higher.
     max_thread_num = 8
 
-    # is related to memory usage.
-    # Actually it's not perfect because each image's size varies.
-    # If loading four 4096 * 4096, the memory usage peak could reach 16000MB.
-    # If someone have no more memory, the program will crash, and then they should realize it
-    # and set the value lower temporarily
+    # this is related to memory usage.
+    # Actually it's not perfect because the size of each image varies.
+    # If loading four 4096 * 4096, the peak memory usage could reach 16000MB.
+    # If the user doesn't have this much available memory, the program will crash.
+    # In that case, the user should lower the value
     max_image_num = 4
 
-    # is related to cpu and memory.Num of rows in a batch
+    # this is related to cpu and memory usage.
+    # This is the number of rows of pixels to process in one batch (images are saturated in batches).
     # Simply separate images in rows, ignoring that the num of column usually increase as num of rows increasing
     # For a 1024 * 1024, a batch is 512 * 1024.But for 2048 * 2048, a batch is 512 * 2048
     batch_rows = 512
 
-    lut_pixels = None  # calculate once
+    # constants for later
+    lut_pixels = None
     coord_scale = None
     coord_offset = None
     texel_height_X0 = None
-    queue_lock = threading.Lock()  # to protect the data_queue
+    # used to protect the data_queue
+    queue_lock = threading.Lock()
     data_queue = queue.Queue()
 
     def execute(self, context):
@@ -100,7 +98,9 @@ class modify_material(bpy.types.Operator):
             return {"CANCELLED"}
 
     def init_prefab_data(self):
+        '''Initialize constants for saturating textures'''
         modify_material.lut_pixels = numpy.array(bpy.data.images['Lut_TimeDay.png'].pixels[:],dtype=modify_material.np_number_precision).reshape(bpy.data.images['Lut_TimeDay.png'].size[1], bpy.data.images['Lut_TimeDay.png'].size[0], 4)
+        #constants to ensure bot and top are within the 32 x 1024 dimensions of the lut
         modify_material.coord_scale = numpy.array([0.0302734375, 0.96875, 31.0],dtype=modify_material.np_number_precision)
         modify_material.coord_offset = numpy.array([0.5 / 1024, 0.5 / 32, 0.0], dtype=modify_material.np_number_precision)
         modify_material.texel_height_X0 = numpy.array([1 / 32, 0], dtype=modify_material.np_number_precision)
@@ -138,11 +138,10 @@ class modify_material(bpy.types.Operator):
 
 
         for obj in objects:
-            #combine duplicated material slots
             c.switch(obj, 'object')
             bpy.ops.object.material_slot_remove_unused()
             c.switch(obj, 'edit')
-
+            #combine duplicated material slots
             for mat_name in [o.name for o in obj.data.materials]:
                 index = 1
                 base_material = bpy.data.materials.get(mat_name)
@@ -399,14 +398,14 @@ class modify_material(bpy.types.Operator):
 
         fileList = Path(bpy.context.scene.kkbp.import_dir).rglob('*.png')
         files = [file for file in fileList if file.is_file() and "_MT" in file.name]
-        unloaded = unprocessed = len(files) # unloaded: unloaded (to saturate) image nums, unprocessed: unfinished image nums
+        unloaded = unprocessed = len(files) # unloaded: unloaded images to saturate, unprocessed: unfinished images that still need to be saturated
         last_miss_time = time.time()  # last time of accessing queue
         current_image_num = 0  # current num of concurrent processing images
         futures = []
         record = {}  # as each image is separated to several batches, this is to record each image's base info
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_thread_num) as executor:
-            # the to-output data occupy much memory, so we should save them timely before loading more images
+            # the to-output data occupies a lot of memory, so we should save them timely before loading more images
             while unloaded > 0 or unprocessed > 0:
                 if (current_time := time.time()) - last_miss_time > 0.3:  # accessing queue every 0.3s, because queue is empty most of the time, so is no need to access it every loop
                     with self.queue_lock:
@@ -466,7 +465,7 @@ class modify_material(bpy.types.Operator):
 
             bpy.data.use_autopack = True  # enable autopack on file save
 
-            # Load all textures.Actually this part could be put into the loop above
+            # Load all textures
             fileList = Path(bpy.context.scene.kkbp.import_dir).rglob('*.png')
             files = [file for file in fileList if file.is_file()]
             for image_file in files:
@@ -487,30 +486,16 @@ class modify_material(bpy.types.Operator):
 
     def saturate_texture(self, index, slice_image):
         '''The Secret Sauce. Accepts a bpy image and saturates it to match the in-game look.'''
-        # width, height = size
-        # Load image and LUT image pixels into array
-
-        # the unchangeable data should be calculated once and fetch them directly when needed
-        # image_pixels = numpy.array(image.pixels[:],dtype=modify_material.np_number_precision).reshape(height, width, 4)
-        #  lut_pixels = numpy.array(bpy.data.images['Lut_TimeDay.png'].pixels[:],dtype=modify_material.np_number_precision).reshape(bpy.data.images['Lut_TimeDay.png'].size[1], bpy.data.images['Lut_TimeDay.png'].size[0], 4)
-        #constants to ensure bot and top are within the 32 x 1024 dimensions of the lut
-        # coord_scale = numpy.array([0.0302734375, 0.96875, 31.0],dtype=modify_material.np_number_precision)
-        # coord_offset = numpy.array([0.5/1024, 0.5/32, 0.0],dtype=modify_material.np_number_precision)
-        # texel_height_X0 = numpy.array([1/32, 0],dtype=modify_material.np_number_precision)
         # Find the XY coordinates of the LUT image needed to saturate each pixel
         coord = slice_image[:, :, :3] * self.coord_scale + self.coord_offset
         coord_frac, coord_floor = numpy.modf(coord)
         coord_frac_z = coord_frac[:, :, 2:3]
-        del coord_frac  # free temporary variable upon they are useless rather than waiting the function return and python allocate them.Actually i don't know whether it works.But at least the
-        # coord_z_floor = coord_floor[:, :, 2:3]
+        del coord_frac  # free temporary variables after they're used
         coord_bot = coord[:, :, :2] + coord_floor[:, :, 2:3] * self.texel_height_X0
         del coord
         del coord_floor
-        # coord_bot = coord[:, :, :2] + numpy.tile(coord_floor[:, :, 2].reshape(height, width, 1), (1, 1, 2)) * self.texel_height_X0
-
 
         #use those XY coordinates to find the saturated version of the color from the LUT image
-
         lutcol_bot = self.__bilinear_interpolation__(self.lut_pixels, coord_bot)
 
         lut_colors = lutcol_bot * (1 - coord_frac_z)
@@ -522,12 +507,8 @@ class modify_material(bpy.types.Operator):
         del coord_top
         slice_image[:, :, :3] = lut_colors[:,:,:3]
 
-        # Update image pixels
-        # image.pixels = image_pixels.flatten().tolist()
-
         with self.queue_lock:
             self.data_queue.put(index)
-
 
     def link_textures_for_face_body(self):
         '''Load all body textures into their texture slots'''
@@ -1095,8 +1076,7 @@ class modify_material(bpy.types.Operator):
         # If this isn't performed, the resulting image will look very blocky because it will snap to colors only found in the LUT.
         lut_col_bot = f00 * (1 - y_frac)[:, :, numpy.newaxis] + f01 * y_frac[:, :, numpy.newaxis]
         lut_col_top = f10 * (1 - y_frac)[:, :, numpy.newaxis] + f11 * y_frac[:, :, numpy.newaxis]
-        interpolated_colors = lut_col_bot * (1 - x_frac)[:, :, numpy.newaxis] + lut_col_top * x_frac[:, :,
-                                                                                              numpy.newaxis]
+        interpolated_colors = lut_col_bot * (1 - x_frac)[:, :, numpy.newaxis] + lut_col_top * x_frac[:, :, numpy.newaxis]
         return interpolated_colors
 
     def saturate_color(self, color: float, light_pass = 'light', shadow_color = {'r':0.764, 'g':0.880, 'b':1}) -> dict[str, float]:
@@ -1112,12 +1092,6 @@ class modify_material(bpy.types.Operator):
 
         # Load image and LUT image pixels into array
         image_pixels = numpy.array([color['r'], color['g'], color['b'], 1],dtype=modify_material.np_number_precision).reshape(height, width, 4)
-        # lut_pixels = numpy.array(bpy.data.images['Lut_TimeDay.png'].pixels[:],dtype=modify_material.np_number_precision).reshape(bpy.data.images['Lut_TimeDay.png'].size[1], bpy.data.images['Lut_TimeDay.png'].size[0], 4)
-
-        #constants to ensure bot and top are within the 32 x 1024 dimensions of the lut
-        # coord_scale = numpy.array([0.0302734375, 0.96875, 31.0],dtype=modify_material.np_number_precision)
-        # coord_offset = numpy.array([0.5/1024, 0.5/32, 0.0],dtype=modify_material.np_number_precision)
-        # texel_height_X0 = numpy.array([1/32, 0],dtype=modify_material.np_number_precision)
 
         # Find the XY coordinates of the LUT image needed to saturate each pixel
         coord = image_pixels[:, :, :3] * self.coord_scale + self.coord_offset
@@ -1148,20 +1122,16 @@ class modify_material(bpy.types.Operator):
         #set the tongue colors if it exists
         #if c.get_material_names('o_tang') and (tongue := c.get_tongue()):
         if c.get_material_names('o_tang') and (tongue := c.get_tongue()):
-            # shader_inputs = c.get_tongue().material_slots[0].material.node_tree.nodes[light_pass].inputs
             shader_inputs = tongue.material_slots[0].material.node_tree.nodes[light_pass].inputs
             shader_inputs['Maintex Saturation'].default_value = 0.6
             shader_inputs['Detail intensity (green)'].default_value = 0.01
             shader_inputs['Color mask (base)'].default_value = [1, 1, 1, 1]
-            # mat_name = c.get_tongue().material_slots[0].name
             mat_name = tongue.material_slots[0].name
             shader_inputs['Color mask (red)'].default_value =   self.saturate_color(c.json_file_manager.get_color(mat_name, "_Color "),  light_pass, shadow_color = c.json_file_manager.get_shadow_color(mat_name))
             shader_inputs['Color mask (green)'].default_value = self.saturate_color(c.json_file_manager.get_color(mat_name, "_Color2 "), light_pass, shadow_color = c.json_file_manager.get_shadow_color(mat_name))
             shader_inputs['Color mask (blue)'].default_value =  self.saturate_color(c.json_file_manager.get_color(mat_name, "_Color3 "), light_pass, shadow_color = c.json_file_manager.get_shadow_color(mat_name))
 
         #set all of the hair colors
-        # Alpha mask was founded to be used in hair. Although current hair shader seems to use the alpha mask, but looks no effect.
-        # However, I prefer to delete those masked vertices manually rather than ignoring them by shader because the mesh is in a mess
         hair_materials = [m for m in bpy.data.materials if m.get('hair') == True and m.get('name') == c.get_name()]
         for hair_material in hair_materials:
             shader_inputs = hair_material.node_tree.nodes[light_pass].inputs
@@ -1189,10 +1159,8 @@ class modify_material(bpy.types.Operator):
                     # shader_inputs['Nipple rim'].default_value =             [1.0, 0.08, 0.09, 1.0]
 
             #face
+            #Note that some headmods have multiple face materials. This will only replace the first one
             if c.get_material_names('cf_O_face'):
-                """
-                however, some model have multi materials on the face
-                """
                 #setup the face material
                 mat_name = 'KK Face ' + c.get_name()
                 shader_inputs = c.get_body().material_slots[mat_name].material.node_tree.nodes[light_pass].inputs

@@ -78,7 +78,7 @@ class modify_mesh(bpy.types.Operator):
         if rigged_tongue_material == general_tongue_material:
             rigged_tongue_material += '.001'
 
-        #  if rigged tongue not exist,
+        #  if rigged tongue doesn't exist,
         #  rename tongue material to .001, duplicate tongue material and rename to general name, separate mesh by .001,
         #  duplicate tongue mesh as general tongue and join back to body
         if rigged_tongue_material is None or general_tongue_material is None: # Some model only have N_cf_haed/o_tang or n_tang/o_tang
@@ -92,7 +92,7 @@ class modify_mesh(bpy.types.Operator):
 
             ori_material = bpy.data.materials[general_tongue_material]
 
-            # rename former material to .001, so we do not need to change the faces' s material to new one
+            # rename original material to .001, so we do not need to change the faces' s material to new one
             ori_material['name'] = rigged_tongue_material
             ori_material['id'] = rigged_tongue_material
             ori_material.name = rigged_tongue_material
@@ -119,10 +119,6 @@ class modify_mesh(bpy.types.Operator):
             bpy.ops.object.join()
 
             tongue['tongue'] = True
-
-            # tongue.modifiers.clear()
-            # for vg in list(tongue.vertex_groups):
-            #     tongue.vertex_groups.remove(vg)
         else:
             tongue = self.separate_materials(c.get_body(), [rigged_tongue_material], 'Tongue (rigged) ' + c.get_name())
             tongue['tongue'] = True
@@ -622,7 +618,6 @@ class modify_mesh(bpy.types.Operator):
                 c.switch(c.get_body(), 'object')
                 bpy.ops.object.shape_key_add(from_mix=False)
                 c.get_body().data.shape_keys.key_blocks[-1].name = cat_data[0]
-                # c.get_body().data.shape_keys.key_blocks[-1].name = tear_mats[cat]
                 last_shapekey = len(c.get_body().data.shape_keys.key_blocks) - 1
                 bpy.context.object.active_shape_key_index = last_shapekey
                 c.switch(c.get_body(), 'edit')

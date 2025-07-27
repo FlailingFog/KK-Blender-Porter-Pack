@@ -4,7 +4,7 @@ from pathlib import Path
 
 class JsonFileManager:
     '''
-    Single Instance, avoid loading files repeatedly.The instance is declared at the bottom of the file
+    Manages json files to avoid loading files repeatedly. The instance is declared at the bottom of the file
     '''
 
     def __init__(self):
@@ -18,8 +18,8 @@ class JsonFileManager:
 
     def init(self):
         '''
-        Recording existing json file but do not load them except MaterialComplete.json
-        For MaterialComplete.json, record material information
+        Recording json filenames in the import directory, but only load MaterialDataComplete.json
+        Also record material information for MaterialDataComplete.json
         '''
         self.clear()
         for file in Path(bpy.context.scene.kkbp.import_dir).glob('*.json'):
@@ -41,25 +41,21 @@ class JsonFileManager:
 
     def get_json_file(self, filename: str) -> json:
         '''
-        Returns the json file by filename. Include the .json in the filename argument
+        Returns the json data by filename. Include the .json in the filename argument
         '''
-        if json_data := self.json_files.get(filename):  # Auto skip the file that not present.It should crash the program for missing file
+        if json_data := self.json_files.get(filename):  # Returns None if the file is not found (will likely cause an error)
             if isinstance(json_data, str):
                 json_data = self.json_files[filename] = json.load(open(json_data))
             return json_data
 
     def get_material_info_by_smr(self, smr_name: str) -> list[dict]:
-        '''
-        Material's name could change to everything at author's willing, but the bone should under the kk's control.
-        So bone's name should be fixed.According to this, we can get target material's name by its smr name
-        '''
         return self.smr_materials_data.get(smr_name)
 
     def get_materials_info(self) -> dict[str, list[dict]]:
         return self.smr_materials_data
 
     def get_color(self, material_name: str, color: str) -> dict[str: float]:
-        '''Find the material material_name and return an RGBA dict list of the specified color ranging from 0-1. If material_name contains a space and the character name, it will be filtered out.'''
+        '''Find the material material_name and return an RGBA dict list of the desired color ranging from 0-1'''
         if material_name := bpy.data.materials[material_name].get('id'):
             material_colors = self.materials_data.get(material_name)
             for material_color in material_colors:
@@ -271,29 +267,6 @@ def get_color(material_name: str, color: str) -> dict[float]:
     return {'r': 1, 'g': 1, 'b': 1, 'a': 1}
 
 
-# def get_shadow_color(material_name: str) -> dict[float]:
-#     '''Find the material material_name and return an RGBA float list ranging from 0-1'''
-#     # get original name
-#     material_name = bpy.data.materials[material_name].get('id')
-#     if material_name:
-#         material_data = json_file_manager.get_json_file('KK_MaterialDataComplete.json')
-#         material_infos = [m['MaterialInformation'] for m in material_data if m.get('MaterialInformation')]
-#         # get all the shadow colors
-#         material_colors = []
-#         for material_info in material_infos:
-#             material_colors.extend([m for m in material_info if m.get('MaterialName') == material_name])
-#         for material_color in material_colors:
-#             # then zip them and find the shadow color
-#             color_dict = zip(material_color['ShaderPropNames'], material_color['ShaderPropColorValues'])
-#             # key names are not consistent, so look through all of them
-#             for pair in color_dict:
-#                 if '_shadowcolor' in pair[0].lower():
-#                     return pair[1]
-#     # return a default color if not found
-#     kklog(f'Couldn\'t find shadow color for {material_name}', 'warn')
-#     return {'r': 0.764, 'g': 0.880, 'b': 1}
-
-
 def get_body_materials() -> list[bpy.types.Material]:
     '''Returns a list of all the body materials'''
     materials = [m for m in bpy.data.materials if
@@ -326,9 +299,10 @@ def reset_timer():
 
 def print_timer(operation_name: str):
     '''Prints the time between now and the last operation that was timed'''
-    kklog('{} operation took {} seconds'.format(operation_name, abs(round(((
-                                                                                   datetime.datetime.now().minute * 60 + datetime.datetime.now().second + datetime.datetime.now().microsecond / 1e6) - bpy.context.scene.kkbp.timer),
-                                                                          3))))
+    kklog('{} operation took {} seconds'.format(
+        operation_name, 
+        abs(round(((datetime.datetime.now().minute * 60 + datetime.datetime.now().second + datetime.datetime.now().microsecond / 1e6) - bpy.context.scene.kkbp.timer),
+        3))))
     reset_timer()
 
 
