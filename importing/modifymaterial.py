@@ -207,10 +207,10 @@ class modify_material(bpy.types.Operator):
         #Replace all materials on the body with templates
         def swap_body_material(original_materials: list[str], template_name: str):
             c_name = c.get_name()
-            #remove dupes
+            #remove dupes and check the material slot actually exists
             original_materials = list(set(original_materials))
             for original_material in original_materials:
-                try:
+                if c.get_body().material_slots.get(original_material):
                     template = bpy.data.materials[template_name].copy()
                     template['body'] = True
 
@@ -222,7 +222,7 @@ class modify_material(bpy.types.Operator):
                     template_group = template.node_tree.nodes['textures'].node_tree.copy()
                     template_group.name = 'Tex ' + original_material + ' ' + c_name
                     template.node_tree.nodes['textures'].node_tree = template_group
-                except:
+                else:
                     c.kklog(f'material or template wasn\'t found when replacing body materials: {str(original_material)} / {str(template_name)}', 'warn')
 
         swap_body_material(c.get_material_names('cf_O_face'),'KK Face')  # However, some model has multiple textures on face, like nose material. Simply converting all of them to KK Face gets a white face(could be fixed by removing those material slots manually).Meanwhile, face's material name could change, getting face's material by its general name(cf_m_face_00) may fail under some circumstances
