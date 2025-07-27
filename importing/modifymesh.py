@@ -634,7 +634,6 @@ class modify_mesh(bpy.types.Operator):
                 bpy.ops.object.material_slot_select()
                 # find a random vertex location of the tear and move it forwards
                 c.switch(c.get_body(), 'object')
-                selected_verts = [v for v in c.get_body().data.vertices if v.select]  # Why?
                 bpy.ops.object.mode_set(mode='EDIT')
                 bpy.ops.transform.translate(value=(0, -1 * abs(amount_to_move_tears_back), 0))
                 c.switch(c.get_body(), 'object')
@@ -658,7 +657,6 @@ class modify_mesh(bpy.types.Operator):
                 bpy.ops.object.material_slot_select()
         # find a random vertex location of the eye and move it backwards
         c.switch(c.get_body(), 'object')
-        selected_verts = [v for v in c.get_body().data.vertices if v.select]  # Why ?
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.transform.translate(value=(0, 2.5 * abs(amount_to_move_tears_back), 0))
         c.switch(c.get_body(), 'object')

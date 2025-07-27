@@ -136,22 +136,6 @@ class modify_material(bpy.types.Operator):
         objects.append(c.get_body())
         objects.extend(c.get_hairs())
 
-        # hmm, this still has some small problems.For example, two tongues' material name could vary, some there is no .001 material.
-        # So code below will ignore them, and in swap body material stage, two KK General will be created.And blender will
-        # rename the later one to .001.However, this will cause crash in following step. example: issue:#714
-        # Simply converting all materials in a smr object to the smr object's first material will not crash,
-        # But this will discard some useful information.For example, there is a nose materia in face, the nose material will
-        # miss.What's Worse, face material was not in the first place, in this case the face material will be discarded
-        # I can't find a good solution
-        mat_name_list = c.get_material_names('cf_Ohitomi_L02')
-        mat_name_list.extend(c.get_material_names('cf_Ohitomi_R02'))
-        mat_name_list.extend(c.get_material_names('cf_Ohitomi_L'))
-        mat_name_list.extend(c.get_material_names('cf_Ohitomi_R'))
-        mat_name_list.extend(c.get_material_names('cf_O_namida_L'))
-        mat_name_list.extend(c.get_material_names('cf_O_namida_M'))
-        mat_name_list.extend(c.get_material_names('cf_O_namida_S'))
-        mat_name_list.extend(c.get_material_names('o_tang'))
-        mat_name_list.extend(c.get_material_names('cf_O_face'))
 
         for obj in objects:
             #combine duplicated material slots
@@ -159,18 +143,17 @@ class modify_material(bpy.types.Operator):
             bpy.ops.object.material_slot_remove_unused()
             c.switch(obj, 'edit')
 
-            for mat in mat_name_list:
+            for mat_name in [o.name for o in obj.data.materials]:
                 index = 1
-                base_material = bpy.data.materials.get(mat)
-                while redundant_material := bpy.data.materials.get(f'{mat}.{index:03d}'):
+                base_material = bpy.data.materials.get(mat_name)
+                while redundant_material := bpy.data.materials.get(f'{mat_name}.{index:03d}'):
                     index += 1
                     redundant_material.user_remap(base_material)
                     bpy.data.materials.remove(redundant_material)
 
-            material_list = bpy.data.materials
-
             #then clean material slots by going through each slot and reassigning the slots that are repeated
             repeats = {}
+            material_list = obj.data.materials
             for index, mat in enumerate(material_list):
                 if mat.name not in repeats:
                     repeats[mat.name] = [index]
