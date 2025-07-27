@@ -136,21 +136,28 @@ class modify_material(bpy.types.Operator):
         objects.append(c.get_body())
         objects.extend(c.get_hairs())
 
+        # hmm, this still has some small problems.For example, two tongues' material name could vary, some there is no .001 material.
+        # So code below will ignore them, and in swap body material stage, two KK General will be created.And blender will
+        # rename the later one to .001.However, this will cause crash in following step. example: issue:#714
+        # Simply converting all materials in a smr object to the smr object's first material will not crash,
+        # But this will discard some useful information.For example, there is a nose materia in face, the nose material will
+        # miss.What's Worse, face material was not in the first place, in this case the face material will be discarded
+        # I can't find a good solution
+        mat_name_list = c.get_material_names('cf_Ohitomi_L02')
+        mat_name_list.extend(c.get_material_names('cf_Ohitomi_R02'))
+        mat_name_list.extend(c.get_material_names('cf_Ohitomi_L'))
+        mat_name_list.extend(c.get_material_names('cf_Ohitomi_R'))
+        mat_name_list.extend(c.get_material_names('cf_O_namida_L'))
+        mat_name_list.extend(c.get_material_names('cf_O_namida_M'))
+        mat_name_list.extend(c.get_material_names('cf_O_namida_S'))
+        mat_name_list.extend(c.get_material_names('o_tang'))
+        mat_name_list.extend(c.get_material_names('cf_O_face'))
+
         for obj in objects:
             #combine duplicated material slots
             c.switch(obj, 'object')
             bpy.ops.object.material_slot_remove_unused()
             c.switch(obj, 'edit')
-
-            mat_name_list = c.get_material_names('cf_Ohitomi_L02')
-            mat_name_list.extend(c.get_material_names('cf_Ohitomi_R02'))
-            mat_name_list.extend(c.get_material_names('cf_Ohitomi_L'))
-            mat_name_list.extend(c.get_material_names('cf_Ohitomi_R'))
-            mat_name_list.extend(c.get_material_names('cf_O_namida_L'))
-            mat_name_list.extend(c.get_material_names('cf_O_namida_M'))
-            mat_name_list.extend(c.get_material_names('cf_O_namida_S'))
-            mat_name_list.extend(c.get_material_names('o_tang'))
-            mat_name_list.extend(c.get_material_names('cf_O_face'))
 
             for mat in mat_name_list:
                 index = 1
