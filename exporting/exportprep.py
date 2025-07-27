@@ -80,7 +80,7 @@ def main(prep_type, simp_type):
 
     # If exporting for Unreal...
     if prep_type == 'E':
-        armature = bpy.data.objects['Armature']
+        armature = bpy.data.objects[armature_name]
         bpy.context.view_layer.objects.active = armature
         bpy.ops.armature.collection_show_all()
 
