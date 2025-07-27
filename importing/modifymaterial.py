@@ -37,20 +37,20 @@ class modify_material(bpy.types.Operator):
 
     # This is how many cpu cores you want to use to saturate the images. 
     # If you have a better CPU, you can set it higher.
-    max_thread_num = 8
+    max_thread_num = bpy.context.preferences.addons[__package__.split('.')[0]].preferences.max_thread_num
 
     # this is related to memory usage.
     # Actually it's not perfect because the size of each image varies.
     # If loading four 4096 * 4096, the peak memory usage could reach 16000MB.
     # If the user doesn't have this much available memory, the program will crash.
     # In that case, the user should lower the value
-    max_image_num = 4
+    max_image_num = bpy.context.preferences.addons[__package__.split('.')[0]].preferences.max_image_num
 
     # this is related to cpu and memory usage.
     # This is the number of rows of pixels to process in one batch (images are saturated in batches).
     # Simply separate images in rows, ignoring that the num of column usually increase as num of rows increasing
     # For a 1024 * 1024, a batch is 512 * 1024.But for 2048 * 2048, a batch is 512 * 2048
-    batch_rows = 512
+    batch_rows = bpy.context.preferences.addons[__package__.split('.')[0]].preferences.batch_rows
 
     # constants for later
     lut_pixels = None
