@@ -333,7 +333,14 @@ class modify_material(bpy.types.Operator):
             template.name = 'KK Tongue ' + c_name
             template['tongue'] = True
             template['bake'] = True
-            template['id'] = c.get_material_names('o_tang')[0]
+            # template['id'] = c.get_material_names('o_tang')[0]
+            for material_name in c.get_material_names('o_tang'): # avoid getting the deleted material
+                if bpy.data.materials.get(material_name):
+                    template['id'] = material_name
+                    break
+            if template.get('id') is None:
+                c.kklog('Failed to replace tongue material', 'warn')
+
             c.get_body().material_slots['KK General ' + c_name].material = template
             template_group = template.node_tree.nodes['textures'].node_tree.copy()
             template.node_tree.nodes['textures'].node_tree = template_group

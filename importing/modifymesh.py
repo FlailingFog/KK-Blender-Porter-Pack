@@ -127,7 +127,7 @@ class modify_mesh(bpy.types.Operator):
         if bpy.data.materials.get(rigged_tongue_material):
             bpy.data.materials[rigged_tongue_material].user_remap(
                 bpy.data.materials[general_tongue_material])
-            bpy.data.materials.remove(bpy.data.materials[rigged_tongue_material])
+            bpy.data.materials.remove(bpy.data.materials[rigged_tongue_material],do_unlink=True) # forcing to delete
         c.print_timer('separate_rigged_tongue')
 
     def separate_hair(self):
