@@ -1,7 +1,7 @@
 #The preferences for the plugin 
 
 import bpy
-from bpy.props import BoolProperty, EnumProperty, StringProperty
+from bpy.props import BoolProperty, EnumProperty, StringProperty, IntProperty
 
 from .interface.dictionary_en import t
 
@@ -112,6 +112,32 @@ class KKBPPreferences(bpy.types.AddonPreferences):
             ("C", t('shader_C'), t('shader_C_tt')),
         ), name="", default="A", description="Shader")
     
+    max_thread_num: IntProperty(
+        min=1, max = 128,
+        default=8,
+        description='''This is how many cpu cores you want to use to saturate the images. 
+If you have a better CPU, you can set it higher.
+Default is 8''')
+
+    max_image_num: IntProperty(
+        min=1, max = 20,
+        default=2,
+        description='''this is related to memory usage.
+Actually it's not perfect because the size of each image varies.
+If loading two 4096 * 4096, the peak memory usage could reach 8000MB.
+If the user doesn't have this much available memory, the program will crash.
+In that case, the user should lower the value.
+Default is 2''')
+
+    batch_rows: IntProperty(
+        min=256, max = 4096,
+        default=512,
+        description='''this is related to cpu and memory usage.
+This is the number of rows of pixels to process in one batch (images are saturated in batches).
+Simply separate images in rows, ignoring that the num of column usually increase as num of rows increasing
+For a 1024 * 1024, a batch is 512 * 1024.But for 2048 * 2048, a batch is 512 * 2048.
+Default is 512''')
+
     def draw(self, context):
         layout = self.layout
         splitfac = 0.5
@@ -162,3 +188,13 @@ class KKBPPreferences(bpy.types.AddonPreferences):
         split = row.split(align=True, factor=splitfac)
         split.prop(self, "simp_dropdown")
         split.prop(self, "prep_dropdown")
+
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.label(text='Change these options based on your computer specs to speed up the import process:')
+        row = col.row(align=True)
+        split = row.split(align=True, factor=0.33)
+        split.prop(self, "max_thread_num", text = 'Maxthreads')
+        split.prop(self, "max_image_num", text = 'Max parallel images')
+        split.prop(self, "batch_rows", text = 'Max rows in one batch')
+
