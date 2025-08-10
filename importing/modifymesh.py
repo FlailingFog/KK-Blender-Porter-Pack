@@ -106,6 +106,7 @@ class modify_mesh(bpy.types.Operator):
             tongue = self.separate_materials(c.get_body(), [rigged_tongue_material], 'Tongue (rigged) ' + c.get_name())
 
             c.get_body().data.materials.append(new_material)
+            bpy.ops.object.material_slot_move(direction='DOWN')
 
             # copy the tongue mesh and join it back to body
             bpy.ops.object.mode_set(mode='OBJECT')

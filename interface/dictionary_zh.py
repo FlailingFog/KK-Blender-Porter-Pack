@@ -138,4 +138,11 @@ translation_dictionary = {
     # 'reset_mats' : 
     # 'reset_mats_tt' : 
 
+    # 'max_thread_num' : 
+    # 'max_image_num' : 
+    # 'batch_rows' : 
+    # 'max_thread_num_tt' : 
+    # 'max_image_num_tt' : 
+    # 'batch_rows_tt' : 
+
     }
