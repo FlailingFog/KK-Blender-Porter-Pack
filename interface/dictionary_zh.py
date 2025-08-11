@@ -10,7 +10,7 @@ translation_dictionary = {
     'keep_templates_tt'     : "保持启用以将KKBP材质模板设置为假用户。这将防止它们在blender关闭时被删除。如果要在角色完成后将其应用于其他对象，则此选项非常有用",
 
     'sfw_mode'          : '和谐模式',
-    'sfw_mode_tt'       : '试图掩盖一些少儿不宜的东西',
+    'sfw_mode_tt'       : '删除相关区域来实现和谐',
 
     'arm_drop'          :"骨架类型",
     'arm_drop_A'        : "使用KKBP骨架",
@@ -47,8 +47,10 @@ translation_dictionary = {
     移除重复的眼白材质槽（如果存在）
     移除“Upper Chest”骨骼，
     编辑骨骼层级以允许Unity自动检测正确骨骼""",
-    # 'prep_drop_E'       : 
-    # 'prep_drop_E_tt'    : 
+    'prep_drop_E'       : '虚幻引擎',
+    'prep_drop_E_tt'    : """删除轮廓...
+    移除重复的眼白材质槽（如果存在）,
+    编辑骨骼层级以允许Unity自动检测正确骨骼""",
 
     'simp_drop'     : '骨骼简化类型',
     'simp_drop_A'   : '非常简单（慢）',
@@ -114,35 +116,35 @@ translation_dictionary = {
     'sep_eye_tt'                : "将眼睛和眉毛从身体对象中分离出来，并将形态键链接到身体对象。当您想让眼睛或眉毛通过头发透视时，该功能非常有用",
     'bone_visibility'           : "更新骨骼可见性",
     'bone_visibility_tt'        : "根据隐藏的服装更新骨骼的可见性",
-    # 'link_hair'                 : 
-    # 'link_hair_tt'              : 
+    'link_hair'                 : "更新头发材质",
+    'link_hair_tt'              : "点击以将当前颜色、细节强度等参数复制到该物体的其他头发材质上。",
 
-    'kkbp_import_tt'   : "导入恋活模型（.pmx格式），并对其应用修复",
+    'kkbp_import_tt'    : "导入恋活模型（.pmx格式），并对其应用修复",
     'export_prep_tt'    : "不适用于Rigify骨架，查看下拉列表以了解更多信息",
     'bake_mats_tt'      : "打开要将材质模板烘焙到的文件夹",
 
-    'delete_cache' : '删除缓存',
+    'delete_cache'    : '删除缓存',
     'delete_cache_tt' : '启用此选项可删除缓存文件。缓存文件在导入模型或最终确定材质时生成。这些文件被命名为 “atlas_files”、“baked_files”、“dark_files ”和 “saturated_files ”存储在pmx文件夹中。启用此选项将删除这些文件夹中的所有文件',
 
-    'use_atlas' : '创建材质图集',
-    'use_atlas_tt': '禁用此功能可在最终确定材质时节省大量时间，但不会创建材质图集。',
+    'use_atlas'      : '创建材质图集',
+    'use_atlas_tt'   : '禁用此功能可在最终确定材质时节省大量时间，但不会创建材质图集。',
     'dont_use_atlas' : '不创建材质图集',
 
-    # 'mat_comb_tt' : '
-    # 'matcomb' : 
-    # 'mat_comb_switch' : 
-    # 'mat_comb_switch_tt' : 
+    'mat_comb_tt'        : '该插件使用Shotariya\'s Material Combiner插件来把材质转化为图集。如果你想手动实现该过程的话，启用该选项。(这样的话，你需要自行下载相关插件。当然，你需要先确定最终材质（烘培），否则不会生效),',
+    'matcomb'            : '自动/手动结合材质',
+    'mat_comb_switch'    : '切换 Material Combiner 的明/暗模式',
+    'mat_comb_switch_tt' : '点击此处可切换贴图状态，以便从 Material Combiner 获取亮色和暗色两种图集',
 
-    # 'pillow' : 
-    # 'pillow_tt':
-    # 'reset_mats' : 
-    # 'reset_mats_tt' : 
+    'pillow'        : '安装Pillow以使用图集功能',
+    'pillow_tt'     : '点击安装Pillow库，这可能需要一段时间，并且可能需要你以管理员身份运行blender。大陆用户如果遇到下载进度缓慢或无法下载的可以去网上搜索“pip换源”,“pip代理设置”',
+    'reset_mats'    : '重置已最终化的材质',
+    'reset_mats_tt' : '点击此处可将你所有已最终确定的材质重置回 -ORG 版本.如果你想重新最终化（Refinalize）所有材质，这会很方便。',
 
-    # 'max_thread_num' : 
-    # 'max_image_num' : 
-    # 'batch_rows' : 
-    # 'max_thread_num_tt' : 
-    # 'max_image_num_tt' : 
-    # 'batch_rows_tt' : 
+    'max_thread_num'    : '并行线程数量',
+    'max_image_num'     : '并行处理图片数量',
+    'batch_rows'        : '每批处理的行数',
+    'max_thread_num_tt' : '插件会在导入模型时调整材质饱和度。这个选项指示在该过程中并行处理的线程数量。如果你有更多的CPU核心数量，可以适当调高些。默认是8',
+    'max_image_num_tt'  : '插件会在导入模型时调整材质饱和度。这个选项指示有多少张图片会被并行处理。这个选项影响内存使用。例如，如果同时处理两张4096 x 4096大小饿图片，内存使用峰值会达到8GB.如果你没这么多内存，程序会崩溃。默认为2',
+    'batch_rows_tt'     : '插件会在导入模型时调整材质饱和度。这个选项指示每个线程会处理多少行像素。例如，设置为512, 当处理一张1024 x 1024的图片时，程序会把它放到两个线程中，每个线程处理512 x 1024的数据。',
 
     }
