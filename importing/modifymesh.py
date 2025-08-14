@@ -16,6 +16,7 @@ This file performs the following operations
 
 ·	Mark certain body materials as freestyle faces for freestyle exclusion
 '''
+import re
 
 import bpy
 from .. import common as c
@@ -30,6 +31,8 @@ class modify_mesh(bpy.types.Operator):
     def execute(self, context):
         try:
             self.rename_uv_maps()
+
+            self.clean_up()
 
             self.separate_rigged_tongue()
             self.separate_hair()
@@ -52,6 +55,17 @@ class modify_mesh(bpy.types.Operator):
         except Exception as error:
             c.handle_error(self, error)
             return {"CANCELLED"}
+
+    def clean_up(self):
+        c.clean_orphaned_data()
+        pattern = re.compile(r'\.\d{3}$')
+        for material in bpy.data.materials:
+            if pattern.search(material.name):
+                new_name = material.name[:-4]
+                material.name = new_name
+                material['id'] = new_name
+                material['name'] = new_name
+
 
     # %% Main functions
     def separate_rigged_tongue(self):
