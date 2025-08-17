@@ -32,8 +32,7 @@ class modify_mesh(bpy.types.Operator):
         try:
             self.rename_uv_maps()
 
-            self.clean_up()
-
+            self.clean_up_duplicates()
             self.separate_rigged_tongue()
             self.separate_hair()
             self.separate_alternate_clothing()
@@ -56,16 +55,17 @@ class modify_mesh(bpy.types.Operator):
             c.handle_error(self, error)
             return {"CANCELLED"}
 
-    def clean_up(self):
+    def clean_up_duplicates(self):
+        '''Removes duplicate materials on the body object (there should only be one each)'''
         c.clean_orphaned_data()
         pattern = re.compile(r'\.\d{3}$')
-        for material in bpy.data.materials:
+        for material in c.get_body().data.materials:
             if pattern.search(material.name):
                 new_name = material.name[:-4]
+                c.kklog(f'Renamed duplicate body material {material.name} to {new_name}')
                 material.name = new_name
                 material['id'] = new_name
                 material['name'] = new_name
-
 
     # %% Main functions
     def separate_rigged_tongue(self):
