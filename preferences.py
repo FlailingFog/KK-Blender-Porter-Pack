@@ -1,7 +1,7 @@
 #The preferences for the plugin 
 
 import bpy
-from bpy.props import BoolProperty, EnumProperty, StringProperty
+from bpy.props import BoolProperty, EnumProperty, StringProperty, IntProperty
 
 from .interface.dictionary_en import t
 
@@ -112,6 +112,21 @@ class KKBPPreferences(bpy.types.AddonPreferences):
             ("C", t('shader_C'), t('shader_C_tt')),
         ), name="", default="A", description="Shader")
     
+    max_thread_num: IntProperty(
+        min=1, max = 64,
+        default=8,
+        description=t('max_thread_num_tt'))
+
+    max_image_num: IntProperty(
+        min=1, max = 10,
+        default=2,
+        description=t('max_image_num_tt'))
+
+    batch_rows: IntProperty(
+        min=256, max = 4096,
+        default=512,
+        description=t('batch_rows_tt'))
+
     def draw(self, context):
         layout = self.layout
         splitfac = 0.5
@@ -162,3 +177,13 @@ class KKBPPreferences(bpy.types.AddonPreferences):
         split = row.split(align=True, factor=splitfac)
         split.prop(self, "simp_dropdown")
         split.prop(self, "prep_dropdown")
+
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.label(text='Change these options based on your computer specs to speed up the import process:')
+        row = col.row(align=True)
+        split = row.split(align=True, factor=0.33)
+        split.prop(self, "max_thread_num", text = t('max_thread_num'))
+        split.prop(self, "max_image_num", text = t('max_image_num'))
+        split.prop(self, "batch_rows", text = t('batch_rows'))
+

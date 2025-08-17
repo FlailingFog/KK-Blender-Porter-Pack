@@ -140,6 +140,12 @@ translation_dictionary = {
     'reset_mats' : 'Reset finalized materials',
     'reset_mats_tt' : 'Click this to reset ALL of your finalized materials back to the -ORG version. Handy if you want to refinalize everything',
     
+    'max_thread_num' : 'Max threads',
+    'max_image_num' : 'Max parallel images',
+    'batch_rows' : 'Rows per batch',
+    'max_thread_num_tt' : 'KKBP saturates your character\'s textures during model import. This option determines how many CPU cores you want to use to perform the saturation. If you have more cores to spare, you can set it higher. Default is 8.',
+    'max_image_num_tt' : 'KKBP saturates your character\'s textures during model import. This option determines how many images can be saturated at once. This setting affects memory usage. For example, if the program loads two 4096 x 4096 images, the peak memory usage could reach 8 GB. If you don\'t have 8GB of free memory Blender could crash. Default is 2',
+    'batch_rows_tt' : 'KKBP saturates your character\'s textures during model import. This option determines how many rows of pixels to process in one batch. For example, if this setting is set to 512 rows and the program is saturating a 1024 x 1024 image, it will be processed in two 512 x 1024 batches. Increasing this value can allow you to process the full image in a single batch, but will increase CPU and memory usage. Default is 512',
     }
 
 def t(text_entry):
@@ -152,6 +158,7 @@ def t(text_entry):
         else:
             return translation_dictionary[text_entry]
     except KeyError:
+        #default to english if not translated
         if translation_dictionary.get(text_entry):
             return translation_dictionary[text_entry] 
         else:
