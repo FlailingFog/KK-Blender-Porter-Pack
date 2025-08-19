@@ -85,6 +85,7 @@ class modify_material(bpy.types.Operator):
             self.setup_gag_eye_material_drivers()
 
             self.add_outlines_to_body()
+            self.add_outlines_to_bonelyfans()
             self.add_outlines_to_hair()
             self.add_outlines_to_clothes()
 
@@ -872,6 +873,32 @@ class modify_material(bpy.types.Operator):
         body.data.materials.append(body_outline_mat)
         c.print_timer('add_outlines_to_body')
 
+    def add_outlines_to_bonelyfans(self):
+        # Add outlines to bonelyfans, used for alternative outline
+        if bonely := c.get_bonelyfans():
+            c.switch(bonely, 'object')
+            mod = bonely.modifiers.new(type='SOLIDIFY', name='Outline Modifier')
+            mod.thickness = 0.0005
+            mod.offset = 0
+            mod.material_offset = len(bonely.material_slots)
+            mod.use_flip_normals = True
+            mod.use_rim = False
+            mod.name = 'Outline Modifier'
+            mod.show_expanded = False
+            # face first
+            faceOutlineMat = bpy.data.materials['Outline General'].copy()
+            faceOutlineMat.name = 'Outline Face ' + c.get_name()
+            bonely.data.materials.append(faceOutlineMat)
+            faceOutlineMat.blend_method = 'CLIP'
+            body_outline_mat = bpy.data.materials['Outline Body'].copy()
+            body_outline_mat.name = 'Outline Body ' + c.get_name()
+            body_outline_mat.node_tree.nodes['textures'].node_tree = \
+                bpy.data.materials['KK Body ' + c.get_name()].node_tree.nodes['textures'].node_tree
+            bonely.data.materials.append(body_outline_mat)
+
+            c.move_and_hide_collection([bonely], 'bonelyfans')
+            c.print_timer('add_outlines_to_bonelyfans')
+
     def add_outlines_to_hair(self):
         #Give each piece of hair with an alphamask on each hair object it's own outline group
         if not bpy.context.scene.kkbp.use_single_outline:
@@ -1012,6 +1039,7 @@ class modify_material(bpy.types.Operator):
     def load_json_colors(self):
         self.update_shaders('light') # Set light colors
         self.update_shaders('dark') # Set dark colors
+        self.make_bonelyfans_transparent() # Make Bonelyfans transparent
         c.print_timer('load_json_colors')
 
     def set_color_management(self):
@@ -1207,6 +1235,11 @@ class modify_material(bpy.types.Operator):
             shader_inputs['Pattern color (green)'].default_value =  self.saturate_color(c.json_file_manager.get_color(material.name, "_Color2_2 "),  light_pass, shadow_color = c.json_file_manager.get_shadow_color(material.name))
             shader_inputs['Pattern color (blue)'].default_value =   self.saturate_color(c.json_file_manager.get_color(material.name, "_Color3_2 "),  light_pass, shadow_color = c.json_file_manager.get_shadow_color(material.name))
 
+    def make_bonelyfans_transparent(self):
+        if bonely := bpy.data.materials.get('Bonelyfans'):
+            bonely.node_tree.nodes['mmd_shader'].inputs[12].default_value = 0.
+        if bonely := bpy.data.materials.get('Bonelyfans.001'):
+            bonely.node_tree.nodes['mmd_shader'].inputs[12].default_value = 0.
     #something is wrong with this one, currently unused
     # def hair_dark_color(self, color, shadow_color):
     #     diffuse = float4(color[0], color[1], color[2], 1)

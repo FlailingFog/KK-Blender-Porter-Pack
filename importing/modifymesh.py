@@ -235,7 +235,9 @@ class modify_mesh(bpy.types.Operator):
         mat_list.extend(extended)
         bonely = self.separate_materials(c.get_body(), mat_list, 'bonelyfans')
         if bonely:
-            bpy.data.objects.remove(bonely)
+            bonely['bonelyfans'] = True
+            bonely['name'] = bpy.context.scene.kkbp.character_name
+            # bpy.data.objects.remove(bonely)
         c.print_timer('delete_shad_bone')
 
     def separate_hitboxes(self):
@@ -461,7 +463,7 @@ class modify_mesh(bpy.types.Operator):
             eyes = [keyName.find("Eyes"),
             keyName.find("NoseT"),
             keyName.find("Eyelashes1"),
-            keyName.find("EyeWhites"),
+            # keyName.find("EyeWhites"),
             keyName.find('Tear_big'),
             keyName.find('Tear_med'),
             keyName.find('Tear_small')]
