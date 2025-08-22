@@ -375,22 +375,23 @@ class post_operations(bpy.types.Operator):
         rig = bpy.context.active_object
         rig['rig'] = True
         rig['name'] = c.get_name()
-        for bone in rig.data.bones:
-            if bpy.app.version[0] == 3:
-                if bone.layers[0] == True or bone.layers[2] == True:
-                    if rig.data.bones.get('ORG-' + bone.name):
-                        if rig.data.bones['ORG-' + bone.name].get('KKBP outfit ID'):
-                            bone['KKBP outfit ID'] = rig.data.bones['ORG-' + bone.name]['KKBP outfit ID']
-                            if rig.data.bones.get('DEF-' + bone.name):
-                                rig.data.bones['DEF-' + bone.name]['KKBP outfit ID'] = rig.data.bones['ORG-' + bone.name]['KKBP outfit ID']
-            else:
-                if bone.collections.get('0') or bone.collections.get('2') == True:
-                    if rig.data.bones.get('ORG-' + bone.name):
-                        if rig.data.bones['ORG-' + bone.name].get('KKBP outfit ID'):
-                            bone['KKBP outfit ID'] = rig.data.bones['ORG-' + bone.name]['KKBP outfit ID']
-                            if rig.data.bones.get('DEF-' + bone.name):
-                                rig.data.bones['DEF-' + bone.name]['KKBP outfit ID'] = rig.data.bones['ORG-' + bone.name]['KKBP outfit ID']
 
+        #Take the IDs from all org bones and copy them over to the generated / helper bones
+        for bone in rig.data.bones:
+            if bone.get('id') and bone.name.startswith('ORG-'):
+                bone_base_name = bone.name[4:]  # Remove 'ORG-' prefix
+                for bone_name in [
+                    bone_base_name,
+                    'DEF-' + bone_base_name,
+                    bone_base_name + '_ik', 
+                    bone_base_name + '_ik.parent', 
+                    bone_base_name + '_master', 
+                    'MCH-' + bone_base_name,
+                    'MCH-' + bone_base_name + '_drv',
+                    ]:
+                    if rig.data.bones.get(bone_name):
+                        rig.data.bones[bone_name]['id'] = bone['id']
+        
         armature.hide_set(True)
         bpy.ops.object.select_all(action='DESELECT')
 
