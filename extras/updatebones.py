@@ -28,6 +28,13 @@ class update_bones(bpy.types.Operator):
                                 hide_this_bone = False
                                 break
                 bone.hide = hide_this_bone
+            #always hide the rest of the accessory / MCH bones if they don't have an ID
+            elif bpy.app.version[0] == 3:
+                if bone.layer in [1, 2]:
+                    bone.hide = True
+            else:
+                if bone.collections.get('1') or bone.collections.get('2'):
+                    bone.hide = True
 
         return {'FINISHED'}
 

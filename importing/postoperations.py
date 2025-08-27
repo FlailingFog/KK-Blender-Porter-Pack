@@ -391,7 +391,12 @@ class post_operations(bpy.types.Operator):
                     ]:
                     if rig.data.bones.get(bone_name):
                         rig.data.bones[bone_name]['id'] = bone['id']
-        
+                        #also add the id to the .001 tail bone that appears sometimes
+                        if 'MCH-' in bone_name and '_drv' in bone_name:
+                            if first_child := rig.data.bones[bone_name].children:
+                                if second_child := first_child[0].children:
+                                    second_child[0]['id'] = bone['id']
+
         armature.hide_set(True)
         bpy.ops.object.select_all(action='DESELECT')
 

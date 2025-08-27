@@ -1,3 +1,6 @@
+### Changes for V8.1.1
+* Clean up "Show bones for current outfit" button again
+
 ### Changes for V8.1.0
 * Major import improvements by **Sonogami-Rinne**!
     * The importer now saturates images in several parallel threads, greatly reducing peak memory usage and speeding up import times!
