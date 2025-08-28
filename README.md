@@ -17,13 +17,18 @@ The ```KKBP exporter for Koikatsu``` exports the character's mesh, armature and 
 ![ ](https://raw.githubusercontent.com/kkbpwiki/kkbpwiki.github.io/master/assets/images/readmeyt.png)](https://www.youtube.com/watch?v=hib8NWBvgvA&list=PLhiuav2SCuveMgQUA2YqqbSE7BtOrkZ-Q&index=1)
 
 ## Help
+
 [Check the wiki for FAQ and basic info.](https://kkbpwiki.github.io/)  
 If you're still having trouble please [create a new issue](https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues).
 
 ## Contributing
-If you're interested in contributing, please check [the issues page](https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues) or [make a pull request!](https://github.com/FlailingFog/KK-Blender-Porter-Pack/pulls)  
-If you want to add or make changes to [the wiki site](https://kkbpwiki.github.io/), click the add / edit buttons on the top right of any page, then make a pull request.  
-If you're interested in translating the plugin's interface into another language, [check this folder for examples](https://github.com/FlailingFog/KK-Blender-Porter-Pack/tree/master/interface).   
+
+Any contributions are welcome! Please check out the links below:
+* [The issues page](https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues)
+* [Make a pull request](https://github.com/FlailingFog/KK-Blender-Porter-Pack/pulls)
+* [Edit the wiki site](https://kkbpwiki.github.io/) (click the edit buttons on the top right of any page, then make a pull request)
+* [Translate the KKBP interface](https://github.com/FlailingFog/KK-Blender-Porter-Pack/tree/master/interface)  
+
 This project does not accept donations.
 
 ## Similar Projects

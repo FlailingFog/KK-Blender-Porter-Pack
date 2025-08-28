@@ -2,7 +2,7 @@ schema_version = "1.0.0"
 # https://docs.blender.org/manual/en/latest/advanced/extensions/getting_started.html
 
 id = "kkbp"
-version = "8.0.3"
+version = "8.1.1"
 name = "KKBP (Koikatsu Blender Porter)"
 tagline = "Imports Koikatsu models into Blender"
 maintainer = "FlailingFog"
