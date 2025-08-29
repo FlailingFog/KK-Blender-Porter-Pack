@@ -1,3 +1,19 @@
+### Changes for V8.1.1
+* Clean up "Show bones for current outfit" button again
+
+### Changes for V8.1.0
+* Major import improvements by **Sonogami-Rinne**!
+    * The importer now saturates images in several parallel threads, greatly reducing peak memory usage and speeding up import times!
+    * More headmods should import now! (including ones with missing tongue materials, gag eyes, and rigged tongues!)
+    * The importer now saturates images with 32 bit precision to reduce memory usage
+    * The importer now stores the character json data after first load, so it's not constantly reading in the same json files over and over again
+    * The default settings should work for most computers, but if it doesn't you can try lowering the "Max threads" and "Max parallel images" values in Edit > Preferences > Add-ons > KKBP menu
+* Exporter improvements by **Sonogami-Rinne**!
+    * Accessories that don't have DynamicBone data will now be skipped instead of crashing the game
+* Updated Chinese translation by **Sonogami-Rinne**!
+* The "Show bones for current outfit" button in the Extras section of the KKBP panel works again (KKBP armature and Rigify armature only)
+* Cards with forbidden ascii characters in their name will now export instead of throwing an error
+
 ### Changes for V8.0.3
 * Fixed atlas save error issue because of new filename
 * fixed re-finalizing the atlas on windows

@@ -869,6 +869,19 @@ class modify_armature(bpy.types.Operator):
                 'cf_J_hitomi_tx_', 'cf_J_FaceRoot', 'cf_J_FaceUp_t',
                 'n_cam', 'EyesLookTar', 'N_move', 'a_n_', 'cf_hit',
                 'cf_j_bnip02', 'cf_j_kokan', 'cf_j_ana']
+        if bpy.app.version[0] == 3:
+            for bone in [bone for bone in armature.data.bones if bone.layers[10]]:
+                for this_prefix in dont_move_these:
+                    if bone.name.startswith(this_prefix):
+                        bone['useless'] = True
+                        break
+        else:
+            for bone in [bone for bone in armature.data.bones if bone.collections.get('10')]:
+                for this_prefix in dont_move_these:
+                    if bone.name.startswith(this_prefix):
+                        bone['useless'] = True
+                        break
+        
         outfits = c.get_outfits()
         outfits.extend(c.get_alts())
         outfits.extend(c.get_hairs())
@@ -878,32 +891,37 @@ class modify_armature(bpy.types.Operator):
             #add outfit id to all accessory bones used by that outfit in an array
             if bpy.app.version[0] == 3:
                 for bone in [bone for bone in armature.data.bones if bone.layers[10]]:
-                    no_move_bone = False
-                    for this_prefix in dont_move_these:
-                        if this_prefix in bone.name:
-                            no_move_bone = True
-                    if not no_move_bone and vertexWeightMap.get(bone.name):
+                    if vertexWeightMap.get(bone.name):
                         try:
                             outfit_id_array = bone['id'].to_list()
                             outfit_id_array.append(outfit_or_hair['id'])
                             bone['id'] = outfit_id_array
+                            bone.parent['id'] = bone.get('id')
+                            if bone.children:
+                                bone.children[0]['id'] = bone.get('id')
                         except:
                             bone['id'] = [outfit_or_hair['id']]
+                            bone.parent['id'] = bone.get('id')
+                            if bone.children:
+                                bone.children[0]['id'] = bone.get('id')
             else:
                 for bone in [bone for bone in armature.data.bones if bone.collections.get('10')]:
-                    no_move_bone = False
-                    for this_prefix in dont_move_these:
-                        if this_prefix in bone.name:
-                            no_move_bone = True
-                    if not no_move_bone and vertexWeightMap.get(bone.name):
+                    if vertexWeightMap.get(bone.name):
                         try:
                             outfit_id_array = bone['id'].to_list()
                             outfit_id_array.append(outfit_or_hair['id'])
                             bone['id'] = outfit_id_array
+                            bone.parent['id'] = bone.get('id')
+                            if bone.children:
+                                bone.children[0]['id'] = bone.get('id')
                         except:
                             bone['id'] = [outfit_or_hair['id']]
+                            bone.parent['id'] = bone.get('id')
+                            if bone.children:
+                                bone.children[0]['id'] = bone.get('id')
+                
         #move accessory bones to armature layer 10
-        for bone in [bone for bone in armature.data.bones if bone.get('id')]:
+        for bone in [bone for bone in armature.data.bones if bone.get('id') and not bone.get('useless')]:
             self.set_armature_layer(bone.name, show_layer = 9)
         c.print_timer('move_accessory_bones_to_layer10')
 
