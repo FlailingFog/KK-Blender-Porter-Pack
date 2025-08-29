@@ -23,6 +23,7 @@
 import bpy, os, numpy, math, time, concurrent.futures, threading, queue
 from pathlib import Path
 from .. import common as c
+from mathutils import Color
 
 class modify_material(bpy.types.Operator):
     bl_idname = "kkbp.modifymaterial"
@@ -92,6 +93,7 @@ class modify_material(bpy.types.Operator):
             self.load_luts()
             self.load_json_colors()
             self.set_color_management()
+            self.adjust_pupil_highlight()
 
             c.clean_orphaned_data()
             return {'FINISHED'}
@@ -1513,6 +1515,49 @@ class modify_material(bpy.types.Operator):
             except:
                 c.kklog('This image was not automatically loaded in because its name exceeds 64 characters: ' + darktex.name, type = 'error')
             return darktex
+
+    def adjust_pupil_highlight(self):
+        data = c.json_file_manager.get_json_file('KK_CharacterInfoData.json')[0]
+        if vec0 := data.get('pupilOffset'):
+            bpy.data.node_groups[".Eye Textures positioning"].nodes["eye_scale"].inputs[3].default_value = vec0[0] * 50 + 25
+            bpy.data.node_groups[".Eye Textures positioning"].nodes["eye_scale"].inputs[4].default_value = vec0[1] * 50 + 25
+
+            vec = data['pupilScale']
+            bpy.data.node_groups[".Eye Textures positioning"].nodes["eye_scale"].inputs[1].default_value = vec[0]
+            bpy.data.node_groups[".Eye Textures positioning"].nodes["eye_scale"].inputs[2].default_value = vec[1]
+
+            vec = data['highlightUpOffset']
+            bpy.data.node_groups[".Eye Textures positioning"].nodes["Group"].inputs[3].default_value = (vec[0] - vec0[0]) * 50 + 25
+            bpy.data.node_groups[".Eye Textures positioning"].nodes["Group"].inputs[4].default_value = (vec[1] - vec0[1]) * 50 + 25
+
+            # vec = data['highlightUpScale']
+            bpy.data.node_groups[".Eye Textures positioning"].nodes["Group"].inputs[1].default_value = 1
+            bpy.data.node_groups[".Eye Textures positioning"].nodes["Group"].inputs[2].default_value = 1
+
+            vec = data['highlightDownOffset']
+            bpy.data.node_groups[".Eye Textures positioning"].nodes["Group.001"].inputs[3].default_value = (vec[0] - vec0[0]) * 50 + 25
+            bpy.data.node_groups[".Eye Textures positioning"].nodes["Group.001"].inputs[4].default_value = (vec[1] - vec0[1]) * 50 + 25
+
+            # vec = data['highlightDownScale']
+            bpy.data.node_groups[".Eye Textures positioning"].nodes["Group.001"].inputs[1].default_value = 1
+            bpy.data.node_groups[".Eye Textures positioning"].nodes["Group.001"].inputs[2].default_value = 1
+
+            # No need to set rotation
+            # vec = data['eyeRotation']
+            # bpy.data.node_groups[".Eye Textures positioning"].nodes["eye_scale"].inputs[5].default_value = math.degrees(vec[0])
+
+            name = c.get_name()
+            vec0 = tuple(data['highlightUpColor'])
+            vec = tuple(data['highlightDownColor'])
+            bpy.data.materials[f"KK EyeL (hitomi) {name}"].node_tree.nodes["light"].inputs[0].default_value = vec0
+            bpy.data.materials[f"KK EyeL (hitomi) {name}"].node_tree.nodes["light"].inputs[1].default_value = vec
+            bpy.data.materials[f"KK EyeL (hitomi) {name}"].node_tree.nodes["light"].inputs[2].default_value = vec0[3]
+            bpy.data.materials[f"KK EyeL (hitomi) {name}"].node_tree.nodes["light"].inputs[3].default_value = vec[3]
+            bpy.data.materials[f"KK EyeR (hitomi) {name}"].node_tree.nodes["light"].inputs[0].default_value = vec0
+            bpy.data.materials[f"KK EyeR (hitomi) {name}"].node_tree.nodes["light"].inputs[1].default_value = vec
+            bpy.data.materials[f"KK EyeR (hitomi) {name}"].node_tree.nodes["light"].inputs[2].default_value = vec0[3]
+            bpy.data.materials[f"KK EyeR (hitomi) {name}"].node_tree.nodes["light"].inputs[3].default_value = vec[3]
+        c.print_timer('adjust pupil and highlight')
 
 class float4:
     '''class to mimic part of float4 class in Unity
