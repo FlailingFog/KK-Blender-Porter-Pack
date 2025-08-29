@@ -186,6 +186,11 @@ def get_tongue() -> bpy.types.Object:
                o.get('tongue') and o.get('name') == bpy.context.scene.kkbp.character_name]
     return tongues[0] if tongues else None
 
+def get_bonelyfans() -> bpy.types.Object:
+    '''Returns the bonelyfans object for this import (Used for alternative outline'''
+    bonelyfans = [o for o in bpy.data.objects if
+                  o.get('bonelyfans') and o.get('name') == bpy.context.scene.kkbp.character_name]
+    return bonelyfans[0] if bonelyfans else None
 
 def get_all_objects() -> list[bpy.types.Object]:
     '''Returns all objects associated with this import'''
