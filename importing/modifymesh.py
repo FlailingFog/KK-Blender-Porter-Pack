@@ -580,12 +580,8 @@ class modify_mesh(bpy.types.Operator):
 
     def correct_shapekeys(self):
         '''correct eye close shape key if necessary'''
-        if c.json_file_manager.get_json_file('KK_KKBPExporterConfig.json')['exportWithEnabledShapekeys']:
-            try:
-                eye_open_max = c.json_file_manager.get_json_file('KK_CharacterInfoData.json')[0]['eyeOpenMax']
-                c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_max = eye_open_max
-            except:
-                pass
+        if eye_open_max := c.json_file_manager.get_json_file('KK_CharacterInfoData.json')[0].get("eyeOpenMax"):
+            c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_max = eye_open_max
         c.print_timer('correct shapekeys')
 
     def create_tear_shapekeys(self):
