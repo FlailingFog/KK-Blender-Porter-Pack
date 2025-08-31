@@ -54,7 +54,7 @@ class modify_armature(bpy.types.Operator):
     
     def execute(self, context):
         try:
-            if compatible_mode := c.json_file_manager.get_json_file("KK_EditBoneInfo_0.json") is None:
+            if compatible_mode := c.json_file_manager.get_json_file("KK_EditBoneInfo.json") is None:
                 c.kklog('Use compatible mode')
 
             self.reparent_all_objects()
@@ -329,8 +329,7 @@ class modify_armature(bpy.types.Operator):
     def rebuild_bone_data(self):
         edit_bone_info = {}
         final_bone_info = {}
-        # I am not sure each outfit has different bone data whether or not
-        for _bone in c.json_file_manager.get_json_file("KK_EditBoneInfo_0.json"):
+        for _bone in c.json_file_manager.get_json_file("KK_EditBoneInfo.json"):
             # transform = _bone['transform']
             world_transform = _bone['worldTransform']
             edit_bone_info[_bone['boneName']] = {
@@ -353,7 +352,7 @@ class modify_armature(bpy.types.Operator):
                     [world_transform[12], world_transform[13], world_transform[14], world_transform[15]],
                 ]),
             }
-        for _bone in c.json_file_manager.get_json_file("KK_FinalBoneInfo_0.json"):
+        for _bone in c.json_file_manager.get_json_file("KK_FinalBoneInfo.json"):
             # transform = _bone['transform']
             # world_transform = _bone['worldTransform']
             final_bone_info[_bone['boneName']] = {
