@@ -60,16 +60,18 @@ class modify_armature(bpy.types.Operator):
             self.reparent_all_objects()
 
             self.remove_bone_locks_and_modifiers()
-            self.scale_armature_bones_down()
-            self.reparent_leg_and_body_bone()
             if not compatible_mode:
                 self.rebuild_bone_data()
+            self.scale_armature_bones_down()
+            self.reparent_leg_and_body_bone()
+
 
             self.delete_non_height_bones()
 
-            if compatible_mode:
-                self.modify_finger_bone_orientations()
-                self.set_bone_roll_data()
+            self.modify_finger_bone_orientations()
+            # if compatible_mode:
+            #
+            #     self.set_bone_roll_data()
 
             self.bend_bones_for_iks()
 
@@ -83,10 +85,11 @@ class modify_armature(bpy.types.Operator):
             self.scale_skirt_and_face_bones()
 
             self.prepare_ik_bones()
-            if compatible_mode:
-                self.create_ik_bones()
-            else:
-                self.create_f_ik_bones()
+            self.create_ik_bones()
+            # if compatible_mode:
+            #
+            # else:
+            #     self.create_f_ik_bones()
 
             self.create_joint_drivers()
 
@@ -334,7 +337,7 @@ class modify_armature(bpy.types.Operator):
             world_transform = _bone['worldTransform']
             edit_bone_info[_bone['boneName']] = {
                 # 'translate': Vector(_bone['position']),
-                # 'rotation': Quaternion(_bone['rotation']),
+                'rotation': Quaternion(_bone['rotation']),
                 # 'scale': Vector(_bone['scale']),
                 # 'matrix': Matrix([
                 #     [transform[0], transform[1], transform[2], transform[3]],
@@ -380,7 +383,15 @@ class modify_armature(bpy.types.Operator):
         c.switch(c.get_armature(), 'Edit')
         for bone_name, bone_info in edit_bone_info.items():
             bone = c.get_armature().data.edit_bones[bone_name]
-            bone.matrix = bone_info['worldMatrix'].copy()
+
+            euler = bone_info['rotation'].to_euler('ZXY')
+            bone.roll = euler.z
+            # bone.matrix = bone_info['worldMatrix'].copy()
+            # length = bone.length
+            # bone.tail.x = bone.head.x
+            # bone.tail.y = bone.head.y
+            # bone.tail.z = bone.tail.z + length
+
         # assert False
         # Set scale data
         c.switch(c.get_armature(), 'POSE')

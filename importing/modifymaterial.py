@@ -20,7 +20,7 @@
 # Dark color conversion code taken from Xukmi https://github.com/xukmi/KKShadersPlus/tree/main/Shaders
 
 
-import bpy, os, numpy, math, time, concurrent.futures, threading, queue
+import bpy, os, numpy, math, time, concurrent.futures, threading, queue, bmesh
 from pathlib import Path
 from .. import common as c
 from mathutils import Color
@@ -65,13 +65,10 @@ class modify_material(bpy.types.Operator):
 
     def execute(self, context):
         try:
-
+            # modify_material.export_light_dark_material = c.json_file_manager.get_json_file("KK_KKBPExporterConfig.json").get("exportLightDarkTexture")
             self.remove_unused_material_slots()
             self.remap_duplicate_material_slots()
 
-            self.replace_materials_for_body()
-            self.replace_materials_for_hair()
-            self.replace_materials_for_outfits()
             self.replace_materials_for_tears_tongue_gageye()
             self.remove_duplicate_node_groups()
 
@@ -399,6 +396,24 @@ class modify_material(bpy.types.Operator):
                         eliminate(node)
         c.print_timer('remove_duplicate_node_groups')
 
+    def ELDT_load_images(self):
+        c.switch(c.get_body(), 'object')
+        file_dir = Path(bpy.context.scene.kkbp.import_dir)
+
+        files = list(file_dir.rglob('**/pre_light/*'))
+        files.extend(list(file_dir.rglob('**/pre_dark/*')))
+        files.extend(list(file_dir.rglob('*_AM.png')))
+        files.extend(list(file_dir.rglob('*_NMP_CNV.png')))
+        files.extend(list(file_dir.rglob('*_NMPD_CNV.png')))
+
+        for file in files:
+            bpy.ops.image.open(filepath=str(file), use_udim_detecting=False)
+            try:
+                bpy.data.images[file.name].pack()
+            except:
+                c.kklog(
+                    'This image was not automatically loaded in because its filename exceeds 64 characters: ' + file.name, type='error')
+
     def load_images(self):
         c.switch(c.get_body(), 'object')
 
@@ -520,6 +535,71 @@ class modify_material(bpy.types.Operator):
 
         with self.queue_lock:
             self.data_queue.put(index)
+
+    def ELDT_replace_materials_and_link_textures_adjust_UV(self):
+        textures = ["_light.png", "_dark.png", "_NMP_CNV.png", "_NMPD_CNV.png", "_AM.png"]
+
+        UV_adjustments = c.json_file_manager.get_json_file("KK_UVAdjustments.json")
+        meshes = [('body', c.get_body()), ('tongue', c.get_tongue())]
+
+        def swap_mesh_material(original_material: str, mesh_type: str, mesh):
+            c_name = c.get_name()
+            # remove dupes and check the material slot actually exists
+            if mesh.material_slots.get(original_material):
+                template = bpy.data.materials['KK Light Dark Texture'].copy()
+                template[mesh_type] = True
+
+                template['name'] = c_name
+                template['id'] = original_material
+                template['bake'] = False
+                template.name = 'KK ' + original_material
+                mesh.material_slots[original_material].material = template
+                # template_group = template.node_tree.nodes['textures'].node_tree.copy()
+                # template_group.name = 'Tex ' + original_material + ' ' + c_name
+                # template.node_tree.nodes['textures'].node_tree = template_group
+            else:
+                c.kklog(
+                    f'material or template wasn\'t found when replacing body materials: {str(original_material)}', 'warn')
+
+
+        for hair in c.get_hairs():
+            meshes.append(('hair', hair))
+        for outfit in c.get_outfits():
+            meshes.append(('outfit', outfit))
+
+        record = {}
+        bm = bmesh.new()
+        for mesh_type, mesh in meshes:
+            c.switch(mesh, 'OBJECT')
+            if mesh.data.uv_layers is None:
+                continue
+            bm.clear()
+            bm.from_mesh(mesh.data)
+            for entry in UV_adjustments:
+                for material_name in entry['materials']:
+                    if (material_index := mesh.material_slots.find(material_name)) >= 0:
+                        record[material_index] = (entry['xOffset'], entry['yOffset'], entry['xScale'], entry['yScale'])
+                        swap_mesh_material(material_name, mesh_type, mesh)
+                        for texture_name in textures:
+                            if image := bpy.data.images.get(material_name + texture_name):
+                                mesh.material_slots[material_index].material.node_tree.nodes[texture_name].image = image
+
+            if not (uv_bm_layer := bm.loops.layers.uv.active):
+                continue
+            for vert in bm.verts:
+                for loop in vert.link_loops:
+                    if adjustment_info := record.get(loop.face.material_index):
+                        uv = loop[uv_bm_layer].uv
+                        uv.x = (uv.x + adjustment_info[0]) / adjustment_info[2]
+                        uv.y = (uv.y + adjustment_info[1]) / adjustment_info[3]
+            record.clear()
+            bm.to_mesh(mesh.data)
+            mesh.data.update()
+        if (material_index := c.get_tongue().material_slots.find('cf_m_tang.001')) >= 0:
+            swap_mesh_material('cf_m_tang.001', 'tongue', c.get_tongue())
+            for texture_name in textures:
+                if image := bpy.data.images.get('cf_m_tang' + texture_name):
+                    c.get_tongue().material_slots[material_index].material.node_tree.nodes[texture_name] = image
 
     def link_textures_for_face_body(self):
         '''Load all body textures into their texture slots'''
@@ -713,7 +793,7 @@ class modify_material(bpy.types.Operator):
         c.print_timer('link_textures_for_clothes')
 
     def link_textures_for_tongue_tear_gag(self):
-        if c.get_tongue():
+        if c.get_tongue() and not modify_material.export_light_dark_material:
             tongue_mat = c.get_material_names('o_tang')
             tongue_mat = tongue_mat if tongue_mat else ['cf_m_tang'] #check for bugged/missing SMR Tongue data
             self.image_load('Tongue', '_CM.png', node_override='_ST_CT.png') #done on purpose
@@ -871,7 +951,11 @@ class modify_material(bpy.types.Operator):
         faceOutlineMat.blend_method = 'CLIP'
         body_outline_mat = bpy.data.materials['Outline Body'].copy()
         body_outline_mat.name = 'Outline Body ' + c.get_name()
-        body_outline_mat.node_tree.nodes['textures'].node_tree = bpy.data.materials['KK Body ' + c.get_name()].node_tree.nodes['textures'].node_tree
+        if modify_material.export_light_dark_material:
+            pass
+            # body_outline_mat.node_tree.nodes['textures'].node_tree = bpy.data.materials['cf_m_body'].node_tree.nodes['textures'].node_tree
+        else:
+            body_outline_mat.node_tree.nodes['textures'].node_tree = bpy.data.materials['KK Body ' + c.get_name()].node_tree.nodes['textures'].node_tree
         body.data.materials.append(body_outline_mat)
         c.print_timer('add_outlines_to_body')
 
@@ -894,8 +978,10 @@ class modify_material(bpy.types.Operator):
             faceOutlineMat.blend_method = 'CLIP'
             body_outline_mat = bpy.data.materials['Outline Body'].copy()
             body_outline_mat.name = 'Outline Body ' + c.get_name()
-            body_outline_mat.node_tree.nodes['textures'].node_tree = \
-                bpy.data.materials['KK Body ' + c.get_name()].node_tree.nodes['textures'].node_tree
+            if modify_material.export_light_dark_material:
+                pass
+            else:
+                body_outline_mat.node_tree.nodes['textures'].node_tree = bpy.data.materials['KK Body ' + c.get_name()].node_tree.nodes['textures'].node_tree
             bonely.data.materials.append(body_outline_mat)
 
             c.move_and_hide_collection([bonely], 'bonelyfans')
@@ -915,11 +1001,14 @@ class modify_material(bpy.types.Operator):
                         mats_to_gons[ob.material_slots[gon.material_index].material.name].append(gon)
                 #find all materials that use an alpha mask or maintex
                 alpha_users = []
-                for mat in ob.material_slots:
-                    AlphaImage = mat.material.node_tree.nodes['textures'].node_tree.nodes['_AM.png'].image
-                    MainImage =  mat.material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].image
-                    if AlphaImage or MainImage:
-                        alpha_users.append(mat.material.name)
+                if modify_material.export_light_dark_material:
+                    pass
+                else:
+                    for mat in ob.material_slots:
+                        AlphaImage = mat.material.node_tree.nodes['textures'].node_tree.nodes['_AM.png'].image
+                        MainImage = mat.material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].image
+                        if AlphaImage or MainImage:
+                            alpha_users.append(mat.material.name)
                 #reorder material_list to place alpha/maintex users first
                 new_mat_list_order = [mat_slot.material.name for mat_slot in ob.material_slots if mat_slot.material.name not in alpha_users]
                 new_mat_list_order = alpha_users + new_mat_list_order
@@ -933,7 +1022,10 @@ class modify_material(bpy.types.Operator):
                 for index, mat in enumerate(alpha_users):
                     OutlineMat = bpy.data.materials['Outline General'].copy()
                     OutlineMat.name = mat.replace('KK ', 'Outline ')
-                    OutlineMat.node_tree.nodes['textures'].node_tree = bpy.data.materials[mat].node_tree.nodes['textures'].node_tree
+                    if modify_material.export_light_dark_material:
+                        pass
+                    else:
+                        OutlineMat.node_tree.nodes['textures'].node_tree = bpy.data.materials[mat].node_tree.nodes['textures'].node_tree
                     ob.material_slots[index + outlineStart].material = OutlineMat
                 #update polygon material indexes
                 for mat in mats_to_gons:
@@ -979,11 +1071,14 @@ class modify_material(bpy.types.Operator):
                         mats_to_gons[ob.material_slots[gon.material_index].material.name].append(gon)
                 #find all materials that use an alpha mask or maintex
                 alpha_users = []
-                for mat in ob.material_slots:
-                    AlphaImage = mat.material.node_tree.nodes['textures'].node_tree.nodes['_AM.png'].image
-                    MainImage =  mat.material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].image
-                    if AlphaImage or MainImage:
-                        alpha_users.append(mat.material.name)
+                if modify_material.export_light_dark_material:
+                    pass
+                else:
+                    for mat in ob.material_slots:
+                        AlphaImage = mat.material.node_tree.nodes['textures'].node_tree.nodes['_AM.png'].image
+                        MainImage = mat.material.node_tree.nodes['textures'].node_tree.nodes['_ST_CT.png'].image
+                        if AlphaImage or MainImage:
+                            alpha_users.append(mat.material.name)
                 #reorder material_list to place alpha/maintex users first
                 new_mat_list_order = [mat_slot.material.name for mat_slot in ob.material_slots if mat_slot.material.name not in alpha_users]
                 new_mat_list_order = alpha_users + new_mat_list_order
