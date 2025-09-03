@@ -37,6 +37,7 @@ class modify_mesh(bpy.types.Operator):
             self.separate_hair()
             self.separate_alternate_clothing()
             self.delete_shad_bone()
+            self.delete_eyeline_down()
             self.separate_hitboxes()
             self.delete_mask_quad()
 
@@ -236,10 +237,19 @@ class modify_mesh(bpy.types.Operator):
         mat_list.extend(extended)
         bonely = self.separate_materials(c.get_body(), mat_list, 'bonelyfans')
         if bonely:
-            bonely['bonelyfans'] = True
-            bonely['name'] = bpy.context.scene.kkbp.character_name
+            if c.json_file_manager.get_json_file("KK_KKBPExporterConfig.json").get("exportLightDarkTexture"):
+                bpy.data.objects.remove(bonely)
+            else:
+                bonely['bonelyfans'] = True
+                bonely['name'] = bpy.context.scene.kkbp.character_name
             # bpy.data.objects.remove(bonely)
         c.print_timer('delete_shad_bone')
+
+    def delete_eyeline_down(self):
+        if c.json_file_manager.get_json_file("KK_KKBPExporterConfig.json").get("exportLightDarkTexture"):
+            if eyeline := self.separate_materials(c.get_body(), ["cf_m_eyeline_down"], 'eyeline down'):
+                bpy.data.objects.remove(eyeline)
+            c.print_timer('delete_eyeline_down')
 
     def separate_hitboxes(self):
         '''Separate the hitbox mesh, if present'''

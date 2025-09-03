@@ -86,17 +86,16 @@ class modify_armature(bpy.types.Operator):
             if compatible_mode:
                 self.create_ik_bones()
             else:
-                pass
-                # self.create_f_ik_bones()
+                self.create_f_ik_bones()
 
-            # self.create_joint_drivers()
-            #
-            # self.categorize_bones()
-            # self.rename_bones_for_clarity()
-            # self.rename_mmd_bones()
-            #
-            # self.apply_bone_widgets()
-            # self.hide_widgets()
+            self.create_joint_drivers()
+
+            self.categorize_bones()
+            self.rename_bones_for_clarity()
+            self.rename_mmd_bones()
+
+            self.apply_bone_widgets()
+            self.hide_widgets()
 
             return {'FINISHED'}
         except Exception as error:

@@ -70,33 +70,43 @@ class modify_material(bpy.types.Operator):
             modify_material.export_light_dark_material = c.json_file_manager.get_json_file("KK_KKBPExporterConfig.json").get("exportLightDarkTexture")
             self.remove_unused_material_slots()
             self.remap_duplicate_material_slots()
+            self.load_materials()
 
-            self.ELDT_load_images()
-            self.ELDT_replace_materials_and_link_textures_adjust_UV()
-            # self.replace_materials_for_body()
-            # self.replace_materials_for_hair()
-            # self.replace_materials_for_outfits()
-            # self.replace_materials_for_tears_tongue_gageye()
-            # self.remove_duplicate_node_groups()
-            #
-            # self.load_images()
-            # self.link_textures_for_face_body()
-            # self.link_textures_for_hair()
-            # self.link_textures_for_clothes()
-            # self.link_textures_for_tongue_tear_gag()
-            # self.create_dark_textures()
+            if modify_material.export_light_dark_material:
+                self.ELDT_load_images()
+                self.ELDT_replace_materials_and_link_textures_adjust_UV()
+
+            else:
+                self.replace_materials_for_body()
+                self.replace_materials_for_hair()
+                self.replace_materials_for_outfits()
+
+            self.replace_materials_for_tears_tongue_gageye()
+
+            if not modify_material.export_light_dark_material:
+                self.remove_duplicate_node_groups()
+
+                self.load_images()
+                self.link_textures_for_face_body()
+                self.link_textures_for_hair()
+                self.link_textures_for_clothes()
+                self.link_textures_for_tongue_tear_gag()
+                self.create_dark_textures()
 
             self.import_and_setup_smooth_normals()
-            # self.setup_gag_eye_material_drivers()
+            self.setup_gag_eye_material_drivers()
 
-            # self.add_outlines_to_body()
-            # self.add_outlines_to_hair()
-            # self.add_outlines_to_clothes()
-            #
-            # self.load_luts()
-            # self.load_json_colors()
-            # self.set_color_management()
-            # self.adjust_pupil_highlight()
+            self.add_outlines_to_body()
+            self.add_outlines_to_hair()
+            self.add_outlines_to_clothes()
+
+            if not modify_material.export_light_dark_material:
+                self.load_luts()
+                self.load_json_colors()
+
+                self.adjust_pupil_highlight()
+
+            self.set_color_management()
 
             c.clean_orphaned_data()
             return {'FINISHED'}
@@ -113,7 +123,36 @@ class modify_material(bpy.types.Operator):
         modify_material.texel_height_X0 = numpy.array([1 / 32, 0], dtype=modify_material.np_number_precision)
         pass
 
-    # %% Main functions            
+    def load_materials(self):
+        templateList = [
+            'KK Body',
+            'KK Tears',
+            'KK Gag00',
+            'KK Gag01',
+            'KK Gag02',
+            'KK EyeR (hitomi)',
+            'KK EyeL (hitomi)',
+            'KK Eyebrows (mayuge)',
+            'KK Eyeline down',
+            'KK Eyeline kage',
+            'KK Eyeline up',
+            'KK Eyewhites (sirome)',
+            'KK Face',
+            'KK General',
+            'KK Hair',
+            'KK Nose',
+            'KK Teeth (tooth)',
+            'KK Simple',
+            'KK Glasses',
+            'Outline General',
+            'Outline Body',
+            'KK Light Dark Texture',
+            'KK Transparent',
+            'KK Light Dark Texture Outline',
+            'KK Light Dark Texture Body Outline'
+        ]
+        c.import_from_library_file(category='Material', list_of_items=templateList, use_fake_user=True)
+    # %% Main functions
     def remove_unused_material_slots(self):
         '''Remove unused mat slots on all visible objects'''
         objects = c.get_outfits()
@@ -186,30 +225,6 @@ class modify_material(bpy.types.Operator):
         c.switch(c.get_body(), 'object')
         if bpy.app.version[0] != 3:
             c.get_body().visible_shadow = False
-        templateList = [
-        'KK Body',
-        'KK Tears',
-        'KK Gag00',
-        'KK Gag01',
-        'KK Gag02',
-        'KK EyeR (hitomi)',
-        'KK EyeL (hitomi)',
-        'KK Eyebrows (mayuge)',
-        'KK Eyeline down',
-        'KK Eyeline kage',
-        'KK Eyeline up',
-        'KK Eyewhites (sirome)',
-        'KK Face',
-        'KK General',
-        'KK Hair',
-        'KK Nose',
-        'KK Teeth (tooth)',
-        'KK Simple',
-        'KK Glasses',
-        'Outline General',
-        'Outline Body',
-        ]
-        c.import_from_library_file(category='Material', list_of_items=templateList, use_fake_user=True)
 
         #Replace all materials on the body with templates
         def swap_body_material(original_materials: list[str], template_name: str):
@@ -323,7 +338,7 @@ class modify_material(bpy.types.Operator):
 
         #give the tears a material template
         c_name = c.get_name()
-        if (tears := c.get_tears()):
+        if tears := c.get_tears():
             template = bpy.data.materials['KK Tears'].copy()
             template.name = 'KK Tears ' + c_name
             template['tears'] = True
@@ -361,8 +376,7 @@ class modify_material(bpy.types.Operator):
                 c.get_tongue().material_slots[0].material = template
 
         #give the gag eyes a material template if they exist
-        if c.get_gags():
-            gag = c.get_gags()
+        if gag := c.get_gags():
             for num in ['00', '01', '02']:
                 template = bpy.data.materials['KK Gag'+num].copy()
                 template['gag'] = True
@@ -549,11 +563,11 @@ class modify_material(bpy.types.Operator):
         UV_adjustments = c.json_file_manager.get_json_file("KK_UVAdjustments.json")
         meshes = [('body', c.get_body()), ('tongue', c.get_tongue())]
 
-        def swap_mesh_material(original_material: str, mesh_type: str, mesh):
+        def swap_mesh_material(original_material: str, target_material: str, mesh_type: str, mesh):
             c_name = c.get_name()
             # remove dupes and check the material slot actually exists
             if mesh.material_slots.get(original_material):
-                template = bpy.data.materials['KK Light Dark Texture'].copy()
+                template = bpy.data.materials[target_material].copy()
                 template[mesh_type] = True
 
                 template['name'] = c_name
@@ -566,7 +580,7 @@ class modify_material(bpy.types.Operator):
                 # template.node_tree.nodes['textures'].node_tree = template_group
             else:
                 c.kklog(
-                    f'material or template wasn\'t found when replacing body materials: {str(original_material)}', 'warn')
+                    f'material or template wasn\'t found when replacing body materials: {str(original_material)}, {target_material}', 'warn')
 
 
         for hair in c.get_hairs():
@@ -586,17 +600,22 @@ class modify_material(bpy.types.Operator):
                 for index, material_name in enumerate(entry['materials']):
                     if (material_index := mesh.material_slots.find(material_name)) >= 0:
                         record[material_index] = (entry['xOffset'], entry['yOffset'], entry['xScale'], entry['yScale'])
-                        swap_mesh_material(material_name, mesh_type, mesh)
+                        # Update the shader
+
+                        swap_mesh_material(material_name, 'KK Light Dark Texture', mesh_type, mesh)
+                        material = mesh.material_slots[material_index].material
+                        material.node_tree.nodes["UV Scale"].inputs[3].default_value[0] = entry['xScale']
+                        material.node_tree.nodes["UV Scale"].inputs[3].default_value[1] = entry['yScale']
+                        material.node_tree.nodes["AlphaMask Stage Switch"].outputs[0].default_value = 0 if entry['AlphaMaskAStage'][index] <= 0 else 2
+
                         for texture_name in textures:
                             if image := bpy.data.images.get(material_name + texture_name):
-                                material = mesh.material_slots[material_index].material
                                 material.node_tree.nodes[texture_name].image = image
-                                material.node_tree.nodes["UV Scale"].inputs[3].default_value[0] = entry['xScale']
-                                material.node_tree.nodes["UV Scale"].inputs[3].default_value[1] = entry['yScale']
-                                material.node_tree.nodes["AlphaMask Stage Switch"].outputs[0].default_value = 0 if entry['AlphaMaskAStage'][index] <= 0 else 2
+                        material.node_tree.update_tag()
 
             if not (uv_bm_layer := bm.loops.layers.uv.active):
                 continue
+            # UV transform
             for vert in bm.verts:
                 for loop in vert.link_loops:
                     if adjustment_info := record.get(loop.face.material_index):
@@ -606,11 +625,22 @@ class modify_material(bpy.types.Operator):
             record.clear()
             bm.to_mesh(mesh.data)
             mesh.data.update()
+
+            #  Replace mesh's materials that do not show in the list to transparent
+            for material_slot in mesh.material_slots:
+                if not material_slot.material.name.startswith('KK '):
+                    swap_mesh_material(material_slot.material.name, 'KK Transparent', mesh_type, mesh)
+
+        # Do not forget tongue.001
         if (material_index := c.get_tongue().material_slots.find('cf_m_tang.001')) >= 0:
-            swap_mesh_material('cf_m_tang.001', 'tongue', c.get_tongue())
+            swap_mesh_material('cf_m_tang.001', 'KK Light Dark Texture', 'tongue', c.get_tongue())
             for texture_name in textures:
                 if image := bpy.data.images.get('cf_m_tang' + texture_name):
                     c.get_tongue().material_slots[material_index].material.node_tree.nodes[texture_name] = image
+
+        # force to update
+        bpy.context.view_layer.update()
+        bpy.context.evaluated_depsgraph_get().update()
 
     def link_textures_for_face_body(self):
         '''Load all body textures into their texture slots'''
@@ -955,18 +985,23 @@ class modify_material(bpy.types.Operator):
         mod.use_rim = False
         mod.name = 'Outline Modifier'
         mod.show_expanded = False
+
         #face first
-        faceOutlineMat = bpy.data.materials['Outline General'].copy()
+        if modify_material.export_light_dark_material:
+            faceOutlineMat = bpy.data.materials['KK Light Dark Texture Outline'].copy()
+            body_outline_mat = bpy.data.materials['KK Light Dark Texture Body Outline'].copy()
+            body_material = bpy.data.materials['KK ' + c.get_material_names('cf_O_face')[0]]
+            body_outline_mat.node_tree.nodes["_AM.png"].image = bpy.data.images[body_material.node_tree.nodes['_AM.png'].image.name]
+            body_outline_mat.node_tree.nodes["UV Scale"].inputs[3].default_value[0] = body_material.node_tree.nodes["UV Scale"].inputs[3].default_value[0]
+        else:
+            faceOutlineMat = bpy.data.materials['Outline General'].copy()
+            body_outline_mat = bpy.data.materials['Outline Body'].copy()
+            body_outline_mat.node_tree.nodes['textures'].node_tree = bpy.data.materials['KK Body ' + c.get_name()].node_tree.nodes['textures'].node_tree
+
         faceOutlineMat.name = 'Outline Face ' + c.get_name()
         body.data.materials.append(faceOutlineMat)
         faceOutlineMat.blend_method = 'CLIP'
-        body_outline_mat = bpy.data.materials['Outline Body'].copy()
         body_outline_mat.name = 'Outline Body ' + c.get_name()
-        if modify_material.export_light_dark_material:
-            pass
-            # body_outline_mat.node_tree.nodes['textures'].node_tree = bpy.data.materials['cf_m_body'].node_tree.nodes['textures'].node_tree
-        else:
-            body_outline_mat.node_tree.nodes['textures'].node_tree = bpy.data.materials['KK Body ' + c.get_name()].node_tree.nodes['textures'].node_tree
         body.data.materials.append(body_outline_mat)
         c.print_timer('add_outlines_to_body')
 
@@ -982,17 +1017,22 @@ class modify_material(bpy.types.Operator):
             mod.use_rim = False
             mod.name = 'Outline Modifier'
             mod.show_expanded = False
-            # face first
-            faceOutlineMat = bpy.data.materials['Outline General'].copy()
-            faceOutlineMat.name = 'Outline Face ' + c.get_name()
+
+            if modify_material.export_light_dark_material:
+                faceOutlineMat = bpy.data.materials['KK Light Dark Texture Outline'].copy()
+                body_outline_mat = bpy.data.materials['KK Light Dark Texture Body Outline'].copy()
+                body_material = bpy.data.materials['KK ' + c.get_material_names('cf_O_face')[0]]
+                body_outline_mat.node_tree.nodes["_AM.png"].image = bpy.data.images[body_material.node_tree.nodes['_AM.png'].image.name]
+                body_outline_mat.node_tree.nodes["UV Scale"].inputs[3].default_value[0] = body_material.node_tree.nodes["UV Scale"].inputs[3].default_value[0]
+            else:
+                faceOutlineMat = bpy.data.materials['Outline General'].copy()
+                body_outline_mat = bpy.data.materials['Outline Body'].copy()
+                body_outline_mat.node_tree.nodes['textures'].node_tree = bpy.data.materials['KK Body ' + c.get_name()].node_tree.nodes['textures'].node_tree
+
+            faceOutlineMat.name = 'Outline Face ' + c.get_name() + 'Alternative'
             bonely.data.materials.append(faceOutlineMat)
             faceOutlineMat.blend_method = 'CLIP'
-            body_outline_mat = bpy.data.materials['Outline Body'].copy()
-            body_outline_mat.name = 'Outline Body ' + c.get_name()
-            if modify_material.export_light_dark_material:
-                pass
-            else:
-                body_outline_mat.node_tree.nodes['textures'].node_tree = bpy.data.materials['KK Body ' + c.get_name()].node_tree.nodes['textures'].node_tree
+            body_outline_mat.name = 'Outline Body ' + c.get_name() + 'Alternative'
             bonely.data.materials.append(body_outline_mat)
 
             c.move_and_hide_collection([bonely], 'bonelyfans')
@@ -1013,7 +1053,11 @@ class modify_material(bpy.types.Operator):
                 #find all materials that use an alpha mask or maintex
                 alpha_users = []
                 if modify_material.export_light_dark_material:
-                    pass
+                    for mat in ob.material_slots:
+                        AlphaImage = mat.material.node_tree.nodes['_AM.png'].image
+                        MainImage = mat.material.node_tree.nodes['_light.png'].image
+                        if AlphaImage or MainImage:
+                            alpha_users.append(mat.material.name)
                 else:
                     for mat in ob.material_slots:
                         AlphaImage = mat.material.node_tree.nodes['textures'].node_tree.nodes['_AM.png'].image
@@ -1030,14 +1074,22 @@ class modify_material(bpy.types.Operator):
                 for mat in alpha_users:
                     ob.data.materials.append(None)
                 #fill alpha user outline materials, and fill image node
-                for index, mat in enumerate(alpha_users):
-                    OutlineMat = bpy.data.materials['Outline General'].copy()
-                    OutlineMat.name = mat.replace('KK ', 'Outline ')
-                    if modify_material.export_light_dark_material:
-                        pass
-                    else:
+
+                if modify_material.export_light_dark_material:
+                    for index, mat in enumerate(alpha_users):
+                        material = bpy.data.materials[mat]
+                        OutlineMat = bpy.data.materials['KK Light Dark Texture Outline'].copy()
+                        OutlineMat.name = mat.replace('KK ', 'Outline ')
+                        OutlineMat.node_tree.nodes["_AM.png"].image = bpy.data.images[material.node_tree.nodes['_AM.png'].image.name]
+                        OutlineMat.node_tree.nodes["UV Scale"].inputs[3].default_value[0] = material.node_tree.nodes["UV Scale"].inputs[3].default_value[0]
+                        OutlineMat.node_tree.nodes["_light.png"].image = bpy.data.images[material.node_tree.nodes['_light.png'].image.name]
+                        ob.material_slots[index + outlineStart].material = OutlineMat
+                else:
+                    for index, mat in enumerate(alpha_users):
+                        OutlineMat = bpy.data.materials['Outline General'].copy()
+                        OutlineMat.name = mat.replace('KK ', 'Outline ')
                         OutlineMat.node_tree.nodes['textures'].node_tree = bpy.data.materials[mat].node_tree.nodes['textures'].node_tree
-                    ob.material_slots[index + outlineStart].material = OutlineMat
+                        ob.material_slots[index + outlineStart].material = OutlineMat
                 #update polygon material indexes
                 for mat in mats_to_gons:
                     for gon in mats_to_gons[mat]:
@@ -1083,7 +1135,11 @@ class modify_material(bpy.types.Operator):
                 #find all materials that use an alpha mask or maintex
                 alpha_users = []
                 if modify_material.export_light_dark_material:
-                    pass
+                    for mat in ob.material_slots:
+                        AlphaImage = mat.material.node_tree.nodes['_AM.png'].image
+                        MainImage = mat.material.node_tree.nodes['_light.png'].image
+                        if AlphaImage or MainImage:
+                            alpha_users.append(mat.material.name)
                 else:
                     for mat in ob.material_slots:
                         AlphaImage = mat.material.node_tree.nodes['textures'].node_tree.nodes['_AM.png'].image
@@ -1100,17 +1156,34 @@ class modify_material(bpy.types.Operator):
                 for mat in alpha_users:
                     ob.data.materials.append(None)
                 #fill alpha user outline materials, and fill image node
-                for index, mat in enumerate(alpha_users):
-                    OutlineMat = bpy.data.materials['Outline General'].copy()
-                    OutlineMat.name = mat.replace('KK ', 'Outline ')
-                    OutlineMat.node_tree.nodes['textures'].node_tree = bpy.data.materials[mat].node_tree.nodes['textures'].node_tree
-                    ob.material_slots[index + outlineStart[ob.name]].material = OutlineMat
+                pass
+                if modify_material.export_light_dark_material:
+                    for index, mat in enumerate(alpha_users):
+                        material = bpy.data.materials[mat]
+                        OutlineMat = bpy.data.materials['KK Light Dark Texture Outline'].copy()
+                        OutlineMat.name = mat.replace('KK ', 'Outline ')
+                        OutlineMat.node_tree.nodes["_AM.png"].image = bpy.data.images[material.node_tree.nodes['_AM.png'].image.name]
+                        OutlineMat.node_tree.nodes["UV Scale"].inputs[3].default_value[0] = material.node_tree.nodes["UV Scale"].inputs[3].default_value[0]
+                        OutlineMat.node_tree.nodes["_light.png"].image = bpy.data.images[material.node_tree.nodes['_light.png'].image.name]
+                        ob.material_slots[index + outlineStart[ob.name]].material = OutlineMat
 
-                    #if the outline material is for a glasses material, disable it
-                    if bpy.data.materials[mat].get('glasses'):
-                        nodes = OutlineMat.node_tree.nodes
-                        links = OutlineMat.node_tree.links
-                        links.remove(nodes['combine'].inputs['Main texture (alpha)'].links[0])
+                        # if the outline material is for a glasses material, disable it
+                        if bpy.data.materials[mat].get('glasses'):
+                            nodes = OutlineMat.node_tree.nodes
+                            links = OutlineMat.node_tree.links
+                            links.remove(nodes['combine'].inputs['Main texture (alpha)'].links[0])
+                else:
+                    for index, mat in enumerate(alpha_users):
+                        OutlineMat = bpy.data.materials['Outline General'].copy()
+                        OutlineMat.name = mat.replace('KK ', 'Outline ')
+                        OutlineMat.node_tree.nodes['textures'].node_tree = bpy.data.materials[mat].node_tree.nodes['textures'].node_tree
+                        ob.material_slots[index + outlineStart[ob.name]].material = OutlineMat
+
+                        # if the outline material is for a glasses material, disable it
+                        if bpy.data.materials[mat].get('glasses'):
+                            nodes = OutlineMat.node_tree.nodes
+                            links = OutlineMat.node_tree.links
+                            links.remove(nodes['combine'].inputs['Main texture (alpha)'].links[0])
                 #update polygon material indexes
                 for mat in mats_to_gons:
                     for gon in mats_to_gons[mat]:
