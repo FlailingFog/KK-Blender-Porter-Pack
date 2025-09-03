@@ -63,34 +63,40 @@ class modify_material(bpy.types.Operator):
     queue_lock = threading.Lock()
     data_queue = queue.Queue()
 
+    export_light_dark_material = False
+
     def execute(self, context):
         try:
-            # modify_material.export_light_dark_material = c.json_file_manager.get_json_file("KK_KKBPExporterConfig.json").get("exportLightDarkTexture")
+            modify_material.export_light_dark_material = c.json_file_manager.get_json_file("KK_KKBPExporterConfig.json").get("exportLightDarkTexture")
             self.remove_unused_material_slots()
             self.remap_duplicate_material_slots()
 
-            self.replace_materials_for_tears_tongue_gageye()
-            self.remove_duplicate_node_groups()
-
-            self.load_images()
-            self.link_textures_for_face_body()
-            self.link_textures_for_hair()
-            self.link_textures_for_clothes()
-            self.link_textures_for_tongue_tear_gag()
-            self.create_dark_textures()
+            self.ELDT_load_images()
+            self.ELDT_replace_materials_and_link_textures_adjust_UV()
+            # self.replace_materials_for_body()
+            # self.replace_materials_for_hair()
+            # self.replace_materials_for_outfits()
+            # self.replace_materials_for_tears_tongue_gageye()
+            # self.remove_duplicate_node_groups()
+            #
+            # self.load_images()
+            # self.link_textures_for_face_body()
+            # self.link_textures_for_hair()
+            # self.link_textures_for_clothes()
+            # self.link_textures_for_tongue_tear_gag()
+            # self.create_dark_textures()
 
             self.import_and_setup_smooth_normals()
-            self.setup_gag_eye_material_drivers()
+            # self.setup_gag_eye_material_drivers()
 
-            self.add_outlines_to_body()
-            self.add_outlines_to_bonelyfans()
-            self.add_outlines_to_hair()
-            self.add_outlines_to_clothes()
-
-            self.load_luts()
-            self.load_json_colors()
-            self.set_color_management()
-            self.adjust_pupil_highlight()
+            # self.add_outlines_to_body()
+            # self.add_outlines_to_hair()
+            # self.add_outlines_to_clothes()
+            #
+            # self.load_luts()
+            # self.load_json_colors()
+            # self.set_color_management()
+            # self.adjust_pupil_highlight()
 
             c.clean_orphaned_data()
             return {'FINISHED'}
@@ -537,6 +543,7 @@ class modify_material(bpy.types.Operator):
             self.data_queue.put(index)
 
     def ELDT_replace_materials_and_link_textures_adjust_UV(self):
+        c.import_from_library_file(category='Material', list_of_items=["KK Light Dark Texture"], use_fake_user=True)
         textures = ["_light.png", "_dark.png", "_NMP_CNV.png", "_NMPD_CNV.png", "_AM.png"]
 
         UV_adjustments = c.json_file_manager.get_json_file("KK_UVAdjustments.json")
@@ -576,13 +583,17 @@ class modify_material(bpy.types.Operator):
             bm.clear()
             bm.from_mesh(mesh.data)
             for entry in UV_adjustments:
-                for material_name in entry['materials']:
+                for index, material_name in enumerate(entry['materials']):
                     if (material_index := mesh.material_slots.find(material_name)) >= 0:
                         record[material_index] = (entry['xOffset'], entry['yOffset'], entry['xScale'], entry['yScale'])
                         swap_mesh_material(material_name, mesh_type, mesh)
                         for texture_name in textures:
                             if image := bpy.data.images.get(material_name + texture_name):
-                                mesh.material_slots[material_index].material.node_tree.nodes[texture_name].image = image
+                                material = mesh.material_slots[material_index].material
+                                material.node_tree.nodes[texture_name].image = image
+                                material.node_tree.nodes["UV Scale"].inputs[3].default_value[0] = entry['xScale']
+                                material.node_tree.nodes["UV Scale"].inputs[3].default_value[1] = entry['yScale']
+                                material.node_tree.nodes["AlphaMask Stage Switch"].outputs[0].default_value = 0 if entry['AlphaMaskAStage'][index] <= 0 else 2
 
             if not (uv_bm_layer := bm.loops.layers.uv.active):
                 continue

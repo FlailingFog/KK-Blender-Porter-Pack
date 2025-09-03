@@ -60,45 +60,43 @@ class modify_armature(bpy.types.Operator):
             self.reparent_all_objects()
 
             self.remove_bone_locks_and_modifiers()
-            if not compatible_mode:
-                self.rebuild_bone_data()
             self.scale_armature_bones_down()
             self.reparent_leg_and_body_bone()
-
+            if not compatible_mode:
+                self.rebuild_bone_data()
 
             self.delete_non_height_bones()
 
-            self.modify_finger_bone_orientations()
-            # if compatible_mode:
-            #
-            #     self.set_bone_roll_data()
+            if compatible_mode:
+                self.modify_finger_bone_orientations()
+                self.set_bone_roll_data()
 
             self.bend_bones_for_iks()
 
             self.remove_empty_vertex_groups()
             self.reorganize_armature_layers()
             self.move_accessory_bones_to_layer10()
-        
+
             self.create_eye_reference_bone()
             self.create_eye_controller_bone()
             self.shorten_kokan_bone()
             self.scale_skirt_and_face_bones()
 
             self.prepare_ik_bones()
-            self.create_ik_bones()
-            # if compatible_mode:
+            if compatible_mode:
+                self.create_ik_bones()
+            else:
+                pass
+                # self.create_f_ik_bones()
+
+            # self.create_joint_drivers()
             #
-            # else:
-            #     self.create_f_ik_bones()
-
-            self.create_joint_drivers()
-
-            self.categorize_bones()
-            self.rename_bones_for_clarity()
-            self.rename_mmd_bones()
-
-            self.apply_bone_widgets()
-            self.hide_widgets()
+            # self.categorize_bones()
+            # self.rename_bones_for_clarity()
+            # self.rename_mmd_bones()
+            #
+            # self.apply_bone_widgets()
+            # self.hide_widgets()
 
             return {'FINISHED'}
         except Exception as error:
@@ -213,6 +211,7 @@ class modify_armature(bpy.types.Operator):
     def delete_non_height_bones(self):
         '''delete bones not under the cf_n_height bone. Deletes bones not under the BodyTop bone if PMX armature was selected'''
         armature = c.get_armature()
+        c.switch(armature, 'EDIT')
         def select_children(parent):
             try:
                 parent.select = True
@@ -384,22 +383,21 @@ class modify_armature(bpy.types.Operator):
         for bone_name, bone_info in edit_bone_info.items():
             bone = c.get_armature().data.edit_bones[bone_name]
 
-            euler = bone_info['rotation'].to_euler('ZXY')
-            bone.roll = euler.z
-            # bone.matrix = bone_info['worldMatrix'].copy()
+            # euler = bone_info['rotation'].to_euler('ZXY')
+            # bone.roll = euler.z
+            bone.matrix = bone_info['worldMatrix'].copy()
             # length = bone.length
             # bone.tail.x = bone.head.x
             # bone.tail.y = bone.head.y
             # bone.tail.z = bone.tail.z + length
 
-        # assert False
         # Set scale data
         c.switch(c.get_armature(), 'POSE')
         for bone_name, bone_info in final_bone_info.items():
-            c.get_armature().pose.bones[bone_name].scale = bone_info['scale'].copy()
+            if bone := c.get_armature().pose.bones.get(bone_name):
+                bone.scale = bone_info['scale'].copy()
 
-        # assert False
-        c.switch(c.get_armature(), 'EDIT')
+        c.switch(c.get_armature(), 'OBJECT')
         c.print_timer('Rebuild bone data')
 
     def set_bone_roll_data(self):
