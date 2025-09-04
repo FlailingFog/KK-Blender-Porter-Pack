@@ -42,8 +42,9 @@
 # Majority of the joint driver corrections were taken from a blend file by johnbbob_la_petite on the koikatsu discord
 
 import bpy, math
+
 from .. import common as c
-from mathutils import Vector
+from mathutils import Vector, Matrix, Quaternion
 
 class modify_armature(bpy.types.Operator):
     bl_idname = "kkbp.modifyarmature"
@@ -53,28 +54,40 @@ class modify_armature(bpy.types.Operator):
     
     def execute(self, context):
         try:
-            
+            if compatible_mode := c.json_file_manager.get_json_file("KK_EditBoneInfo.json") is None:
+                c.kklog('Use compatible mode')
+
             self.reparent_all_objects()
+
             self.remove_bone_locks_and_modifiers()
             self.scale_armature_bones_down()
             self.reparent_leg_and_body_bone()
+            if not compatible_mode:
+                self.rebuild_bone_data()
+
             self.delete_non_height_bones()
 
-            self.modify_finger_bone_orientations()
-            self.set_bone_roll_data()
+            if compatible_mode:
+                self.modify_finger_bone_orientations()
+                self.set_bone_roll_data()
+
             self.bend_bones_for_iks()
 
             self.remove_empty_vertex_groups()
             self.reorganize_armature_layers()
             self.move_accessory_bones_to_layer10()
-        
+
             self.create_eye_reference_bone()
             self.create_eye_controller_bone()
             self.shorten_kokan_bone()
             self.scale_skirt_and_face_bones()
-            
+
             self.prepare_ik_bones()
-            self.create_ik_bones()
+            if compatible_mode:
+                self.create_ik_bones()
+            else:
+                self.create_f_ik_bones()
+
             self.create_joint_drivers()
 
             self.categorize_bones()
@@ -197,6 +210,7 @@ class modify_armature(bpy.types.Operator):
     def delete_non_height_bones(self):
         '''delete bones not under the cf_n_height bone. Deletes bones not under the BodyTop bone if PMX armature was selected'''
         armature = c.get_armature()
+        c.switch(armature, 'EDIT')
         def select_children(parent):
             try:
                 parent.select = True
@@ -313,344 +327,415 @@ class modify_armature(bpy.types.Operator):
             reorient(bone)
         c.print_timer('modify_finger_bone_orientations')
 
+    def rebuild_bone_data(self):
+        edit_bone_info = {}
+        final_bone_info = {}
+        for _bone in c.json_file_manager.get_json_file("KK_EditBoneInfo.json"):
+            # transform = _bone['transform']
+            world_transform = _bone['worldTransform']
+            edit_bone_info[_bone['boneName']] = {
+                # 'translate': Vector(_bone['position']),
+                'rotation': Quaternion(_bone['rotation']),
+                # 'scale': Vector(_bone['scale']),
+                # 'matrix': Matrix([
+                #     [transform[0], transform[1], transform[2], transform[3]],
+                #     [transform[4], transform[5], transform[6], transform[7]],
+                #     [transform[8], transform[9], transform[10], transform[11]],
+                #     [transform[12], transform[13], transform[14], transform[15]],
+                # ]),
+                # 'worldTranslate': Vector(_bone['worldPosition']),
+                # 'worldRotation': Quaternion(_bone['worldRotation']),
+                # 'worldScale': Vector(_bone['worldScale']),
+                'worldMatrix': Matrix([
+                    [world_transform[0], world_transform[1], world_transform[2], world_transform[3]],
+                    [world_transform[4], world_transform[5], world_transform[6], world_transform[7]],
+                    [world_transform[8], world_transform[9], world_transform[10], world_transform[11]],
+                    [world_transform[12], world_transform[13], world_transform[14], world_transform[15]],
+                ]),
+            }
+        for _bone in c.json_file_manager.get_json_file("KK_FinalBoneInfo.json"):
+            # transform = _bone['transform']
+            # world_transform = _bone['worldTransform']
+            final_bone_info[_bone['boneName']] = {
+                # 'translate': Vector(_bone['position']),
+                # 'rotation': Quaternion(_bone['rotation']),
+                'scale': Vector(_bone['scale']),
+                # 'matrix': Matrix([
+                #     [transform[0], transform[1], transform[2], transform[3]],
+                #     [transform[4], transform[5], transform[6], transform[7]],
+                #     [transform[8], transform[9], transform[10], transform[11]],
+                #     [transform[12], transform[13], transform[14], transform[15]],
+                # ]),
+                # 'worldTranslate': Vector(_bone['worldPosition']),
+                # 'worldRotation': Quaternion(_bone['worldRotation']),
+                # 'worldScale': Vector(_bone['worldScale']),
+                # 'worldMatrix': Matrix([
+                #     [world_transform[0], world_transform[1], world_transform[2], world_transform[3]],
+                #     [world_transform[4], world_transform[5], world_transform[6], world_transform[7]],
+                #     [world_transform[8], world_transform[9], world_transform[10], world_transform[11]],
+                #     [world_transform[12], world_transform[13], world_transform[14], world_transform[15]],
+                # ]),
+            }
+
+        #  Set roll data
+        c.switch(c.get_armature(), 'Edit')
+        for bone_name, bone_info in edit_bone_info.items():
+            bone = c.get_armature().data.edit_bones[bone_name]
+
+            # euler = bone_info['rotation'].to_euler('ZXY')
+            # bone.roll = euler.z
+            bone.matrix = bone_info['worldMatrix'].copy()
+            # length = bone.length
+            # bone.tail.x = bone.head.x
+            # bone.tail.y = bone.head.y
+            # bone.tail.z = bone.tail.z + length
+
+        # Set scale data
+        c.switch(c.get_armature(), 'POSE')
+        for bone_name, bone_info in final_bone_info.items():
+            if bone := c.get_armature().pose.bones.get(bone_name):
+                bone.scale = bone_info['scale'].copy()
+
+        c.switch(c.get_armature(), 'OBJECT')
+        c.print_timer('Rebuild bone data')
+
     def set_bone_roll_data(self):
         '''Use roll data from a reference armature dump to set the roll for each bone'''
         reroll_data = {
-        'BodyTop':0.0,
-        'p_cf_body_bone':0.0,
-        'cf_j_root':0.0,
-        'cf_n_height':0.0,
-        'cf_j_hips':0.0,
-        'cf_j_spine01':0.0,
-        'cf_j_spine02':0.0,
-        'cf_j_spine03':0.0,
-        'cf_d_backsk_00':0.0,
-        'cf_j_backsk_C_01':-1.810556946517264e-23,
-        'cf_j_backsk_C_02':-1.1667208633608472e-15,
-        'cf_j_backsk_L_01':-0.001851903973147273,
-        'cf_j_backsk_L_02':-0.0034122250508517027,
-        'cf_j_backsk_R_01':0.0018519698642194271,
-        'cf_j_backsk_R_02':0.003412271151319146,
-        'cf_d_bust00':0.0,
-        'cf_s_bust00_L':0.0,
-        'cf_d_bust01_L':0.4159948229789734,
-        'cf_j_bust01_L':0.4159948229789734,
-        'cf_d_bust02_L':0.4159948229789734,
-        'cf_j_bust02_L':0.4151105582714081,
-        'cf_d_bust03_L':0.4151104986667633,
-        'cf_j_bust03_L':0.4151104986667633,
-        'cf_d_bnip01_L':0.4151104986667633,
-        'cf_j_bnip02root_L':0.4151104986667633,
-        'cf_s_bnip02_L':0.4151104986667633,
-        'cf_j_bnip02_L':0.4154767096042633,
-        'cf_s_bnip025_L':0.4154742360115051,
-        'cf_s_bnip01_L':0.41547420620918274,
-        'cf_s_bnip015_L':0.41547420620918274,
-        'cf_s_bust03_L':0.4153861403465271,
-        'cf_s_bust02_L':0.38631150126457214,
-        'cf_s_bust01_L':0.4159947633743286,
-        'cf_s_bust00_R':0.0,
-        'cf_d_bust01_R':-0.4159948527812958,
-        'cf_j_bust01_R':-0.4159948229789734,
-        'cf_d_bust02_R':-0.41599488258361816,
-        'cf_j_bust02_R':-0.41511064767837524,
-        'cf_d_bust03_R':-0.41511061787605286,
-        'cf_j_bust03_R':-0.41511064767837524,
-        'cf_d_bnip01_R':-0.41511061787605286,
-        'cf_j_bnip02root_R':-0.41511061787605286,
-        'cf_s_bnip02_R':-0.41511061787605286,
-        'cf_j_bnip02_R':-0.41547682881355286,
-        'cf_s_bnip025_R':-0.4154742360115051,
-        'cf_s_bnip01_R':-0.4154742956161499,
-        'cf_s_bnip015_R':-0.4154742956161499,
-        'cf_s_bust03_R':-0.41538622975349426,
-        'cf_s_bust02_R':-0.38631150126457214,
-        'cf_s_bust01_R':-0.4159948229789734,
-        'cf_d_shoulder_L':0.0,
-        'cf_j_shoulder_L':0.0,
-        'cf_d_shoulder02_L':4.2021918488899246e-05,
-        'cf_s_shoulder02_L':4.202192212687805e-05,
-        'cf_j_arm00_L':0.0,
-        'cf_d_arm01_L':-0.0012054670369252563,
-        'cf_s_arm01_L':0.009222406893968582,
-        'cf_d_arm02_L':-0.0012054670369252563,
-        'cf_s_arm02_L':0.004008470103144646,
-        'cf_d_arm03_L':-0.0012054670369252563,
-        'cf_s_arm03_L':-0.0012097591534256935,
-        'cf_j_forearm01_L':0.0,
-        'cf_d_forearm02_L':0.0,
-        'cf_s_forearm02_L':0.0,
-        'cf_d_wrist_L':0.0,
-        'cf_s_wrist_L':0.0,
-        'cf_d_hand_L':0.0,
-        'cf_j_hand_L':-6.776263578034403e-21,
-        'cf_s_hand_L':-6.776263578034403e-21,
-        'cf_j_index01_L':math.radians(-11),
-        'cf_j_index02_L':math.radians(-5),
-        'cf_j_index03_L':math.radians(0),
-        'cf_j_little01_L':math.radians(30),
-        'cf_j_little02_L':math.radians(11),
-        'cf_j_little03_L':math.radians(30),
-        'cf_j_middle01_L':math.radians(3),
-        'cf_j_middle02_L':math.radians(3),
-        'cf_j_middle03_L':math.radians(3),
-        'cf_j_ring01_L':math.radians(15),
-        'cf_j_ring02_L':math.radians(7),
-        'cf_j_ring03_L':math.radians(15),
-        'cf_j_thumb01_L':math.pi,
-        'cf_j_thumb02_L':math.pi,
-        'cf_j_thumb03_L':math.pi,
-        'cf_s_elbo_L':0.0,
-        'cf_s_forearm01_L':0.0,
-        'cf_s_elboback_L':0.0,
-        'cf_d_shoulder_R':0.0,
-        'cf_j_shoulder_R':0.0,
-        'cf_d_shoulder02_R':-4.355472628958523e-05,
-        'cf_s_shoulder02_R':-4.355472628958523e-05,
-        'cf_j_arm00_R':0.0,
-        'cf_d_arm01_R':0.0009736516512930393,
-        'cf_s_arm01_R':0.0009736517095007002,
-        'cf_d_arm02_R':0.0009736516512930393,
-        'cf_s_arm02_R':-0.004238337744027376,
-        'cf_d_arm03_R':0.0009736516512930393,
-        'cf_s_arm03_R':0.0009736517095007002,
-        'cf_j_forearm01_R':0.0,
-        'cf_d_forearm02_R':2.6637668270268477e-05,
-        'cf_s_forearm02_R':2.6637668270268477e-05,
-        'cf_d_wrist_R':1.9139706637361087e-05,
-        'cf_s_wrist_R':1.9139704818371683e-05,
-        'cf_d_hand_R':1.9139704818371683e-05,
-        'o_brac':0.0,
-        'cf_j_hand_R':-6.776470373187541e-21,
-        'cf_s_hand_R':-6.776470373187541e-21,
-        'cf_j_index01_R':math.radians(-11),
-        'cf_j_index02_R':math.radians(-5),
-        'cf_j_index03_R':math.radians(0),
-        'cf_j_little01_R':math.radians(30),
-        'cf_j_little02_R':math.radians(11),
-        'cf_j_little03_R':math.radians(30),
-        'cf_j_middle01_R':math.radians(3),
-        'cf_j_middle02_R':math.radians(3),
-        'cf_j_middle03_R':math.radians(3),
-        'cf_j_ring01_R':math.radians(15),
-        'cf_j_ring02_R':math.radians(7),
-        'cf_j_ring03_R':math.radians(15),
-        'cf_j_thumb01_R':math.radians(0),
-        'cf_j_thumb02_R':math.radians(0),
-        'cf_j_thumb03_R':math.radians(0),
-        'cf_s_elbo_R':0.0,
-        'cf_s_forearm01_R':0.0,
-        'cf_s_elboback_R':4.203895392974451e-44,
-        'cf_d_spinesk_00':0.0,
-        'cf_j_spinesk_00':5.2774636787104646e-23,
-        'cf_j_spinesk_01':-0.01019450556486845,
-        'cf_j_spinesk_02':0.0032659571152180433,
-        'cf_j_spinesk_03':-0.001969193108379841,
-        'cf_j_spinesk_04':-0.001969192875549197,
-        'cf_j_spinesk_05':-0.00196919240988791,
-        'cf_j_neck':0.0,
-        'cf_j_head':0.0,
-        'cf_s_head':0.0,
-        'p_cf_head_bone':0.0,
-        'cf_J_N_FaceRoot':2.1210576051089447e-07,
-        'cf_J_FaceRoot':2.1210573208918504e-07,
-        'cf_J_FaceBase':2.1210573208918504e-07,
-        'cf_J_FaceLow_tz':2.1210573208918504e-07,
-        'cf_J_FaceLow_sx':2.1210573208918504e-07,
-        'cf_J_CheekUpBase':2.1210573208918504e-07,
-        'cf_J_CheekUp_s_L':2.1210573208918504e-07,
-        'cf_J_CheekUp_s_R':2.1210573208918504e-07,
-        'cf_J_Chin_Base':2.1210574630003975e-07,
-        'cf_J_CheekLow_s_L':2.1210573208918504e-07,
-        'cf_J_CheekLow_s_R':2.1210573208918504e-07,
-        'cf_J_Chin_s':2.1210573208918504e-07,
-        'cf_J_ChinTip_Base':2.1210574630003975e-07,
-        'cf_J_ChinLow':2.1210573208918504e-07,
-        'cf_J_MouthBase_ty':2.1210573208918504e-07,
-        'cf_J_MouthBase_rx':2.1210573208918504e-07,
-        'cf_J_MouthCavity':2.1210571787833032e-07,
-        'cf_J_MouthMove':2.1210571787833032e-07,
-        'cf_J_Mouth_L':2.1210573208918504e-07,
-        'cf_J_Mouth_R':2.1210573208918504e-07,
-        'cf_J_MouthLow':2.1210573208918504e-07,
-        'cf_J_Mouthup':2.1210573208918504e-07,
-        'cf_J_FaceUp_ty':2.1210573208918504e-07,
-        'a_n_headside':2.1210574630003975e-07,
-        'cf_J_EarBase_ry_L':-0.1504509449005127,
-        'cf_J_EarLow_L':-0.1504509449005127,
-        'cf_J_EarUp_L':-0.1504509449005127,
-        'cf_J_EarBase_ry_R':0.15762563049793243,
-        'cf_J_EarLow_R':0.15762564539909363,
-        'cf_J_EarUp_R':0.15762564539909363,
-        'cf_J_FaceUp_tz':2.1210574630003975e-07,
-        'cf_J_Eye_tz':2.1210574630003975e-07,
-        'cf_J_Eye_txdam_L':2.1210574630003975e-07,
-        'cf_J_Eye_tx_L':2.1210573208918504e-07,
-        'cf_J_Eye_rz_L':0.20466913282871246,
-        'cf_J_CheekUp2_L':0.004773593973368406,
-        'cf_J_Eye01_s_L':0.20466917753219604,
-        'cf_J_Eye02_s_L':0.20466917753219604,
-        'cf_J_Eye03_s_L':0.20466917753219604,
-        'cf_J_Eye04_s_L':0.20466917753219604,
-        'cf_J_Eye05_s_L':0.20466917753219604,
-        'cf_J_Eye06_s_L':0.20466917753219604,
-        'cf_J_Eye07_s_L':0.20466917753219604,
-        'cf_J_Eye08_s_L':0.20466917753219604,
-        'cf_J_hitomi_tx_L':0.18981075286865234,
-        'cf_J_Eye_txdam_R':2.1210574630003975e-07,
-        'cf_J_Eye_tx_R':2.1210576051089447e-07,
-        'cf_J_Eye_rz_R':-0.2046687752008438,
-        'cf_J_CheekUp2_R':-0.0047732163220644,
-        'cf_J_Eye01_s_R':-0.2046687752008438,
-        'cf_J_Eye02_s_R':-0.2046687752008438,
-        'cf_J_Eye03_s_R':-0.2046687752008438,
-        'cf_J_Eye04_s_R':-0.2046687752008438,
-        'cf_J_Eye05_s_R':-0.2046687752008438,
-        'cf_J_Eye06_s_R':-0.2046687752008438,
-        'cf_J_Eye07_s_R':-0.2046687752008438,
-        'cf_J_Eye08_s_R':-0.2046687752008438,
-        'cf_J_hitomi_tx_R':-0.2046687752008438,
-        'cf_J_Mayu_ty':2.1210574630003975e-07,
-        'cf_J_Mayumoto_L':0.3458269536495209,
-        'cf_J_Mayu_L':0.34616410732269287,
-        'cf_J_MayuMid_s_L':0.34626930952072144,
-        'cf_J_MayuTip_s_L':0.3462893068790436,
-        'cf_J_Mayumoto_R':-0.34582653641700745,
-        'cf_J_Mayu_R':-0.34616369009017944,
-        'cf_J_MayuMid_s_R':-0.3462689220905304,
-        'cf_J_MayuTip_s_R':-0.34628885984420776,
-        'cf_J_NoseBase':2.1210573208918504e-07,
-        'cf_J_NoseBase_rx':2.1210573208918504e-07,
-        'cf_J_Nose_rx':2.1210573208918504e-07,
-        'cf_J_Nose_tip':2.1210571787833032e-07,
-        'cf_J_NoseBridge_ty':2.1210573208918504e-07,
-        'cf_J_NoseBridge_rx':2.1210573208918504e-07,
-        'cf_s_neck':0.0,
-        'cf_s_spine03':0.0,
-        'a_n_back':-3.1415927410125732,
-        'cf_s_spine02':0.0,
-        'cf_s_spine01':0.0,
-        'cf_j_waist01':0.0,
-        'cf_d_sk_top':0.0,
-        'cf_d_sk_00_00':-3.1415927410125732,
-        'cf_j_sk_00_00':-3.1415927410125732,
-        'cf_j_sk_00_01':-3.1415927410125732,
-        'cf_j_sk_00_02':3.1415293216705322,
-        'cf_j_sk_00_03':3.1415293216705322,
-        'cf_j_sk_00_04':3.1415293216705322,
-        'cf_j_sk_00_05':3.1415293216705322,
-        'cf_d_sk_01_00':2.3621666431427,
-        'cf_j_sk_01_00':2.3621666431427,
-        'cf_j_sk_01_01':2.364142656326294,
-        'cf_j_sk_01_02':2.3684122562408447,
-        'cf_j_sk_01_03':2.3684122562408447,
-        'cf_j_sk_01_04':2.3684122562408447,
-        'cf_j_sk_01_05':2.3684122562408447,
-        'cf_d_sk_02_00':1.5806118249893188,
-        'cf_j_sk_02_00':1.5808137655258179,
-        'cf_j_sk_02_01':1.5806832313537598,
-        'cf_j_sk_02_02':1.5820348262786865,
-        'cf_j_sk_02_03':1.5820348262786865,
-        'cf_j_sk_02_04':1.5820348262786865,
-        'cf_j_sk_02_05':1.5820348262786865,
-        'cf_d_sk_03_00':0.7112568616867065,
-        'cf_j_sk_03_00':0.7112571597099304,
-        'cf_j_sk_03_01':0.7112568020820618,
-        'cf_j_sk_03_02':0.709623396396637,
-        'cf_j_sk_03_03':0.7096233367919922,
-        'cf_j_sk_03_04':0.7096233367919922,
-        'cf_j_sk_03_05':0.7096234560012817,
-        'cf_d_sk_04_00':3.4498308600352867e-17,
-        'cf_j_sk_04_00':0.00037256989162415266,
-        'cf_j_sk_04_01':0.00012998198508284986,
-        'cf_j_sk_04_02':0.0001299990399274975,
-        'cf_j_sk_04_03':0.0001299990399274975,
-        'cf_j_sk_04_04':0.0001299990399274975,
-        'cf_j_sk_04_05':0.0001299990399274975,
-        'cf_d_sk_05_00':-0.7112577557563782,
-        'cf_j_sk_05_00':-0.7112579345703125,
-        'cf_j_sk_05_01':-0.7112577557563782,
-        'cf_j_sk_05_02':-0.7096185088157654,
-        'cf_j_sk_05_03':-0.7096185088157654,
-        'cf_j_sk_05_04':-0.7096185088157654,
-        'cf_j_sk_05_05':-0.7096185088157654,
-        'cf_d_sk_06_00':-1.5806118249893188,
-        'cf_j_sk_06_00':-1.5808138847351074,
-        'cf_j_sk_06_01':-1.5806833505630493,
-        'cf_j_sk_06_02':-1.5820401906967163,
-        'cf_j_sk_06_03':-1.5820401906967163,
-        'cf_j_sk_06_04':-1.5820401906967163,
-        'cf_j_sk_06_05':-1.5820401906967163,
-        'cf_d_sk_07_00':-2.3621666431427,
-        'cf_j_sk_07_00':-2.3621666431427,
-        'cf_j_sk_07_01':-2.3649401664733887,
-        'cf_j_sk_07_02':-2.3683762550354004,
-        'cf_j_sk_07_03':-2.3683762550354004,
-        'cf_j_sk_07_04':-2.3683762550354004,
-        'cf_j_sk_07_05':-2.3683762550354004,
-        'cf_j_waist02':0.0,
-        'cf_d_siri_L':4.435180380824022e-05,
-        'cf_d_siri01_L':4.484502278501168e-05,
-        'cf_j_siri_L':4.435180744621903e-05,
-        'cf_s_siri_L':4.607543087331578e-05,
-        'cf_d_ana':4.053832753925235e-07,
-        'cf_j_ana':4.053832753925235e-07,
-        'cf_s_ana':4.0538333223594236e-07,
-        'cf_d_kokan':0.0,
-        'cf_j_kokan':7.531064056820469e-07,
-        'cf_d_siri_R':-5.766015220842746e-08,
-        'cf_d_siri01_R':-5.766015220842746e-08,
-        'cf_j_siri_R':-5.766015220842746e-08,
-        'cf_s_siri_R':-5.766015576114114e-08,
-        'cf_j_thigh00_L':0.0,
-        'cf_d_thigh01_L':0.0,
-        'cf_s_thigh01_L':0.0,
-        'cf_d_thigh02_L':0.0,
-        'cf_s_thigh02_L':0.0,
-        'cf_d_thigh03_L':0.0,
-        'cf_s_thigh03_L':0.0,
-        'cf_j_leg01_L':0.0,
-        'cf_d_kneeF_L':0.0,
-        'cf_d_leg02_L':-8.435114585980674e-12,
-        'cf_s_leg02_L':0.0019489085534587502,
-        'cf_d_leg03_L':2.6021072699222714e-05,
-        'cf_s_leg03_L':2.6021054509328678e-05,
-        'cf_j_leg03_L':-1.7005811689396744e-11,
-        'cf_j_foot_L':-1.6870217028897017e-11,
-        'cf_j_toes_L':-1.6870217028897017e-11,
-        'cf_s_leg01_L':1.5783663344534925e-25,
-        'cf_s_kneeB_L':1.5783659646749431e-25,
-        'cf_j_thigh00_R':0.0,
-        'cf_d_thigh01_R':-2.9915531455925155e-27,
-        'cf_s_thigh01_R':-2.3654518046693106e-22,
-        'cf_d_thigh02_R':0.0,
-        'cf_s_thigh02_R':0.0,
-        'cf_d_thigh03_R':0.0,
-        'cf_s_thigh03_R':0.0,
-        'cf_j_leg01_R':0.0,
-        'cf_d_kneeF_R':0.0,
-        'cf_d_leg02_R':-3.092561655648751e-07,
-        'cf_s_leg02_R':-3.092561655648751e-07,
-        'cf_d_leg03_R':-4.125216790384911e-08,
-        'cf_s_leg03_R':-4.125216790384911e-08,
-        'cf_j_leg03_R':-6.69778160045098e-07,
-        'cf_j_foot_R':-6.185123311297502e-07,
-        'cf_j_toes_R':-6.185122742863314e-07,
-        'cf_s_leg01_R':-8.901179133911008e-16,
-        'cf_s_kneeB_R':-8.901180192702192e-16,
-        'cf_s_waist02':0.0,
-        'cf_s_leg_L':-0.004678195342421532,
-        'cf_s_leg_R':0.004779986571520567,
-        'cf_s_waist01':0.0,
+            'BodyTop': 0.0,
+            'p_cf_body_bone': 0.0,
+            'cf_j_root': 0.0,
+            'cf_n_height': 0.0,
+            'cf_j_hips': 0.0,
+            'cf_j_spine01': 0.0,
+            'cf_j_spine02': 0.0,
+            'cf_j_spine03': 0.0,
+            'cf_d_backsk_00': 0.0,
+            'cf_j_backsk_C_01': -1.810556946517264e-23,
+            'cf_j_backsk_C_02': -1.1667208633608472e-15,
+            'cf_j_backsk_L_01': -0.001851903973147273,
+            'cf_j_backsk_L_02': -0.0034122250508517027,
+            'cf_j_backsk_R_01': 0.0018519698642194271,
+            'cf_j_backsk_R_02': 0.003412271151319146,
+            'cf_d_bust00': 0.0,
+            'cf_s_bust00_L': 0.0,
+            'cf_d_bust01_L': 0.4159948229789734,
+            'cf_j_bust01_L': 0.4159948229789734,
+            'cf_d_bust02_L': 0.4159948229789734,
+            'cf_j_bust02_L': 0.4151105582714081,
+            'cf_d_bust03_L': 0.4151104986667633,
+            'cf_j_bust03_L': 0.4151104986667633,
+            'cf_d_bnip01_L': 0.4151104986667633,
+            'cf_j_bnip02root_L': 0.4151104986667633,
+            'cf_s_bnip02_L': 0.4151104986667633,
+            'cf_j_bnip02_L': 0.4154767096042633,
+            'cf_s_bnip025_L': 0.4154742360115051,
+            'cf_s_bnip01_L': 0.41547420620918274,
+            'cf_s_bnip015_L': 0.41547420620918274,
+            'cf_s_bust03_L': 0.4153861403465271,
+            'cf_s_bust02_L': 0.38631150126457214,
+            'cf_s_bust01_L': 0.4159947633743286,
+            'cf_s_bust00_R': 0.0,
+            'cf_d_bust01_R': -0.4159948527812958,
+            'cf_j_bust01_R': -0.4159948229789734,
+            'cf_d_bust02_R': -0.41599488258361816,
+            'cf_j_bust02_R': -0.41511064767837524,
+            'cf_d_bust03_R': -0.41511061787605286,
+            'cf_j_bust03_R': -0.41511064767837524,
+            'cf_d_bnip01_R': -0.41511061787605286,
+            'cf_j_bnip02root_R': -0.41511061787605286,
+            'cf_s_bnip02_R': -0.41511061787605286,
+            'cf_j_bnip02_R': -0.41547682881355286,
+            'cf_s_bnip025_R': -0.4154742360115051,
+            'cf_s_bnip01_R': -0.4154742956161499,
+            'cf_s_bnip015_R': -0.4154742956161499,
+            'cf_s_bust03_R': -0.41538622975349426,
+            'cf_s_bust02_R': -0.38631150126457214,
+            'cf_s_bust01_R': -0.4159948229789734,
+            'cf_d_shoulder_L': 0.0,
+            'cf_j_shoulder_L': 0.0,
+            'cf_d_shoulder02_L': 4.2021918488899246e-05,
+            'cf_s_shoulder02_L': 4.202192212687805e-05,
+            'cf_j_arm00_L': 0.0,
+            'cf_d_arm01_L': -0.0012054670369252563,
+            'cf_s_arm01_L': 0.009222406893968582,
+            'cf_d_arm02_L': -0.0012054670369252563,
+            'cf_s_arm02_L': 0.004008470103144646,
+            'cf_d_arm03_L': -0.0012054670369252563,
+            'cf_s_arm03_L': -0.0012097591534256935,
+            'cf_j_forearm01_L': 0.0,
+            'cf_d_forearm02_L': 0.0,
+            'cf_s_forearm02_L': 0.0,
+            'cf_d_wrist_L': 0.0,
+            'cf_s_wrist_L': 0.0,
+            'cf_d_hand_L': 0.0,
+            'cf_j_hand_L': -6.776263578034403e-21,
+            'cf_s_hand_L': -6.776263578034403e-21,
+            'cf_j_index01_L': math.radians(-11),
+            'cf_j_index02_L': math.radians(-5),
+            'cf_j_index03_L': math.radians(0),
+            'cf_j_little01_L': math.radians(30),
+            'cf_j_little02_L': math.radians(11),
+            'cf_j_little03_L': math.radians(30),
+            'cf_j_middle01_L': math.radians(3),
+            'cf_j_middle02_L': math.radians(3),
+            'cf_j_middle03_L': math.radians(3),
+            'cf_j_ring01_L': math.radians(15),
+            'cf_j_ring02_L': math.radians(7),
+            'cf_j_ring03_L': math.radians(15),
+            'cf_j_thumb01_L': math.pi,
+            'cf_j_thumb02_L': math.pi,
+            'cf_j_thumb03_L': math.pi,
+            'cf_s_elbo_L': 0.0,
+            'cf_s_forearm01_L': 0.0,
+            'cf_s_elboback_L': 0.0,
+            'cf_d_shoulder_R': 0.0,
+            'cf_j_shoulder_R': 0.0,
+            'cf_d_shoulder02_R': -4.355472628958523e-05,
+            'cf_s_shoulder02_R': -4.355472628958523e-05,
+            'cf_j_arm00_R': 0.0,
+            'cf_d_arm01_R': 0.0009736516512930393,
+            'cf_s_arm01_R': 0.0009736517095007002,
+            'cf_d_arm02_R': 0.0009736516512930393,
+            'cf_s_arm02_R': -0.004238337744027376,
+            'cf_d_arm03_R': 0.0009736516512930393,
+            'cf_s_arm03_R': 0.0009736517095007002,
+            'cf_j_forearm01_R': 0.0,
+            'cf_d_forearm02_R': 2.6637668270268477e-05,
+            'cf_s_forearm02_R': 2.6637668270268477e-05,
+            'cf_d_wrist_R': 1.9139706637361087e-05,
+            'cf_s_wrist_R': 1.9139704818371683e-05,
+            'cf_d_hand_R': 1.9139704818371683e-05,
+            'o_brac': 0.0,
+            'cf_j_hand_R': -6.776470373187541e-21,
+            'cf_s_hand_R': -6.776470373187541e-21,
+            'cf_j_index01_R': math.radians(-11),
+            'cf_j_index02_R': math.radians(-5),
+            'cf_j_index03_R': math.radians(0),
+            'cf_j_little01_R': math.radians(30),
+            'cf_j_little02_R': math.radians(11),
+            'cf_j_little03_R': math.radians(30),
+            'cf_j_middle01_R': math.radians(3),
+            'cf_j_middle02_R': math.radians(3),
+            'cf_j_middle03_R': math.radians(3),
+            'cf_j_ring01_R': math.radians(15),
+            'cf_j_ring02_R': math.radians(7),
+            'cf_j_ring03_R': math.radians(15),
+            'cf_j_thumb01_R': math.radians(0),
+            'cf_j_thumb02_R': math.radians(0),
+            'cf_j_thumb03_R': math.radians(0),
+            'cf_s_elbo_R': 0.0,
+            'cf_s_forearm01_R': 0.0,
+            'cf_s_elboback_R': 4.203895392974451e-44,
+            'cf_d_spinesk_00': 0.0,
+            'cf_j_spinesk_00': 5.2774636787104646e-23,
+            'cf_j_spinesk_01': -0.01019450556486845,
+            'cf_j_spinesk_02': 0.0032659571152180433,
+            'cf_j_spinesk_03': -0.001969193108379841,
+            'cf_j_spinesk_04': -0.001969192875549197,
+            'cf_j_spinesk_05': -0.00196919240988791,
+            'cf_j_neck': 0.0,
+            'cf_j_head': 0.0,
+            'cf_s_head': 0.0,
+            'p_cf_head_bone': 0.0,
+            'cf_J_N_FaceRoot': 2.1210576051089447e-07,
+            'cf_J_FaceRoot': 2.1210573208918504e-07,
+            'cf_J_FaceBase': 2.1210573208918504e-07,
+            'cf_J_FaceLow_tz': 2.1210573208918504e-07,
+            'cf_J_FaceLow_sx': 2.1210573208918504e-07,
+            'cf_J_CheekUpBase': 2.1210573208918504e-07,
+            'cf_J_CheekUp_s_L': 2.1210573208918504e-07,
+            'cf_J_CheekUp_s_R': 2.1210573208918504e-07,
+            'cf_J_Chin_Base': 2.1210574630003975e-07,
+            'cf_J_CheekLow_s_L': 2.1210573208918504e-07,
+            'cf_J_CheekLow_s_R': 2.1210573208918504e-07,
+            'cf_J_Chin_s': 2.1210573208918504e-07,
+            'cf_J_ChinTip_Base': 2.1210574630003975e-07,
+            'cf_J_ChinLow': 2.1210573208918504e-07,
+            'cf_J_MouthBase_ty': 2.1210573208918504e-07,
+            'cf_J_MouthBase_rx': 2.1210573208918504e-07,
+            'cf_J_MouthCavity': 2.1210571787833032e-07,
+            'cf_J_MouthMove': 2.1210571787833032e-07,
+            'cf_J_Mouth_L': 2.1210573208918504e-07,
+            'cf_J_Mouth_R': 2.1210573208918504e-07,
+            'cf_J_MouthLow': 2.1210573208918504e-07,
+            'cf_J_Mouthup': 2.1210573208918504e-07,
+            'cf_J_FaceUp_ty': 2.1210573208918504e-07,
+            'a_n_headside': 2.1210574630003975e-07,
+            'cf_J_EarBase_ry_L': -0.1504509449005127,
+            'cf_J_EarLow_L': -0.1504509449005127,
+            'cf_J_EarUp_L': -0.1504509449005127,
+            'cf_J_EarBase_ry_R': 0.15762563049793243,
+            'cf_J_EarLow_R': 0.15762564539909363,
+            'cf_J_EarUp_R': 0.15762564539909363,
+            'cf_J_FaceUp_tz': 2.1210574630003975e-07,
+            'cf_J_Eye_tz': 2.1210574630003975e-07,
+            'cf_J_Eye_txdam_L': 2.1210574630003975e-07,
+            'cf_J_Eye_tx_L': 2.1210573208918504e-07,
+            'cf_J_Eye_rz_L': 0.20466913282871246,
+            'cf_J_CheekUp2_L': 0.004773593973368406,
+            'cf_J_Eye01_s_L': 0.20466917753219604,
+            'cf_J_Eye02_s_L': 0.20466917753219604,
+            'cf_J_Eye03_s_L': 0.20466917753219604,
+            'cf_J_Eye04_s_L': 0.20466917753219604,
+            'cf_J_Eye05_s_L': 0.20466917753219604,
+            'cf_J_Eye06_s_L': 0.20466917753219604,
+            'cf_J_Eye07_s_L': 0.20466917753219604,
+            'cf_J_Eye08_s_L': 0.20466917753219604,
+            'cf_J_hitomi_tx_L': 0.18981075286865234,
+            'cf_J_Eye_txdam_R': 2.1210574630003975e-07,
+            'cf_J_Eye_tx_R': 2.1210576051089447e-07,
+            'cf_J_Eye_rz_R': -0.2046687752008438,
+            'cf_J_CheekUp2_R': -0.0047732163220644,
+            'cf_J_Eye01_s_R': -0.2046687752008438,
+            'cf_J_Eye02_s_R': -0.2046687752008438,
+            'cf_J_Eye03_s_R': -0.2046687752008438,
+            'cf_J_Eye04_s_R': -0.2046687752008438,
+            'cf_J_Eye05_s_R': -0.2046687752008438,
+            'cf_J_Eye06_s_R': -0.2046687752008438,
+            'cf_J_Eye07_s_R': -0.2046687752008438,
+            'cf_J_Eye08_s_R': -0.2046687752008438,
+            'cf_J_hitomi_tx_R': -0.2046687752008438,
+            'cf_J_Mayu_ty': 2.1210574630003975e-07,
+            'cf_J_Mayumoto_L': 0.3458269536495209,
+            'cf_J_Mayu_L': 0.34616410732269287,
+            'cf_J_MayuMid_s_L': 0.34626930952072144,
+            'cf_J_MayuTip_s_L': 0.3462893068790436,
+            'cf_J_Mayumoto_R': -0.34582653641700745,
+            'cf_J_Mayu_R': -0.34616369009017944,
+            'cf_J_MayuMid_s_R': -0.3462689220905304,
+            'cf_J_MayuTip_s_R': -0.34628885984420776,
+            'cf_J_NoseBase': 2.1210573208918504e-07,
+            'cf_J_NoseBase_rx': 2.1210573208918504e-07,
+            'cf_J_Nose_rx': 2.1210573208918504e-07,
+            'cf_J_Nose_tip': 2.1210571787833032e-07,
+            'cf_J_NoseBridge_ty': 2.1210573208918504e-07,
+            'cf_J_NoseBridge_rx': 2.1210573208918504e-07,
+            'cf_s_neck': 0.0,
+            'cf_s_spine03': 0.0,
+            'a_n_back': -3.1415927410125732,
+            'cf_s_spine02': 0.0,
+            'cf_s_spine01': 0.0,
+            'cf_j_waist01': 0.0,
+            'cf_d_sk_top': 0.0,
+            'cf_d_sk_00_00': -3.1415927410125732,
+            'cf_j_sk_00_00': -3.1415927410125732,
+            'cf_j_sk_00_01': -3.1415927410125732,
+            'cf_j_sk_00_02': 3.1415293216705322,
+            'cf_j_sk_00_03': 3.1415293216705322,
+            'cf_j_sk_00_04': 3.1415293216705322,
+            'cf_j_sk_00_05': 3.1415293216705322,
+            'cf_d_sk_01_00': 2.3621666431427,
+            'cf_j_sk_01_00': 2.3621666431427,
+            'cf_j_sk_01_01': 2.364142656326294,
+            'cf_j_sk_01_02': 2.3684122562408447,
+            'cf_j_sk_01_03': 2.3684122562408447,
+            'cf_j_sk_01_04': 2.3684122562408447,
+            'cf_j_sk_01_05': 2.3684122562408447,
+            'cf_d_sk_02_00': 1.5806118249893188,
+            'cf_j_sk_02_00': 1.5808137655258179,
+            'cf_j_sk_02_01': 1.5806832313537598,
+            'cf_j_sk_02_02': 1.5820348262786865,
+            'cf_j_sk_02_03': 1.5820348262786865,
+            'cf_j_sk_02_04': 1.5820348262786865,
+            'cf_j_sk_02_05': 1.5820348262786865,
+            'cf_d_sk_03_00': 0.7112568616867065,
+            'cf_j_sk_03_00': 0.7112571597099304,
+            'cf_j_sk_03_01': 0.7112568020820618,
+            'cf_j_sk_03_02': 0.709623396396637,
+            'cf_j_sk_03_03': 0.7096233367919922,
+            'cf_j_sk_03_04': 0.7096233367919922,
+            'cf_j_sk_03_05': 0.7096234560012817,
+            'cf_d_sk_04_00': 3.4498308600352867e-17,
+            'cf_j_sk_04_00': 0.00037256989162415266,
+            'cf_j_sk_04_01': 0.00012998198508284986,
+            'cf_j_sk_04_02': 0.0001299990399274975,
+            'cf_j_sk_04_03': 0.0001299990399274975,
+            'cf_j_sk_04_04': 0.0001299990399274975,
+            'cf_j_sk_04_05': 0.0001299990399274975,
+            'cf_d_sk_05_00': -0.7112577557563782,
+            'cf_j_sk_05_00': -0.7112579345703125,
+            'cf_j_sk_05_01': -0.7112577557563782,
+            'cf_j_sk_05_02': -0.7096185088157654,
+            'cf_j_sk_05_03': -0.7096185088157654,
+            'cf_j_sk_05_04': -0.7096185088157654,
+            'cf_j_sk_05_05': -0.7096185088157654,
+            'cf_d_sk_06_00': -1.5806118249893188,
+            'cf_j_sk_06_00': -1.5808138847351074,
+            'cf_j_sk_06_01': -1.5806833505630493,
+            'cf_j_sk_06_02': -1.5820401906967163,
+            'cf_j_sk_06_03': -1.5820401906967163,
+            'cf_j_sk_06_04': -1.5820401906967163,
+            'cf_j_sk_06_05': -1.5820401906967163,
+            'cf_d_sk_07_00': -2.3621666431427,
+            'cf_j_sk_07_00': -2.3621666431427,
+            'cf_j_sk_07_01': -2.3649401664733887,
+            'cf_j_sk_07_02': -2.3683762550354004,
+            'cf_j_sk_07_03': -2.3683762550354004,
+            'cf_j_sk_07_04': -2.3683762550354004,
+            'cf_j_sk_07_05': -2.3683762550354004,
+            'cf_j_waist02': 0.0,
+            'cf_d_siri_L': 4.435180380824022e-05,
+            'cf_d_siri01_L': 4.484502278501168e-05,
+            'cf_j_siri_L': 4.435180744621903e-05,
+            'cf_s_siri_L': 4.607543087331578e-05,
+            'cf_d_ana': 4.053832753925235e-07,
+            'cf_j_ana': 4.053832753925235e-07,
+            'cf_s_ana': 4.0538333223594236e-07,
+            'cf_d_kokan': 0.0,
+            'cf_j_kokan': 7.531064056820469e-07,
+            'cf_d_siri_R': -5.766015220842746e-08,
+            'cf_d_siri01_R': -5.766015220842746e-08,
+            'cf_j_siri_R': -5.766015220842746e-08,
+            'cf_s_siri_R': -5.766015576114114e-08,
+            'cf_j_thigh00_L': 0.0,
+            'cf_d_thigh01_L': 0.0,
+            'cf_s_thigh01_L': 0.0,
+            'cf_d_thigh02_L': 0.0,
+            'cf_s_thigh02_L': 0.0,
+            'cf_d_thigh03_L': 0.0,
+            'cf_s_thigh03_L': 0.0,
+            'cf_j_leg01_L': 0.0,
+            'cf_d_kneeF_L': 0.0,
+            'cf_d_leg02_L': -8.435114585980674e-12,
+            'cf_s_leg02_L': 0.0019489085534587502,
+            'cf_d_leg03_L': 2.6021072699222714e-05,
+            'cf_s_leg03_L': 2.6021054509328678e-05,
+            'cf_j_leg03_L': -1.7005811689396744e-11,
+            'cf_j_foot_L': -1.6870217028897017e-11,
+            'cf_j_toes_L': -1.6870217028897017e-11,
+            'cf_s_leg01_L': 1.5783663344534925e-25,
+            'cf_s_kneeB_L': 1.5783659646749431e-25,
+            'cf_j_thigh00_R': 0.0,
+            'cf_d_thigh01_R': -2.9915531455925155e-27,
+            'cf_s_thigh01_R': -2.3654518046693106e-22,
+            'cf_d_thigh02_R': 0.0,
+            'cf_s_thigh02_R': 0.0,
+            'cf_d_thigh03_R': 0.0,
+            'cf_s_thigh03_R': 0.0,
+            'cf_j_leg01_R': 0.0,
+            'cf_d_kneeF_R': 0.0,
+            'cf_d_leg02_R': -3.092561655648751e-07,
+            'cf_s_leg02_R': -3.092561655648751e-07,
+            'cf_d_leg03_R': -4.125216790384911e-08,
+            'cf_s_leg03_R': -4.125216790384911e-08,
+            'cf_j_leg03_R': -6.69778160045098e-07,
+            'cf_j_foot_R': -6.185123311297502e-07,
+            'cf_j_toes_R': -6.185122742863314e-07,
+            'cf_s_leg01_R': -8.901179133911008e-16,
+            'cf_s_kneeB_R': -8.901180192702192e-16,
+            'cf_s_waist02': 0.0,
+            'cf_s_leg_L': -0.004678195342421532,
+            'cf_s_leg_R': 0.004779986571520567,
+            'cf_s_waist01': 0.0,
         }
-        
+
         armature = c.get_armature()
         c.switch(armature, 'edit')
         for bone in reroll_data:
             if armature.data.edit_bones.get(bone):
                 armature.data.edit_bones[bone].roll = reroll_data[bone]
         c.print_timer('set_bone_roll_data')
-
     def bend_bones_for_iks(self):
         '''slightly modify the armature to support IKs'''
         if not bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
@@ -1118,6 +1203,309 @@ class modify_armature(bpy.types.Operator):
         reparent('cf_pv_elbo_R', 'cf_pv_root_upper')
         reparent('cf_pv_elbo_L', 'cf_pv_root_upper')
         c.print_timer('prepare_ik_bones')
+
+
+    def create_f_ik_bones(self):
+        # Notice, this function do not create correct IK bones.
+        # After rebuild_bone_data, bones are no longer vertical but are now aligned horizontally along the Y-axis.
+        # So former code are not compatible
+        # I'm not familiar with IK, so I just tweaked the parameters to make it look as normal as possible.
+        if not bpy.context.scene.kkbp.armature_dropdown in ['A','B']:
+            return
+
+        kneedistl = [1]
+        kneedistr = [1]
+        # Separate each function to edit mode part and pose mode part
+        def legIK_edit(legbone, IKtarget, IKpole, IKpoleangle, footIK, kneebone, toebone, footbone):
+            # Flip foot IK to match foot bone
+            bone = c.get_armature().data.edit_bones[footIK]
+            bone.head.y = c.get_armature().data.edit_bones[kneebone].tail.y
+            bone = c.get_armature().data.edit_bones[footIK]
+            bone.tail.z = c.get_armature().data.edit_bones[toebone].head.z
+            bone = c.get_armature().data.edit_bones[footIK]
+            bone.head.z = c.get_armature().data.edit_bones[footbone].head.z
+
+            bone = c.get_armature().data.edit_bones[footIK]
+            bone.head.x = c.get_armature().data.edit_bones[kneebone].tail.x
+            bone = c.get_armature().data.edit_bones[footIK]
+            bone.tail.x = bone.head.x
+
+            # unparent the bone
+            center_bone = c.get_armature().data.edit_bones['cf_n_height']
+            bone = c.get_armature().data.edit_bones[footIK]
+            bone.parent = center_bone
+        def footIK_edit(footbone, toebone, footIK, kneebone, legbone, kneedist):
+            kneedist = kneedist[0]
+            # After rebuild_bone_info, these bones are no longer vertical but are now aligned horizontally along the Y-axis. As a result, the following operation causes the bone lengths to become zero.
+            # c.get_armature().data.edit_bones[kneebone].head.y = kneedist * -5
+            # c.get_armature().data.edit_bones[kneebone].tail.y = kneedist * -5
+
+            # make toe bone shorter
+            c.get_armature().data.edit_bones[toebone].tail.z = c.get_armature().data.edit_bones[legbone].head.z * 0.2
+        def heelIK_edit(footbone, footIK, toebone):
+            masterbone = self.new_bone('MasterFootIK.' + footbone[-1])
+            masterbone = c.get_armature().data.edit_bones['MasterFootIK.' + footbone[-1]]
+            masterbone.head = c.get_armature().data.edit_bones[footbone].head
+            masterbone = c.get_armature().data.edit_bones['MasterFootIK.' + footbone[-1]]
+            masterbone.tail = c.get_armature().data.edit_bones[footbone].tail
+            masterbone = c.get_armature().data.edit_bones['MasterFootIK.' + footbone[-1]]
+            masterbone.matrix = c.get_armature().data.edit_bones[footbone].matrix
+            masterbone = c.get_armature().data.edit_bones['MasterFootIK.' + footbone[-1]]
+            masterbone.parent = c.get_armature().data.edit_bones['cf_n_height']
+
+            # Create the heel controller
+            heelIK = self.new_bone('HeelIK.' + footbone[-1])
+            heelIK = c.get_armature().data.edit_bones['HeelIK.' + footbone[-1]]
+            heelIK.head = c.get_armature().data.edit_bones[footbone].tail
+            heelIK = c.get_armature().data.edit_bones['HeelIK.' + footbone[-1]]
+            heelIK.tail = c.get_armature().data.edit_bones[footbone].head
+            heelIK = c.get_armature().data.edit_bones['HeelIK.' + footbone[-1]]
+            heelIK.parent = masterbone
+            heelIK = c.get_armature().data.edit_bones['HeelIK.' + footbone[-1]]
+            heelIK = c.get_armature().data.edit_bones['HeelIK.' + footbone[-1]]
+            heelIK.tail.y *= .5
+
+            # parent footIK to heel controller
+            c.get_armature().data.edit_bones[footIK].parent = heelIK
+
+            # make a bone to pin the foot
+            footPin = self.new_bone('FootPin.' + footbone[-1])
+            footPin = c.get_armature().data.edit_bones['FootPin.' + footbone[-1]]
+            footPin.head = c.get_armature().data.edit_bones[toebone].head
+            footPin = c.get_armature().data.edit_bones['FootPin.' + footbone[-1]]
+            footPin.tail = c.get_armature().data.edit_bones[toebone].tail
+            footPin = c.get_armature().data.edit_bones['FootPin.' + footbone[-1]]
+            footPin.parent = masterbone
+            footPin = c.get_armature().data.edit_bones['FootPin.' + footbone[-1]]
+            footPin.tail.z *= .8
+
+            # make a bone to allow rotation of the toe along an arc
+            toeRotator = self.new_bone('ToeRotator.' + footbone[-1])
+            toeRotator = c.get_armature().data.edit_bones['ToeRotator.' + footbone[-1]]
+            toeRotator.head = c.get_armature().data.edit_bones[toebone].head
+            toeRotator = c.get_armature().data.edit_bones['ToeRotator.' + footbone[-1]]
+            toeRotator.tail = c.get_armature().data.edit_bones[toebone].tail
+            toeRotator = c.get_armature().data.edit_bones['ToeRotator.' + footbone[-1]]
+            toeRotator.parent = masterbone
+
+            # make a bone to pin the toe
+            toePin = self.new_bone('ToePin.' + footbone[-1])
+            toePin = c.get_armature().data.edit_bones['ToePin.' + footbone[-1]]
+            toePin.head = c.get_armature().data.edit_bones[toebone].tail
+            toePin = c.get_armature().data.edit_bones['ToePin.' + footbone[-1]]
+            toePin.tail = c.get_armature().data.edit_bones[toebone].tail
+            toePin = c.get_armature().data.edit_bones['ToePin.' + footbone[-1]]
+            toePin.parent = toeRotator
+
+            toePin = c.get_armature().data.edit_bones['ToePin.' + footbone[-1]]
+            toePin.tail.z *= 1.2
+        def armhandIK_edit(elbowbone, handcontroller, elbowcontroller, IKangle, wristbone):
+            bone = c.get_armature().data.edit_bones[handcontroller]
+            bone.parent = c.get_armature().data.edit_bones['cf_n_height']
+            c.get_armature().data.bones[wristbone].hide = True
+
+            # For some reasons, after rebuild_bone_data, the following code will cause the bone lengths to become zero
+            # move elbow IKs closer to body
+            # elbowdist = round((c.get_armature().data.edit_bones[elbowbone].head - c.get_armature().data.edit_bones[
+            #     elbowbone].tail).length, 2)
+            # c.get_armature().data.edit_bones[elbowcontroller].head.x = elbowdist * 2
+            # c.get_armature().data.edit_bones[elbowcontroller].tail.x = elbowdist * 2
+        def legIK_pose(legbone, IKtarget, IKpole, IKpoleangle, footIK, kneebone, toebone, footbone):
+            bone = c.get_armature().pose.bones[legbone]
+
+            # Make IK
+            ik = bone.constraints.new("IK")
+            ik.name = "IK"
+
+            # Set target and subtarget
+            bone.constraints["IK"].target = c.get_armature()
+            bone.constraints["IK"].subtarget = c.get_armature().data.bones[IKtarget].name
+
+            # Set pole and subpole and pole angle
+            bone.constraints["IK"].pole_target = c.get_armature()
+            bone.constraints["IK"].pole_subtarget = c.get_armature().data.bones[IKpole].name
+            bone.constraints["IK"].pole_angle = IKpoleangle
+
+            # Set chain length
+
+            bone.constraints["IK"].chain_count = 2
+        def footIK_pose(footbone, toebone, footIK, kneebone, legbone, kneedist):
+            bone = c.get_armature().pose.bones[footbone]
+
+            # Make Copy rotation
+            bone.constraints.new("COPY_ROTATION")
+
+            # Set target and subtarget
+            bone.constraints[0].target = c.get_armature()
+            bone.constraints[0].subtarget = c.get_armature().data.bones[footIK].name
+
+            # Set the rotation to local space
+            bone.constraints[0].target_space = 'LOCAL_WITH_PARENT'
+            bone.constraints[0].owner_space = 'LOCAL_WITH_PARENT'
+
+            # move knee IKs closer to body
+            kneedist[0] = round(
+                (c.get_armature().pose.bones[footbone].head - c.get_armature().pose.bones[footbone].tail).length, 2)
+        def heelIK_pose(footbone, footIK, toebone):
+            bone = c.get_armature().pose.bones[footbone]
+            ik = bone.constraints.new("IK")
+            ik.name = "IK"
+            bone = c.get_armature().pose.bones[footbone]
+            bone.constraints["IK"].target = c.get_armature()
+            bone = c.get_armature().pose.bones[footbone]
+            bone.constraints["IK"].subtarget = c.get_armature().data.bones['FootPin.' + footbone[-1]].name
+            bone = c.get_armature().pose.bones[footbone]
+            bone.constraints["IK"].chain_count = 1
+
+            # pin the toe
+            bone = c.get_armature().pose.bones[toebone]
+            ik = bone.constraints.new("IK")
+            ik.name = "IK"
+            bone = c.get_armature().pose.bones[toebone]
+            bone.constraints["IK"].target = c.get_armature()
+            bone = c.get_armature().pose.bones[toebone]
+            bone.constraints["IK"].subtarget = c.get_armature().data.bones['ToePin.' + footbone[-1]].name
+            bone = c.get_armature().pose.bones[toebone]
+            bone.constraints["IK"].chain_count = 1
+
+            # move these bones to armature layer 2
+            bpy.ops.object.mode_set(mode='POSE')  # use this instead of c.switch to prevent crashing
+            layer2 = (
+            False, True, False, False, False, False, False, False, False, False, False, False, False, False, False,
+            False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
+            False, False)
+            bpy.ops.pose.select_all(action='DESELECT')
+            if bpy.app.version[0] == 3:
+                c.get_armature().data.bones['FootPin.' + footbone[-1]].select = True
+                c.get_armature().data.bones['ToePin.' + footbone[-1]].select = True
+                c.get_armature().data.bones[toebone].select = True
+                bpy.ops.pose.bone_layers(layers=layer2)
+                c.get_armature().data.bones[footIK].select = True
+            else:
+                c.get_armature().data.bones['FootPin.' + footbone[-1]].collections.clear()
+                self.set_armature_layer('FootPin.' + footbone[-1], 2)
+                c.get_armature().data.bones['ToePin.' + footbone[-1]].collections.clear()
+                self.set_armature_layer('ToePin.' + footbone[-1], 2)
+                c.get_armature().data.bones[toebone].collections.clear()
+                self.set_armature_layer(toebone, 2)
+                c.get_armature().data.bones[footIK].collections.clear()
+                self.set_armature_layer(footIK, 2)
+        def armhandIK_pose(elbowbone, handcontroller, elbowcontroller, IKangle, wristbone):
+            # Set IK bone
+            bone = c.get_armature().pose.bones[elbowbone]
+
+            # Add IK
+            bone.constraints.new("IK")
+
+            # Set target and subtarget
+            bone.constraints["IK"].target = c.get_armature()
+            bone.constraints["IK"].subtarget = c.get_armature().data.bones[handcontroller].name
+
+            # Set pole and subpole and pole angle
+            bone.constraints["IK"].pole_target = c.get_armature()
+            bone.constraints["IK"].pole_subtarget = c.get_armature().data.bones[elbowcontroller].name
+            bone.constraints["IK"].pole_angle = IKangle
+
+            # Set chain length
+            bone.constraints["IK"].chain_count = 2
+
+            # Set hand rotation then hide it
+            bone = c.get_armature().pose.bones[wristbone]
+            bone.constraints.new("COPY_ROTATION")
+            bone.constraints[0].target = c.get_armature()
+            bone.constraints[0].subtarget = c.get_armature().data.bones[handcontroller].name
+        c.switch(c.get_armature(), 'EDIT')
+
+        armhandIK_edit('cf_j_forearm01_R', 'cf_pv_hand_R', 'cf_pv_elbo_R', 0, 'cf_j_hand_R')
+        armhandIK_edit('cf_j_forearm01_L', 'cf_pv_hand_L', 'cf_pv_elbo_L', 180, 'cf_j_hand_L')
+
+        legIK_edit('cf_j_leg01_R', 'cf_pv_foot_R', 'cf_pv_knee_R', -math.pi / 2, 'cf_pv_foot_R', 'cf_j_leg01_R', 'cf_j_toes_R', 'cf_j_foot_R')
+        legIK_edit('cf_j_leg01_L', 'cf_pv_foot_L', 'cf_pv_knee_L', -math.pi / 2, 'cf_pv_foot_L', 'cf_j_leg01_L', 'cf_j_toes_L', 'cf_j_foot_L')
+
+        # The following eight lines were added just to prevent crashes. They look kind of inexplicable, and I don’t really know why, because I figured them out through trial and error.
+        # Due to Blender's memory management, the original method no longer works on the skeleton after rebuild_bone_data, even though that function only modified the bones' rotation and scale data.
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+        arm = c.get_armature()
+        bpy.context.view_layer.update()
+        bpy.context.evaluated_depsgraph_get().update()
+        arm.evaluated_get(bpy.context.evaluated_depsgraph_get())
+        c.switch(c.get_armature(), 'OBJECT')
+        c.switch(c.get_armature(), 'EDIT')
+        c.switch(c.get_armature(), 'OBJECT')
+
+
+        c.switch(c.get_armature(), 'POSE')
+
+        armhandIK_pose('cf_j_forearm01_R', 'cf_pv_hand_R', 'cf_pv_elbo_R', math.pi / 2, 'cf_j_hand_R')
+        armhandIK_pose('cf_j_forearm01_L', 'cf_pv_hand_L', 'cf_pv_elbo_L', math.pi / 2, 'cf_j_hand_L')
+        legIK_pose('cf_j_leg01_R', 'cf_pv_foot_R', 'cf_pv_knee_R', -math.pi / 2, 'cf_pv_foot_R', 'cf_j_leg01_R','cf_j_toes_R', 'cf_j_foot_R')
+        legIK_pose('cf_j_leg01_L', 'cf_pv_foot_L', 'cf_pv_knee_L', -math.pi / 2, 'cf_pv_foot_L', 'cf_j_leg01_L','cf_j_toes_L', 'cf_j_foot_L')
+        footIK_pose('cf_j_foot_R', 'cf_j_toes_R', 'cf_pv_foot_R', 'cf_pv_knee_R', 'cf_j_leg01_R', kneedistr)
+        footIK_pose('cf_j_foot_L',  'cf_j_toes_L', 'cf_pv_foot_L', 'cf_pv_knee_L', 'cf_j_leg01_L', kneedistl)
+
+
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+        arm = c.get_armature()
+        bpy.context.view_layer.update()
+        bpy.context.evaluated_depsgraph_get().update()
+        arm.evaluated_get(bpy.context.evaluated_depsgraph_get())
+
+
+        c.switch(c.get_armature(), 'OBJECT')
+        c.switch(c.get_armature(), 'POSE')
+        c.switch(c.get_armature(), 'OBJECT')
+        c.switch(arm, 'EDIT')
+
+
+        footIK_edit('cf_j_foot_R', 'cf_j_toes_R', 'cf_pv_foot_R', 'cf_pv_knee_R', 'cf_j_leg01_R', kneedistr)
+        footIK_edit('cf_j_foot_L', 'cf_j_toes_L', 'cf_pv_foot_L', 'cf_pv_knee_L', 'cf_j_leg01_L', kneedistl)
+
+        heelIK_edit('cf_j_foot_L', 'cf_pv_foot_L', 'cf_j_toes_L')
+        heelIK_edit('cf_j_foot_R', 'cf_pv_foot_R', 'cf_j_toes_R')
+
+
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+        arm = c.get_armature()
+        bpy.context.view_layer.update()
+        bpy.context.evaluated_depsgraph_get().update()
+        arm.evaluated_get(bpy.context.evaluated_depsgraph_get())
+
+        c.switch(c.get_armature(), 'OBJECT')
+        c.switch(c.get_armature(), 'EDIT')
+        c.switch(c.get_armature(), 'OBJECT')
+        c.switch(c.get_armature(), 'POSE')
+
+        heelIK_pose('cf_j_foot_L', 'cf_pv_foot_L', 'cf_j_toes_L')
+        heelIK_pose('cf_j_foot_R', 'cf_pv_foot_R', 'cf_j_toes_R')
+
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+        arm = c.get_armature()
+        bpy.context.view_layer.update()
+        bpy.context.evaluated_depsgraph_get().update()
+        arm.evaluated_get(bpy.context.evaluated_depsgraph_get())
+
+        # c.switch(c.get_armature(), 'OBJECT')
+        # c.switch(c.get_armature(), 'POSE')
+        # c.switch(c.get_armature(), 'OBJECT')
+        # c.switch(c.get_armature(), 'EDIT')
+
+        # move newly created bones to correct armature layers
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+        self.set_armature_layer('MasterFootIK.L', 0)
+        self.set_armature_layer('MasterFootIK.R', 0)
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+        self.set_armature_layer('HeelIK.L', 0)
+        self.set_armature_layer('HeelIK.R', 0)
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+        self.set_armature_layer('ToeRotator.L', 0)
+        self.set_armature_layer('ToeRotator.R', 0)
+        self.set_armature_layer('cf_d_bust00', 0)
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+        c.get_armature().data.bones['cf_pv_root_upper'].hide = True
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+        c.switch(c.get_armature(), 'object')
+
+
 
     def create_ik_bones(self):
         '''give the leg a foot IK, the foot a heel controller, and the arm a hand IK'''
