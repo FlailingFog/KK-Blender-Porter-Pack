@@ -37,7 +37,7 @@ class modify_mesh(bpy.types.Operator):
             self.separate_hair()
             self.separate_alternate_clothing()
             self.delete_shad_bone()
-            self.delete_eyeline_down()
+            # self.delete_eyeline_down() I think we could delete this mesh, as it is transparent and do not participate in any shape key
             self.separate_hitboxes()
             self.delete_mask_quad()
 
